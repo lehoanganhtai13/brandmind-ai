@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:docs.claude.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

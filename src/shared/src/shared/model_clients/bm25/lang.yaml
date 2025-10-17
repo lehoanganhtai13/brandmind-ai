@@ -1,0 +1,25 @@
+en:
+  tokenizer:
+    class: StandardTokenizer
+    params: {}
+  filters:
+    - class: LowercaseFilter
+      params: {}
+    - class: PunctuationFilter
+      params: {}
+    - class: StopwordFilter
+      params: 
+        language: "english"
+    - class: StemmingFilter
+      params:
+        language: "english"
+
+vi:
+  tokenizer:
+    class: VietnameseTokenizer
+    params: {}
+  filters:
+    - class: LowercaseFilter
+      params: {}
+    - class: PunctuationFilter
+      params: {}
