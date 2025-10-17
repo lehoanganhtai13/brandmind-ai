@@ -5,8 +5,8 @@
 ### Tool Orchestration Engine
 ```
 Request Analysis → Tool Selection → Parallel Execution → Result Integration → Next Steps
-      ↓               ↓               ↓                    ↓                ↓
-  Context Building  Tool Ranking   Concurrent Calls   Response Merging   State Update
+       ↓                 ↓                ↓                    ↓                 ↓
+Context Building   Tool Ranking    Concurrent Calls      Response Merging   State Update
 ```
 
 ## Tool Ecosystem
