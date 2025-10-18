@@ -208,3 +208,6 @@ __marimo__/
 
 # Claude-VSCode
 .claude/
+
+# Draft code
+draft/
