@@ -148,6 +148,11 @@
 
       This model defines the core data structure used throughout the meal planning
       workflow to maintain consistency and type safety across service boundaries.
+
+      Attributes:
+          id (str): Unique identifier for the meal plan entry
+          name (str): Descriptive name of the meal
+          nutrition_data (Dict[str, float]): Key-value pairs of nutrition metrics
       """
       id: str
       name: str
@@ -167,10 +172,10 @@
           Transforms raw meal data into optimized format for nutrition analysis.
 
           Args:
-              data: Raw meal information with nutrition metrics
+              data (ExampleDataModel): Raw meal information with nutrition metrics
 
           Returns:
-              Processed meal data ready for optimization algorithms
+              processed_data (ProcessedResult): Processed meal data ready for optimization algorithms
           """
           pass
   ```
