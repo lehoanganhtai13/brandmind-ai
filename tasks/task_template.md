@@ -89,7 +89,7 @@
 
 > **📝 Coding Standards & Documentation Requirements**
 >
-> All code implementations must follow enterprise-level Python standards:
+> All code implementations **MUST** follow **enterprise-level Python standards**:
 >
 > - **Comprehensive Docstrings**: Every module, class, and function must have detailed docstrings in English explaining:
 >   - **Purpose**: What this component does and why it exists
@@ -103,6 +103,16 @@
 >
 > - **Focus on Functionality**: Document the "what" and "why" rather than the "how" - explain business purpose, not code implementation details
 >
+> - **Language**: All code, comments, and docstrings must be in **English only**
+>
+> - **Naming Conventions**: Follow PEP 8 naming conventions for variables, functions, classes, and modules
+>
+> - **Modularization**: Break down large functions/classes into smaller, reusable components with clear responsibilities
+>
+> - **Type Hints**: Use Python type hints for all function signatures to ensure clarity on expected data types
+>
+> - **Line Length**: Max 100 characters - break long lines for readability
+>
 > **Example of Good Documentation Style**:
 > ```python
 > def process_meal_nutrition_data(user_profile: UserProfile, recipe_data: List[RecipeData]) -> NutritionSummary:
@@ -114,13 +124,14 @@
 >     accounts for user-specific dietary restrictions and TDEE requirements.
 >
 >     Args:
->         user_profile: User's dietary preferences, restrictions, and health goals
->         recipe_data: Collection of recipes with detailed nutrition information
+>         user_profile (UserProfile): User's dietary preferences, restrictions, and health goals
+>         recipe_data (List[RecipeData]): Collection of recipes with detailed nutrition information
 >
 >     Returns:
->         Aggregated nutrition summary with macro breakdowns and compliance metrics
->         for use in meal plan optimization algorithms
+>         nutrition_summary (NutritionSummary): Aggregated nutrition summary with macro breakdowns and 
+>         compliance metrics for use in meal plan optimization algorithms
 >     """
+>     # Implementation goes here
 > ```
 
 ### Component 1
