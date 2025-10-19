@@ -1,0 +1,15 @@
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng_container
+    hostname: searxng
+    restart: unless-stopped
+    volumes:
+      - ./data:/etc/searxng        # settings.yml, uwsgi.ini, log
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
