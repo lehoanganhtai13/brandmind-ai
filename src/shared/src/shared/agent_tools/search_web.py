@@ -7,7 +7,6 @@ import time
 import random
 import threading
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from loguru import logger
 from typing import Dict, List
 
@@ -22,7 +21,7 @@ from shared.utils.base_class import Payload, SearchResult
 # Global throttle lock: ensures only one search request is in-flight to SearXNG at a time
 _SEARXNG_THROTTLE_LOCK = threading.Lock()
 _LAST_SEARXNG_TIME = 0.0
-_MIN_DELAY_BETWEEN_SEARXNG = 2.5  # seconds
+_MIN_DELAY_BETWEEN_SEARXNG = 3.5  # seconds - balanced for reliability without rate limiting
 
 
 def deep_serp_search(query: str, number_of_results: int = 5) -> List[SearchResult]:
@@ -97,13 +96,13 @@ def deep_serp_search(query: str, number_of_results: int = 5) -> List[SearchResul
     
 def search_web(queries: List[str], top_k: int = 5) -> Dict[str, Dict]:
     """
-    Google Search tool to find relevant information on the web with parallel execution.
-    
+    Google Search tool to find relevant information on the web with sequential execution.
+
     Features:
     - Query deduplication to reduce unnecessary requests
     - Rate limiting (2s delay between requests per engine)
     - Automatic exponential backoff on rate limit (429) responses
-    - Parallel execution with max 2 concurrent workers (to avoid overwhelming upstream)
+    - Sequential execution to prevent rate limiting
     - Automatic fallback to next engine if current fails
 
     Args:
@@ -128,14 +127,14 @@ def search_web(queries: List[str], top_k: int = 5) -> Dict[str, Dict]:
     """
     # Use container hostname when running in Docker, localhost when running locally
     searxng_host = os.getenv("SEARXNG_HOST", "localhost")
-    url = f"http://{searxng_host}:8080"
+    searxng_port = os.getenv("SEARXNG_PORT", "8080")
+    url = f"http://{searxng_host}:{searxng_port}"
     language = "vi"
     format = "json"
     engines = [
         "duckduckgo",      # Try first (CAPTCHA risk but good results when works)
         "brave",           # Fallback: works reliably
         "startpage",       # Fallback: Google-like results
-        "Swisscows",       # Fallback: privacy-focused
         "google",          # Last resort: often returns 0 results but try anyway
     ]
 
@@ -277,24 +276,18 @@ def search_web(queries: List[str], top_k: int = 5) -> Dict[str, Dict]:
         
         return query, [], 0.0, "none"
 
-    # Execute searches in parallel
+    # Execute searches sequentially to avoid rate limiting
     results_dict = {}
     total_start_time = time.time()
 
-    max_workers = min(len(queries), 2)  # Limit to 2 workers or number of queries, whichever is smaller
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all queries
-        future_to_query = {executor.submit(search_single_query, query): query for query in queries}
-        
-        # Collect results as they complete
-        for future in as_completed(future_to_query):
-            query, results, response_time, engine_used = future.result()
-            results_dict[query] = {
-                "results": results,
-                "response_time": response_time,
-                "result_count": len(results),
-                "engine_used": engine_used
-            }
+    for query in queries:
+        query_text, results, response_time, engine_used = search_single_query(query)
+        results_dict[query_text] = {
+            "results": results,
+            "response_time": response_time,
+            "result_count": len(results),
+            "engine_used": engine_used
+        }
     
     total_time = time.time() - total_start_time
 
