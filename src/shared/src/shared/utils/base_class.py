@@ -35,3 +35,17 @@ class SearchResult(BaseModel):
     title: str
     url: str
     snippet: str
+
+
+# ----------------- Scraping Result Types -----------------
+
+class ScrapeResult(BaseModel):
+    """
+    Class to represent the result of a web scraping operation.
+
+    Attributes:
+        url (str): The URL that was scraped.
+        content (str): The textual content extracted from the URL.
+    """
+    url: str
+    content: str

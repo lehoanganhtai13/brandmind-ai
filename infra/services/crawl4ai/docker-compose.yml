@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    container_name: crawl4ai-server
+    ports:
+      - "11235:11235"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${GEMINI_API_KEY}
+      - DEFAULT_LLM_PROVIDER=gemini/gemini-2.0-flash-exp
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    shm_size: 2gb
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11235/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - crawl4ai-network
+
+networks:
+  crawl4ai-network:
+    driver: bridge

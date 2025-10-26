@@ -55,7 +55,7 @@ sync: ## Sync dependencies with lock file
 
 update: ## Update all dependencies
 	uv lock --upgrade
-	uv sync
+	uv sync --group chatbot --group indexer --group dev
 
 clean: ## Clean cache and virtual environment
 	rm -rf .venv
