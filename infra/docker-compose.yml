@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # SearXNG - Privacy-focused search engine
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng_container
+    hostname: searxng
+    restart: unless-stopped
+    volumes:
+      - ./services/searxng/data:/etc/searxng
+    ports:
+      - "${SEARXNG_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - brandmind-network
+
+  # Crawl4AI - Web scraping service
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    container_name: crawl4ai-server
+    ports:
+      - "${CRAWL4AI_PORT:-11235}:11235"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11235/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - brandmind-network
+
+networks:
+  brandmind-network:
+    driver: bridge
