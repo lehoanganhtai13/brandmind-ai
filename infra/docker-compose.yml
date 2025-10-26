@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # SearXNG - Privacy-focused search engine
   searxng:
-    image: searxng/searxng:latest
+    image: searxng/searxng:2025.10.25-4ca75a045
     container_name: searxng_container
     hostname: searxng
     restart: unless-stopped
@@ -21,7 +21,7 @@ services:
 
   # Crawl4AI - Web scraping service
   crawl4ai:
-    image: unclecode/crawl4ai:latest
+    image: unclecode/crawl4ai:0.7.6
     container_name: crawl4ai-server
     ports:
       - "${CRAWL4AI_PORT:-11235}:11235"

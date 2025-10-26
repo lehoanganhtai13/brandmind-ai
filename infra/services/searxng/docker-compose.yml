@@ -1,6 +1,6 @@
 services:
   searxng:
-    image: searxng/searxng:latest
+    image: searxng/searxng:2025.10.25-4ca75a045
     container_name: searxng_container
     hostname: searxng
     restart: unless-stopped

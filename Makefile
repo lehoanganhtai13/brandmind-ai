@@ -1,6 +1,7 @@
 .PHONY: help install install-chatbot install-indexer install-dev install-all
 .PHONY: add-chatbot add-indexer add-shared add-core add-dev
 .PHONY: sync update clean test format lint check
+.PHONY: services-up services-down services-restart services-logs services-status
 
 # Default target
 .DEFAULT_GOAL := help
@@ -94,6 +95,22 @@ shell: ## Start Python shell with environment
 
 ipython: ## Start IPython shell
 	uv run ipython
+
+## Docker Services
+services-up: ## Start infrastructure services (SearXNG + Crawl4AI)
+	cd infra && docker-compose up -d --build
+
+services-down: ## Stop infrastructure services
+	cd infra && docker-compose down
+
+services-restart: ## Restart infrastructure services
+	cd infra && docker-compose restart
+
+services-logs: ## Show logs from infrastructure services
+	cd infra && docker-compose logs -f
+
+services-status: ## Show status of infrastructure services
+	cd infra && docker-compose ps
 
 ## Lock file
 lock: ## Update lock file without installing
