@@ -9,7 +9,7 @@ from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'shared', 'src'))
 
-from shared.agent_tools.crawl4ai_client import create_crawl4ai_client, Crawl4AIPresets
+from shared.agent_tools.crawler.crawl4ai_client import create_crawl4ai_client, Crawl4AIPresets
 
 def test_crawl4ai_client():
     """Test all modes of the Crawl4AI SDK client."""

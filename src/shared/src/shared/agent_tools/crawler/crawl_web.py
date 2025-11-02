@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from loguru import logger
 
 from shared.utils.base_class import ScrapeResult
-from shared.agent_tools.crawl4ai_client import create_crawl4ai_client, Crawl4AIPresets
+from shared.agent_tools.crawler.crawl4ai_client import create_crawl4ai_client, Crawl4AIPresets
 
 
 def scrape_web_content(

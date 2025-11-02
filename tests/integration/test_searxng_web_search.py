@@ -10,7 +10,7 @@ from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'shared', 'src'))
 
-from shared.agent_tools.search_web import search_web
+from shared.agent_tools.search.search_web import search_web
 
 def test_searxng_vietnamese_queries():
     """Test SearXNG with Vietnamese food-related queries."""

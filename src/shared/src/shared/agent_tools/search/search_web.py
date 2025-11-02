@@ -15,7 +15,7 @@ logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 
-from shared.agent_tools.exceptions import LoadCrapelessDeepSerpTokenError
+from shared.agent_tools.search.exceptions import LoadCrapelessDeepSerpTokenError
 from shared.utils.base_class import Payload, SearchResult
 
 # Global throttle lock: ensures only one search request is in-flight to SearXNG at a time
@@ -100,7 +100,7 @@ def search_web(queries: List[str], top_k: int = 5) -> Dict[str, Dict]:
 
     Features:
     - Query deduplication to reduce unnecessary requests
-    - Rate limiting (2s delay between requests per engine)
+    - Rate limiting (3.5s delay between requests per engine)
     - Automatic exponential backoff on rate limit (429) responses
     - Sequential execution to prevent rate limiting
     - Automatic fallback to next engine if current fails
@@ -141,7 +141,7 @@ def search_web(queries: List[str], top_k: int = 5) -> Dict[str, Dict]:
     logger.info(f"Starting web search for list of following queries: {queries}")
     
     # Rate limiting configuration (prevent blocking from upstream engines)
-    MIN_DELAY_BETWEEN_REQUESTS = 2.0  # 2 second delay between requests to same engine
+    MIN_DELAY_BETWEEN_REQUESTS = 3.5  # 3.5 second delay between requests to same engine
     last_request_time = {}  # Track last request time per engine
 
     # Per-engine circuit breaker state to avoid repeatedly hitting failing engines

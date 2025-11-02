@@ -9,7 +9,11 @@ dependencies = []
 
 [dependency-groups]
 chatbot = ["shared", "core"]
-indexer = ["shared", "core"]
+indexer = [
+    "shared",
+    "core",
+    "llama-cloud-services>=0.6.76",
+]
 dev = ["pytest>=7.0.0", "black>=23.0.0", "mypy>=1.0.0", "isort>=5.12.0"]
 
 [tool.uv.sources]

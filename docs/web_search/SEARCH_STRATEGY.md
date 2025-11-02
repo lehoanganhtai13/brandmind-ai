@@ -51,7 +51,7 @@ Hệ thống tìm kiếm web của brandmind-ai sử dụng **SearXNG + Bing fal
 
 **Usage:**
 ```python
-from shared.agent_tools.search_web import search_web
+from shared.agent_tools.search.search_web import search_web
 
 # English queries
 results = search_web(["python tutorial", "machine learning"], top_k=5)
@@ -98,7 +98,7 @@ results = search_web(
 
 **Usage:**
 ```python
-from shared.agent_tools.search_web import bing_web_search
+from shared.agent_tools.search.search_web import bing_web_search
 
 # English query (auto-detect via Accept-Language header)
 results = bing_web_search("python programming tutorial", top_k=5)
@@ -123,7 +123,7 @@ results = bing_web_search("cách làm phở bò", top_k=5)
 
 **Usage:**
 ```python
-from shared.agent_tools.search_web import deep_serp_search
+from shared.agent_tools.search.search_web import deep_serp_search
 
 results = deep_serp_search("cách làm phở bò", number_of_results=5)
 ```
@@ -371,7 +371,7 @@ results = search_web(["q1", "q2", "q3", "q4"])  # Parallel with 2 workers
 
 ### Global Throttle Settings (Python)
 
-Located in: `src/shared/src/shared/agent_tools/search_web.py`
+Located in: `src/shared/src/shared/agent_tools/search/search_web.py`
 
 ```python
 _SEARXNG_THROTTLE_LOCK = threading.Lock()
@@ -418,7 +418,7 @@ google:
 
 ### Bing Fallback Settings
 
-Located in: `src/shared/src/shared/agent_tools/search_web.py`
+Located in: `src/shared/src/shared/agent_tools/search/search_web.py`
 
 ```python
 # Language-aware Bing parameters
@@ -450,7 +450,7 @@ timeout=30  # seconds
 All search functions provide detailed logs:
 
 ```python
-from shared.agent_tools.search_web import search_web
+from shared.agent_tools.search.search_web import search_web
 
 result = search_web(["python tutorial", "machine learning"])
 ```

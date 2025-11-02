@@ -9,7 +9,7 @@ from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'shared', 'src'))
 
-from shared.agent_tools.crawl_web import scrape_web_content
+from shared.agent_tools.crawler.crawl_web import scrape_web_content
 
 def test_unified_scrape():
     """Test all 3 modes of the unified scrape_web_content function."""

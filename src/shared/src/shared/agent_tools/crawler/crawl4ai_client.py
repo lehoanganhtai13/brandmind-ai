@@ -231,7 +231,6 @@ class Crawl4AIClient:
     def _filter_content_with_llm(self, content: str, query: str) -> str:
         """Use Gemini AI to filter content relevant to user query."""
         try:
-            import json
             from src.config.system_config import SETTINGS
             from src.prompts.extract_web_content.filter_relevant_content import FILTER_RELEVANT_CONTENT_PROMPT
             from shared.model_clients.llm.google import GoogleAIClientLLM, GoogleAIClientLLMConfig
