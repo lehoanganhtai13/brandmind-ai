@@ -13,6 +13,7 @@ def scrape_web_content(
 ) -> ScrapeResult:
     """
     Unified web content scraping function with multiple extraction modes.
+    Use this function to scrape web content in different ways based on the specified mode.
 
     Args:
         web_url (str): The URL to scrape

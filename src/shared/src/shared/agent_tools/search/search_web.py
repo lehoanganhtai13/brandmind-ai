@@ -97,6 +97,7 @@ def deep_serp_search(query: str, number_of_results: int = 5) -> List[SearchResul
 def search_web(queries: List[str], top_k: int = 5) -> Dict[str, Dict]:
     """
     Google Search tool to find relevant information on the web with sequential execution.
+    Use this function to perform web searches for a list of queries.
 
     Features:
     - Query deduplication to reduce unnecessary requests

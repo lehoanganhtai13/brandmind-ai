@@ -237,7 +237,7 @@ class Crawl4AIClient:
 
             llm = GoogleAIClientLLM(
                 config=GoogleAIClientLLMConfig(
-                    model="gemini-2.5-flash",
+                    model="gemini-2.5-flash-lite",
                     api_key=SETTINGS.GEMINI_API_KEY,
                     thinking_budget=0,
                     response_mime_type="text/plain",
@@ -265,7 +265,7 @@ class Crawl4AIClient:
 
             llm = GoogleAIClientLLM(
                 config=GoogleAIClientLLMConfig(
-                    model="gemini-2.5-flash",
+                    model="gemini-2.5-flash-lite",
                     api_key=SETTINGS.GEMINI_API_KEY,
                     thinking_budget=0,
                     response_mime_type="text/plain",
@@ -294,7 +294,7 @@ class Crawl4AIClient:
 
             llm = GoogleAIClientLLM(
                 config=GoogleAIClientLLMConfig(
-                    model="gemini-2.5-flash",
+                    model="gemini-2.5-flash-lite",
                     api_key=SETTINGS.GEMINI_API_KEY,
                     thinking_budget=0,
                     response_mime_type="application/json",
