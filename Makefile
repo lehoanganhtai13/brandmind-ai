@@ -98,19 +98,19 @@ ipython: ## Start IPython shell
 
 ## Docker Services
 services-up: ## Start infrastructure services (SearXNG + Crawl4AI)
-	cd infra && docker-compose up -d --build
+	cd infra && docker compose up -d --build
 
 services-down: ## Stop infrastructure services
-	cd infra && docker-compose down
+	cd infra && docker compose down
 
 services-restart: ## Restart infrastructure services
-	cd infra && docker-compose restart
+	cd infra && docker compose restart
 
 services-logs: ## Show logs from infrastructure services
-	cd infra && docker-compose logs -f
+	cd infra && docker compose logs -f
 
 services-status: ## Show status of infrastructure services
-	cd infra && docker-compose ps
+	cd infra && docker compose ps
 
 ## Lock file
 lock: ## Update lock file without installing
