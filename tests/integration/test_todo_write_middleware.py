@@ -76,8 +76,19 @@ def print_agent_result(result, step_num):
                     tool_args = tool_call.get('args', {})
                     print(f"   {msg_type}: [Tool call: {tool_name}]")
                     print(f"   └─ Args: {tool_args}")
-                elif msg.content.strip():
-                    content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+                elif hasattr(msg, 'content') and msg.content:
+                    # Handle both string and list content
+                    if isinstance(msg.content, list):
+                        # Extract text content from list format
+                        if msg.content and len(msg.content) > 0 and 'text' in msg.content[0]:
+                            content = msg.content[0]['text']
+                        else:
+                            content = str(msg.content)
+                    else:
+                        content = msg.content.strip()
+
+                    # Truncate long content
+                    content = content[:200] + "..." if len(content) > 200 else content
                     print(f"   {msg_type}: {content}")
                 else:
                     print(f"   {msg_type}: [Empty AI message]")
@@ -120,9 +131,14 @@ def create_agent_with_todos(
     """
     try:
         from src.config.system_config import SETTINGS
-        os.environ["GOOGLE_API_KEY"] = SETTINGS.GEMINI_API_KEY
 
-        model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.1)
+        model = ChatGoogleGenerativeAI(
+            google_api_key=SETTINGS.GEMINI_API_KEY,
+            model="gemini-2.5-pro",
+            temperature=0.1,
+            # top_p=0.1,
+            thinking_budget=4000,
+        )
     except ImportError as e:
         # Expected when google_genai package not available
         pytest.skip(f"Google Generative AI not available: {e}")
@@ -199,12 +215,12 @@ async def test_agent_todo_persistence():
     try:
         # Initial request to create todos
         result1 = await agent.ainvoke({
-            "messages": [HumanMessage(content="Create a simple website with HTML and CSS")]
+            "messages": [HumanMessage(content="Help me develop a brand positioning strategy for a new eco-friendly sneaker brand.")]
         })
 
         # Print formatted results
         print("🎯 === STEP 1: Initial Request ===")
-        print(f"💬 User: Create a simple website with HTML and CSS")
+        print(f"💬 User: Help me develop a brand positioning strategy for a new eco-friendly sneaker brand.")
         print_agent_result(result1, 1)
 
         # Follow-up request
