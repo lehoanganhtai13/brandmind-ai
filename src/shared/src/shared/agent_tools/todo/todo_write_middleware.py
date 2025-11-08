@@ -105,9 +105,10 @@ class TodoWriteMiddleware(AgentMiddleware):
         handler: Callable[[ModelRequest], ModelResponse],
     ) -> ModelCallResult:
         """
-        Inject system prompt based on current todo state.
+        Inject system prompt and reminders based on current todo state.
 
-        Automatically provides initial guidance when no todos exist.
+        Always injects the main system prompt with TodoWrite instructions.
+        Provides additional initial guidance when no todos exist.
         State change reminders are handled through tool responses.
 
         Args:
@@ -118,21 +119,23 @@ class TodoWriteMiddleware(AgentMiddleware):
             ModelCallResult with potentially modified system prompt
         """
         try:
+            # Always inject the main TodoWrite system prompt
+            existing_prompt = request.system_prompt or ""
+            request.system_prompt = f"{existing_prompt}\n\n{self.system_prompt}"
+
             # Get todos from request state, default to empty list
             todos = request.state.get("todos", [])
 
-            # Only inject reminder for empty todo lists (initial state)
+            # Inject additional reminder for empty todo lists (initial state)
             if not todos:
                 reminder = self._generate_reminder(todos)  # Will return EMPTY_TODO_REMINDER
                 if reminder:
-                    existing_prompt = request.system_prompt or ""
-                    request.system_prompt = f"{existing_prompt}\n\n{reminder}"
-            # If todos exist, don't inject anything - let tool responses handle reminders
+                    request.system_prompt = f"{request.system_prompt}\n\n{reminder}"
 
             return handler(request)
         except Exception as e:
             # Log error but don't break the middleware chain
-            print(f"Warning: TodoWriteMiddleware reminder injection failed: {e}")
+            print(f"Warning: TodoWriteMiddleware system prompt injection failed: {e}")
             return handler(request)
 
     async def awrap_model_call(
@@ -141,9 +144,10 @@ class TodoWriteMiddleware(AgentMiddleware):
         handler: Callable[[ModelRequest], Awaitable[ModelResponse]],
     ) -> ModelCallResult:
         """
-        Async version of wrap_model_call - inject system prompt based on todo state.
+        Async version of wrap_model_call - inject system prompt and reminders based on todo state.
 
-        Automatically provides initial guidance when no todos exist.
+        Always injects the main system prompt with TodoWrite instructions.
+        Provides additional initial guidance when no todos exist.
         State change reminders are handled through tool responses.
 
         Args:
@@ -154,21 +158,23 @@ class TodoWriteMiddleware(AgentMiddleware):
             ModelCallResult with potentially modified system prompt
         """
         try:
+            # Always inject the main TodoWrite system prompt
+            existing_prompt = request.system_prompt or ""
+            request.system_prompt = f"{existing_prompt}\n\n{self.system_prompt}"
+
             # Get todos from request state, default to empty list
             todos = request.state.get("todos", [])
 
-            # Only inject reminder for empty todo lists (initial state)
+            # Inject additional reminder for empty todo lists (initial state)
             if not todos:
                 reminder = self._generate_reminder(todos)  # Will return EMPTY_TODO_REMINDER
                 if reminder:
-                    existing_prompt = request.system_prompt or ""
-                    request.system_prompt = f"{existing_prompt}\n\n{reminder}"
-            # If todos exist, don't inject anything - let tool responses handle reminders
+                    request.system_prompt = f"{request.system_prompt}\n\n{reminder}"
 
             return await handler(request)
         except Exception as e:
             # Log error but don't break the middleware chain
-            print(f"Warning: TodoWriteMiddleware async reminder injection failed: {e}")
+            print(f"Warning: TodoWriteMiddleware async system prompt injection failed: {e}")
             return await handler(request)
 
     def _create_write_todos_tool(self):

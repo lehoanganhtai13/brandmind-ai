@@ -88,16 +88,16 @@ def print_agent_result(result, step_num):
                         content = msg.content.strip()
 
                     # Truncate long content
-                    content = content[:200] + "..." if len(content) > 200 else content
+                    content = content[:500] + "..." if len(content) > 500 else content
                     print(f"   {msg_type}: {content}")
                 else:
                     print(f"   {msg_type}: [Empty AI message]")
             elif msg_type == "ToolMessage":
-                print(f"   {msg_type}: {msg.content[:200]}{'...' if len(msg.content) > 200 else ''}")
+                print(f"   {msg_type}: {msg.content[:500]}{'...' if len(msg.content) > 500 else ''}")
             else:
                 # Handle other message types
                 if hasattr(msg, 'content') and msg.content:
-                    content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+                    content = msg.content[:500] + "..." if len(msg.content) > 500 else msg.content
                     print(f"   {msg_type}: {content}")
                 else:
                     print(f"   {msg_type}: [No content]")
@@ -134,7 +134,7 @@ def create_agent_with_todos(
 
         model = ChatGoogleGenerativeAI(
             google_api_key=SETTINGS.GEMINI_API_KEY,
-            model="gemini-2.5-pro",
+            model="gemini-2.5-flash",
             temperature=0.1,
             # top_p=0.1,
             thinking_budget=4000,
@@ -213,14 +213,16 @@ async def test_agent_todo_persistence():
     )
 
     try:
+        user_query = "Guide me in crafting a brand identity strategy for a startup launching sustainable athletic shoes."
+
         # Initial request to create todos
         result1 = await agent.ainvoke({
-            "messages": [HumanMessage(content="Help me develop a brand positioning strategy for a new eco-friendly sneaker brand.")]
+            "messages": [HumanMessage(content=user_query)]
         })
 
         # Print formatted results
         print("🎯 === STEP 1: Initial Request ===")
-        print(f"💬 User: Help me develop a brand positioning strategy for a new eco-friendly sneaker brand.")
+        print(f"💬 User: {user_query}")
         print_agent_result(result1, 1)
 
         # Follow-up request
