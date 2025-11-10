@@ -17,8 +17,8 @@ from typing import List, Optional
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src", "shared", "src"))
 
 from src.prompts.task_management.todo_system_prompt import EMPTY_TODO_REMINDER
-from shared.agent_tools.todo.todo_write_middleware import TodoWriteMiddleware
-from shared.agent_middlewares.stop_check.ensure_tasks_finished_middleware import EnsureTasksFinishedMiddleware
+from shared.agent_tools import TodoWriteMiddleware
+from shared.agent_middlewares import EnsureTasksFinishedMiddleware
 
 try:
     from langchain.agents import create_agent
