@@ -6,8 +6,8 @@ including validation, state persistence, and automatic reminder generation.
 Inspired by Claude Code's TodoWrite functionality with enterprise-level reliability.
 """
 
-from typing import List, Dict, Any, Literal, Annotated
-from typing_extensions import TypedDict
+from loguru import logger
+from typing import List, Dict, Any, Annotated
 from collections.abc import Callable, Awaitable
 
 from langchain_core.messages import ToolMessage
@@ -27,27 +27,12 @@ from src.prompts.task_management.todo_system_prompt import (
     WRITE_TODOS_SYSTEM_PROMPT,
     WRITE_TODOS_TOOL_DESCRIPTION,
     EMPTY_TODO_REMINDER,
-    TODO_REMINDER_TEMPLATE
+    TODO_REMINDER_TEMPLATE,
+    TODO_REMINDER_FINAL_CONFIRMATION
 )
 
-
-class TodoItem(TypedDict):
-    """
-    Represents a structured todo item with all mandatory fields.
-
-    This data structure defines the standard format for todo items used throughout
-    the agent system to maintain consistency and enable comprehensive task tracking.
-
-    Attributes:
-        content (str): Clear, actionable description of the task
-        status (str): Current task status - "pending", "in_progress", or "completed"
-        activeForm (str): Present continuous description of active work
-        priority (str): Task priority level for scheduling decisions
-    """
-    content: str
-    status: Literal["pending", "in_progress", "completed"]
-    activeForm: str
-    priority: Literal["high", "medium", "low"]
+# Import shared types to ensure consistency
+from shared.agent_types import TodoItem
 
 
 class PlanningState(AgentState):
@@ -135,7 +120,7 @@ class TodoWriteMiddleware(AgentMiddleware):
             return handler(request)
         except Exception as e:
             # Log error but don't break the middleware chain
-            print(f"Warning: TodoWriteMiddleware system prompt injection failed: {e}")
+            logger.error(f"Failed to inject system reminder: {e}")
             return handler(request)
 
     async def awrap_model_call(
@@ -174,7 +159,7 @@ class TodoWriteMiddleware(AgentMiddleware):
             return await handler(request)
         except Exception as e:
             # Log error but don't break the middleware chain
-            print(f"Warning: TodoWriteMiddleware async system prompt injection failed: {e}")
+            logger.error(f"Failed to inject system reminder: {e}")
             return await handler(request)
 
     def _create_write_todos_tool(self):
@@ -266,8 +251,18 @@ class TodoWriteMiddleware(AgentMiddleware):
             # Case A: Empty list reminder
             if not todos:
                 return EMPTY_TODO_REMINDER
+            
+            in_progress_tasks = [task for task in todos if task.get("status") == "in_progress"]
+            pending_tasks = [task for task in todos if task.get("status") == "pending"]
 
-            # Case B: State change reminder with placeholder
+            # Case B: All tasks completed reminder
+            if not in_progress_tasks and not pending_tasks:
+                return (
+                    TODO_REMINDER_FINAL_CONFIRMATION
+                    .replace("{{all_tasks_count}}", str(len(todos)))
+                )
+
+            # Case C: State change reminder with placeholder
             todos_json = json.dumps([
                 {
                     "content": todo["content"],
@@ -276,7 +271,18 @@ class TodoWriteMiddleware(AgentMiddleware):
                 } for todo in todos
             ], indent=2)
 
-            return TODO_REMINDER_TEMPLATE.replace("{{todos_json}}", todos_json)
+            return (
+                TODO_REMINDER_TEMPLATE
+                .replace("{{todos_json}}", todos_json)
+                .replace(
+                    "{{current_task_content}}",
+                    in_progress_tasks[0]["content"] if in_progress_tasks else ""
+                )
+                .replace(
+                    "{{current_task_status}}",
+                    in_progress_tasks[0]["status"] if in_progress_tasks else ""
+                )
+            )
 
         except Exception as e:
             print(f"Warning: TodoWriteMiddleware reminder generation failed: {e}")

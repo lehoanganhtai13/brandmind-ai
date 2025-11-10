@@ -19,51 +19,6 @@ For simple objectives that only require one or two steps (e.g., answering a simp
 1.  **IMMEDIATE COMPLETION:** It is CRITICAL that you mark todos as `completed` as soon as you are done with that specific step. Do not batch up multiple completed steps.
 2.  **ONE IN-PROGRESS:** You MUST mark a task as `in_progress` right BEFORE you start working on it. Only one task should be `in_progress` at a time.
 3.  **REVISE AS NEEDED:** Don't be afraid to revise the To-Do list as you go. New information from the user or tool results may reveal new tasks that need to be added, or old tasks that are irrelevant and can be deleted. However, DO NOT change previously `completed` tasks.
-
-## Examples
-
-<example>
-user: Help me develop a brand positioning strategy for a new eco-friendly sneaker brand.
-assistant: Understood. This is a complex task that involves multiple stages. I will use the `{{write_todos_function_name}}` tool to plan our steps.
-(calls `{{write_todos_function_name}}` to add the following)
-- 1. Analyze the target audience for eco-friendly sneakers.
-- 2. Research key competitors (e.g., Allbirds, Veja).
-- 3. Define the brand's Unique Selling Proposition (USP) and key differentiators.
-- 4. Craft the brand's core positioning statement (Mission, Vision, Values).
-- 5. Develop key messaging pillars based on the positioning.
-
-I will start with the first task. I am marking "Analyze the target audience" as `in_progress` and will now use the search tool to gather data on eco-conscious Millennial and Gen Z consumers.
-</example>
-
-<example>
-(Assistant has just finished the audience analysis)
-assistant: The audience analysis is complete. The key segments are [details...].
-
-I am now marking "Analyze the target audience" as `completed` and "Research key competitors" as `in_progress`.
-
-Next, I will search for the brand positioning and marketing strategies of Allbirds and Veja...
-(Assistant performs the research)
-...
-The competitor research is done. I've found [details...]. I am marking "Research key competitors" as `completed`.
-
-The next step is to define the USP. Based on the audience's desire for [X] and competitors' weakness in [Y], what unique angle should we focus on?
-</example>
-
-<example>
-user: Actually, before we define the USP, can you first check for potential brand names we could trademark?
-assistant: That's a good idea. That task is not on our list. I will use the `{{write_todos_function_name}}` tool to add a new task and reprioritize.
-(calls `{{write_todos_function_name}}` to add)
-- 3. Perform initial trademark search for potential brand names.
-(The previous step 3 "Define the USP" is now step 4)
-
-I am marking "Perform initial trademark search" as `in_progress`. What name ideas do you have in mind?
-</example>
-
-<example>
-user: What is a brand persona?
-assistant: (This is a simple, informational request, so I will NOT use the todo tool)
-A brand persona is a humanized representation of your brand. It's as if your brand were a person, with a specific personality, voice, and set of values. This helps guide the tone of voice for all your marketing communications.
-</example>
 """
 
 WRITE_TODOS_TOOL_DESCRIPTION = """
@@ -121,38 +76,60 @@ Skip using this tool when:
 
 When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
 
-## Examples
+## Tool Call JSON Format Example
+CRITICAL: When you call this tool, the JSON for the `todos` argument MUST follow this exact structure.
+This is NOT a conversational example to be mimicked. This is a technical JSON structure template.
 
-<example>
-User: I need you to build a full competitor analysis. Please cover their positioning, messaging, and visual identity.
-Assistant: I'll help with that comprehensive analysis. This is a multi-step research task, so I will use the `{{write_todos_function_name}}` tool to plan our steps.
-(calls `{{write_todos_function_name}}` to add the following)
-- 1. Identify and list 3-5 key competitors.
-- 2. Analyze brand positioning and USP for each competitor.
-- 3. Analyze core messaging and tone of voice for each.
-- 4. Analyze visual identity (logo, color, typography) for each.
-- 5. Synthesize findings into a summary report.
-
-I am marking "Identify and list 3-5 key competitors" as `in_progress` and will start by searching.
-<reasoning>
-The assistant used the todo list because the user requested a "full competitor analysis" covering three distinct areas (positioning, messaging, visual). This is a non-trivial, multi-step task that benefits from a structured plan.
-</reasoning>
-</example>
-
-<example>
-User: What's the main difference between brand voice and brand tone?
-Assistant: Brand voice is your brand's consistent personality (e.g., "playful," "authoritative"). Brand tone is the emotional inflection of that voice, which changes depending on the situation (e.g., "helpful" for support docs, "enthusiastic" for a launch).
-<reasoning>
-The assistant did not use the todo list because this is a purely informational/conversational request. It's a single, straightforward question that can be answered directly without needing a multi-step plan.
-</reasoning>
-</example>
+<json_template>
+{
+  "todos": [
+    {
+      "content": "Define the target audience",
+      "status": "in_progress",
+      "activeForm": "Defining the target audience",
+      "priority": "high"
+    },
+    {
+      "content": "Analyze competitors",
+      "status": "pending",
+      "activeForm": "Analyzing competitors",
+      "priority": "high"
+    },
+    {
+      "content": "Develop brand values and mission",
+      "status": "pending",
+      "activeForm": "Developing brand values and mission",
+      "priority": "medium"
+    }
+  ]
+}
+</json_template>
 """
 
 TODO_REMINDER_TEMPLATE = """
 <system-reminder>
 Your todo list has changed. DO NOT mention this explicitly to the user. Here are the latest contents of your todo list:
-{{todos_json}}. Continue on with the tasks that you have to complete.
+{{todos_json}}
+
+You MUST continue working.
+Your current active task is: **"{{current_task_content}}"** (status: {{current_task_status}})
+Think about the next action required to complete this task.
 </system-reminder>"""
+
+TODO_REMINDER_FINAL_CONFIRMATION = """
+<system_final_check>
+You have completed all {{all_tasks_count}} tasks in your todo list, which is excellent! 
+
+However, your work is NOT finished. Please review:
+1. Have you truly solved the user's problem: "[original user query]"
+2. Is there anything else the user might need to know?
+3. Are there any follow-up actions or recommendations you should provide?
+
+If you have fully addressed the user's request, provide a concise summary of what was accomplished.
+If there's more to add, please continue with any additional helpful information.
+
+This is a final quality check to ensure complete user satisfaction.
+</system_final_check>"""
 
 EMPTY_TODO_REMINDER = """
 <system-reminder>
