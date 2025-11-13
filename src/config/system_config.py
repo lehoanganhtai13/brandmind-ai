@@ -29,4 +29,7 @@ class Settings:
         self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
         self.EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", 1536))
 
+        # Parsing service settings
+        self.LLAMA_PARSE_API_KEY = os.getenv("LLAMA_PARSE_API_KEY", "")
+
 SETTINGS = Settings()
