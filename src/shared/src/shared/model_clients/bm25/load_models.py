@@ -1,5 +1,5 @@
 from minio import Minio
-from src.config.system_config import SETTINGS
+from config.system_config import SETTINGS
 from shared.model_clients.bm25.encoder import BM25Client
 
 

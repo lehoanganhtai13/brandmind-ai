@@ -116,9 +116,9 @@ services-status: ## Show status of infrastructure services
 .PHONY: parse-docs
 parse-docs: ## Parse documents via CLI. Usage: make parse-docs [FILE=doc.pdf]
 	@if [ -n "$(FILE)" ]; then \
-		uv run python -m src.cli.parse_documents --file $(FILE); \
+		uv run parse-docs --file $(FILE); \
 	else \
-		uv run python -m src.cli.parse_documents; \
+		uv run parse-docs; \
 	fi
 
 ## Lock file

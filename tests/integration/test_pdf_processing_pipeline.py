@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil
 
 from core.document_processing.pdf_processor import PDFProcessor
-from src.config.system_config import SETTINGS
+from config.system_config import SETTINGS
 
 # Mark all tests in this file as asyncio
 pytestmark = pytest.mark.asyncio

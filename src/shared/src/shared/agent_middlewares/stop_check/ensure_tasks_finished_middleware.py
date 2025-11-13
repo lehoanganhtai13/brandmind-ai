@@ -20,7 +20,7 @@ from langchain.agents.middleware.types import (
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from shared.agent_types import TodoItem
-from src.prompts.task_management.stop_check_prompts import (
+from prompts.task_management.stop_check_prompts import (
     STOP_CHECK_CRITICAL_REMINDER,
     STOP_CHECK_FINAL_CONFIRMATION,
 )

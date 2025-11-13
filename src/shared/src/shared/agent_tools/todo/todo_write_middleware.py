@@ -23,7 +23,7 @@ from langchain.agents.middleware.types import (
 from langchain.tools import InjectedToolCallId
 import json
 
-from src.prompts.task_management.todo_system_prompt import (
+from prompts.task_management.todo_system_prompt import (
     WRITE_TODOS_SYSTEM_PROMPT,
     WRITE_TODOS_TOOL_DESCRIPTION,
     EMPTY_TODO_REMINDER,

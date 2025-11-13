@@ -19,9 +19,8 @@ class TableSummarizer:
 
     def __init__(self):
         """Initializes the TableSummarizer with a Google AI LLM client."""
-        from src.config.system_config import SETTINGS
-        from src.prompts.document_processing.summarize_table import SUMMARIZE_TABLE_PROMPT
-
+        from config.system_config import SETTINGS
+        from prompts.document_processing.summarize_table import SUMMARIZE_TABLE_PROMPT
         self.llm = GoogleAIClientLLM(
             config=GoogleAIClientLLMConfig(
                 model="gemini-2.5-flash-lite",

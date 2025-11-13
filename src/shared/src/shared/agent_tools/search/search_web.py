@@ -35,7 +35,7 @@ def deep_serp_search(query: str, number_of_results: int = 5) -> List[SearchResul
     Returns:
         List[SearchResult]: List of search results from Google SERP, each containing title, url, and snippet.
     """
-    from src.config.system_config import SETTINGS
+    from config.system_config import SETTINGS
 
     host = "api.scrapeless.com"
     url = f"https://{host}/api/v1/scraper/request"

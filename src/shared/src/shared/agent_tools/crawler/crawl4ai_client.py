@@ -231,8 +231,8 @@ class Crawl4AIClient:
     def _filter_content_with_llm(self, content: str, query: str) -> str:
         """Use Gemini AI to filter content relevant to user query."""
         try:
-            from src.config.system_config import SETTINGS
-            from src.prompts.extract_web_content.filter_relevant_content import FILTER_RELEVANT_CONTENT_PROMPT
+            from config.system_config import SETTINGS
+            from prompts.extract_web_content.filter_relevant_content import FILTER_RELEVANT_CONTENT_PROMPT
             from shared.model_clients.llm.google import GoogleAIClientLLM, GoogleAIClientLLMConfig
 
             llm = GoogleAIClientLLM(
@@ -259,8 +259,8 @@ class Crawl4AIClient:
     def _summarize_content_with_llm(self, content: str) -> str:
         """Use Gemini AI to create structured summary of content."""
         try:
-            from src.config.system_config import SETTINGS
-            from src.prompts.extract_web_content.summarize_content import SUMMARIZE_CONTENT_PROMPT
+            from config.system_config import SETTINGS
+            from prompts.extract_web_content.summarize_content import SUMMARIZE_CONTENT_PROMPT
             from shared.model_clients.llm.google import GoogleAIClientLLM, GoogleAIClientLLMConfig
 
             llm = GoogleAIClientLLM(
@@ -288,8 +288,8 @@ class Crawl4AIClient:
         """Use Gemini AI to define main content boundaries like Tavily approach."""
         try:
             import json
-            from src.config.system_config import SETTINGS
-            from src.prompts.extract_web_content.find_main_content import MAIN_CONTENT_SEARCH_PROMPT
+            from config.system_config import SETTINGS
+            from prompts.extract_web_content.find_main_content import MAIN_CONTENT_SEARCH_PROMPT
             from shared.model_clients.llm.google import GoogleAIClientLLM, GoogleAIClientLLMConfig
 
             llm = GoogleAIClientLLM(

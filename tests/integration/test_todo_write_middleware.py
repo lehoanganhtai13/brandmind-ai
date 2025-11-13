@@ -16,7 +16,7 @@ from typing import List, Optional
 # Add project root to path following existing test patterns
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src", "shared", "src"))
 
-from src.prompts.task_management.todo_system_prompt import EMPTY_TODO_REMINDER
+from prompts.task_management.todo_system_prompt import EMPTY_TODO_REMINDER
 from shared.agent_tools import TodoWriteMiddleware
 from shared.agent_middlewares import EnsureTasksFinishedMiddleware
 
@@ -133,7 +133,7 @@ def create_agent_with_todos(
         BaseChatModel: Configured LangGraph agent with TodoWrite middleware
     """
     try:
-        from src.config.system_config import SETTINGS
+        from config.system_config import SETTINGS
 
         model = ChatGoogleGenerativeAI(
             google_api_key=SETTINGS.GEMINI_API_KEY,
@@ -151,7 +151,7 @@ def create_agent_with_todos(
         pytest.fail(f"Failed to initialize Gemini model: {e}")
 
     # Import prompts from module
-    from src.prompts.task_management.todo_system_prompt import (
+    from prompts.task_management.todo_system_prompt import (
         WRITE_TODOS_SYSTEM_PROMPT,
         WRITE_TODOS_TOOL_DESCRIPTION
     )

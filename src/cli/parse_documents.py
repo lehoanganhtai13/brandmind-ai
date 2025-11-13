@@ -11,7 +11,7 @@ from loguru import logger
 from core.document_processing.pdf_processor import PDFProcessor
 
 
-async def main():
+async def async_main():
     """
     Main asynchronous function to run the document processing CLI.
 
@@ -83,6 +83,11 @@ async def main():
     logger.info("All processing tasks completed.")
 
 
+def main():
+    """Synchronous entry point for the CLI."""
+    asyncio.run(async_main())
+
+
 if __name__ == "__main__":
-    # This allows the async main function to be run from the command line
-    asyncio.run(main())
+    # Entry point when running the script directly: python parse_documents.py
+    main()

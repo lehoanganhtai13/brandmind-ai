@@ -8,7 +8,7 @@ from typing import List, Optional
 from loguru import logger
 
 from core.document_processing.models import PDFParseResult
-from src.config.system_config import SETTINGS
+from config.system_config import SETTINGS
 
 
 PAGE_MARKDOWN_TEMPLATE = """# Page {page_number}
