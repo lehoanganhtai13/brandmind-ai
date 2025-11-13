@@ -1,4 +1,4 @@
-# Task 03: Create CLI for Document Processing Pipeline
+# Task 03: Create CLI for Document Parsing Pipeline
 
 ## 📌 Metadata
 
@@ -43,8 +43,8 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
 
 - **Usability**: Developers can run the pipeline with a single `make` command.
 - **Functionality**:
-    - Running `make process-docs` processes all documents listed in `document_metadata.json`.
-    - Running `make process-docs FILE="<filename.pdf>"` processes only the specified file.
+    - Running `make parse-docs` processes all documents listed in `document_metadata.json`.
+    - Running `make parse-docs FILE="<filename.pdf>"` processes only the specified file.
     - The CLI provides clear feedback if a specified file is not found in the metadata.
 - **Reliability**: The CLI correctly orchestrates the `PDFProcessor` and handles file paths as expected.
 
@@ -83,7 +83,7 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
    - *Decision Point: Finalize argument names and CLI feedback messages.*
 
 2. **Makefile Integration**
-   - Add a new `process-docs` target to the `Makefile`.
+   - Add a new `parse-docs` target to the `Makefile`.
    - Implement the conditional logic to check for the `FILE` variable and pass it to the Python script.
 
 ------------------------------------------------------------------------
@@ -97,9 +97,9 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
 ### Component 1
 
 #### Requirement 1 - Document Processing CLI Script
-- **Requirement**: Create a Python script at `src/cli/process_documents.py` that uses the `PDFProcessor` to parse documents. The script must support parsing all documents from metadata or a single specified document.
+- **Requirement**: Create a Python script at `src/cli/parse_documents.py` that uses the `PDFProcessor` to parse documents. The script must support parsing all documents from metadata or a single specified document.
 - **Implementation**:
-  - `src/cli/process_documents.py`
+  - `src/cli/parse_documents.py`
   ```python
   import argparse
   import asyncio
@@ -119,7 +119,7 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
       Parses command-line arguments to determine which documents to process
       and then invokes the PDFProcessor pipeline.
       """
-      parser = argparse.ArgumentParser(description="Run the document processing pipeline.")
+      parser = argparse.ArgumentParser(description="Run the document parsing pipeline.")
       parser.add_argument(
           "--file",
           type=str,
@@ -174,7 +174,7 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
 
   ```
 - **Acceptance Criteria**:
-  - [x] Script is created at `src/cli/process_documents.py`.
+  - [x] Script is created at `src/cli/parse_documents.py`.
   - [x] Script correctly parses the `--file` argument.
   - [x] Script processes all documents from metadata when no argument is given.
   - [x] Script processes only the specified file when the argument is provided.
@@ -183,21 +183,21 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
 ### Component 2
 
 #### Requirement 1 - Makefile Integration Target
-- **Requirement**: Add a `process-docs` target to the `Makefile` for easy execution of the CLI script.
+- **Requirement**: Add a `parse-docs` target to the `Makefile` for easy execution of the CLI script.
 - **Implementation**:
   - `Makefile`
   ```makefile
-  .PHONY: process-docs
-  process-docs: ## Process documents via CLI. Usage: make process-docs [FILE=doc.pdf]
+  .PHONY: parse-docs
+  parse-docs: ## Parse documents via CLI. Usage: make parse-docs [FILE=doc.pdf]
 	@if [ -n "$(FILE)" ]; then \
-		uv run python src/cli/process_documents.py --file $(FILE); \
+		uv run python -m src.cli.parse_documents --file $(FILE); \
 	else \
-		uv run python src/cli/process_documents.py; \
+		uv run python -m src.cli.parse_documents; \
 	fi
   ```
 - **Acceptance Criteria**:
-  - [x] `make process-docs` runs the script without the `--file` argument.
-  - [x] `make process-docs FILE="<filename.pdf>"` runs the script with the `--file "<filename.pdf>"` argument.
+  - [x] `make parse-docs` runs the script without the `--file` argument.
+  - [x] `make parse-docs FILE="<filename.pdf>"` runs the script with the `--file "<filename.pdf>"` argument.
   - [x] The command is placed logically within the Makefile, e.g., under a new "Processing" section.
 
 ------------------------------------------------------------------------
@@ -208,7 +208,7 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
 - **Purpose**: Verify that the CLI processes all documents from the metadata file.
 - **Steps**:
   1. Ensure `data/raw_documents/document_metadata.json` lists at least one document.
-  2. Run `make process-docs`.
+  2. Run `make parse-docs`.
 - **Expected Result**: The pipeline runs for all documents listed in the metadata. Parsed files appear in `data/parsed_documents/`.
 - **Status**: ✅ Passed
 
@@ -216,14 +216,14 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
 - **Purpose**: Verify that the CLI processes only the specified, valid document.
 - **Steps**:
   1. Get a valid document name from `document_metadata.json`.
-  2. Run `make process-docs FILE="<valid_filename.pdf>"`.
+  2. Run `make parse-docs FILE="<valid_filename.pdf>"`.
 - **Expected Result**: The pipeline runs for only the specified document. A new parsed folder is created for just that document.
 - **Status**: ✅ Passed
 
 ### Test Case 3: Single File Mode (Invalid File)
 - **Purpose**: Verify that the CLI handles requests for documents not in the metadata.
 - **Steps**:
-  1. Run `make process-docs FILE="non_existent_file.pdf"`.
+  1. Run `make parse-docs FILE="non_existent_file.pdf"`.
 - **Expected Result**: The script prints an error message stating the file was not found in the metadata and exits gracefully without processing anything.
 - **Status**: ✅ Passed
 
@@ -236,19 +236,19 @@ Implement a command-line interface (CLI) tool, integrated with the project's `Ma
 ### What Was Implemented
 
 **Components Completed**:
-- [x] Document Processing CLI Script: A Python script in `src/cli/` to orchestrate the pipeline.
-- [x] Makefile Integration: A `process-docs` target for easy execution.
+- [x] Document Parsing CLI Script: A Python script in `src/cli/` to orchestrate the pipeline.
+- [x] Makefile Integration: A `parse-docs` target for easy execution.
 
 **Files Created/Modified**:
 ```
 src/
     └── cli/
-        └── process_documents.py      # CLI script for running the PDF processing pipeline
-Makefile                          # Added 'process-docs' target
+        └── parse_documents.py      # CLI script for running the PDF parsing pipeline
+Makefile                          # Added 'parse-docs' target
 ```
 
 **Key Features Delivered**:
-1. **Document Processing CLI**: A new command-line tool to run the PDF pipeline.
+1. **Document Parsing CLI**: A new command-line tool to run the PDF pipeline.
 2. **Makefile Integration**: A simplified `make` command for easy execution.
 3. **Flexible Processing Modes**: Support for both batch processing of all documents and single-file processing.
 
@@ -260,8 +260,8 @@ Makefile                          # Added 'process-docs' target
 - **Module Execution (`python -m`)**: Chose to execute the CLI as a module to ensure the project root is added to `sys.path`. This approach is compatible with the project's existing absolute import style (`from src...`) and avoids the `ModuleNotFoundError` encountered when using a standard `[project.scripts]` entry point, which expects a different package layout.
 
 **Documentation Added**:
-- [ ] Docstrings added to the main function of the CLI script.
-- [ ] Help text added to the `process-docs` target in the Makefile.
+- [x] Docstrings added to the main function of the CLI script.
+- [x] Help text added to the `parse-docs` target in the Makefile.
 
 ### Validation Results
 

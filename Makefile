@@ -113,12 +113,12 @@ services-status: ## Show status of infrastructure services
 	cd infra && docker compose ps
 
 ## Processing
-.PHONY: process-docs
-process-docs: ## Process documents via CLI. Usage: make process-docs [FILE=doc.pdf]
+.PHONY: parse-docs
+parse-docs: ## Parse documents via CLI. Usage: make parse-docs [FILE=doc.pdf]
 	@if [ -n "$(FILE)" ]; then \
-		uv run python -m src.cli.process_documents --file $(FILE); \
+		uv run python -m src.cli.parse_documents --file $(FILE); \
 	else \
-		uv run python -m src.cli.process_documents; \
+		uv run python -m src.cli.parse_documents; \
 	fi
 
 ## Lock file
