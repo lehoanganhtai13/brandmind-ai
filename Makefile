@@ -50,6 +50,26 @@ add-dev: ## Add development dependency. Usage: make add-dev PKG=pytest-asyncio
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required. Usage: make add-dev PKG=package-name"; exit 1; fi
 	uv add --group dev $(PKG)
 
+add-core-optional: ## Add optional dependency to core. Usage: make add-core-optional GROUP=group_name PKG=package_name
+	@if [ -z "$(PKG)" ] || [ -z "$(GROUP)" ]; then echo "Error: PKG and GROUP are required."; exit 1; fi
+	uv add --package core --optional $(GROUP) $(PKG)
+
+remove-indexer: ## Remove package from indexer group. Usage: make remove-indexer PKG=package_name
+	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
+	uv remove --group indexer $(PKG)
+
+remove-chatbot: ## Remove package from chatbot group. Usage: make remove-chatbot PKG=package_name
+	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
+	uv remove --group chatbot $(PKG)
+
+remove-shared: ## Remove package from shared package. Usage: make remove-shared PKG=package_name
+	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
+	cd src/shared && uv remove $(PKG)
+
+remove-dev: ## Remove development dependency. Usage: make remove-dev PKG=package_name
+	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
+	uv remove --group dev $(PKG)
+
 ## Maintenance
 sync: ## Sync dependencies with lock file
 	uv sync

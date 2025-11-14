@@ -266,8 +266,7 @@ dev = [
     { name = "pytest-asyncio" },
 ]
 indexer = [
-    { name = "core" },
-    { name = "llama-cloud-services" },
+    { name = "core", extra = ["document-processing"] },
     { name = "shared" },
 ]
 
@@ -287,8 +286,7 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
 ]
 indexer = [
-    { name = "core", editable = "src/core" },
-    { name = "llama-cloud-services", specifier = ">=0.6.76" },
+    { name = "core", extras = ["document-processing"], editable = "src/core" },
     { name = "shared", editable = "src/shared" },
 ]
 
@@ -426,8 +424,19 @@ dependencies = [
     { name = "shared" },
 ]
 
+[package.optional-dependencies]
+document-processing = [
+    { name = "beautifulsoup4" },
+    { name = "llama-cloud-services" },
+]
+
 [package.metadata]
-requires-dist = [{ name = "shared", editable = "src/shared" }]
+requires-dist = [
+    { name = "beautifulsoup4", marker = "extra == 'document-processing'", specifier = ">=4.14.2" },
+    { name = "llama-cloud-services", marker = "extra == 'document-processing'", specifier = ">=0.6.79" },
+    { name = "shared", editable = "src/shared" },
+]
+provides-extras = ["document-processing"]
 
 [[package]]
 name = "crawl4ai"
@@ -787,14 +796,14 @@ wheels = [
 
 [[package]]
 name = "griffe"
-version = "1.14.0"
+version = "1.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ec/d7/6c09dd7ce4c7837e4cdb11dce980cb45ae3cd87677298dc3b781b6bce7d3/griffe-1.14.0.tar.gz", hash = "sha256:9d2a15c1eca966d68e00517de5d69dd1bc5c9f2335ef6c1775362ba5b8651a13", size = 424684 }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/0c/3a471b6e31951dce2360477420d0a8d1e00dea6cf33b70f3e8c3ab6e28e1/griffe-1.15.0.tar.gz", hash = "sha256:7726e3afd6f298fbc3696e67958803e7ac843c1cfe59734b6251a40cdbfb5eea", size = 424112 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/b1/9ff6578d789a89812ff21e4e0f80ffae20a65d5dd84e7a17873fe3b365be/griffe-1.14.0-py3-none-any.whl", hash = "sha256:0e9d52832cccf0f7188cfe585ba962d2674b241c01916d780925df34873bceb0", size = 144439 },
+    { url = "https://files.pythonhosted.org/packages/9c/83/3b1d03d36f224edded98e9affd0467630fc09d766c0e56fb1498cbb04a9b/griffe-1.15.0-py3-none-any.whl", hash = "sha256:6f6762661949411031f5fcda9593f586e6ce8340f0ba88921a0f2ef7a81eb9a3", size = 150705 },
 ]
 
 [[package]]
@@ -1266,7 +1275,7 @@ wheels = [
 
 [[package]]
 name = "llama-index-core"
-version = "0.14.7"
+version = "0.14.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1297,9 +1306,9 @@ dependencies = [
     { name = "typing-inspect" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/53/a8/11f128ad6e1918ae56aecf4f99619ef16acba31a7dfdad47f9801dc7ab0b/llama_index_core-0.14.7.tar.gz", hash = "sha256:ceacf30131b84c72e4881748ef428f5392ab484adf1c0e7e0f1048b2b98eb70e", size = 11578585 }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/ee/3f68cfac0eba7085aaeede5d179d31097d8351cbeae333859aabd0e20ed7/llama_index_core-0.14.8.tar.gz", hash = "sha256:8865a8546746b8c5f0684085ccfcf900aeb04862ebfe2077ad522374cf71e58e", size = 11579082 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/0a/5e9b9b1b10b58df1f6c219872b19ffd41cc49bdad58b1c24a2c971883c11/llama_index_core-0.14.7-py3-none-any.whl", hash = "sha256:568591a27dd171f9d5299155920bfef6bac9e7fa59df200404877a57b7973765", size = 11919918 },
+    { url = "https://files.pythonhosted.org/packages/27/61/bdc7d7e818f07ae8208786581608043c95a510f3f0906d7f6f53a69a1712/llama_index_core-0.14.8-py3-none-any.whl", hash = "sha256:e54046f09507aeb2fad51d8e9686dc0fa41c77d3925892e55c3756ca31f1c0c3", size = 11920547 },
 ]
 
 [[package]]
@@ -1317,16 +1326,16 @@ wheels = [
 
 [[package]]
 name = "llama-index-workflows"
-version = "2.11.0"
+version = "2.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "llama-index-instrumentation" },
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/de/7a/989b4ccc279b256dae3ee5c1b442f706bf9d870c3694e4fb53aed2539c27/llama_index_workflows-2.11.0.tar.gz", hash = "sha256:c65d8456d0d172e7d85ef3742b9d83d20496106373bb76ba3cb541a5d59bc982", size = 5245327 }
+sdist = { url = "https://files.pythonhosted.org/packages/d1/81/d05070be172aa9952d4d0c2d8cd08afc17745b140abf214127e5a00faa8d/llama_index_workflows-2.11.1.tar.gz", hash = "sha256:046f4146c846f54165f7507c5e466c2f5948349f54125c945056343a00bfa42b", size = 5249630 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/ce/dc4d29821ede8cff07ffe6cb37d9961b9c14feb28363b09abcd891ffd201/llama_index_workflows-2.11.0-py3-none-any.whl", hash = "sha256:53b2e6e58dfa40b322f5815b9dd17aa59eb0fa8eab20886f91d690de5e14ee2e", size = 91934 },
+    { url = "https://files.pythonhosted.org/packages/c7/1f/817e0a5e9935d29d645c15a544460cc5e2beb1f876e7bd69ce1c996223e2/llama_index_workflows-2.11.1-py3-none-any.whl", hash = "sha256:6faeaf39930cce904cc999f3faf7de165d962b837de22e1dc89d2fba84739e73", size = 92058 },
 ]
 
 [[package]]

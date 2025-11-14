@@ -22,8 +22,7 @@ members = ["src/shared", "src/core"]
 chatbot = ["shared", "core"]
 indexer = [
     "shared",
-    "core",
-    "llama-cloud-services>=0.6.76",
+    "core[document_processing]",
 ]
 dev = [
  "pytest>=7.0.0",
