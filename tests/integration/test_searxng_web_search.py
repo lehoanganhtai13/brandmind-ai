@@ -3,14 +3,17 @@
 Integration tests for SearXNG web search with rate limiting and deduplication.
 """
 
-import sys
 import os
+import sys
 import time
 from datetime import datetime
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'shared', 'src'))
+sys.path.append(
+    os.path.join(os.path.dirname(__file__), "..", "..", "src", "shared", "src")
+)
 
 from shared.agent_tools.search.search_web import search_web
+
 
 def test_searxng_vietnamese_queries():
     """Test SearXNG with Vietnamese food-related queries."""
@@ -48,33 +51,38 @@ def test_searxng_vietnamese_queries():
     for query, data in result["queries"].items():
         print("\n" + "=" * 100)
         print(f"[SEARXNG TEST] Query: {query}")
-        print(f"Engine: {data['engine_used']} | Results: {data['result_count']} | Time: {data['response_time']:.2f}s")
+        print(
+            f"Engine: {data['engine_used']} | Results: {data['result_count']} | "
+            f"Time: {data['response_time']:.2f}s"
+        )
         print("=" * 100)
 
         query_result = {
             "query": query,
-            "engine": data['engine_used'],
-            "result_count": data['result_count'],
-            "response_time": data['response_time'],
-            "results": []
+            "engine": data["engine_used"],
+            "result_count": data["result_count"],
+            "response_time": data["response_time"],
+            "results": [],
         }
 
-        if data['result_count'] > 0:
+        if data["result_count"] > 0:
             print(f"✓ Found {data['result_count']} results")
 
             # Simple relevance check - if title or snippet contains keywords from query
             is_relevant = any(
-                any(word.lower() in (result.title + result.snippet).lower()
-                    for word in query.replace("?", "").split()[:3])
+                any(
+                    word.lower() in (result.title + result.snippet).lower()
+                    for word in query.replace("?", "").split()[:3]
+                )
                 for result in data["results"][:2]
             )
 
             if is_relevant:
                 vietnamese_success += 1
-                print(f"✓ Results appear RELEVANT")
+                print("✓ Results appear RELEVANT")
                 query_result["relevance"] = "RELEVANT"
             else:
-                print(f"⚠ Results appear LESS RELEVANT (might be valid edge case)")
+                print("⚠ Results appear LESS RELEVANT (might be valid edge case)")
                 query_result["relevance"] = "LESS_RELEVANT"
 
             for i, search_result in enumerate(data["results"][:3], 1):
@@ -82,27 +90,34 @@ def test_searxng_vietnamese_queries():
                 print(f"      URL: {search_result.url}")
                 print(f"      Snippet: {search_result.snippet[:100]}...")
 
-                query_result["results"].append({
-                    "title": search_result.title,
-                    "url": search_result.url,
-                    "snippet": search_result.snippet[:200]
-                })
+                query_result["results"].append(
+                    {
+                        "title": search_result.title,
+                        "url": search_result.url,
+                        "snippet": search_result.snippet[:200],
+                    }
+                )
         else:
-            print(f"✗ No results found")
+            print("✗ No results found")
             query_result["relevance"] = "NO_RESULTS"
 
         detailed_results.append(query_result)
 
     # Save results to file
     results_file = os.path.join(results_dir, f"vietnamese_queries_{timestamp}.txt")
-    with open(results_file, 'w', encoding='utf-8') as f:
+    with open(results_file, "w", encoding="utf-8") as f:
         f.write("SEARXNG VIETNAMESE QUERIES TEST RESULTS\n")
         f.write("=" * 50 + "\n\n")
         f.write(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Total Queries: {len(vietnamese_queries)}\n")
-        f.write(f"Relevant Results: {vietnamese_success}/{len(vietnamese_queries)} ({100*vietnamese_success/len(vietnamese_queries):.0f}%)\n")
+        f.write(
+            f"Relevant Results: {vietnamese_success}/{len(vietnamese_queries)} "
+            f"({100 * vietnamese_success / len(vietnamese_queries):.0f}%)\n"
+        )
         f.write(f"Total Time: {vietnamese_time:.2f}s\n")
-        f.write(f"Average Time/Query: {vietnamese_time/len(vietnamese_queries):.2f}s\n\n")
+        f.write(
+            f"Average Time/Query: {vietnamese_time / len(vietnamese_queries):.2f}s\n\n"
+        )
 
         for query_result in detailed_results:
             f.write(f"QUERY: {query_result['query']}\n")
@@ -119,10 +134,13 @@ def test_searxng_vietnamese_queries():
             f.write("\n")
 
     print("\n" + "=" * 100)
-    print(f"VIETNAMESE RESULTS:")
-    print(f"  Relevant: {vietnamese_success}/{len(vietnamese_queries)} ({100*vietnamese_success/len(vietnamese_queries):.0f}%)")
+    print("VIETNAMESE RESULTS:")
+    print(
+        f"  Relevant: {vietnamese_success}/{len(vietnamese_queries)} "
+        f"({100 * vietnamese_success / len(vietnamese_queries):.0f}%)"
+    )
     print(f"  Total time: {vietnamese_time:.2f}s")
-    print(f"  Avg/query: {vietnamese_time/len(vietnamese_queries):.2f}s")
+    print(f"  Avg/query: {vietnamese_time / len(vietnamese_queries):.2f}s")
     print(f"  Results saved: {results_file}")
     print("=" * 100)
 
@@ -130,8 +148,9 @@ def test_searxng_vietnamese_queries():
         "success_count": vietnamese_success,
         "total_queries": len(vietnamese_queries),
         "total_time": vietnamese_time,
-        "results_file": results_file
+        "results_file": results_file,
     }
+
 
 def test_searxng_english_queries():
     """Test SearXNG with English food-related queries."""
@@ -169,33 +188,38 @@ def test_searxng_english_queries():
     for query, data in result["queries"].items():
         print("\n" + "=" * 100)
         print(f"[SEARXNG TEST] Query: {query}")
-        print(f"Engine: {data['engine_used']} | Results: {data['result_count']} | Time: {data['response_time']:.2f}s")
+        print(
+            f"Engine: {data['engine_used']} | Results: {data['result_count']} | "
+            f"Time: {data['response_time']:.2f}s"
+        )
         print("=" * 100)
 
         query_result = {
             "query": query,
-            "engine": data['engine_used'],
-            "result_count": data['result_count'],
-            "response_time": data['response_time'],
-            "results": []
+            "engine": data["engine_used"],
+            "result_count": data["result_count"],
+            "response_time": data["response_time"],
+            "results": [],
         }
 
-        if data['result_count'] > 0:
+        if data["result_count"] > 0:
             print(f"✓ Found {data['result_count']} results")
 
             # Simple relevance check
             is_relevant = any(
-                any(word.lower() in (result.title + result.snippet).lower()
-                    for word in query.replace("?", "").split()[:3])
+                any(
+                    word.lower() in (result.title + result.snippet).lower()
+                    for word in query.replace("?", "").split()[:3]
+                )
                 for result in data["results"][:2]
             )
 
             if is_relevant:
                 english_success += 1
-                print(f"✓ Results appear RELEVANT")
+                print("✓ Results appear RELEVANT")
                 query_result["relevance"] = "RELEVANT"
             else:
-                print(f"⚠ Results appear LESS RELEVANT (might be valid edge case)")
+                print("⚠ Results appear LESS RELEVANT (might be valid edge case)")
                 query_result["relevance"] = "LESS_RELEVANT"
 
             for i, search_result in enumerate(data["results"][:3], 1):
@@ -203,27 +227,32 @@ def test_searxng_english_queries():
                 print(f"      URL: {search_result.url}")
                 print(f"      Snippet: {search_result.snippet[:100]}...")
 
-                query_result["results"].append({
-                    "title": search_result.title,
-                    "url": search_result.url,
-                    "snippet": search_result.snippet[:200]
-                })
+                query_result["results"].append(
+                    {
+                        "title": search_result.title,
+                        "url": search_result.url,
+                        "snippet": search_result.snippet[:200],
+                    }
+                )
         else:
-            print(f"✗ No results found")
+            print("✗ No results found")
             query_result["relevance"] = "NO_RESULTS"
 
         detailed_results.append(query_result)
 
     # Save results to file
     results_file = os.path.join(results_dir, f"english_queries_{timestamp}.txt")
-    with open(results_file, 'w', encoding='utf-8') as f:
+    with open(results_file, "w", encoding="utf-8") as f:
         f.write("SEARXNG ENGLISH QUERIES TEST RESULTS\n")
         f.write("=" * 50 + "\n\n")
         f.write(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Total Queries: {len(english_queries)}\n")
-        f.write(f"Relevant Results: {english_success}/{len(english_queries)} ({100*english_success/len(english_queries):.0f}%)\n")
+        f.write(
+            f"Relevant Results: {english_success}/{len(english_queries)} "
+            f"({100 * english_success / len(english_queries):.0f}%)\n"
+        )
         f.write(f"Total Time: {english_time:.2f}s\n")
-        f.write(f"Average Time/Query: {english_time/len(english_queries):.2f}s\n\n")
+        f.write(f"Average Time/Query: {english_time / len(english_queries):.2f}s\n\n")
 
         for query_result in detailed_results:
             f.write(f"QUERY: {query_result['query']}\n")
@@ -240,10 +269,13 @@ def test_searxng_english_queries():
             f.write("\n")
 
     print("\n" + "=" * 100)
-    print(f"ENGLISH RESULTS:")
-    print(f"  Relevant: {english_success}/{len(english_queries)} ({100*english_success/len(english_queries):.0f}%)")
+    print("ENGLISH RESULTS:")
+    print(
+        f"  Relevant: {english_success}/{len(english_queries)} "
+        f"({100 * english_success / len(english_queries):.0f}%)"
+    )
     print(f"  Total time: {english_time:.2f}s")
-    print(f"  Avg/query: {english_time/len(english_queries):.2f}s")
+    print(f"  Avg/query: {english_time / len(english_queries):.2f}s")
     print(f"  Results saved: {results_file}")
     print("=" * 100)
 
@@ -251,8 +283,9 @@ def test_searxng_english_queries():
         "success_count": english_success,
         "total_queries": len(english_queries),
         "total_time": english_time,
-        "results_file": results_file
+        "results_file": results_file,
     }
+
 
 def test_query_deduplication():
     """Test query deduplication functionality."""
@@ -282,12 +315,15 @@ def test_query_deduplication():
 
     unique_count = len(result["queries"])
     print(f"\n✓ After deduplication: {unique_count} unique queries executed")
-    print(f"  Time saved: ~{(len(duplicate_queries) - unique_count) * 2:.1f}s (approx 2s per duplicate)")
+    print(
+        f"  Time saved: ~{(len(duplicate_queries) - unique_count) * 2:.1f}s "
+        f"(approx 2s per duplicate)"
+    )
     print(f"  Actual time: {dedup_time:.2f}s")
 
     # Save deduplication results
     dedup_file = os.path.join(results_dir, f"deduplication_test_{timestamp}.txt")
-    with open(dedup_file, 'w', encoding='utf-8') as f:
+    with open(dedup_file, "w", encoding="utf-8") as f:
         f.write("SEARXNG QUERY DEDUPLICATION TEST\n")
         f.write("=" * 40 + "\n\n")
         f.write(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -302,7 +338,10 @@ def test_query_deduplication():
 
         f.write("\nUNIQUE QUERIES EXECUTED:\n")
         for i, (query, data) in enumerate(result["queries"].items(), 1):
-            f.write(f"  {i}. {query}: {data['result_count']} results via {data['engine_used']}\n")
+            f.write(
+                f"  {i}. {query}: {data['result_count']} results via "
+                f"{data['engine_used']}\n"
+            )
 
     for query, data in result["queries"].items():
         print(f"\n  {query}: {data['result_count']} results via {data['engine_used']}")
@@ -313,8 +352,9 @@ def test_query_deduplication():
         "input_count": len(duplicate_queries),
         "unique_count": unique_count,
         "time_taken": dedup_time,
-        "results_file": dedup_file
+        "results_file": dedup_file,
     }
+
 
 def test_rate_limiting():
     """Test rate limiting behavior."""
@@ -349,7 +389,7 @@ def test_rate_limiting():
 
     # Save rate limiting results
     rate_limit_file = os.path.join(results_dir, f"rate_limiting_test_{timestamp}.txt")
-    with open(rate_limit_file, 'w', encoding='utf-8') as f:
+    with open(rate_limit_file, "w", encoding="utf-8") as f:
         f.write("SEARXNG RATE LIMITING TEST\n")
         f.write("=" * 30 + "\n\n")
         f.write(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -360,7 +400,9 @@ def test_rate_limiting():
 
         f.write("PER-QUERY BREAKDOWN:\n")
         for query, data in result["queries"].items():
-            f.write(f"  {query}: {data['response_time']:.2f}s via {data['engine_used']}\n")
+            f.write(
+                f"  {query}: {data['response_time']:.2f}s via {data['engine_used']}\n"
+            )
 
     # Show per-engine breakdown
     for query, data in result["queries"].items():
@@ -369,11 +411,12 @@ def test_rate_limiting():
     print(f"\n✓ Rate limiting test results saved: {rate_limit_file}")
 
     return {
-        "total_queries": result['total_queries'],
-        "execution_time": result['total_execution_time'],
+        "total_queries": result["total_queries"],
+        "execution_time": result["total_execution_time"],
         "wall_clock_time": elapsed,
-        "results_file": rate_limit_file
+        "results_file": rate_limit_file,
     }
+
 
 def run_comprehensive_test():
     """Run all SearXNG tests and create summary report."""
@@ -395,25 +438,61 @@ def run_comprehensive_test():
 
     # Create comprehensive summary
     summary_file = os.path.join(results_dir, f"comprehensive_summary_{timestamp}.txt")
-    with open(summary_file, 'w', encoding='utf-8') as f:
+    with open(summary_file, "w", encoding="utf-8") as f:
         f.write("SEARXNG COMPREHENSIVE TEST SUMMARY\n")
         f.write("=" * 50 + "\n\n")
         f.write(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"Test Categories: 4 (Vietnamese, English, Deduplication, Rate Limiting)\n\n")
+        f.write(
+            "Test Categories: 4 (Vietnamese, English, Deduplication, Rate Limiting)\n\n"
+        )
 
         f.write("RESULTS OVERVIEW:\n")
         f.write("-" * 20 + "\n")
-        f.write(f"Vietnamese Queries: {vietnamese_results['success_count']}/{vietnamese_results['total_queries']} relevant ({100*vietnamese_results['success_count']/vietnamese_results['total_queries']:.0f}%)\n")
-        f.write(f"English Queries: {english_results['success_count']}/{english_results['total_queries']} relevant ({100*english_results['success_count']/english_results['total_queries']:.0f}%)\n")
-        f.write(f"Deduplication: {dedup_results['input_count']} → {dedup_results['unique_count']} queries\n")
-        f.write(f"Rate Limiting: {rate_limit_results['total_queries']} queries in {rate_limit_results['execution_time']:.2f}s\n\n")
+        vietnamese_percentage = (
+            100
+            * vietnamese_results["success_count"]
+            / vietnamese_results["total_queries"]
+        )
+        f.write(
+            f"Vietnamese Queries: {vietnamese_results['success_count']}/"
+            f"{vietnamese_results['total_queries']} relevant "
+            f"({vietnamese_percentage:.0f}%)\n"
+        )
+        english_percentage = (
+            100 * english_results["success_count"] / english_results["total_queries"]
+        )
+        f.write(
+            f"English Queries: {english_results['success_count']}/"
+            f"{english_results['total_queries']} relevant "
+            f"({english_percentage:.0f}%)\n"
+        )
+        f.write(
+            f"Deduplication: {dedup_results['input_count']} → "
+            f"{dedup_results['unique_count']} queries\n"
+        )
+        f.write(
+            f"Rate Limiting: {rate_limit_results['total_queries']} queries in "
+            f"{rate_limit_results['execution_time']:.2f}s\n\n"
+        )
 
         f.write("PERFORMANCE METRICS:\n")
         f.write("-" * 20 + "\n")
-        f.write(f"Vietnamese avg time/query: {vietnamese_results['total_time']/vietnamese_results['total_queries']:.2f}s\n")
-        f.write(f"English avg time/query: {english_results['total_time']/english_results['total_queries']:.2f}s\n")
-        f.write(f"Rate limiting avg time/query: {rate_limit_results['execution_time']/rate_limit_results['total_queries']:.2f}s\n")
-        f.write(f"Deduplication time saved: ~{(dedup_results['input_count'] - dedup_results['unique_count']) * 2:.1f}s\n\n")
+        vietnamese_avg_time = (
+            vietnamese_results["total_time"] / vietnamese_results["total_queries"]
+        )
+        f.write(f"Vietnamese avg time/query: {vietnamese_avg_time:.2f}s\n")
+        english_avg_time = (
+            english_results["total_time"] / english_results["total_queries"]
+        )
+        f.write(f"English avg time/query: {english_avg_time:.2f}s\n")
+        rate_limit_avg_time = (
+            rate_limit_results["execution_time"] / rate_limit_results["total_queries"]
+        )
+        f.write(f"Rate limiting avg time/query: {rate_limit_avg_time:.2f}s\n")
+        dedup_time_saved = (
+            dedup_results["input_count"] - dedup_results["unique_count"]
+        ) * 2
+        f.write(f"Deduplication time saved: ~{dedup_time_saved:.1f}s\n\n")
 
         f.write("DETAILED RESULT FILES:\n")
         f.write("-" * 20 + "\n")
@@ -431,15 +510,18 @@ def run_comprehensive_test():
 
     return summary_file
 
+
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Test SearXNG web search functionality")
+    parser = argparse.ArgumentParser(
+        description="Test SearXNG web search functionality"
+    )
     parser.add_argument(
         "--test",
         choices=["all", "vietnamese", "english", "dedup", "ratelimit", "comprehensive"],
         default="comprehensive",
-        help="Test category to run"
+        help="Test category to run",
     )
 
     args = parser.parse_args()

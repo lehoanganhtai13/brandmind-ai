@@ -21,6 +21,7 @@ class TableSummarizer:
         """Initializes the TableSummarizer with a Google AI LLM client."""
         from config.system_config import SETTINGS
         from prompts.document_processing.summarize_table import SUMMARIZE_TABLE_PROMPT
+
         self.llm = GoogleAIClientLLM(
             config=GoogleAIClientLLMConfig(
                 model="gemini-2.5-flash-lite",
@@ -37,22 +38,26 @@ class TableSummarizer:
         Summarizes a single HTML table using the configured LLM.
 
         Args:
-            table (TableInfo): An object containing the table's HTML content and metadata.
+            table (TableInfo): An object containing the table's HTML content and
+                metadata.
 
         Returns:
-            TableSummary: An object containing the original HTML and the generated summary.
+            TableSummary: An object containing the original HTML and the generated
+                summary.
         """
         start_time = time.time()
         try:
             content = (
-                f"The table content from page {table.page_number} is:\n{table.html_content}"
+                f"The table content from page {table.page_number} is:\n"
+                f"{table.html_content}"
             )
             result = self.llm.complete(content, temperature=0.1).text
             summary = result.strip()
             processing_time = time.time() - start_time
 
             logger.debug(
-                f"Table summary generated for page {table.page_number} in {processing_time:.2f}s"
+                f"Table summary generated for page {table.page_number} in "
+                f"{processing_time:.2f}s"
             )
 
             return TableSummary(
@@ -63,7 +68,8 @@ class TableSummarizer:
             )
         except Exception as e:
             logger.error(
-                f"Failed to summarize table on page {table.page_number}: {e}, using fallback"
+                f"Failed to summarize table on page {table.page_number}: {e}, "
+                "using fallback"
             )
             return TableSummary(
                 original_table_html=table.html_content,
@@ -73,8 +79,7 @@ class TableSummarizer:
             )
 
     async def summarize_tables_batch(
-        self,
-        tables: List[TableInfo]
+        self, tables: List[TableInfo]
     ) -> List[TableSummary]:
         """
         Summarizes multiple tables sequentially with a progress bar.

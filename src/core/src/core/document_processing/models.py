@@ -1,7 +1,8 @@
 """Pydantic models for the document processing pipeline."""
 
-from pydantic import BaseModel, Field
 from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class TableInfo(BaseModel):

@@ -11,7 +11,7 @@ Identify the **first** sentence/line of text and the **last** sentence/line of t
 
 1.  **Body Content:**
     *   It is the core, unique part of the page. It usually starts with the main title (H1, marked with `#`).
-    *   It includes descriptive paragraphs, introductions, and subheadings (H2, H3, marked with `##`, `###`) such as "Ingredients," "Steps," "Notes," "Final Product."
+    *   It includes descriptive paragraphs, introductions, and subheadings (H2, H3, marked with `##`, `###`) such as "Ingredients," "Steps," "Notes," "Final Product." \
     *   It includes lists, images, and videos directly related to the article's topic.
     *   It ends with a concluding sentence, a piece of advice, or a description of the final product.
 
@@ -19,7 +19,7 @@ Identify the **first** sentence/line of text and the **last** sentence/line of t
     *   **Pre-body Junk:**
         *   Navigation links.
         *   Breadcrumbs (e.g., `Home > News > Article A`).
-        *   Brief meta information (publication date, author) IF it is located separately above the main title.
+        *   Brief meta information (publication date, author) IF it is located separately above the main title. \
     *   **Post-body Junk:**
         *   Author bio.
         *   Social media share buttons.

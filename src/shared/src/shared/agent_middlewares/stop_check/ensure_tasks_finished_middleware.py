@@ -6,9 +6,8 @@ when there are incomplete todos. It acts as a "stop check" guardrail
 similar to Claude Code's stop prevention mechanism.
 """
 
-from loguru import logger
-from typing import List, Dict, Optional
-from collections.abc import Callable, Awaitable
+from collections.abc import Awaitable, Callable
+from typing import Dict, List, Optional
 
 from langchain.agents.middleware.types import (
     AgentMiddleware,
@@ -18,12 +17,13 @@ from langchain.agents.middleware.types import (
     ModelResponse,
 )
 from langchain_core.messages import HumanMessage, SystemMessage
+from loguru import logger
 
-from shared.agent_types import TodoItem
 from prompts.task_management.stop_check_prompts import (
     STOP_CHECK_CRITICAL_REMINDER,
     STOP_CHECK_FINAL_CONFIRMATION,
 )
+from shared.agent_types import TodoItem
 
 
 class PlanningState(AgentState):
@@ -33,6 +33,7 @@ class PlanningState(AgentState):
     This should match the PlanningState definition in todo_write_middleware.py
     to ensure state consistency across the application.
     """
+
     todos: List[TodoItem]
 
 
@@ -58,7 +59,7 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         tool_name: str = "write_todos",
         re_prompt_template: Optional[str] = None,
         final_confirmation_template: Optional[str] = None,
-        max_reminders: int = 3
+        max_reminders: int = 3,
     ):
         """
         Initialize the stop check middleware.
@@ -72,7 +73,9 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         self.tool_name = tool_name
         self.max_reminders = max_reminders
         self.re_prompt_template = re_prompt_template or STOP_CHECK_CRITICAL_REMINDER
-        self.final_confirmation_template = final_confirmation_template or STOP_CHECK_FINAL_CONFIRMATION
+        self.final_confirmation_template = (
+            final_confirmation_template or STOP_CHECK_FINAL_CONFIRMATION
+        )
 
     def wrap_model_call(
         self,
@@ -95,17 +98,20 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         # 3. If agent is stopping, check if todos are complete
         if is_stopping:
             todos = request.state.get("todos", [])
+            if not isinstance(todos, list):
+                raise TypeError("Todos in agent state must be a list.")
+
             incomplete_tasks = self._get_incomplete_tasks(todos)
 
-            # 4. If there are incomplete tasks, log warning (sync environment limitation)
-            if (
-                len(incomplete_tasks["in_progress"]) > 0
-                or len(incomplete_tasks["pending"]) > 0
+            if isinstance(incomplete_tasks, dict) and (
+                len(incomplete_tasks.get("in_progress", [])) > 0
+                or len(incomplete_tasks.get("pending", [])) > 0
             ):
                 logger.info(
-                    f"Agent attempted to stop with {len(incomplete_tasks['pending'])} pending "
-                    f"and {len(incomplete_tasks['in_progress'])} in-progress tasks. "
-                    "Injecting critical reminder to continue working."
+                    "Agent attempted to stop with "
+                    f"{len(incomplete_tasks.get('pending', []))} pending and "
+                    f"{len(incomplete_tasks.get('in_progress', []))} in-progress "
+                    "tasks. Injecting critical reminder to continue working."
                 )
                 # Try multiple reminders in the same stopping attempt
                 current_response = response
@@ -125,21 +131,30 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                     if not still_stopping:
                         # Agent is working again, return the good response
                         return current_response
-                    
+
                     # logger.debug(f"Model response after reminder: {current_response}")
 
                     # Update incomplete tasks for next attempt
                     todos = request.state.get("todos", [])
+                    if not isinstance(todos, list):
+                        raise TypeError("Todos in agent state must be a list.")
                     incomplete_tasks = self._get_incomplete_tasks(todos)
+                    if not isinstance(incomplete_tasks, dict):
+                        incomplete_tasks = {"pending": [], "in_progress": []}
                     if not incomplete_tasks:
                         # All tasks completed, return response
                         return current_response
 
                 # If we get here, agent ignored all reminders
-                incomplete_count = len(incomplete_tasks["pending"]) + len(incomplete_tasks["in_progress"])
+                if isinstance(incomplete_tasks, dict):
+                    incomplete_count = len(incomplete_tasks.get("pending", [])) + len(
+                        incomplete_tasks.get("in_progress", [])
+                    )
+                else:
+                    incomplete_count = 0
                 raise RuntimeError(
-                    f"Agent failed to complete tasks after {self.max_reminders} reminders. "
-                    f"Still has {incomplete_count} incomplete tasks. "
+                    f"Agent failed to complete tasks after {self.max_reminders} "
+                    f"reminders. Still has {incomplete_count} incomplete tasks. "
                     f"Agent is ignoring critical reminders and refusing to work."
                 )
             else:
@@ -154,16 +169,20 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                     if request.messages:
                         for msg in request.messages:
                             if isinstance(msg, HumanMessage):
-                                original_query = msg.content
+                                if isinstance(msg.content, str):
+                                    original_query = msg.content
                                 break
-                    
+
                     logger.debug(f"Found original user query: {original_query}")
 
                     final_confirmation_reminder = (
-                        self.final_confirmation_template
-                        .replace("{{all_tasks_count}}", str(len(todos)))
+                        self.final_confirmation_template.replace(
+                            "{{all_tasks_count}}", str(len(todos))
+                        )
                     )
-                    request.messages.append(SystemMessage(content=final_confirmation_reminder))
+                    request.messages.append(
+                        SystemMessage(content=final_confirmation_reminder)
+                    )
 
                     # Force the model to re-think with the final confirmation reminder
                     final_response = handler(request)
@@ -201,17 +220,20 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         # 3. If agent is stopping, check if todos are complete
         if is_stopping:
             todos = request.state.get("todos", [])
+            if not isinstance(todos, list):
+                raise TypeError("Todos in agent state must be a list.")
             incomplete_tasks = self._get_incomplete_tasks(todos)
 
             # 4. If there are incomplete tasks, force continuation
-            if (
-                len(incomplete_tasks["in_progress"]) > 0
-                or len(incomplete_tasks["pending"]) > 0
+            if isinstance(incomplete_tasks, dict) and (
+                len(incomplete_tasks.get("in_progress", [])) > 0
+                or len(incomplete_tasks.get("pending", [])) > 0
             ):
                 logger.info(
-                    f"Agent attempted to stop with {len(incomplete_tasks['pending'])} pending "
-                    f"and {len(incomplete_tasks['in_progress'])} in-progress tasks. "
-                    "Injecting critical reminder to continue working."
+                    f"Agent attempted to stop with "
+                    f"{len(incomplete_tasks.get('pending', []))} pending and "
+                    f"{len(incomplete_tasks.get('in_progress', []))} in-progress "
+                    "tasks. Injecting critical reminder to continue working."
                 )
                 # Try multiple reminders in the same stopping attempt
                 current_response = response
@@ -231,21 +253,30 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                     if not still_stopping:
                         # Agent is working again, return the good response
                         return current_response
-                    
+
                     # logger.debug(f"Model response after reminder: {current_response}")
 
                     # Update incomplete tasks for next attempt
                     todos = request.state.get("todos", [])
+                    if not isinstance(todos, list):
+                        raise TypeError("Todos in agent state must be a list.")
                     incomplete_tasks = self._get_incomplete_tasks(todos)
+                    if not isinstance(incomplete_tasks, dict):
+                        incomplete_tasks = {"pending": [], "in_progress": []}
                     if not incomplete_tasks:
                         # All tasks completed, return response
                         return current_response
 
                 # If we get here, agent ignored all reminders
-                incomplete_count = len(incomplete_tasks["pending"]) + len(incomplete_tasks["in_progress"])
+                if isinstance(incomplete_tasks, dict):
+                    incomplete_count = len(incomplete_tasks.get("pending", [])) + len(
+                        incomplete_tasks.get("in_progress", [])
+                    )
+                else:
+                    incomplete_count = 0
                 raise RuntimeError(
-                    f"Agent failed to complete tasks after {self.max_reminders} reminders. "
-                    f"Still has {incomplete_count} incomplete tasks. "
+                    f"Agent failed to complete tasks after {self.max_reminders} "
+                    f"reminders. Still has {incomplete_count} incomplete tasks. "
                     f"Agent is ignoring critical reminders and refusing to work."
                 )
             else:
@@ -260,21 +291,26 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                     if request.messages:
                         for msg in request.messages:
                             if isinstance(msg, HumanMessage):
-                                original_query = msg.content
+                                if isinstance(msg.content, str):
+                                    original_query = msg.content
                                 break
-                    
+
                     logger.debug(f"Found original user query: {original_query}")
 
                     # Try multiple reminders in the same stopping attempt
                     final_response = response
                     for attempt in range(self.max_reminders):
                         final_confirmation_reminder = (
-                            self.final_confirmation_template
-                            .replace("{{all_tasks_count}}", str(len(todos)))
+                            self.final_confirmation_template.replace(
+                                "{{all_tasks_count}}", str(len(todos))
+                            )
                         )
-                        request.messages.append(SystemMessage(content=final_confirmation_reminder))
+                        request.messages.append(
+                            SystemMessage(content=final_confirmation_reminder)
+                        )
 
-                        # Force the model to re-think with the final confirmation reminder
+                        # Force the model to re-think with the final confirmation
+                        # reminder
                         final_response = await handler(request)
 
                         # Check if agent is still stopping after reminder
@@ -283,7 +319,6 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                         if not still_stopping:
                             # Agent is working again, return the good response
                             return final_response
-
 
         # 5. Either agent didn't stop, or todos are complete - return original response
         return response
@@ -301,23 +336,26 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         # Get the last AIMessage from the response
         last_ai_message = None
         if hasattr(response, "result"):
-            result = response.result
+            result = response.result  # type: ignore
             last_ai_message = result[-1]
 
         if not last_ai_message:
             # No message found, cannot determine stopping
             return False
-        
-        if (
-            last_ai_message.content is not None
-            and ((
+
+        if last_ai_message.content is not None and (
+            (
                 isinstance(last_ai_message.content, list)
+                and len(last_ai_message.content) > 0
+                and isinstance(last_ai_message.content[0], dict)
                 and "text" in last_ai_message.content[0]
+                and isinstance(last_ai_message.content[0]["text"], str)
                 and last_ai_message.content[0]["text"].strip() != ""
-            ) or (
+            )
+            or (
                 isinstance(last_ai_message.content, str)
                 and last_ai_message.content.strip() != ""
-            ))
+            )
         ):
             return False  # Has content, not stopping
         elif (
@@ -331,6 +369,8 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                 if metadata.get("finish_reason") == "STOP":
                     # Model indicated stopping
                     return True
+            # Default case: not stopping
+            return False
 
     def _get_incomplete_tasks(self, todos: List[TodoItem]) -> Dict[str, List[TodoItem]]:
         """
@@ -345,10 +385,7 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         pending_tasks = [t for t in todos if t.get("status") == "pending"]
         in_progress_tasks = [t for t in todos if t.get("status") == "in_progress"]
 
-        return {
-            "pending": pending_tasks,
-            "in_progress": in_progress_tasks
-        }
+        return {"pending": pending_tasks, "in_progress": in_progress_tasks}
 
     def _generate_re_prompt(self, incomplete_tasks: Dict[str, List[TodoItem]]) -> str:
         """
@@ -360,27 +397,36 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         Returns:
             str: Formatted re-prompt message
         """
-        pending_tasks = incomplete_tasks["pending"]
-        in_progress_tasks = incomplete_tasks["in_progress"]
+        if not isinstance(incomplete_tasks, dict):
+            return "Please continue working on your tasks."
+
+        pending_tasks = incomplete_tasks.get("pending", [])
+        in_progress_tasks = incomplete_tasks.get("in_progress", [])
 
         # Determine next task instruction
         next_task_instruction = ""
         if in_progress_tasks:
             next_task = in_progress_tasks[0]
+            next_task_content = next_task.get("content", "Unknown task")
+            next_task_status = "in_progress" if next_task_content else "unknown"
             next_task_instruction = (
-                f"Your current active task is: \"{next_task['content']}\""
-                " (status: in_progress)."
+                "Your current active task is: "
+                f'"{next_task_content}" '
+                f"(status: {next_task_status})."
             )
         elif pending_tasks:
             next_task = pending_tasks[0]
+            next_task_content = next_task.get("content", "Unknown task")
+            next_task_status = "pending" if next_task_content else "unknown"
             next_task_instruction = (
-                f"Your next task is: \"{next_task['content']}\""
-                " (status: pending)."
+                f'Your next task is: "{next_task_content}" '
+                f"(status: {next_task_status})."
             )
 
         return (
-            self.re_prompt_template
-            .replace("{{in_progress_count}}", str(len(in_progress_tasks)))
+            self.re_prompt_template.replace(
+                "{{in_progress_count}}", str(len(in_progress_tasks))
+            )
             .replace("{{pending_count}}", str(len(pending_tasks)))
             .replace("{{next_task_instruction}}", next_task_instruction)
             .replace("{{write_todos_function_name}}", self.tool_name)

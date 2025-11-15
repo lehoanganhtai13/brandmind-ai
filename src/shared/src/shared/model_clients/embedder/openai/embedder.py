@@ -1,13 +1,14 @@
+from typing import Any, List, Literal
+
 import httpx
 import tiktoken
-from typing import Any, List, Literal
 from loguru import logger
-from openai import OpenAI, AsyncOpenAI, APIError
+from openai import APIError, AsyncOpenAI, OpenAI
 
-from shared.utils.base_class import DenseEmbedding
 from shared.model_clients.embedder.base_embedder import BaseEmbedder
-from shared.model_clients.embedder.openai.config import OpenAIClientConfig
 from shared.model_clients.embedder.exceptions import CallServerEmbedderError
+from shared.model_clients.embedder.openai.config import OpenAIClientConfig
+from shared.utils.base_class import DenseEmbedding
 
 # Define a type for clarity
 InputType = Literal["query", "text"]
@@ -45,100 +46,116 @@ class OpenAIEmbedder(BaseEmbedder):
             self._encoding = tiktoken.get_encoding("cl100k_base")
         else:
             # Use generic httpx clients for compatible APIs
-            headers = {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
+            headers = {"Content-Type": "application/json", "Accept": "application/json"}
             if self.config.api_key:
                 headers["Authorization"] = f"Bearer {self.config.api_key}"
 
-            self._sync_client = httpx.Client(base_url=self.config.base_url, headers=headers, timeout=60.0)
-            self._async_client = httpx.AsyncClient(base_url=self.config.base_url, headers=headers, timeout=60.0)
+            self._sync_client = httpx.Client(
+                base_url=self.config.base_url, headers=headers, timeout=60.0
+            )
+            self._async_client = httpx.AsyncClient(
+                base_url=self.config.base_url, headers=headers, timeout=60.0
+            )
 
     def count_tokens(self, text: str) -> int:
         """
         Counts the number of tokens in the text using tiktoken.
         This is primarily useful for official OpenAI models to monitor usage.
-        
+
         Args:
             text (str): The text to count tokens for.
 
         Returns:
             int: The number of tokens.
-        
+
         Raises:
-            ValueError: If the tokenizer is not available (i.e., not using an official OpenAI client).
+            ValueError: If the tokenizer is not available (i.e., not using
+                an official OpenAI client).
         """
         if not self._encoding:
-            raise ValueError("Token counting is only available when `use_openai_client` is True.")
+            raise ValueError(
+                "Token counting is only available when `use_openai_client` is True."
+            )
         return len(self._encoding.encode(text))
 
-    def _embed_sync(self, texts: List[str], input_type: InputType) -> List[DenseEmbedding]:
+    def _embed_sync(
+        self, texts: List[str], input_type: InputType
+    ) -> List[DenseEmbedding]:
         """Helper method for synchronous embedding generation."""
         try:
             if isinstance(self._sync_client, OpenAI):
                 response = self._sync_client.embeddings.create(
                     input=texts,
                     model=self.config.model_id,
-                    dimensions=self.config.model_dimensions
+                    dimensions=self.config.model_dimensions,
                 )
                 return [res.embedding for res in response.data]
-            
+
             # Logic for compatible clients using httpx.Client
             elif isinstance(self._sync_client, httpx.Client):
                 endpoint = (
-                    self.config.query_embedding_endpoint 
-                    if input_type == "query" 
+                    self.config.query_embedding_endpoint
+                    if input_type == "query"
                     else self.config.doc_embedding_endpoint
                 )
                 payload = {"input": texts, "model": self.config.model_id}
-                
-                response = self._sync_client.post(endpoint, json=payload)
-                response.raise_for_status() # Raise an exception for 4xx/5xx responses
-                
+
+                response = self._sync_client.post(endpoint, json=payload)  # type: ignore[assignment]
+                response.raise_for_status()  # type: ignore[attr-defined]
+
                 # The response structure should match OpenAI's API
-                return [item["embedding"] for item in response.json()["data"]]
-            
+                return [item["embedding"] for item in response.json()["data"]]  # type: ignore[index,misc]
+
             else:
-                raise TypeError(f"Unsupported synchronous client type: {type(self._sync_client)}")
+                raise TypeError(
+                    f"Unsupported synchronous client type: {type(self._sync_client)}"
+                )
 
         except (APIError, httpx.HTTPStatusError) as e:
             raise CallServerEmbedderError(f"API call failed: {e!s}") from e
         except Exception as e:
-            raise CallServerEmbedderError(f"An unexpected error occurred during embedding: {e!s}") from e
+            raise CallServerEmbedderError(
+                f"An unexpected error occurred during embedding: {e!s}"
+            ) from e
 
-    async def _embed_async(self, texts: List[str], input_type: InputType) -> List[DenseEmbedding]:
+    async def _embed_async(
+        self, texts: List[str], input_type: InputType
+    ) -> List[DenseEmbedding]:
         """Helper method for asynchronous embedding generation."""
         try:
             if isinstance(self._async_client, AsyncOpenAI):
                 response = await self._async_client.embeddings.create(
                     input=texts,
                     model=self.config.model_id,
-                    dimensions=self.config.model_dimensions
+                    dimensions=self.config.model_dimensions,
                 )
                 return [res.embedding for res in response.data]
-            
+
             # Logic for compatible clients using httpx.AsyncClient
             elif isinstance(self._async_client, httpx.AsyncClient):
                 endpoint = (
-                    self.config.query_embedding_endpoint 
-                    if input_type == "query" 
+                    self.config.query_embedding_endpoint
+                    if input_type == "query"
                     else self.config.doc_embedding_endpoint
                 )
                 payload = {"input": texts, "model": self.config.model_id}
 
-                response = await self._async_client.post(endpoint, json=payload)
-                response.raise_for_status() # Raise an exception for 4xx/5xx responses
+                response = await self._async_client.post(endpoint, json=payload)  # type: ignore[assignment]
+                response.raise_for_status()  # type: ignore[attr-defined]
 
-                return [item["embedding"] for item in response.json()["data"]]
+                return [item["embedding"] for item in response.json()["data"]]  # type: ignore[index,misc]
 
             else:
-                raise TypeError(f"Unsupported asynchronous client type: {type(self._async_client)}")
+                raise TypeError(
+                    f"Unsupported asynchronous client type: {type(self._async_client)}"
+                )
 
         except (APIError, httpx.HTTPStatusError) as e:
             raise CallServerEmbedderError(f"Asynchronous API call failed: {e!s}") from e
         except Exception as e:
-            raise CallServerEmbedderError(f"An unexpected error occurred during async embedding: {e!s}") from e
+            raise CallServerEmbedderError(
+                f"An unexpected error occurred during async embedding: {e!s}"
+            ) from e
 
     # --- Synchronous Methods ---
 
@@ -156,7 +173,9 @@ class OpenAIEmbedder(BaseEmbedder):
         embeddings = self._embed_sync([text], input_type="text")
         return embeddings[0]
 
-    def get_text_embeddings(self, texts: List[str], **kwargs: Any) -> List[DenseEmbedding]:
+    def get_text_embeddings(
+        self, texts: List[str], **kwargs: Any
+    ) -> List[DenseEmbedding]:
         """Get the embeddings for a list of text documents."""
         if self._encoding:
             total_tokens = sum(self.count_tokens(t) for t in texts)
@@ -178,11 +197,12 @@ class OpenAIEmbedder(BaseEmbedder):
             logger.info(f"📊 Number of tokens in text: {self.count_tokens(text)}")
         embeddings = await self._embed_async([text], input_type="text")
         return embeddings[0]
-        
-    async def aget_text_embeddings(self, texts: List[str], **kwargs: Any) -> List[DenseEmbedding]:
+
+    async def aget_text_embeddings(
+        self, texts: List[str], **kwargs: Any
+    ) -> List[DenseEmbedding]:
         """Asynchronously get the embeddings for a list of text documents."""
         if self._encoding:
             total_tokens = sum(self.count_tokens(t) for t in texts)
             logger.info(f"📊 Total number of tokens in texts: {total_tokens}")
         return await self._embed_async(texts, input_type="text")
-    

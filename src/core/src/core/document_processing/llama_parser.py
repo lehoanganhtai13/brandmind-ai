@@ -1,15 +1,14 @@
-import time
-import os
 import datetime
 import json
+import os
+import time
 from pathlib import Path
-
 from typing import List, Optional
+
 from loguru import logger
 
-from core.document_processing.models import PDFParseResult
 from config.system_config import SETTINGS
-
+from core.document_processing.models import PDFParseResult
 
 PAGE_MARKDOWN_TEMPLATE = """# Page {page_number}
 
@@ -35,7 +34,8 @@ class LlamaPDFProcessor:
         Initializes the LlamaPDFProcessor.
 
         Args:
-            api_key (Optional[str]): The API key for LlamaParse. If None, it defaults to SETTINGS.LLAMA_PARSE_API_KEY.
+            api_key (Optional[str]): The API key for LlamaParse. If None, it defaults to
+                SETTINGS.LLAMA_PARSE_API_KEY.
             **config: Additional configuration for LlamaParse.
         """
         self.api_key = api_key if api_key is not None else SETTINGS.LLAMA_PARSE_API_KEY
@@ -52,9 +52,7 @@ class LlamaPDFProcessor:
         try:
             with open(metadata_path, "r", encoding="utf-8") as f:
                 metadata_list = json.load(f)
-            return {
-                item["document_name"]: item["author"] for item in metadata_list
-            }
+            return {item["document_name"]: item["author"] for item in metadata_list}
         except (json.JSONDecodeError, KeyError) as e:
             logger.error(f"Failed to load or parse author metadata: {e}")
             return {}
@@ -63,8 +61,8 @@ class LlamaPDFProcessor:
     def parser(self):
         """
         Lazy initialization of the LlamaParse instance.
-        This property ensures that the LlamaParse client is only created when it is first accessed,
-        allowing for optional dependency management.
+        This property ensures that the LlamaParse client is only created when it is
+        first accessed, allowing for optional dependency management.
 
         Returns:
             The LlamaParse instance.
@@ -114,9 +112,9 @@ class LlamaPDFProcessor:
         """
         Parses a single PDF file and generates per-page markdown files.
 
-        This method processes a PDF, extracts its content page by page, and saves each page
-        as a separate markdown file in a structured output directory. It also gathers
-        metadata about the parsing process.
+        This method processes a PDF, extracts its content page by page, and saves each
+        page as a separate markdown file in a structured output directory. It also
+        gathers metadata about the parsing process.
 
         Args:
             file_path (str): The path to the PDF file to be parsed.
@@ -191,8 +189,8 @@ class LlamaPDFProcessor:
         """
         Parses multiple PDF files sequentially with progress tracking.
 
-        This method iterates through a list of file paths, parsing each PDF individually.
-        It uses tqdm to display a progress bar for the batch operation.
+        This method iterates through a list of file paths, parsing each PDF
+        individually. It uses tqdm to display a progress bar for the batch operation.
 
         Args:
             file_paths (List[str]): A list of paths to the PDF files to be processed.

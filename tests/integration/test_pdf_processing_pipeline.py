@@ -1,17 +1,20 @@
 """Integration tests for the full PDF processing pipeline."""
 
-import pytest
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 
-from core.document_processing.pdf_processor import PDFProcessor
+import pytest
+
 from config.system_config import SETTINGS
+from core.document_processing.pdf_processor import PDFProcessor
 
 # Mark all tests in this file as asyncio
 pytestmark = pytest.mark.asyncio
 
-TEST_PDF_PATH = "data/raw_documents/Kotler_and_Armstrong_Principles_of_Marketing_test.pdf"
+TEST_PDF_PATH = (
+    "data/raw_documents/Kotler_and_Armstrong_Principles_of_Marketing_test.pdf"
+)
 
 
 @pytest.fixture(scope="module")
@@ -32,12 +35,13 @@ async def test_pdf_processing_pipeline(processor: PDFProcessor):
 
     # --- Setup: Load expected author from metadata ---
     import json
+
     expected_author = "Unknown"
     metadata_path = "data/raw_documents/document_metadata.json"
     if os.path.exists(metadata_path):
         with open(metadata_path, "r", encoding="utf-8") as f:
             metadata_list = json.load(f)
-        
+
         test_pdf_filename = Path(TEST_PDF_PATH).name
         for item in metadata_list:
             if item.get("document_name") == test_pdf_filename:
@@ -80,12 +84,14 @@ async def test_pdf_processing_pipeline(processor: PDFProcessor):
     if parse_result.tables_extracted > 0:
         print(f"Found and processed {parse_result.tables_extracted} tables.")
         # Verify that the HTML tables have been replaced by summaries.
-        # We do this by checking that the '<table>' tag no longer exists in the final files.
+        # We do this by checking that the '<table>' tag no longer exists in the
+        # final files.
         for page_file_path in parse_result.page_files:
             with open(page_file_path, "r", encoding="utf-8") as f:
                 final_content = f.read()
                 assert "<table" not in final_content.lower(), (
-                    f"Found an unprocessed <table> tag in the final output file: {page_file_path}"
+                    f"Found an unprocessed <table> tag in the final output file: "
+                    f"{page_file_path}"
                 )
 
     # --- Cleanup ---

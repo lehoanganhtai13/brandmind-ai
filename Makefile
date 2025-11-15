@@ -92,15 +92,20 @@ test: ## Run tests
 test-watch: ## Run tests in watch mode
 	uv run pytest-watch tests/
 
-format: ## Format code with black and isort
-	uv run black src/ tests/
-	uv run isort src/ tests/
+format: ## Format code with ruff and black
+	uv run ruff format src/
+	uv run black src/
 
-lint: ## Lint code with flake8 and mypy
-	uv run flake8 src/
-	uv run mypy src/
+lint: ## Lint code with ruff and mypy
+	uv run ruff check src/ --fix
+	uv run mypy src/shared/src --ignore-missing-imports
+	uv run mypy src/core/src --ignore-missing-imports
+	uv run mypy src/config --ignore-missing-imports
 
-check: format lint test ## Run format, lint, and test
+security-check: ## Run security scan with bandit
+	uv run bandit -r src/ -s B101,B603 -ll
+
+typecheck: format lint security-check ## Run type checking and linting
 
 ## Info
 show-deps: ## Show installed packages

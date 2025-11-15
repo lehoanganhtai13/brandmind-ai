@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from loguru import logger
 
@@ -27,7 +27,8 @@ async def async_main():
     parser.add_argument(
         "--file",
         type=str,
-        help="The specific filename of a document to process. Must be listed in document_metadata.json.",
+        help="The specific filename of a document to process. Must be listed in "
+        "document_metadata.json.",
         required=False,
     )
     args = parser.parse_args()
@@ -56,17 +57,14 @@ async def async_main():
                 found = True
                 break
         if not found:
-            logger.error(
-                f"File '{args.file}' not found in metadata file. Aborting."
-            )
+            logger.error(f"File '{args.file}' not found in metadata file. Aborting.")
             return
     else:
         # Batch mode: process all documents from metadata
         target_docs = all_docs_metadata
 
     file_paths_to_process = [
-        str(Path("data/raw_documents") / doc["document_name"])
-        for doc in target_docs
+        str(Path("data/raw_documents") / doc["document_name"]) for doc in target_docs
     ]
 
     if not file_paths_to_process:
@@ -76,9 +74,7 @@ async def async_main():
     # Initialize and run the processor
     # API keys are handled by the SETTINGS object within the processor's constructor
     processor = PDFProcessor(llama_config={})
-    logger.info(
-        f"Starting processing for {len(file_paths_to_process)} document(s)..."
-    )
+    logger.info(f"Starting processing for {len(file_paths_to_process)} document(s)...")
     await processor.process_pdf_batch(file_paths_to_process)
     logger.info("All processing tasks completed.")
 

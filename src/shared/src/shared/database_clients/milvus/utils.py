@@ -1,12 +1,14 @@
 from enum import Enum
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class IndexValueType(Enum):
     """
     Enum for different types of indexed values.
     """
+
     STRING = "varchar"
     INT = "double"
     BOOL = "bool"
@@ -15,14 +17,15 @@ class IndexValueType(Enum):
 class IndexParam(BaseModel):
     """
     Parameters for indexing JSON fields in Milvus database.
-    
+
     Args:
         indexed_key (str): Path of the indexed key in the JSON object.
-            You can target nested keys, array positions, or both 
+            You can target nested keys, array positions, or both
             (e.g., `metadata["product_info"]["category"]` or `metadata["tags"][0]`)
         index_name (str): Name of the index in Milvus database.
         value_type (IndexValueType): Type of the value to be indexed.
     """
+
     indexed_key: str
     index_name: str
     value_type: IndexValueType
@@ -35,16 +38,18 @@ class MetricType(Enum):
     """
     Enum for different types of metrics used in Milvus databases.
     """
+
     L2 = "L2"
     IP = "IP"
     COSINE = "COSINE"
     HAMMING = "HAMMING"
-    
+
 
 class IndexType(Enum):
     """
     Enum for different types of indexes used in Milvus databases.
     """
+
     AUTOINDEX = "AUTOINDEX"
     FLAT = "FLAT"
     IVF_FLAT = "IVF_FLAT"
@@ -59,6 +64,7 @@ class ElementType(Enum):
     """
     Enum representing the types of elements of an array in Milvus.
     """
+
     INT = "int"
     FLOAT = "float"
     STRING = "string"
@@ -69,6 +75,7 @@ class DataType(Enum):
     """
     Enum representing the data types supported by Milvus.
     """
+
     INT = "int"
     STRING = "string"
     DENSE_VECTOR = "dense_vector"
@@ -83,6 +90,7 @@ class IndexConfig(BaseModel):
     """
     Class representing the configuration for an index in Milvus.
     """
+
     index: bool = False
     hnsw_m: Optional[int] = None
     hnsw_ef_construction: Optional[int] = None
@@ -94,6 +102,7 @@ class SchemaField(BaseModel):
     """
     Class representing a field in a Milvus schema.
     """
+
     field_name: str
     field_type: DataType
     is_primary: bool = False

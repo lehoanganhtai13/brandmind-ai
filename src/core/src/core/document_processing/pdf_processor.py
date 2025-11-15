@@ -1,11 +1,12 @@
 """Unified PDF processing pipeline."""
 
-from typing import List, Dict, Any
 from pathlib import Path
+from typing import Any, Dict, List
+
 from loguru import logger
 
-from core.document_processing.models import PDFParseResult, TableInfo, TableSummary
 from core.document_processing.llama_parser import LlamaPDFProcessor
+from core.document_processing.models import PDFParseResult, TableInfo, TableSummary
 from core.document_processing.table_extractor import HTMLTableExtractor
 from core.document_processing.table_summarizer import TableSummarizer
 
@@ -41,7 +42,7 @@ class PDFProcessor:
         Returns:
             PDFParseResult: The result object from the initial parsing step,
                             containing metadata about the processed document.
-        
+
         Raises:
             Exception: Propagates exceptions from underlying processing steps.
         """
@@ -52,7 +53,9 @@ class PDFProcessor:
             logger.info(
                 f"Step 2: Detecting tables in {len(parse_result.page_files)} page files"
             )
-            tables = self.table_extractor.detect_tables_in_files(parse_result.page_files)
+            tables = self.table_extractor.detect_tables_in_files(
+                parse_result.page_files
+            )
 
             if tables:
                 logger.info(f"Step 3: Summarizing {len(tables)} detected tables")
@@ -65,7 +68,8 @@ class PDFProcessor:
                     await self._update_files_with_summaries(tables, table_summaries)
 
             logger.info(
-                f"PDF processing completed: {len(parse_result.page_files)} page files created"
+                f"PDF processing completed: {len(parse_result.page_files)} "
+                "page files created"
             )
             return parse_result
 
@@ -102,7 +106,6 @@ class PDFProcessor:
                     logger.debug(f"Updated table in {table.page_file}")
                 except Exception as e:
                     logger.error(f"Failed to update file {table.page_file}: {e}")
-
 
     async def process_pdf_batch(self, file_paths: List[str]) -> List[PDFParseResult]:
         """

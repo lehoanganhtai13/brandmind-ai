@@ -4,8 +4,8 @@ import numpy as np
 from pydantic import BaseModel
 from scipy.sparse import csr_array
 
-
 # ----------------- API Classes -----------------
+
 
 class Payload(BaseModel):
     """Class to store payload data for the API."""
@@ -16,12 +16,13 @@ class Payload(BaseModel):
 
 # ----------------- Embedding Types -----------------
 
-DenseEmbedding = List[float]    # Type alias for embedding vectors
-BinaryEmbedding = np.ndarray    # Type alias for binary embeddings (0s and 1s)
-SparseEmbedding = csr_array     # Type alias for sparse embeddings
+DenseEmbedding = List[float]  # Type alias for embedding vectors
+BinaryEmbedding = np.ndarray  # Type alias for binary embeddings (0s and 1s)
+SparseEmbedding = csr_array  # Type alias for sparse embeddings
 
 
 # ----------------- Search Result Types -----------------
+
 
 class SearchResult(BaseModel):
     """
@@ -32,12 +33,14 @@ class SearchResult(BaseModel):
         url (str): The URL link of the search result.
         snippet (str): A brief snippet or description of the search result.
     """
+
     title: str
     url: str
     snippet: str
 
 
 # ----------------- Scraping Result Types -----------------
+
 
 class ScrapeResult(BaseModel):
     """
@@ -47,5 +50,6 @@ class ScrapeResult(BaseModel):
         url (str): The URL that was scraped.
         content (str): The textual content extracted from the URL.
     """
+
     url: str
     content: str

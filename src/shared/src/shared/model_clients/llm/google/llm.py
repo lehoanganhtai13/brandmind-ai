@@ -9,9 +9,9 @@ provides a rich set of features and robust error handling.
 Requires: pip install --upgrade google-genai>=1.18
 """
 
-from typing import Optional, Any, List, Dict
-
 import traceback
+from typing import Any, Dict, List, Optional
+
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError
@@ -23,17 +23,18 @@ from shared.model_clients.llm.base_class import (
     CompletionResponseGen,
 )
 from shared.model_clients.llm.base_llm import BaseLLM
-from shared.model_clients.llm.google.config import GoogleAIClientLLMConfig, SchemaLike
 from shared.model_clients.llm.exceptions import CallServerLLMError
+from shared.model_clients.llm.google.config import GoogleAIClientLLMConfig, SchemaLike
 
 
 class GoogleAIClientLLM(BaseLLM):
     """
-    An LLM client that implements the BaseLLM interface for Google's Generative AI (Gemini) models.
+    An LLM client that implements the BaseLLM interface for Google's Generative AI
+    (Gemini) models.
 
     This class provides a standardized, simplified, and robust way to perform
     synchronous and asynchronous completions, including streaming.
-    
+
     Features:
     - Sync/async completion with streaming support
     - Google Search grounding for up-to-date information
@@ -44,7 +45,8 @@ class GoogleAIClientLLM(BaseLLM):
     Attributes:
         config (GoogleAIClientLLMConfig): The configuration object for the client.
         _client (genai.Client): The shared Google Generative AI client instance.
-        _tools (List[types.Tool]): List of tools (e.g., Google Search) available to the model.
+        _tools (List[types.Tool]): List of tools (e.g., Google Search) available to
+            the model.
     """
 
     def __init__(self, config: GoogleAIClientLLMConfig, **kwargs):
@@ -54,11 +56,11 @@ class GoogleAIClientLLM(BaseLLM):
     def _initialize_llm(self, **kwargs) -> None:
         """
         Initializes the Google Generative AI client and configures tools.
-        
+
         This method is called once during instantiation to set up the client
         for reuse, which is more efficient than creating clients on each call.
         It also configures optional tools like Google Search grounding.
-        
+
         Raises:
             CallServerLLMError: If client initialization fails.
         """
@@ -66,7 +68,9 @@ class GoogleAIClientLLM(BaseLLM):
             # Create one shared client for both sync and async operations
             self._client = genai.Client(api_key=self.config.api_key)
         except Exception as e:
-            raise CallServerLLMError(f"Failed to initialize Google Gen-AI client: {e}") from e
+            raise CallServerLLMError(
+                f"Failed to initialize Google Gen-AI client: {e}"
+            ) from e
 
         # Configure optional Google Search tool for grounding
         self._tools: List[types.Tool] = []
@@ -74,12 +78,13 @@ class GoogleAIClientLLM(BaseLLM):
             self._tools.append(types.Tool(google_search=types.GoogleSearch()))
 
         if self.config.tools:
-            # If tools are provided, ensure they are compatible with the Google Gen-AI client
+            # If tools are provided, ensure they are compatible with the Google
+            # Gen-AI client
             if isinstance(self.config.tools, list):
                 self._tools.extend(self.config.tools)
             else:
                 raise CallServerLLMError("Tools must be a list of functions.")
-            
+
     @staticmethod
     def _extract_text(response: types.GenerateContentResponse) -> str:
         """
@@ -95,18 +100,23 @@ class GoogleAIClientLLM(BaseLLM):
         Returns:
             str: Combined textual content.
         """
-        parts = []
+        parts: List[Any] = []
         try:
-            parts = response.candidates[0].content.parts
-            final_text = "".join(p.text for p in parts if getattr(p, "text", None))
-        except Exception as e:
+            if response.candidates and response.candidates[0].content:
+                parts = response.candidates[0].content.parts or []  # type: ignore[assignment]
+                final_text = "".join(p.text for p in parts if p.text)  # type: ignore[misc]
+            else:
+                final_text = ""
+        except Exception:
             logger.error(f"Error extracting text from response: {parts}")
             logger.error(traceback.format_exc())
 
             # Fallback to response.text if extraction fails
-            final_text = response.text
-            logger.info(f"Using `response.text` as fallback due to error - text: {final_text}")
-            
+            final_text = response.text or ""
+            logger.info(
+                f"Using `response.text` as fallback due to error - text: {final_text}"
+            )
+
         return final_text
 
     def _make_generate_config(
@@ -118,15 +128,15 @@ class GoogleAIClientLLM(BaseLLM):
         top_p: Optional[float] = None,
         max_tokens: Optional[int] = None,
         response_mime_type: Optional[str] = None,
-        response_schema: Optional[SchemaLike] = None
+        response_schema: Optional[SchemaLike] = None,
     ) -> types.GenerateContentConfig:
         """
         Build GenerateContentConfig with all necessary parameters.
-        
+
         This method centralizes configuration creation, similar to how
         OpenAI client prepares messages. It handles default values and
         optional features like thinking budgets.
-        
+
         Args:
             system_instruction (str, optional): Override default system instruction.
             thinking_budget (int, optional): Override default thinking budget.
@@ -135,7 +145,7 @@ class GoogleAIClientLLM(BaseLLM):
             max_tokens (int, optional): Override default max tokens.
             response_mime_type (str, optional): MIME type for the response.
             response_schema (SchemaLike, optional): Schema for response validation.
-            
+
         Returns:
             types.GenerateContentConfig: Complete configuration for the API call.
         """
@@ -147,13 +157,13 @@ class GoogleAIClientLLM(BaseLLM):
             "tools": self._tools or None,
             "response_mime_type": response_mime_type or self.config.response_mime_type,
             "response_schema": response_schema or self.config.response_schema,
-            "http_options": types.HttpOptions(timeout=60_000) # 60 seconds timeout
+            "http_options": types.HttpOptions(timeout=60_000),  # 60 seconds timeout
         }
 
         # Configure thinking budget if specified (0 disables thinking on Flash models)
         thinking_budget_to_use = (
-            thinking_budget 
-            if thinking_budget is not None 
+            thinking_budget
+            if thinking_budget is not None
             else self.config.thinking_budget
         )
         if thinking_budget_to_use is not None:
@@ -167,14 +177,14 @@ class GoogleAIClientLLM(BaseLLM):
     def complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
         """
         Generates a single, non-streaming completion response synchronously.
-        
+
         Args:
             prompt (str): The user input prompt to process.
             **kwargs: Additional parameters to override config defaults.
-            
+
         Returns:
             CompletionResponse: The model's response with generated text.
-            
+
         Raises:
             CallServerLLMError: If the API call fails.
         """
@@ -188,7 +198,9 @@ class GoogleAIClientLLM(BaseLLM):
 
             text = self._extract_text(response)
             if not text:
-                raise CallServerLLMError("Google Gen-AI API returned empty response text.")
+                raise CallServerLLMError(
+                    "Google Gen-AI API returned empty response text."
+                )
 
             return CompletionResponse(text=text)
         except Exception as e:
@@ -197,17 +209,17 @@ class GoogleAIClientLLM(BaseLLM):
     def stream_complete(self, prompt: str, **kwargs: Any) -> CompletionResponseGen:
         """
         Generates a streaming completion response synchronously.
-        
+
         This method yields incremental responses as they become available,
         allowing for real-time display of the model's output.
-        
+
         Args:
             prompt (str): The user input prompt to process.
             **kwargs: Additional parameters to override config defaults.
-            
+
         Yields:
             CompletionResponse: Incremental responses with full text and delta.
-            
+
         Raises:
             CallServerLLMError: If the streaming call fails.
         """
@@ -218,7 +230,7 @@ class GoogleAIClientLLM(BaseLLM):
                 contents=prompt,
                 config=config,
             )
-            
+
             full_text = ""
             for chunk in stream:
                 chunk_text = self._extract_text(chunk)
@@ -227,19 +239,21 @@ class GoogleAIClientLLM(BaseLLM):
                     full_text += delta
                     yield CompletionResponse(text=full_text, delta=delta)
         except APIError as e:
-            raise CallServerLLMError(f"Google Gen-AI stream call failed: {e.message}") from e
+            raise CallServerLLMError(
+                f"Google Gen-AI stream call failed: {e.message}"
+            ) from e
 
     async def acomplete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
         """
         Generates a single, non-streaming completion response asynchronously.
-        
+
         Args:
             prompt (str): The user input prompt to process.
             **kwargs: Additional parameters to override config defaults.
-            
+
         Returns:
             CompletionResponse: The model's response with generated text.
-            
+
         Raises:
             CallServerLLMError: If the async API call fails.
         """
@@ -253,26 +267,32 @@ class GoogleAIClientLLM(BaseLLM):
 
             text = self._extract_text(response)
             if not text:
-                raise CallServerLLMError("Async Google Gen-AI API returned empty response text.")
+                raise CallServerLLMError(
+                    "Async Google Gen-AI API returned empty response text."
+                )
 
             return CompletionResponse(text=text)
         except APIError as e:
-            raise CallServerLLMError(f"Async Google Gen-AI API call failed: {e.message}") from e
+            raise CallServerLLMError(
+                f"Async Google Gen-AI API call failed: {e.message}"
+            ) from e
 
-    async def astream_complete(self, prompt: str, **kwargs: Any) -> CompletionResponseAsyncGen:
+    async def astream_complete(  # type: ignore[override]
+        self, prompt: str, **kwargs: Any
+    ) -> CompletionResponseAsyncGen:
         """
         Generates a streaming completion response asynchronously.
-        
+
         This method provides async streaming capabilities, yielding incremental
         responses as they become available in an async context.
-        
+
         Args:
             prompt (str): The user input prompt to process.
             **kwargs: Additional parameters to override config defaults.
-            
+
         Yields:
             CompletionResponse: Incremental responses with full text and delta.
-            
+
         Raises:
             CallServerLLMError: If the async streaming call fails.
         """
@@ -283,7 +303,7 @@ class GoogleAIClientLLM(BaseLLM):
                 contents=prompt,
                 config=config,
             )
-            
+
             full_text = ""
             async for chunk in stream:
                 chunk_text = self._extract_text(chunk)
@@ -292,5 +312,6 @@ class GoogleAIClientLLM(BaseLLM):
                     full_text += delta
                     yield CompletionResponse(text=full_text, delta=delta)
         except APIError as e:
-            raise CallServerLLMError(f"Async Google Gen-AI stream call failed: {e.message}") from e
-        
+            raise CallServerLLMError(
+                f"Async Google Gen-AI stream call failed: {e.message}"
+            ) from e

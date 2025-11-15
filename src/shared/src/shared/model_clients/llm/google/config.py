@@ -1,5 +1,7 @@
-from typing import Optional, Any, Callable, Dict, Union, Type
+from typing import Any, Callable, Dict, Optional, Type, Union
+
 from pydantic import BaseModel
+
 from shared.model_clients.llm.base_class import LLMBackend, LLMConfig
 
 JSONSchema = Dict[str, Any]
@@ -13,31 +15,34 @@ class GoogleAIClientLLMConfig(LLMConfig):
     This class centralizes settings for connecting to Google's Generative AI API
     with advanced features like grounding, thinking budgets, and system instructions.
 
-    Important: Grounding and structured output are mutually exclusive. You must choose one:
-    - Option A: Enable grounding for up-to-date web information (plain text responses only)
+    Important: Grounding and structured output are mutually exclusive.
+    You must choose one:
+    - Option A: Enable grounding for up-to-date web information (plain text responses
+        only)
     - Option B: Use structured JSON/enum responses without grounding
 
     Attributes:
-        model (str): 
-            The ID of the Gemini model to use for completions 
+        model (str):
+            The ID of the Gemini model to use for completions
             (e.g., "gemini-2.5-flash-preview", "gemini-2.5-pro-preview").
             Defaults to "gemini-2.5-flash-preview".
-        api_key (str, optional): 
+        api_key (str, optional):
             The Google AI API key for authentication. It's recommended to set this via
             the `GOOGLE_API_KEY` environment variable. Defaults to None.
-        temperature (float): 
-            Controls randomness in the output. Lower values make the model more deterministic.
+        temperature (float):
+            Controls randomness in the output. Lower values make the model more
+            deterministic.
             Range: 0.0 to 2.0. Defaults to 0.1.
-        top_p (float): 
+        top_p (float):
             Controls diversity via nucleus sampling. Lower values restrict the model to
             more probable tokens. Range: 0.0 to 1.0. Defaults to 0.95.
-        max_tokens (int): 
-            The maximum number of tokens to generate in the completion. 
+        max_tokens (int):
+            The maximum number of tokens to generate in the completion.
             Defaults to 8192.
-        use_grounding (bool): 
+        use_grounding (bool):
             If True, enables Google Search grounding to base responses on
             up-to-date, verifiable information from the web. Defaults to False.
-            
+
             NOTE: When grounding is enabled, you cannot use structured output
             (`response_mime_type` must be `"text/plain"` or None, and `response_schema`
             must be None). This is a Google API limitation.
@@ -48,28 +53,29 @@ class GoogleAIClientLLMConfig(LLMConfig):
             NOTE: When tools are provided, you cannot use structured output
             (`response_mime_type` must be `"text/plain"` or None, and `response_schema`
             must be None). This is a Google API limitation.
-        system_instruction (str, optional): 
+        system_instruction (str, optional):
             A default system-level instruction for the model, applied to all requests.
             This serves as persistent context for the conversation. Defaults to None.
-        thinking_budget (int, optional): 
+        thinking_budget (int, optional):
             Controls the model's reasoning process. Set to 0 to disable thinking
             (Flash models only). Higher values allow more thorough reasoning.
             Defaults to None (uses model default).
         response_mime_type (str, optional):
-            The MIME type for the response, such as `"application/json"` or `"text/plain"` or `"text/x.enum"`.
+            The MIME type for the response, such as `"application/json"` or
+            `"text/plain"` or `"text/x.enum"`.
             This specifies the format of the model's output. Defaults to None.
-            
-            IMPORTANT: Cannot be used with grounding (use_grounding=True) or tools. 
+
+            IMPORTANT: Cannot be used with grounding (use_grounding=True) or tools.
             If grounding or tools are enabled, this must be None or `"text/plain"`.
         response_schema (SchemaLike, optional):
             A Pydantic model or JSON schema to validate the response structure.
             This ensures the model's output adheres to a specific format.
             Defaults to None (no validation).
-            
+
             IMPORTANT: Cannot be used with grounding (use_grounding=True) or tools.
             If grounding or tools are enabled, this must be None.
     """
-    
+
     def __init__(
         self,
         model: str = "gemini-2.5-flash",
@@ -83,7 +89,7 @@ class GoogleAIClientLLMConfig(LLMConfig):
         thinking_budget: Optional[int] = None,
         response_mime_type: Optional[str] = None,
         response_schema: Optional[SchemaLike] = None,
-        **kwargs
+        **kwargs,
     ):
         # We explicitly set the backend to GOOGLE for this config type.
         super().__init__(backend=LLMBackend.GOOGLE, **kwargs)
@@ -98,29 +104,31 @@ class GoogleAIClientLLMConfig(LLMConfig):
         self.response_mime_type = response_mime_type
         self.response_schema = response_schema
         self.tools = tools
-        
+
         # Validate mutually exclusive options
         self._validate_config()
-    
+
     def _validate_config(self) -> None:
         """
         Validates that grounding and structured output are not used together.
-        
+
         Raises:
             ValueError: If both grounding and structured output are enabled.
         """
         if self.use_grounding or self.tools:
             # Check if structured output is being used
             has_structured_mime_type = (
-                self.response_mime_type is not None and 
-                self.response_mime_type != "text/plain"
+                self.response_mime_type is not None
+                and self.response_mime_type != "text/plain"
             )
             has_response_schema = self.response_schema is not None
-            
+
             if has_structured_mime_type or has_response_schema:
                 raise ValueError(
-                    "Cannot use grounding or tools with structured output. Choose one:\n"
-                    "- Option A: use_grounding=True or provide tools with response_mime_type=None/text/plain and response_schema=None\n"
-                    "- Option B: use_grounding=False and tools=None with response_mime_type/response_schema for structured output"
+                    "Cannot use grounding or tools with structured output. "
+                    "Choose one:\n"
+                    "- Option A: use_grounding=True or provide tools with "
+                    "response_mime_type=None/text/plain and response_schema=None\n"
+                    "- Option B: use_grounding=False and tools=None with "
+                    "response_mime_type/response_schema for structured output"
                 )
-        

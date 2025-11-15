@@ -6,13 +6,10 @@ including validation, state persistence, and automatic reminder generation.
 Inspired by Claude Code's TodoWrite functionality with enterprise-level reliability.
 """
 
-from loguru import logger
-from typing import List, Dict, Any, Annotated
-from collections.abc import Callable, Awaitable
+import json
+from collections.abc import Awaitable, Callable
+from typing import Annotated, Any, Dict, List
 
-from langchain_core.messages import ToolMessage
-from langchain_core.tools import tool
-from langgraph.types import Command
 from langchain.agents.middleware.types import (
     AgentMiddleware,
     AgentState,
@@ -21,14 +18,17 @@ from langchain.agents.middleware.types import (
     ModelResponse,
 )
 from langchain.tools import InjectedToolCallId
-import json
+from langchain_core.messages import ToolMessage
+from langchain_core.tools import tool
+from langgraph.types import Command
+from loguru import logger
 
 from prompts.task_management.todo_system_prompt import (
+    EMPTY_TODO_REMINDER,
+    TODO_REMINDER_FINAL_CONFIRMATION,
+    TODO_REMINDER_TEMPLATE,
     WRITE_TODOS_SYSTEM_PROMPT,
     WRITE_TODOS_TOOL_DESCRIPTION,
-    EMPTY_TODO_REMINDER,
-    TODO_REMINDER_TEMPLATE,
-    TODO_REMINDER_FINAL_CONFIRMATION
 )
 
 # Import shared types to ensure consistency
@@ -46,6 +46,7 @@ class PlanningState(AgentState):
     Attributes:
         todos (List[TodoItem]): Persistent todo list for task tracking
     """
+
     todos: List[TodoItem]
 
 
@@ -68,7 +69,7 @@ class TodoWriteMiddleware(AgentMiddleware):
         *,
         tool_name: str = "write_todos",
         system_prompt: str = WRITE_TODOS_SYSTEM_PROMPT,
-        tool_description: str = WRITE_TODOS_TOOL_DESCRIPTION
+        tool_description: str = WRITE_TODOS_TOOL_DESCRIPTION,
     ):
         """
         Initialize TodoWrite middleware with custom parameters.
@@ -80,8 +81,12 @@ class TodoWriteMiddleware(AgentMiddleware):
         """
         super().__init__()
         self.tool_name = tool_name
-        self.system_prompt = system_prompt.replace("{{write_todos_function_name}}", tool_name)
-        self.tool_description = tool_description.replace("{{write_todos_function_name}}", tool_name)
+        self.system_prompt = system_prompt.replace(
+            "{{write_todos_function_name}}", tool_name
+        )
+        self.tool_description = tool_description.replace(
+            "{{write_todos_function_name}}", tool_name
+        )
         self.tools = [self._create_write_todos_tool()]
 
     def wrap_model_call(
@@ -110,10 +115,13 @@ class TodoWriteMiddleware(AgentMiddleware):
 
             # Get todos from request state, default to empty list
             todos = request.state.get("todos", [])
+            if not isinstance(todos, list):
+                raise ValueError("Todos in state must be a list")
 
             # Inject additional reminder for empty todo lists (initial state)
             if not todos:
-                reminder = self._generate_reminder(todos)  # Will return EMPTY_TODO_REMINDER
+                # Return EMPTY_TODO_REMINDER
+                reminder = self._generate_reminder(todos)
                 if reminder:
                     request.system_prompt = f"{request.system_prompt}\n\n{reminder}"
 
@@ -129,7 +137,8 @@ class TodoWriteMiddleware(AgentMiddleware):
         handler: Callable[[ModelRequest], Awaitable[ModelResponse]],
     ) -> ModelCallResult:
         """
-        Async version of wrap_model_call - inject system prompt and reminders based on todo state.
+        Async version of wrap_model_call - inject system prompt and reminders
+        based on todo state.
 
         Always injects the main system prompt with TodoWrite instructions.
         Provides additional initial guidance when no todos exist.
@@ -149,10 +158,13 @@ class TodoWriteMiddleware(AgentMiddleware):
 
             # Get todos from request state, default to empty list
             todos = request.state.get("todos", [])
+            if not isinstance(todos, list):
+                raise ValueError("Todos in state must be a list")
 
             # Inject additional reminder for empty todo lists (initial state)
             if not todos:
-                reminder = self._generate_reminder(todos)  # Will return EMPTY_TODO_REMINDER
+                # Return EMPTY_TODO_REMINDER
+                reminder = self._generate_reminder(todos)
                 if reminder:
                     request.system_prompt = f"{request.system_prompt}\n\n{reminder}"
 
@@ -163,11 +175,15 @@ class TodoWriteMiddleware(AgentMiddleware):
             return await handler(request)
 
     def _create_write_todos_tool(self):
-        """Create the todo management tool with comprehensive validation and state management."""
+        """
+        Create the todo management tool with comprehensive validation
+        and state management.
+        """
+
         @tool(self.tool_name, description=self.tool_description)
         def write_todos(
-            todos: List[TodoItem],
-            tool_call_id: Annotated[str, InjectedToolCallId]
+            todos: List[Dict[str, Any]],
+            tool_call_id: Annotated[str, InjectedToolCallId],
         ) -> Command:
             """
             Manage todo list for complex multi-step tasks (3+ steps or more).
@@ -193,10 +209,12 @@ class TodoWriteMiddleware(AgentMiddleware):
                 if not validation["valid"]:
                     return Command(
                         update={
-                            "messages": [ToolMessage(
-                                f"Validation error: {validation['error']}",
-                                tool_call_id=tool_call_id
-                            )]
+                            "messages": [
+                                ToolMessage(
+                                    f"Validation error: {validation['error']}",
+                                    tool_call_id=tool_call_id,
+                                )
+                            ]
                         }
                     )
 
@@ -205,7 +223,7 @@ class TodoWriteMiddleware(AgentMiddleware):
 
                 # Add contextual reminders for existing todos
                 if todos:
-                    reminder = self._generate_reminder(todos)  # Generate state change reminder
+                    reminder = self._generate_reminder(todos)
                     if reminder:
                         response_message += f"\n\n{reminder}"
 
@@ -213,10 +231,9 @@ class TodoWriteMiddleware(AgentMiddleware):
                 return Command(
                     update={
                         "todos": todos,
-                        "messages": [ToolMessage(
-                            response_message,
-                            tool_call_id=tool_call_id
-                        )]
+                        "messages": [
+                            ToolMessage(response_message, tool_call_id=tool_call_id)
+                        ],
                     }
                 )
 
@@ -224,16 +241,18 @@ class TodoWriteMiddleware(AgentMiddleware):
                 # Return error message if something goes wrong
                 return Command(
                     update={
-                        "messages": [ToolMessage(
-                            f"Error updating todo list: {str(e)}",
-                            tool_call_id=tool_call_id
-                        )]
+                        "messages": [
+                            ToolMessage(
+                                f"Error updating todo list: {str(e)}",
+                                tool_call_id=tool_call_id,
+                            )
+                        ]
                     }
                 )
 
         return write_todos
 
-    def _generate_reminder(self, todos: List[TodoItem]) -> str:
+    def _generate_reminder(self, todos: List[Dict[str, Any]]) -> str:
         """
         Generate reminders based on todo state.
 
@@ -248,39 +267,55 @@ class TodoWriteMiddleware(AgentMiddleware):
             Reminder string or empty string if no reminder needed
         """
         try:
+            if not isinstance(todos, list):
+                return ""
+
             # Case A: Empty list reminder
             if not todos:
                 return EMPTY_TODO_REMINDER
-            
-            in_progress_tasks = [task for task in todos if task.get("status") == "in_progress"]
+
+            in_progress_tasks = [
+                task for task in todos if task.get("status") == "in_progress"
+            ]
             pending_tasks = [task for task in todos if task.get("status") == "pending"]
 
             # Case B: All tasks completed reminder
             if not in_progress_tasks and not pending_tasks:
-                return (
-                    TODO_REMINDER_FINAL_CONFIRMATION
-                    .replace("{{all_tasks_count}}", str(len(todos)))
+                return TODO_REMINDER_FINAL_CONFIRMATION.replace(
+                    "{{all_tasks_count}}", str(len(todos))
                 )
 
             # Case C: State change reminder with placeholder
-            todos_json = json.dumps([
-                {
-                    "content": todo["content"],
-                    "status": todo["status"],
-                    "activeForm": todo["activeForm"]
-                } for todo in todos
-            ], indent=2)
+            todos_json = json.dumps(
+                [
+                    {
+                        "content": todo["content"],
+                        "status": todo["status"],
+                        "activeForm": todo.get("activeForm", ""),
+                    }
+                    for todo in todos
+                    if (
+                        isinstance(todo, dict)
+                        and "content" in todo
+                        and "status" in todo
+                    )
+                ],
+                indent=2,
+            )
 
             return (
-                TODO_REMINDER_TEMPLATE
-                .replace("{{todos_json}}", todos_json)
+                TODO_REMINDER_TEMPLATE.replace("{{todos_json}}", todos_json)
                 .replace(
                     "{{current_task_content}}",
-                    in_progress_tasks[0]["content"] if in_progress_tasks else ""
+                    (
+                        in_progress_tasks[0].get("content", "")
+                        if in_progress_tasks
+                        else ""
+                    ),
                 )
                 .replace(
                     "{{current_task_status}}",
-                    in_progress_tasks[0]["status"] if in_progress_tasks else ""
+                    in_progress_tasks[0].get("status", "") if in_progress_tasks else "",
                 )
             )
 
@@ -288,7 +323,7 @@ class TodoWriteMiddleware(AgentMiddleware):
             print(f"Warning: TodoWriteMiddleware reminder generation failed: {e}")
             return ""
 
-    def _validate_todos(self, todos: List[TodoItem]) -> Dict[str, Any]:
+    def _validate_todos(self, todos: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Validate todo list with mandatory activeForm and business rules.
 
@@ -313,40 +348,54 @@ class TodoWriteMiddleware(AgentMiddleware):
             if len(in_progress) > 1:
                 return {
                     "valid": False,
-                    "error": f"Too many tasks in_progress ({len(in_progress)}). Only 1 task allowed at a time."
+                    "error": (
+                        f"Too many tasks in_progress ({len(in_progress)}). "
+                        "Only 1 task allowed at a time."
+                    ),
                 }
 
             # Mandatory field validation
             for i, todo in enumerate(todos):
                 # Check required content field
                 if not todo.get("content", "").strip():
-                    return {"valid": False, "error": f"Todo at index {i} has empty content"}
+                    return {
+                        "valid": False,
+                        "error": f"Todo at index {i} has empty content",
+                    }
 
                 # Check mandatory activeForm field
                 if not todo.get("activeForm", "").strip():
-                    return {"valid": False, "error": f"Todo at index {i} has empty activeForm field"}
+                    return {
+                        "valid": False,
+                        "error": f"Todo at index {i} has empty activeForm field",
+                    }
 
                 # Check valid status values
                 if todo.get("status") not in ["pending", "in_progress", "completed"]:
                     return {
                         "valid": False,
-                        "error": f"Todo at index {i} has invalid status '{todo.get('status')}'. Must be one of: pending, in_progress, completed"
+                        "error": (
+                            f"Todo at index {i} has invalid status "
+                            f"'{todo.get('status')}'. "
+                            "Must be one of: pending, in_progress, completed"
+                        ),
                     }
 
                 # Check valid priority values
                 if todo.get("priority") not in ["high", "medium", "low"]:
                     return {
                         "valid": False,
-                        "error": f"Todo at index {i} has invalid priority '{todo.get('priority')}'. Must be one of: high, medium, low"
+                        "error": (
+                            f"Todo at index {i} has invalid priority "
+                            f"'{todo.get('priority')}'. "
+                            "Must be one of: high, medium, low"
+                        ),
                     }
 
             return {"valid": True, "error": None}
 
         except Exception as e:
-            return {
-                "valid": False,
-                "error": f"Validation error: {str(e)}"
-            }
+            return {"valid": False, "error": f"Validation error: {str(e)}"}
 
 
 if __name__ == "__main__":
@@ -370,14 +419,14 @@ if __name__ == "__main__":
             "content": "Test task 1",
             "status": "pending",
             "activeForm": "Starting test task 1",
-            "priority": "high"
+            "priority": "high",
         },
         {
             "content": "Test task 2",
             "status": "in_progress",
             "activeForm": "Working on test task 2",
-            "priority": "medium"
-        }
+            "priority": "medium",
+        },
     ]
 
     validation = middleware._validate_todos(test_todos)
@@ -393,14 +442,14 @@ if __name__ == "__main__":
             "content": "Task 1",
             "status": "in_progress",
             "activeForm": "Working on task 1",
-            "priority": "high"
+            "priority": "high",
         },
         {
             "content": "Task 2",
             "status": "in_progress",
             "activeForm": "Working on task 2",
-            "priority": "medium"
-        }
+            "priority": "medium",
+        },
     ]
 
     invalid_validation = middleware._validate_todos(invalid_todos)

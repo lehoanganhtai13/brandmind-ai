@@ -1,13 +1,14 @@
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 from loguru import logger
 
 
 class Settings:
     """Settings for the system configuration."""
-    def __init__(self):
 
+    def __init__(self):
         # Load environment variables
         # Get project root (2 levels up from this file: src/config/system_config.py)
         project_root = Path(__file__).parent.parent.parent
@@ -20,10 +21,12 @@ class Settings:
             status = load_dotenv(env_file)
             if not status:
                 logger.warning(f"Failed to load environment variables from {env_file}")
-        
+
         # MinIO settings
-        self.MINIO_ACCESS_KEY_ID = os.getenv("MINIO_ACCESS_KEY_ID",  "minioadmin")
-        self.MINIO_SECRET_ACCESS_KEY = os.getenv("MINIO_SECRET_ACCESS_KEY", "minioadmin")
+        self.MINIO_ACCESS_KEY_ID = os.getenv("MINIO_ACCESS_KEY_ID", "minioadmin")
+        self.MINIO_SECRET_ACCESS_KEY = os.getenv(
+            "MINIO_SECRET_ACCESS_KEY", "minioadmin"
+        )
 
         # Model serving settings
         self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -31,5 +34,6 @@ class Settings:
 
         # Parsing service settings
         self.LLAMA_PARSE_API_KEY = os.getenv("LLAMA_PARSE_API_KEY", "")
+
 
 SETTINGS = Settings()

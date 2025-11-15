@@ -1,25 +1,23 @@
 import json
 import math
 from collections import defaultdict
-from loguru import logger
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import requests
+from loguru import logger
 from scipy.sparse import csr_array, vstack
 
-from shared.model_clients.bm25.tokenizers import (
-    Analyzer, build_default_analyzer
-)
+from shared.model_clients.bm25.tokenizers import Analyzer, build_default_analyzer
 
 
 # https://github.com/milvus-io/milvus-model/blob/main/src/pymilvus/model/sparse/bm25/bm25.py
 class BM25EmbeddingFunction:
     def __init__(
         self,
-        analyzer: Analyzer = None,
+        analyzer: Optional[Analyzer] = None,
         corpus: Optional[List] = None,
         k1: float = 1.5,
         b: float = 0.75,
@@ -28,11 +26,11 @@ class BM25EmbeddingFunction:
     ):
         if analyzer is None:
             analyzer = build_default_analyzer(language="en")
-            
+
         self.analyzer = analyzer
         self.corpus_size = 0
-        self.avgdl = 0
-        self.idf = {}
+        self.avgdl = 0.0
+        self.idf: Dict[str, List[Any]] = {}
         self.k1 = k1
         self.b = b
         self.epsilon = epsilon
@@ -46,12 +44,12 @@ class BM25EmbeddingFunction:
             self.idf[word][1] = index
 
     def _compute_statistics(self, corpus: List[str]):
-        term_document_frequencies = defaultdict(int)
+        term_document_frequencies: Dict[str, int] = defaultdict(int)
         total_word_count = 0
         for document in corpus:
             total_word_count += len(document)
 
-            frequencies = defaultdict(int)
+            frequencies: Dict[str, int] = defaultdict(int)
             for word in document:
                 frequencies[word] += 1
 
@@ -69,7 +67,7 @@ class BM25EmbeddingFunction:
 
     def _calc_idf(self, term_document_frequencies: Dict):
         # collect idf sum to calculate an average idf for epsilon value
-        idf_sum = 0
+        idf_sum = 0.0
         # collect words with negative idf to set them a special epsilon value.
         # idf can be negative if word is contained in more than half of documents
         negative_idfs = []
@@ -77,7 +75,9 @@ class BM25EmbeddingFunction:
             idf = math.log(self.corpus_size - freq + 0.5) - math.log(freq + 0.5)
             if word not in self.idf:
                 self.idf[word] = [0.0, 0]
-            self.idf[word][0] = idf
+            # Update the idf value by replacing the entire list
+            old_index = self.idf[word][1] if word in self.idf else 0
+            self.idf[word] = [idf, old_index]
             idf_sum += idf
             if idf < 0:
                 negative_idfs.append(word)
@@ -85,7 +85,9 @@ class BM25EmbeddingFunction:
 
         eps = self.epsilon * self.average_idf
         for word in negative_idfs:
-            self.idf[word][0] = eps
+            # Update epsilon value by replacing the entire list
+            old_index = self.idf[word][1]
+            self.idf[word] = [eps, old_index]
 
     def _rebuild(self, corpus: List[str]):
         self._clear()
@@ -97,7 +99,7 @@ class BM25EmbeddingFunction:
     def _clear(self):
         self.corpus_size = 0
         # idf records the (value, index)
-        self.idf = defaultdict(list)
+        self.idf: Dict[str, List[Any]] = defaultdict(lambda: [0.0, 0])
 
     @property
     def dim(self):
@@ -114,11 +116,13 @@ class BM25EmbeddingFunction:
                 values.append(self.idf[term][0])
                 rows.append(0)
                 cols.append(self.idf[term][1])
-        return csr_array((values, (rows, cols)), shape=(1, len(self.idf))).astype(np.float32)
+        return csr_array((values, (rows, cols)), shape=(1, len(self.idf))).astype(
+            np.float32
+        )
 
     def _encode_document(self, doc: str) -> csr_array:
         terms = self.analyzer(doc)
-        frequencies = defaultdict(int)
+        frequencies: Dict[str, int] = defaultdict(int)
         doc_len = len(terms)
         term_set = set()
         for term in terms:
@@ -131,19 +135,27 @@ class BM25EmbeddingFunction:
                 value = (
                     term_freq
                     * (self.k1 + 1)
-                    / (term_freq + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl))
+                    / (
+                        term_freq
+                        + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)
+                    )
                 )
                 rows.append(0)
                 cols.append(self.idf[term][1])
                 values.append(value)
-        return csr_array((values, (rows, cols)), shape=(1, len(self.idf))).astype(np.float32)
+        return csr_array((values, (rows, cols)), shape=(1, len(self.idf))).astype(
+            np.float32
+        )
 
     def encode_queries(self, queries: List[str]) -> csr_array:
         sparse_embs = [self._encode_query(query) for query in queries]
         return vstack(sparse_embs).tocsr()
 
     def __call__(self, texts: List[str]) -> csr_array:
-        error_message = "Unsupported function called, please check the documentation of 'BM25EmbeddingFunction'."
+        error_message = (
+            "Unsupported function called, please check the documentation of "
+            "'BM25EmbeddingFunction'."
+        )
         raise ValueError(error_message)
 
     def encode_documents(self, documents: List[str]) -> csr_array:
@@ -151,7 +163,7 @@ class BM25EmbeddingFunction:
         return vstack(sparse_embs).tocsr()
 
     def save(self, path: str):
-        bm25_params = {}
+        bm25_params: Dict[str, Any] = {}
         bm25_params["version"] = "v1"
         bm25_params["corpus_size"] = self.corpus_size
         bm25_params["avgdl"] = self.avgdl
@@ -176,13 +188,16 @@ class BM25EmbeddingFunction:
             if not Path(default_meta_filename).exists():
                 try:
                     logger.info(
-                        f"{default_meta_filename} not found, start downloading from {default_meta_url} to ./{default_meta_filename}."
+                        f"{default_meta_filename} not found, start downloading from "
+                        f"{default_meta_url} to ./{default_meta_filename}."
                     )
                     response = requests.get(default_meta_url, timeout=30)
                     response.raise_for_status()
                     with Path(default_meta_filename).open("wb") as f:
                         f.write(response.content)
-                    logger.info(f"{default_meta_filename} has been downloaded successfully.")
+                    logger.info(
+                        f"{default_meta_filename} has been downloaded successfully."
+                    )
                 except requests.exceptions.RequestException as e:
                     error_message = f"Failed to download the file: {e}"
                     raise RuntimeError(error_message) from e

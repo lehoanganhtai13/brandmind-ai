@@ -6,6 +6,7 @@ to ensure type consistency and avoid duplication.
 """
 
 from typing import Literal
+
 from typing_extensions import TypedDict
 
 
@@ -22,6 +23,7 @@ class TodoItem(TypedDict):
         activeForm (str): Present continuous description of active work
         priority (str): Task priority level for scheduling decisions
     """
+
     content: str
     status: Literal["pending", "in_progress", "completed"]
     activeForm: str

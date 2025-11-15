@@ -28,12 +28,37 @@ dev = [
  "pytest>=7.0.0",
  "black>=23.0.0",
  "mypy>=1.0.0",
- "isort>=5.12.0",
- "flake8>=6.0.0",
  "pytest-asyncio>=1.2.0",
+ "ruff>=0.14.5",
+ "bandit>=1.8.6",
+ "scipy-stubs>=1.15.3.0",
+ "types-pyyaml>=6.0.12.20250915",
+ "types-requests>=2.32.4.20250913",
+ "types-tqdm>=4.67.0.20250809",
 ]
 
 [tool.uv.sources]
 shared = { workspace = true }
 core = { workspace = true }
 
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+exclude = ["src/prompts", "tests"]
+
+[tool.ruff.lint]
+# Enable rule sets to replace flake8 (E, F, W) and isort (I)
+select = ["E", "F", "W", "I"]
+ignore = []
+
+[tool.ruff.lint.isort]
+# Declare project's own modules for correct import sorting
+known-first-party = ["cli", "config", "core", "prompts", "services", "shared"]
+
+[tool.mypy]
+exclude = ["src/prompts"]
+
+# Handle workspace packages correctly
+mypy_path = "src:src/core/src:src/shared/src"
+namespace_packages = true
+explicit_package_bases = true

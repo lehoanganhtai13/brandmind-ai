@@ -7,16 +7,16 @@ from shared.utils.base_class import DenseEmbedding
 
 class BaseEmbedder(ABC):
     """Abstract base class for embedding models."""
-    
+
     def __init__(self, config: EmbedderConfig, **kwargs):
         self.config = config
         self._initialize_embedder(**kwargs)
-    
+
     @abstractmethod
     def _initialize_embedder(self, **kwargs) -> None:
         """Initialize the embedder."""
         pass
-        
+
     @abstractmethod
     def get_query_embedding(self, query: str, **kwargs: Any) -> DenseEmbedding:
         """
@@ -44,7 +44,9 @@ class BaseEmbedder(ABC):
         raise NotImplementedError("This method should be implemented in a subclass.")
 
     @abstractmethod
-    def get_text_embeddings(self, texts: List[str], **kwargs: Any) -> List[DenseEmbedding]:
+    def get_text_embeddings(
+        self, texts: List[str], **kwargs: Any
+    ) -> List[DenseEmbedding]:
         """
         Get the embeddings for the list of texts.
 
@@ -81,9 +83,11 @@ class BaseEmbedder(ABC):
             DenseEmbedding: The embedding for the text.
         """
         raise NotImplementedError("This method should be implemented in a subclass.")
-    
+
     @abstractmethod
-    async def aget_text_embeddings(self, texts: List[str], **kwargs: Any) -> List[DenseEmbedding]:
+    async def aget_text_embeddings(
+        self, texts: List[str], **kwargs: Any
+    ) -> List[DenseEmbedding]:
         """
         Asynchronously get the embeddings for the list of texts.
 
@@ -94,4 +98,3 @@ class BaseEmbedder(ABC):
             List[DenseEmbedding]: The list of embeddings for the texts.
         """
         raise NotImplementedError("This method should be implemented in a subclass.")
-    

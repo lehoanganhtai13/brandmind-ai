@@ -3,10 +3,10 @@ import string
 from pathlib import Path
 from typing import Any, Dict, List, Match, Optional, Type
 
-
 # -------------- Class Registry --------------
 
 _class_registry = {}
+
 
 def register_class(register_as: str):
     def decorator(cls: Type[Any]):
@@ -17,6 +17,7 @@ def register_class(register_as: str):
 
 
 # -------------- Preprocessors --------------
+
 
 class Preprocessor:
     def apply(self, text: str):
@@ -44,9 +45,10 @@ class ReplacePreprocessor(Preprocessor):
 
     def apply(self, text: str):
         return self.pattern.sub(self._replacement_function, text)
-    
+
 
 # -------------- Tokenizers --------------
+
 
 class Tokenizer:
     def tokenize(self, text: str):
@@ -59,19 +61,23 @@ class StandardTokenizer(Tokenizer):
     def __init__(self):
         import nltk
         from nltk import word_tokenize
+
         try:
-           word_tokenize("this is a simple test.") 
+            word_tokenize("this is a simple test.")
         except LookupError:
             nltk.download("punkt_tab")
+
     def tokenize(self, text: str):
         from nltk import word_tokenize
+
         return word_tokenize(text)
-    
+
 
 @register_class("VietnameseTokenizer")
 class VietnameseTokenizer(Tokenizer):
     def __init__(self):
         from underthesea import word_tokenize as vietnamese_word_tokenize
+
         try:
             vietnamese_word_tokenize("this is a simple test.", format="text")
         except LookupError:
@@ -79,12 +85,15 @@ class VietnameseTokenizer(Tokenizer):
                 "The 'underthesea' package is required for Vietnamese tokenization. "
                 "Please install it using 'pip install underthesea'."
             )
+
     def tokenize(self, text: str):
         from underthesea import word_tokenize as vietnamese_word_tokenize
+
         return vietnamese_word_tokenize(text, format="text")
 
 
 # -------------- Text Filters --------------
+
 
 class TextFilter:
     def apply(self, tokens: List[str]):
@@ -100,9 +109,12 @@ class LowercaseFilter(TextFilter):
 
 @register_class("StopwordFilter")
 class StopwordFilter(TextFilter):
-    def __init__(self, language: str = "english", stopword_list: Optional[List[str]] = None):
+    def __init__(
+        self, language: str = "english", stopword_list: Optional[List[str]] = None
+    ):
         import nltk
         from nltk.corpus import stopwords
+
         try:
             nltk.corpus.stopwords.words(language)
         except LookupError:
@@ -129,13 +141,15 @@ class PunctuationFilter(TextFilter):
 class StemmingFilter(TextFilter):
     def __init__(self, language: str = "english"):
         from nltk.stem.snowball import SnowballStemmer
+
         self.stemmer = SnowballStemmer(language)
 
     def apply(self, tokens: List[str]):
         return [self.stemmer.stem(token) for token in tokens]
 
 
-# -------------- Analyzer --------------    
+# -------------- Analyzer --------------
+
 
 class Analyzer:
     def __init__(
@@ -151,17 +165,19 @@ class Analyzer:
         self.filters = filters
 
     def __call__(self, text: str):
-        for preprocessor in self.preprocessors:
-            text = preprocessor.apply(text)
+        if self.preprocessors:
+            for preprocessor in self.preprocessors:
+                text = preprocessor.apply(text)
         tokens = self.tokenizer.tokenize(text)
-        for _filter in self.filters:
-            tokens = _filter.apply(tokens)
+        if self.filters:
+            for _filter in self.filters:
+                tokens = _filter.apply(tokens)
         return tokens
 
 
 def build_default_analyzer(language: str = "vi"):
     default_config_path = Path(__file__).parent / "lang.yaml"
-    return build_analyzer_from_yaml(default_config_path, language)
+    return build_analyzer_from_yaml(str(default_config_path), language)
 
 
 def build_analyzer_from_yaml(filepath: str, name: str):
@@ -192,4 +208,6 @@ def build_analyzer_from_yaml(filepath: str, name: str):
             for filter_config in lang_config["filters"]
         ]
 
-    return Analyzer(name=name, tokenizer=tokenizer, preprocessors=preprocessors, filters=filters)
+    return Analyzer(
+        name=name, tokenizer=tokenizer, preprocessors=preprocessors, filters=filters
+    )

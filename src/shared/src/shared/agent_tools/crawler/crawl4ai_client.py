@@ -5,22 +5,32 @@ Uses official Crawl4AI SDK for better configuration and reliability.
 
 import asyncio
 import traceback
-from typing import Optional, List
+from typing import List, Optional
+
+from crawl4ai import BrowserConfig, CacheMode, CrawlerRunConfig
+from crawl4ai.content_filter_strategy import PruningContentFilter
+from crawl4ai.docker_client import Crawl4aiDockerClient
+from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from loguru import logger
 from pydantic import BaseModel, Field
-
-from crawl4ai.docker_client import Crawl4aiDockerClient
-from crawl4ai import BrowserConfig, CrawlerRunConfig, CacheMode
-from crawl4ai.content_filter_strategy import PruningContentFilter
-from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
 from shared.utils.base_class import ScrapeResult
 
 
 class ContentExtractionResult(BaseModel):
-    status: str = Field(..., description="Status of the content extraction. Possible values: 'no_content', 'not_cleaned', 'cleaned'.")
-    start_sentence: str = Field("", description="The starting sentence of the main content.")
-    end_sentence: str = Field("", description="The ending sentence of the main content.")
+    status: str = Field(
+        ...,
+        description=(
+            "Status of the content extraction. Possible values: "
+            "'no_content', 'not_cleaned', 'cleaned'."
+        ),
+    )
+    start_sentence: str = Field(
+        "", description="The starting sentence of the main content."
+    )
+    end_sentence: str = Field(
+        "", description="The ending sentence of the main content."
+    )
 
 
 class Crawl4AIConfig(BaseModel):
@@ -32,14 +42,25 @@ class Crawl4AIConfig(BaseModel):
     # Content cleaning parameters for LLM optimization
     only_text: bool = Field(True, description="Extract text-only content")
     excluded_tags: List[str] = Field(
-        default=["script", "style", "nav", "header", "footer", "aside", "iframe", "form"],
-        description="HTML tags to exclude for cleaner content"
+        default=[
+            "script",
+            "style",
+            "nav",
+            "header",
+            "footer",
+            "aside",
+            "iframe",
+            "form",
+        ],
+        description="HTML tags to exclude for cleaner content",
     )
     excluded_selector: Optional[str] = Field(
         default="[class*='ad'], [class*='banner'], [class*='popup'], [id*='ad']",
-        description="CSS selectors to exclude ads and noise"
+        description="CSS selectors to exclude ads and noise",
     )
-    css_selector: Optional[str] = Field(None, description="Focus on specific content area")
+    css_selector: Optional[str] = Field(
+        None, description="Focus on specific content area"
+    )
 
     # Content filtering
     word_count_threshold: int = Field(10, description="Minimum words per text block")
@@ -47,10 +68,14 @@ class Crawl4AIConfig(BaseModel):
 
     # Image and media handling
     exclude_external_images: bool = Field(True, description="Remove external images")
-    image_description_min_word_threshold: int = Field(5, description="Min words for image descriptions")
+    image_description_min_word_threshold: int = Field(
+        5, description="Min words for image descriptions"
+    )
 
     # Advanced cleaning
-    fit_markdown: bool = Field(True, description="Use heuristic filtering for AI-friendly content")
+    fit_markdown: bool = Field(
+        True, description="Use heuristic filtering for AI-friendly content"
+    )
     prettiify: bool = Field(True, description="Clean and format HTML")
 
     # Performance
@@ -61,7 +86,12 @@ class Crawl4AIConfig(BaseModel):
 class Crawl4AIClient:
     """Client using official Crawl4AI Docker SDK for web scraping."""
 
-    def __init__(self, base_url: str = "http://localhost:11235", timeout: float = 60.0, verbose: bool = True):
+    def __init__(
+        self,
+        base_url: str = "http://localhost:11235",
+        timeout: float = 60.0,
+        verbose: bool = True,
+    ):
         self.base_url = base_url
         self.timeout = timeout
         self.verbose = verbose
@@ -69,9 +99,7 @@ class Crawl4AIClient:
     async def _get_client(self) -> Crawl4aiDockerClient:
         """Get Docker client instance."""
         return Crawl4aiDockerClient(
-            base_url=self.base_url,
-            timeout=self.timeout,
-            verbose=self.verbose
+            base_url=self.base_url, timeout=self.timeout, verbose=self.verbose
         )
 
     def _run_async(self, coro):
@@ -81,6 +109,7 @@ class Crawl4AIClient:
             if loop.is_running():
                 # Create new event loop for nested calls
                 import threading
+
                 result = None
                 exception = None
 
@@ -107,7 +136,9 @@ class Crawl4AIClient:
             # No event loop, create one
             return asyncio.run(coro)
 
-    def fetch_clean_content(self, url: str, config: Optional[Crawl4AIConfig] = None) -> ScrapeResult:
+    def fetch_clean_content(
+        self, url: str, config: Optional[Crawl4AIConfig] = None
+    ) -> ScrapeResult:
         """
         Extract clean, LLM-optimized content from a website.
 
@@ -119,7 +150,19 @@ class Crawl4AIClient:
             ScrapeResult with clean content
         """
         if not config:
-            config = Crawl4AIConfig(url=url)
+            config = Crawl4AIConfig(
+                url=url,
+                only_text=True,
+                css_selector=None,
+                word_count_threshold=10,
+                remove_forms=True,
+                exclude_external_images=True,
+                image_description_min_word_threshold=5,
+                fit_markdown=True,
+                prettiify=True,
+                cache_mode="enabled",
+                timeout=30,
+            )
         else:
             config.url = url
 
@@ -136,7 +179,7 @@ class Crawl4AIClient:
                         options={
                             "ignore_images": True,
                             "ignore_links": config.only_text,
-                            "body_width": 0
+                            "body_width": 0,
                         }
                     )
 
@@ -146,7 +189,7 @@ class Crawl4AIClient:
                         content_filter = PruningContentFilter(
                             threshold=0.45,
                             threshold_type="dynamic",
-                            min_word_threshold=config.word_count_threshold
+                            min_word_threshold=config.word_count_threshold,
                         )
                         # Apply content filter to markdown generator
                         markdown_generator = DefaultMarkdownGenerator(
@@ -154,36 +197,47 @@ class Crawl4AIClient:
                             options={
                                 "ignore_images": True,
                                 "ignore_links": config.only_text,
-                                "body_width": 0
-                            }
+                                "body_width": 0,
+                            },
                         )
 
                     # Configure crawler
                     crawler_config = CrawlerRunConfig(
-                        cache_mode=CacheMode.BYPASS if config.cache_mode == "bypass" else CacheMode.ENABLED,
+                        cache_mode=(
+                            CacheMode.BYPASS
+                            if config.cache_mode == "bypass"
+                            else CacheMode.ENABLED
+                        ),
                         excluded_tags=config.excluded_tags,
                         excluded_selector=config.excluded_selector,
                         css_selector=config.css_selector,
                         word_count_threshold=config.word_count_threshold,
                         remove_forms=config.remove_forms,
                         exclude_external_images=config.exclude_external_images,
-                        markdown_generator=markdown_generator
+                        markdown_generator=markdown_generator,
                     )
 
                     results = await client.crawl(
                         urls=[url],
                         browser_config=browser_config,
-                        crawler_config=crawler_config
+                        crawler_config=crawler_config,
                     )
 
                     if results:
                         result = results[0] if isinstance(results, list) else results
                         if result.success and result.markdown:
                             content = self._post_process_content(result.markdown)
-                            logger.info(f"Successfully crawled {url} - {len(content)} characters")
+                            logger.info(
+                                f"Successfully crawled {url} - {len(content)} "
+                                "characters"
+                            )
                             return ScrapeResult(url=url, content=content)
                         else:
-                            error_msg = result.error_message if hasattr(result, 'error_message') else "Unknown error"
+                            error_msg = (
+                                result.error_message
+                                if hasattr(result, "error_message")
+                                else "Unknown error"
+                            )
                             logger.error(f"Crawl failed: {error_msg}")
                             return ScrapeResult(url=url, content="")
                     else:
@@ -219,21 +273,27 @@ class Crawl4AIClient:
             # Use local LLM to create summary
             summary_content = self._summarize_content_with_llm(basic_result.content)
 
-            logger.info(f"Summary extraction completed for {url} - {len(summary_content)} characters")
+            logger.info(
+                f"Summary extraction completed for {url} - {len(summary_content)} "
+                f"characters"
+            )
             return ScrapeResult(url=url, content=summary_content)
 
         except Exception as e:
             logger.error(f"Summary extraction failed for {url}: {e}")
             return ScrapeResult(url=url, content="")
 
-
-
     def _filter_content_with_llm(self, content: str, query: str) -> str:
         """Use Gemini AI to filter content relevant to user query."""
         try:
             from config.system_config import SETTINGS
-            from prompts.extract_web_content.filter_relevant_content import FILTER_RELEVANT_CONTENT_PROMPT
-            from shared.model_clients.llm.google import GoogleAIClientLLM, GoogleAIClientLLMConfig
+            from prompts.extract_web_content.filter_relevant_content import (
+                FILTER_RELEVANT_CONTENT_PROMPT,
+            )
+            from shared.model_clients.llm.google import (
+                GoogleAIClientLLM,
+                GoogleAIClientLLMConfig,
+            )
 
             llm = GoogleAIClientLLM(
                 config=GoogleAIClientLLMConfig(
@@ -244,7 +304,9 @@ class Crawl4AIClient:
                 )
             )
 
-            prompt = FILTER_RELEVANT_CONTENT_PROMPT.replace("{{user_query}}", query).replace("{{content}}", content)
+            prompt = FILTER_RELEVANT_CONTENT_PROMPT.replace(
+                "{{user_query}}", query
+            ).replace("{{content}}", content)
 
             result = llm.complete(prompt, temperature=0.1).text
 
@@ -260,8 +322,13 @@ class Crawl4AIClient:
         """Use Gemini AI to create structured summary of content."""
         try:
             from config.system_config import SETTINGS
-            from prompts.extract_web_content.summarize_content import SUMMARIZE_CONTENT_PROMPT
-            from shared.model_clients.llm.google import GoogleAIClientLLM, GoogleAIClientLLMConfig
+            from prompts.extract_web_content.summarize_content import (
+                SUMMARIZE_CONTENT_PROMPT,
+            )
+            from shared.model_clients.llm.google import (
+                GoogleAIClientLLM,
+                GoogleAIClientLLMConfig,
+            )
 
             llm = GoogleAIClientLLM(
                 config=GoogleAIClientLLMConfig(
@@ -276,11 +343,13 @@ class Crawl4AIClient:
 
             result = llm.complete(prompt, temperature=0.1).text
 
-            logger.debug(f"LLM content summarization completed")
+            logger.debug("LLM content summarization completed")
             return result.strip()
 
         except Exception as e:
-            logger.warning(f"LLM content summarization failed: {e}, using original content")
+            logger.warning(
+                f"LLM content summarization failed: {e}, using original content"
+            )
             logger.warning(traceback.format_exc())
             return content
 
@@ -288,9 +357,15 @@ class Crawl4AIClient:
         """Use Gemini AI to define main content boundaries like Tavily approach."""
         try:
             import json
+
             from config.system_config import SETTINGS
-            from prompts.extract_web_content.find_main_content import MAIN_CONTENT_SEARCH_PROMPT
-            from shared.model_clients.llm.google import GoogleAIClientLLM, GoogleAIClientLLMConfig
+            from prompts.extract_web_content.find_main_content import (
+                MAIN_CONTENT_SEARCH_PROMPT,
+            )
+            from shared.model_clients.llm.google import (
+                GoogleAIClientLLM,
+                GoogleAIClientLLMConfig,
+            )
 
             llm = GoogleAIClientLLM(
                 config=GoogleAIClientLLMConfig(
@@ -304,7 +379,7 @@ class Crawl4AIClient:
 
             result = llm.complete(
                 MAIN_CONTENT_SEARCH_PROMPT.replace("{{raw_content}}", content),
-                temperature=0.1
+                temperature=0.1,
             ).text
 
             if result.startswith("```json"):
@@ -324,15 +399,22 @@ class Crawl4AIClient:
 
                 if start_index != -1 and end_index != -1:
                     # Extract the main content
-                    main_content = content[start_index:end_index + len(end_sentence)]
+                    main_content = content[start_index : end_index + len(end_sentence)]
                     return main_content.strip()
                 else:
-                    return content  # Fallback to original content if sentences not found
+                    return (
+                        content  # Fallback to original content if sentences not found
+                    )
 
         except Exception as e:
-            logger.warning(f"AI main content extraction failed: {e}, using original content")
+            logger.warning(
+                f"AI main content extraction failed: {e}, using original content"
+            )
             logger.warning(traceback.format_exc())
             return content
+
+        # Fallback return in case of unexpected execution path
+        return content
 
     def _post_process_content(self, content: str) -> str:
         """Process content using AI main content detection + formatting cleanup."""
@@ -360,7 +442,6 @@ class Crawl4AIClient:
 
         return content
 
-
     def fetch_relevant_content(self, url: str, query: str) -> ScrapeResult:
         """
         Extract website content relevant to a specific query using local LLM filtering.
@@ -381,20 +462,26 @@ class Crawl4AIClient:
                 return ScrapeResult(url=url, content="")
 
             # Use local LLM to filter relevant content
-            filtered_content = self._filter_content_with_llm(basic_result.content, query)
+            filtered_content = self._filter_content_with_llm(
+                basic_result.content, query
+            )
 
-            logger.info(f"LLM-filtered crawl completed for {url} - {len(filtered_content)} characters")
+            logger.info(
+                f"LLM-filtered crawl completed for {url} - {len(filtered_content)} "
+                f"characters"
+            )
             return ScrapeResult(url=url, content=filtered_content)
 
         except Exception as e:
             logger.error(f"Error in LLM-filtered crawl for {url}: {e}")
             return ScrapeResult(url=url, content="")
 
+
 # Factory function for easy usage
 def create_crawl4ai_client(
     base_url: str = "http://localhost:11235",
     timeout: float = 60.0,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> Crawl4AIClient:
     """Create a Crawl4AI Docker client instance."""
     return Crawl4AIClient(base_url=base_url, timeout=timeout, verbose=verbose)
@@ -409,13 +496,18 @@ class Crawl4AIPresets:
         """Lenient configuration to get maximum content first."""
         return Crawl4AIConfig(
             url="",
+            only_text=True,
             css_selector=None,  # No selector restrictions
             excluded_selector=None,  # No exclusions
             excluded_tags=["script", "style", "iframe"],  # Only obvious noise
             word_count_threshold=0,  # Keep all text blocks
+            remove_forms=True,
             exclude_external_images=False,  # Keep captions/figures
             image_description_min_word_threshold=0,
-            fit_markdown=False  # No content filter initially
+            fit_markdown=False,  # No content filter initially
+            prettiify=True,
+            cache_mode="enabled",
+            timeout=30,
         )
 
     @staticmethod
@@ -423,12 +515,21 @@ class Crawl4AIPresets:
         """Balanced configuration with light filtering."""
         return Crawl4AIConfig(
             url="",
+            only_text=True,
             css_selector=None,  # Let Crawl4AI auto-detect main content
-            excluded_selector=".ads, .advertisement, .cookie, .newsletter, .promo, [id^='ad-'], [class^='ad-']",
+            excluded_selector=(
+                ".ads, .advertisement, .cookie, .newsletter, .promo, "
+                "[id^='ad-'], [class^='ad-']"
+            ),
             excluded_tags=["script", "style", "iframe", "form"],
             word_count_threshold=3,  # Very low threshold
+            remove_forms=True,
             exclude_external_images=False,  # Keep captions
-            fit_markdown=False
+            image_description_min_word_threshold=5,
+            fit_markdown=False,
+            prettiify=True,
+            cache_mode="enabled",
+            timeout=30,
         )
 
     @staticmethod
@@ -436,11 +537,29 @@ class Crawl4AIPresets:
         """Strict configuration for heavily filtered content."""
         return Crawl4AIConfig(
             url="",
+            only_text=True,
             css_selector="main, article, .content, .post, .entry-content",
-            excluded_selector=".ads, .advertisement, .cookie, .newsletter, .promo, [id^='ad-'], [class^='ad-'], nav, header, footer, aside",
-            excluded_tags=["script", "style", "nav", "header", "footer", "aside", "iframe", "form", "button"],
+            excluded_selector=(
+                ".ads, .advertisement, .cookie, .newsletter, .promo, "
+                "[id^='ad-'], [class^='ad-'], nav, header, footer, aside"
+            ),
+            excluded_tags=[
+                "script",
+                "style",
+                "nav",
+                "header",
+                "footer",
+                "aside",
+                "iframe",
+                "form",
+                "button",
+            ],
             word_count_threshold=5,
+            remove_forms=True,
             exclude_external_images=False,  # Still keep captions
-            fit_markdown=True  # Enable content filter
+            image_description_min_word_threshold=5,
+            fit_markdown=True,  # Enable content filter
+            prettiify=True,
+            cache_mode="enabled",
+            timeout=30,
         )
-

@@ -2,8 +2,10 @@
 
 import re
 from typing import List
-from core.document_processing.models import TableInfo
+
 from loguru import logger
+
+from core.document_processing.models import TableInfo
 
 
 class HTMLTableExtractor:
@@ -40,7 +42,9 @@ class HTMLTableExtractor:
 
                 page_num_match = re.search(r"page_(\d+)", page_file_path)
                 if not page_num_match:
-                    logger.warning(f"Could not extract page number from {page_file_path}")
+                    logger.warning(
+                        f"Could not extract page number from {page_file_path}"
+                    )
                     continue
                 page_num = int(page_num_match.group(1))
 
@@ -57,5 +61,7 @@ class HTMLTableExtractor:
                 logger.warning(f"Failed to process tables in {page_file_path}: {e}")
                 continue
 
-        logger.info(f"Detected {len(tables)} tables across {len(page_files)} page files")
+        logger.info(
+            f"Detected {len(tables)} tables across {len(page_files)} page files"
+        )
         return tables

@@ -1,24 +1,21 @@
 from abc import ABC, abstractmethod
-from typing import Any, List, Dict
+from typing import Any, Dict, List
 
-from shared.database_clients.base_class import (
-    EmbeddingData,
-    VectorDBConfig
-)
+from shared.database_clients.base_class import EmbeddingData, VectorDBConfig
 
 
 class BaseVectorDatabase(ABC):
     """Abstract base class for vector database operations."""
-    
+
     def __init__(self, config: VectorDBConfig, **kwargs):
         self.config = config
         self._initialize_client(**kwargs)
-    
+
     @abstractmethod
     def _initialize_client(self, **kwargs) -> None:
         """Initialize the database client."""
         pass
-    
+
     @abstractmethod
     def create_collection(
         self,
@@ -33,17 +30,17 @@ class BaseVectorDatabase(ABC):
     def load_collection(self, collection_name: str, **kwargs) -> bool:
         """Load the collection into memory for faster search operations."""
         pass
-    
+
     @abstractmethod
     def delete_collection(self, collection_name: str, **kwargs) -> None:
         """Delete a collection from the database."""
         pass
-    
+
     @abstractmethod
     def list_collections(self, **kwargs) -> List[str]:
         """List all collections in the database."""
         pass
-    
+
     @abstractmethod
     def has_collection(self, collection_name: str, **kwargs) -> bool:
         """Check if a collection exists."""
@@ -58,7 +55,7 @@ class BaseVectorDatabase(ABC):
     def get_items(self, ids: List[str], **kwargs) -> List[Dict]:
         """Get items from the collection by their IDs."""
         pass
-    
+
     @abstractmethod
     def search_dense_vectors(
         self,
@@ -72,7 +69,8 @@ class BaseVectorDatabase(ABC):
         """
         Search for dense vectors in the collection.
         The output is a nested list of dictionaries containing the search results.
-        Each dictionary corresponds to a search result and contains the fields specified in `output_fields` and `_score` field.
+        Each dictionary corresponds to a search result and contains the fields
+        specified in `output_fields` and `_score` field.
         """
         pass
 
@@ -87,15 +85,16 @@ class BaseVectorDatabase(ABC):
         """
         Perform hybrid search for vectors in the collection.
         The output is a list of dictionaries containing the search results.
-        Each dictionary corresponds to a search result and contains the fields specified in `output_fields` and `_score` field.
+        Each dictionary corresponds to a search result and contains the fields
+        specified in `output_fields` and `_score` field.
         """
         pass
 
     @abstractmethod
-    def async_create_collection(
+    async def async_create_collection(
         self,
         collection_name: str,
-        collection_structure: List[Dict],
+        collection_structure: List[Any],
         **kwargs,
     ) -> None:
         """Asynchronously create a new collection in the vector database."""
@@ -103,7 +102,8 @@ class BaseVectorDatabase(ABC):
 
     @abstractmethod
     async def async_load_collection(self, collection_name: str, **kwargs) -> bool:
-        """Asynchronously load the collection into memory for faster search operations."""
+        """Asynchronously load the collection into memory for faster search
+        operations."""
         pass
 
     @abstractmethod
@@ -144,7 +144,8 @@ class BaseVectorDatabase(ABC):
         """
         Asynchronously search for dense vectors in the collection.
         The output is a nested list of dictionaries containing the search results.
-        Each dictionary corresponds to a search result and contains the fields specified in `output_fields` and `_score` field.
+        Each dictionary corresponds to a search result and contains the fields
+        specified in `output_fields` and `_score` field.
         """
         pass
 
@@ -159,7 +160,7 @@ class BaseVectorDatabase(ABC):
         """
         Asynchronously hybrid search for vectors in the collection.
         The output is a list of dictionaries containing the search results.
-        Each dictionary corresponds to a search result and contains the fields specified in `output_fields` and `_score` field.
+        Each dictionary corresponds to a search result and contains the fields
+        specified in `output_fields` and `_score` field.
         """
         pass
-    
