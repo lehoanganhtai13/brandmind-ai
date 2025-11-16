@@ -12,7 +12,7 @@ from core.document_processing.models import PDFParseResult
 
 PAGE_MARKDOWN_TEMPLATE = """# Page {page_number}
 
-**Document**: {document_name}
+**Document Title**: {document_title}
 **Author**: {author}
 **Original File**: {original_file_path}
 **Page Number**: {page_number}/{total_pages}
@@ -41,20 +41,29 @@ class LlamaPDFProcessor:
         self.api_key = api_key if api_key is not None else SETTINGS.LLAMA_PARSE_API_KEY
         self.config = config
         self._parser = None
-        self.author_map = self._load_author_metadata()
+        self.document_metadata = self._load_document_metadata()
 
-    def _load_author_metadata(self):
-        """Loads author metadata from the JSON file."""
+    def _load_document_metadata(self):
+        """Loads document metadata (author and title) from the JSON file."""
         metadata_path = Path("data/raw_documents/document_metadata.json")
         if not metadata_path.exists():
-            logger.warning(f"Author metadata file not found at {metadata_path}")
+            logger.warning(f"Document metadata file not found at {metadata_path}")
             return {}
         try:
             with open(metadata_path, "r", encoding="utf-8") as f:
                 metadata_list = json.load(f)
-            return {item["document_name"]: item["author"] for item in metadata_list}
+            # New structure: map filename to a dict of metadata
+            return {
+                item["document_name"]: {
+                    "author": item.get("author", "Unknown"),
+                    "document_title": item.get(
+                        "document_title", Path(item["document_name"]).stem
+                    ),
+                }
+                for item in metadata_list
+            }
         except (json.JSONDecodeError, KeyError) as e:
-            logger.error(f"Failed to load or parse author metadata: {e}")
+            logger.error(f"Failed to load or parse document metadata: {e}")
             return {}
 
     @property
@@ -135,7 +144,14 @@ class LlamaPDFProcessor:
             raise FileNotFoundError(f"PDF file not found: {file_path}")
 
         doc_name = path.stem
-        author = self.author_map.get(path.name, "Unknown")
+
+        # Retrieve metadata using the new structure
+        metadata = self.document_metadata.get(path.name, {})
+        author = metadata.get("author", "Unknown")
+        document_title = metadata.get(
+            "document_title", doc_name.replace("_", " ").title()
+        )
+
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         output_dir = Path("data/parsed_documents") / f"{doc_name}_{timestamp}"
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -150,6 +166,7 @@ class LlamaPDFProcessor:
                 page_content = PAGE_MARKDOWN_TEMPLATE.format(
                     page_number=i,
                     document_name=doc_name,
+                    document_title=document_title,
                     author=author,
                     original_file_path=file_path,
                     total_pages=len(markdown_documents),
@@ -178,6 +195,7 @@ class LlamaPDFProcessor:
                     "file_extension": path.suffix,
                     "timestamp": timestamp,
                     "author": author,
+                    "document_title": document_title,
                 },
             )
 

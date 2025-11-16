@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import json
 from pathlib import Path
 
 import pytest
@@ -12,9 +13,23 @@ from core.document_processing.pdf_processor import PDFProcessor
 # Mark all tests in this file as asyncio
 pytestmark = pytest.mark.asyncio
 
-TEST_PDF_PATH = (
-    "data/raw_documents/Kotler_and_Armstrong_Principles_of_Marketing_test.pdf"
-)
+@pytest.fixture(scope="module")
+def first_document_metadata():
+    """Loads metadata for the first document from document_metadata.json."""
+    metadata_path = "data/raw_documents/document_metadata.json"
+    if not os.path.exists(metadata_path):
+        pytest.skip(f"Metadata file not found at {metadata_path}")
+    with open(metadata_path, "r", encoding="utf-8") as f:
+        metadata_list = json.load(f)
+    if not metadata_list:
+        pytest.skip("No document metadata found.")
+    return metadata_list[0] # Return the first document's metadata
+
+
+@pytest.fixture(scope="module")
+def test_pdf_path(first_document_metadata):
+    """Derives the test PDF path from the first document's metadata."""
+    return Path("data/raw_documents") / first_document_metadata["document_name"]
 
 
 @pytest.fixture(scope="module")
@@ -26,38 +41,32 @@ def processor():
     return PDFProcessor(llama_config=llama_config)
 
 
-async def test_pdf_processing_pipeline(processor: PDFProcessor):
+async def test_pdf_processing_pipeline(
+    processor: PDFProcessor, test_pdf_path: Path, first_document_metadata: dict
+):
     """
     Tests the end-to-end PDF processing pipeline.
     It processes a sample PDF and verifies the output structure and content.
     """
-    assert os.path.exists(TEST_PDF_PATH), f"Test PDF not found at {TEST_PDF_PATH}"
+    assert os.path.exists(test_pdf_path), f"Test PDF not found at {test_pdf_path}"
 
-    # --- Setup: Load expected author from metadata ---
-    import json
-
-    expected_author = "Unknown"
-    metadata_path = "data/raw_documents/document_metadata.json"
-    if os.path.exists(metadata_path):
-        with open(metadata_path, "r", encoding="utf-8") as f:
-            metadata_list = json.load(f)
-
-        test_pdf_filename = Path(TEST_PDF_PATH).name
-        for item in metadata_list:
-            if item.get("document_name") == test_pdf_filename:
-                expected_author = item.get("author", "Unknown")
-                break
+    # --- Setup: Load expected metadata from fixture ---
+    expected_author = first_document_metadata.get("author", "Unknown")
+    expected_document_title = first_document_metadata.get(
+        "document_title", test_pdf_path.stem.replace("_", " ").title()
+    )
 
     # --- Execution ---
-    parse_result = await processor.process_pdf(TEST_PDF_PATH)
+    parse_result = await processor.process_pdf(str(test_pdf_path))
 
     # --- Verification ---
     # 1. Check if the result object is valid
     assert parse_result is not None
-    assert parse_result.file_path == TEST_PDF_PATH
+    assert parse_result.file_path == str(test_pdf_path)
     assert parse_result.pages > 0
     assert len(parse_result.page_files) == parse_result.pages
     assert parse_result.metadata.get("author") == expected_author
+    assert parse_result.metadata.get("document_title") == expected_document_title
 
     # 2. Check if the output directory and files were created
     output_dir = Path(parse_result.output_directory)
@@ -75,9 +84,9 @@ async def test_pdf_processing_pipeline(processor: PDFProcessor):
         with open(first_page_path, "r", encoding="utf-8") as f:
             content = f.read()
             assert "# Page 1" in content
-            assert f"**Document**: {Path(TEST_PDF_PATH).stem}" in content
+            assert f"**Document Title**: {expected_document_title}" in content # Updated check
             assert f"**Author**: {expected_author}" in content
-            assert f"**Original File**: {TEST_PDF_PATH}" in content
+            assert f"**Original File**: {str(test_pdf_path)}" in content
             assert f"**Page Number**: 1/{parse_result.pages}" in content
 
     # 5. Check if tables were summarized (if any)
