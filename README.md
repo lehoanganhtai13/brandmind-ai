@@ -20,8 +20,8 @@ BrandMind AI is not just another automation tool. It's a **cognitive augmentatio
 ## ✨ Key Features
 
 - **Automated Document Parsing**: Ingests and understands PDF documents, extracting key information and summaries.
-- **Intelligent Web Crawling**: Crawls websites to gather relevant brand and market data using a dedicated service (`Crawl4AI`).
-- **Advanced Search**: Utilizes a private, aggregated search engine (`SearXNG`) to find the most relevant information.
+- **Intelligent Web Crawling**: Crawls websites to gather relevant brand and market data using a dedicated service ([`Crawl4AI`](https://github.com/unclecode/crawl4ai)).
+- **Advanced Search**: Utilizes a private, aggregated search engine ([`SearXNG`](https://github.com/searxng/searxng)) to find the most relevant information.
 - **AI-Powered Analytics**: Employs Large Language Models (LLMs) for content summarization, analysis, and trend identification.
 - **Modular & Extensible**: Built with a clean, service-oriented architecture for easy extension and maintenance.
 
@@ -49,7 +49,7 @@ The project relies on external services for crawling and searching. Start them u
 ```bash
 make services-up
 ```
-*This will start SearXNG and Crawl4AI in the background. You can check their status with `make services-status`.*
+*This will start [`SearXNG`](https://github.com/searxng/searxng) and [`Crawl4AI`](https://github.com/unclecode/crawl4ai) in the background. You can check their status with `make services-status`.*
 
 ### 4. Install Dependencies
 
