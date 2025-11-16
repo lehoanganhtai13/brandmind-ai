@@ -398,14 +398,14 @@ class BM25Client:
                     index = futures[future]
                     # Extend results list if needed
                     while len(results) <= index:
-                        results.append(csr_array((1, dim)))
+                        results.append(csr_array((1, dim)))  # type: ignore[arg-type]
                     results[index] = result
                 except Exception as e:
                     index = futures[future]
                     logger.error(f"Error converting dictionary at index {index}: {e}")
                     # Ensure results list has enough elements
                     while len(results) <= index:
-                        results.append(csr_array((1, dim)))
+                        results.append(csr_array((1, dim)))  # type: ignore[arg-type]
 
         return results
 
@@ -444,15 +444,34 @@ class BM25Client:
         if not isinstance(emb1, csr_array) or not isinstance(emb2, csr_array):
             raise ValueError("Both embeddings must be in CSR format")
 
-        # Calculate the dot product and norms
-        dot_product = emb1.dot(emb2.T).data[0]
+        # Ensure embeddings are 2D (reshape 1D to 2D if needed)
+        if emb1.ndim == 1:
+            emb1 = emb1.reshape((1, -1))  # type: ignore[arg-type]
+        if emb2.ndim == 1:
+            emb2 = emb2.reshape((1, -1))  # type: ignore[arg-type]
+
+        # Calculate norms first to handle zero vectors
         norm1 = np.sqrt(emb1.power(2).sum())
         norm2 = np.sqrt(emb2.power(2).sum())
 
-        # Calculate cosine similarity
+        # Handle zero vectors
         if norm1 == 0 or norm2 == 0:
             return 0.0
 
+        # Calculate the dot product
+        dot_result = emb1.dot(emb2.T)
+
+        # Handle both sparse matrix and array results
+        if hasattr(dot_result, "nnz"):
+            # It's a sparse matrix
+            if dot_result.nnz == 0:
+                return 0.0
+            dot_product = dot_result.data[0]
+        else:
+            # It's a numpy array
+            dot_product = float(dot_result.flat[0])
+
+        # Calculate cosine similarity
         return dot_product / (norm1 * norm2)
 
     def fit(
@@ -566,7 +585,9 @@ class BM25Client:
         Returns:
             List[csr_array]: List of BM25 embeddings for the input documents
         """
-        return list(self._encode_documents(data))
+        stacked = self._encode_documents(data)
+        # Split the stacked matrix into individual rows
+        return [stacked[i] for i in range(stacked.shape[0])]  # type: ignore[misc]
 
     def encode_queries(self, queries: List[str]) -> List[csr_array]:
         """
@@ -578,4 +599,6 @@ class BM25Client:
         Returns:
             List[csr_array]: List of BM25 embeddings for the input queries
         """
-        return list(self.bm25.encode_queries(queries))
+        stacked = self.bm25.encode_queries(queries)
+        # Split the stacked matrix into individual rows
+        return [stacked[i] for i in range(stacked.shape[0])]  # type: ignore[misc]

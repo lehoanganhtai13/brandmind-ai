@@ -110,15 +110,17 @@ class BM25EmbeddingFunction:
 
     def _encode_query(self, query: str) -> csr_array:
         terms = self.analyzer(query)
-        values, rows, cols = [], [], []
+        values: List[float] = []
+        rows: List[int] = []
+        cols: List[int] = []
         for term in terms:
             if term in self.idf:
                 values.append(self.idf[term][0])
                 rows.append(0)
                 cols.append(self.idf[term][1])
-        return csr_array((values, (rows, cols)), shape=(1, len(self.idf))).astype(
-            np.float32
-        )
+        # Scipy sparse matrix type issues in Python 3.12+
+        sparse_vec = csr_array((values, (rows, cols)), shape=(1, len(self.idf)))  # type: ignore
+        return sparse_vec.astype(np.float32)  # type: ignore[return-value]
 
     def _encode_document(self, doc: str) -> csr_array:
         terms = self.analyzer(doc)
@@ -128,7 +130,9 @@ class BM25EmbeddingFunction:
         for term in terms:
             frequencies[term] += 1
             term_set.add(term)
-        values, rows, cols = [], [], []
+        values: List[float] = []
+        rows: List[int] = []
+        cols: List[int] = []
         for term in term_set:
             if term in self.idf:
                 term_freq = frequencies[term]
@@ -143,9 +147,9 @@ class BM25EmbeddingFunction:
                 rows.append(0)
                 cols.append(self.idf[term][1])
                 values.append(value)
-        return csr_array((values, (rows, cols)), shape=(1, len(self.idf))).astype(
-            np.float32
-        )
+        # Scipy sparse matrix type issues in Python 3.12+
+        sparse_vec = csr_array((values, (rows, cols)), shape=(1, len(self.idf)))  # type: ignore
+        return sparse_vec.astype(np.float32)  # type: ignore[return-value]
 
     def encode_queries(self, queries: List[str]) -> csr_array:
         sparse_embs = [self._encode_query(query) for query in queries]

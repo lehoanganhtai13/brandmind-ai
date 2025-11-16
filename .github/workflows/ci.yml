@@ -16,15 +16,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Install uv and enable caching
         uses: astral-sh/setup-uv@v1
         with:
-          python-version: '3.10'
+          python-version: '3.12'
           enable-cache: true
           version: "latest"
 
@@ -33,3 +33,6 @@ jobs:
 
       - name: Run type checking, linting, and security scan
         run: make typecheck
+
+      - name: Run unit tests
+        run: make test-unit

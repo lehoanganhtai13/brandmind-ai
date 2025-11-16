@@ -31,7 +31,7 @@ Follow these steps to get your local development environment up and running.
 
 ### 1. Prerequisites
 
-- **Python 3.10**
+- **Python 3.12**
 - **[uv](https://github.com/astral-sh/uv)**: An extremely fast Python package installer and resolver.
 - **[Docker](https://www.docker.com/)**: For running the required infrastructure services.
 

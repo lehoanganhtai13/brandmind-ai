@@ -1,7 +1,7 @@
 [project]
 name = "shared"
 version = "0.1.0"
-requires-python = ">=3.10,<3.11"
+requires-python = ">=3.12"
 dependencies = [
     "crawl4ai>=0.7.6",
     "google-genai>=1.39.1",
@@ -16,11 +16,11 @@ dependencies = [
     "pydantic>=2.11.9",
     "pymilvus>=2.6.2",
     "python-dotenv>=1.1.1",
+    "pyvi>=0.1.1",
     "pyyaml>=6.0.3",
     "requests>=2.32.5",
     "tiktoken>=0.11.0",
     "tqdm>=4.67.1",
-    "underthesea==6.8.4",
 ]
 
 [build-system]

@@ -92,6 +92,9 @@ test: ## Run tests
 test-watch: ## Run tests in watch mode
 	uv run pytest-watch tests/
 
+test-unit: ## Run unit tests only
+	uv run pytest tests/unit/
+
 format: ## Format code with ruff and black
 	uv run ruff format src/
 	uv run black src/

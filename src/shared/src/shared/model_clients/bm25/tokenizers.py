@@ -76,20 +76,24 @@ class StandardTokenizer(Tokenizer):
 @register_class("VietnameseTokenizer")
 class VietnameseTokenizer(Tokenizer):
     def __init__(self):
-        from underthesea import word_tokenize as vietnamese_word_tokenize
-
         try:
-            vietnamese_word_tokenize("this is a simple test.", format="text")
-        except LookupError:
+            from pyvi import ViTokenizer
+
+            # Test import to ensure package is available
+            ViTokenizer.tokenize("test")
+        except ImportError:
             raise ImportError(
-                "The 'underthesea' package is required for Vietnamese tokenization. "
-                "Please install it using 'pip install underthesea'."
+                "The 'pyvi' package is required for Vietnamese tokenization. "
+                "Please install it using 'pip install pyvi'."
             )
 
     def tokenize(self, text: str):
-        from underthesea import word_tokenize as vietnamese_word_tokenize
+        from pyvi import ViTokenizer
 
-        return vietnamese_word_tokenize(text, format="text")
+        # pyvi returns text with underscores connecting compound words
+        # Split by whitespace to get individual tokens
+        tokenized_text = ViTokenizer.tokenize(text)
+        return tokenized_text.split()
 
 
 # -------------- Text Filters --------------
