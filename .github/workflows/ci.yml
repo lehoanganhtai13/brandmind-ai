@@ -24,7 +24,6 @@ jobs:
       - name: Install uv and enable caching
         uses: astral-sh/setup-uv@v1
         with:
-          python-version: '3.12'
           enable-cache: true
           version: "latest"
 
