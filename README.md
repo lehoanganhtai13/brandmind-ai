@@ -117,11 +117,14 @@ brandmind-ai/
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
+When contributing, please follow a rebase workflow rather than a merge workflow for your Pull Requests to maintain a clean commit history.
+
 1.  Fork the Project
 2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3.  Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)
-4.  Push to the Branch (`git push --force-with-lease origin feature/AmazingFeature`)
-5.  Open a Pull Request
+4.  Rebase your branch onto the target branch (e.g., `main`)
+5.  Push to the Branch (`git push --force-with-lease origin feature/AmazingFeature`)
+6.  Open a Pull Request
 
 ## 📄 License
 
