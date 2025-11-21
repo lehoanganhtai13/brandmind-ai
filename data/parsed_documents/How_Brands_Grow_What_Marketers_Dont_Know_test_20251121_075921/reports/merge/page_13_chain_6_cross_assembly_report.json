@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_13_chain_6_cross",
+  "page_number": 13,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 13,
+      "start_pos": 2174,
+      "end_pos": 2558,
+      "html_size": 384,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_13.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 14,
+      "start_pos": 265,
+      "end_pos": 776,
+      "html_size": 511,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_14.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "13-14",
+  "merge_decision": {
+    "chain_id": "page_13_chain_6_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": true,
+        "description": "The second fragment had a collapsed column error where a single cell contained multiple lines of text separated by <br>. This cell was split into multiple rows to align with the other columns."
+      },
+      "reasoning": "The second table appears to be a continuation of the first table, providing a 'New World View' that contrasts with the 'Past World View' in the first table. The column headers, although malformed in the second table, align conceptually with the data in the first table. The second table also exhibits a collapsed column error that, when repaired, aligns its data structure with the first table."
+    },
+    "final_merged_html": "<table><thead><tr><th colspan=\"7\" style=\"text-align:center;\">Brand Performance</th></tr></thead><tbody><tr><td><b>Past World View</b></td><td>Growth Through Targeting Brand Loyals</td><td>Unpredictable Confusing Brand Metrics</td><td>Price Promotions Win New</td><td>Target Marketing</td><td>We Compete on Positioning</td><td>Differentiation</td></tr><tr><td>New World View</td><td>Growth<br>Through<br>Penetration</td><td>Predictable<br>Meaningful Brand<br>Metrics</td><td>Price Promotions<br>Existing Loyal<br>Customers</td><td>Sophisticated Mass<br>Marketing</td><td>Heuristics</td><td>Distinctiveness</td></tr></tbody></table>",
+    "processing_time": 1.8202791213989258
+  },
+  "timestamp": "2025-11-21T08:00:31.533972"
+}

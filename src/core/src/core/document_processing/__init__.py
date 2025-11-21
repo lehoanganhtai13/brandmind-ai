@@ -3,7 +3,7 @@
 from core.document_processing.llama_parser import LlamaPDFProcessor
 from core.document_processing.models import PDFParseResult, TableInfo, TableSummary
 from core.document_processing.pdf_processor import PDFProcessor
-from core.document_processing.table_extractor import HTMLTableExtractor
+from core.document_processing.table_extractor import TableExtractor
 from core.document_processing.table_summarizer import TableSummarizer
 
 __all__ = [
@@ -11,7 +11,7 @@ __all__ = [
     "TableInfo",
     "TableSummary",
     "LlamaPDFProcessor",
-    "HTMLTableExtractor",
+    "TableExtractor",
     "TableSummarizer",
     "PDFProcessor",
 ]

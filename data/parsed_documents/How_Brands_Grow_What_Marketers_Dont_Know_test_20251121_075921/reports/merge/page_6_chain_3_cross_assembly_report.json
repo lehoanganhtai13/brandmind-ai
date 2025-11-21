@@ -1,0 +1,48 @@
+{
+  "chain_id": "page_6_chain_3_cross",
+  "page_number": 6,
+  "fragment_count": 3,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 6,
+      "start_pos": 3103,
+      "end_pos": 3801,
+      "html_size": 698,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_6.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 7,
+      "start_pos": 263,
+      "end_pos": 2617,
+      "html_size": 2354,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_7.md"
+    },
+    {
+      "fragment_index": 3,
+      "page_number": 8,
+      "start_pos": 263,
+      "end_pos": 1128,
+      "html_size": 865,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_8.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "6-8",
+  "merge_decision": {
+    "chain_id": "page_6_chain_3_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 3,
+      "repairs_performed": {
+        "collapsed_columns_fixed": true,
+        "description": "The first fragment had a rowspan cell in the first column that was split into multiple rows to align with subsequent rows."
+      },
+      "reasoning": "The first fragment contains the primary header row. The subsequent fragments contain data rows that align with the columns defined in the first fragment. The second fragment's header row was treated as data, and the third fragment's header row was also treated as data and its first column was empty, indicating it was a continuation of the table."
+    },
+    "final_merged_html": "<table><thead>\n    <tr>\n        <th>Category</th>\n        <th>Demo</th>\n        <th>Media</th>\n        <th>Values</th>\n        <th>Average</th>\n    </tr>\n    </thead>\n    <tbody>\n    <tr>\n        <td>Cigarettes</td>\n        <td>4</td>\n        <td>4</td>\n        <td>6</td>\n        <td>6</td>\n    </tr>\n    <tr>\n        <td>Cat food</td>\n        <td>3</td>\n        <td>1</td>\n        <td>4</td>\n        <td>4</td>\n    </tr>\n    <tr>\n        <td>Mints</td>\n        <td>3</td>\n        <td>1</td>\n        <td>3</td>\n        <td>3</td>\n    </tr>\n    <tr>\n        <td>Toothbrushes</td>\n        <td>3</td>\n        <td>1</td>\n        <td>3</td>\n        <td>3</td>\n    </tr>\n    <tr>\n        <td>Private health insurance</td>\n        <td>4</td>\n        <td>2</td>\n        <td>3</td>\n        <td>3</td>\n    </tr>\n    <tr>\n        <td></td>\n        <td></td>\n        <td></td>\n        <td></td>\n        <td></td>\n    </tr>\n    <tr>\n      <td>Sweets</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>3</td>\n    </tr>\n<tr>\n      <td>Crisps</td>\n<td>3</td>\n<td>1</td>\n<td>3</td>\n<td>3</td>\n    </tr>\n<tr>\n      <td>Toilet soap</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>3</td>\n    </tr>\n<tr>\n      <td>Package holidays</td>\n<td>3</td>\n<td>1</td>\n<td>3</td>\n<td>3</td>\n    </tr>\n<tr>\n      <td>Dry batteries</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>3</td>\n    </tr>\n<tr>\n      <td>Other chocolate</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Kitchen rolls</td>\n<td>3</td>\n<td>1</td>\n<td>3</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Nuts</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Chocolate bars</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Toothpaste</td>\n<td>2</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Toilet paper</td>\n<td>2</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Computers</td>\n<td>3</td>\n<td>2</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Record shops</td>\n<td>3</td>\n<td>1</td>\n<td>1</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Store retail cards</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Computer games</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Vitamins</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Liquid detergent</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Grocers</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Yogurt</td>\n<td>3</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Light bulbs</td>\n<td>2</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Car tyres</td>\n<td>2</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Stain removers</td>\n<td>2</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Car insurance</td>\n<td>3</td>\n<td>1</td>\n<td>1</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Coffee</td>\n<td>2</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Home contents</td>\n<td>2</td>\n<td>1</td>\n<td>1</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Paint</td>\n<td>3</td>\n<td>1</td>\n<td>1</td>\n<td>2</td>\n    </tr>\n<tr>\n      <td>Shampoo</td>\n<td>2</td>\n<td>1</td>\n<td>2</td>\n<td>2</td>\n    </tr>\n<tr>\n<td>Airlines</td>\n<td>2</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>Camera film</td>\n<td>2</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>Headache tablets</td>\n<td>2</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>Cars</td>\n<td>2</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>Credit cards</td>\n<td>2</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>Mortgages</td>\n<td>2</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>Fuel</td>\n<td>2</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>Retailers</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td><strong>Average</strong></td>\n<td><strong>3</strong></td>\n<td><strong>1</strong></td>\n<td><strong>2</strong></td>\n<td><strong>2</strong></td>\n</tr>\n</tbody>\n</table>",
+    "processing_time": 3.750258207321167
+  },
+  "timestamp": "2025-11-21T08:00:31.532422"
+}

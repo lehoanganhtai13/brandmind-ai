@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_9_chain_4_cross",
+  "page_number": 9,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 9,
+      "start_pos": 1665,
+      "end_pos": 1872,
+      "html_size": 207,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_9.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 10,
+      "start_pos": 264,
+      "end_pos": 363,
+      "html_size": 99,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_10.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "9-10",
+  "merge_decision": {
+    "chain_id": "page_9_chain_4_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": true,
+        "description": "The first fragment had a rowspan cell in the first column which was split into multiple rows to align with subsequent columns."
+      },
+      "reasoning": "The first fragment provides the header structure with column names, and the second fragment contains data that aligns with these columns. The second fragment's header was converted to a body row, and the first fragment's header was used as the primary header. The rowspan in the first fragment was decomposed to align with the data in the second fragment."
+    },
+    "final_merged_html": "<table><thead><tr><td></td><td>Male (%)</td><td>Female (%)</td><td>Single (%)</td><td>Couple with no <br/> kids (%)</td><td>Family with <br/> kids (%)</td><td>Other (%)</td></tr></thead><tbody><tr><td>Cardholders</td><td>37</td><td>63</td><td>15</td><td>32</td><td>52</td><td>1</td></tr><tr><td>Non-cardholder customers</td><td>42</td><td>58</td><td>12</td><td>34</td><td>53</td><td>1</td></tr></tbody></table>",
+    "processing_time": 1.4032177925109863
+  },
+  "timestamp": "2025-11-21T08:00:31.533038"
+}

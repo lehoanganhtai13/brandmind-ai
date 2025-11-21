@@ -1,0 +1,10 @@
+{
+  "table_id": "page_13_table_12",
+  "page_number": 13,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"8\" style=\"text-align:center;\">Consumer Behavior</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><b>Past World View</b></td>\n<td>Attitude Drives Behavior</td>\n<td>Brand Loyals</td>\n<td>Brand Switchers</td>\n<td>Deeply Committed Buyers</td>\n<td>Involvement</td>\n<td>Rational Involved Viewers</td>\n</tr>\n<tr>\n<td><b>New World View</b></td>\n<td>Behavior Drives Attitude</td>\n<td>Loyal Switchers</td>\n<td>Loyal Switchers</td>\n<td>Uncaring Cognitive Misers</td>\n<td>Heuristics</td>\n<td>Emotional Distracted Viewers</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a shift in understanding consumer behavior, moving from a \"Past World View\" to a \"New World View.\" The core change is the relationship between attitude and behavior, with the past view positing that attitude drives behavior, while the new view suggests behavior drives attitude. This impacts the categorization of consumers: \"Brand Loyals\" and \"Deeply Committed Buyers\" in the past are re-envisioned as \"Loyal Switchers\" in the new paradigm. Similarly, \"Brand Switchers\" are also categorized as \"Loyal Switchers.\" The concept of \"Involvement\" in the past is replaced by \"Heuristics\" in the new view, and \"Rational Involved Viewers\" become \"Emotional Distracted Viewers.\" This represents a transition from a cognitively driven model of consumer decision-making to one that emphasizes behavioral patterns and cognitive shortcuts.",
+  "processing_time": 1.2160019874572754,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-21T08:00:31.540269"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_1_table_1",
+  "page_number": 1,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th></th>\n      <th>Colgate</th>\n      <th>Crest</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>% volume</td>\n<td>19</td>\n<td>37</td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of market share between two toothpaste brands, Colgate and Crest, based on percentage of volume. Crest holds a significantly larger market share at 37% of the total volume, while Colgate accounts for 19%. This indicates a substantial difference in consumer preference or product distribution between the two brands, with Crest dominating the market volume compared to Colgate.",
+  "processing_time": 1.153944969177246,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-21T08:00:31.534889"
+}

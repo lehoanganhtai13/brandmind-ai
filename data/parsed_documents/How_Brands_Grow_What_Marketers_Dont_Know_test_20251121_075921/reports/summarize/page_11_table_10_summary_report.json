@@ -1,0 +1,10 @@
+{
+  "table_id": "page_11_table_10",
+  "page_number": 11,
+  "original_table_html": "<table><thead><tr><th></th><th colspan=\"4\">Percentage of buyers who also bought brand</th></tr></thead><tbody><tr><td>Buyers of brand</td><td></td><td></td><td></td><td></td></tr><tr><td>A</td><td>100%</td><td></td><td></td><td></td></tr><tr><td>B</td><td></td><td>100%</td><td></td><td></td></tr><tr><td>C</td><td></td><td></td><td>100%</td><td></td></tr><tr><td>D</td><td></td><td></td><td></td><td>100%</td></tr></tbody></table>",
+  "summary_markdown": "This data presents a comparative analysis of brand purchasing behavior, specifically focusing on cross-buying patterns. It illustrates that each brand (A, B, C, and D) is exclusively purchased by its own respective buyers, with 100% of buyers of brand A also buying brand A, and similarly for brands B, C, and D. The structure is comparative, highlighting the self-contained purchasing base for each individual brand. There is no indication of cross-purchasing between different brands; for instance, buyers of brand A do not also purchase brands B, C, or D, and vice versa. The table effectively demonstrates a scenario where brand loyalty or distinct market segmentation prevents customers from purchasing multiple brands within this observed set.",
+  "processing_time": 1.1262238025665283,
+  "was_merged": true,
+  "source_chain_id": "page_11_chain_5_cross",
+  "timestamp": "2025-11-21T08:00:31.539228"
+}

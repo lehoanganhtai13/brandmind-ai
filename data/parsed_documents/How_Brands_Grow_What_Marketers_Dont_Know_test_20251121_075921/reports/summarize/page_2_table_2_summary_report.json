@@ -1,0 +1,10 @@
+{
+  "table_id": "page_2_table_2",
+  "page_number": 2,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th colspan=\"3\">Colgate consumer base</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>One time buyers<br>16%</td>\n<td>Loyals<br>38%</td>\n<td>Switchers<br>46%</td>\n    </tr>\n  </tbody>\n  <tfoot>\n    <tr>\n      <td colspan=\"3\"><em>Data source: Spaeth &amp; Hess 1989.</em></td>\n    </tr>\n  </tfoot>\n</table>",
+  "summary_markdown": "This table outlines the Colgate consumer base, categorizing it into three distinct segments based on purchasing behavior. The largest segment comprises Switchers, accounting for 46% of consumers, indicating a tendency to move between brands. Loyals represent a significant portion at 38%, suggesting a strong preference for Colgate. The smallest segment consists of One-time buyers, making up 16% of the consumer base, implying infrequent or trial purchases. This data, sourced from Spaeth & Hess in 1989, presents a comparative structure of Colgate's customer demographics, highlighting the relative sizes of these behavioral groups.",
+  "processing_time": 1.0451991558074951,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-21T08:00:31.535449"
+}

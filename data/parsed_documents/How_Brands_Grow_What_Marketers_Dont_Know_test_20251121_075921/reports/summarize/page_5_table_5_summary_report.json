@@ -1,0 +1,10 @@
+{
+  "table_id": "page_5_table_5",
+  "page_number": 5,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Number of purchases</th>\n<td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20+</td>\n</tr>\n</thead>\n<tbody>\n<tr>\n<th>Buyers (%)</th>\n<td>11</td><td>18</td><td>14</td><td>12</td><td>10</td><td>8</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a distribution of buyers based on the number of purchases made, illustrating a comparative structure. The primary components are the \"Number of purchases,\" ranging from zero to twenty or more, and the corresponding \"Buyers (%)\" who fall into each purchase category. The key relationship depicted is the inverse correlation between the number of purchases and the percentage of buyers, with a significant majority of buyers making a small number of purchases. Specifically, 11% of buyers made zero purchases, while 18% made one purchase, and 14% made two purchases. As the number of purchases increases, the percentage of buyers generally decreases, reaching a low of 1% for buyers making between 12 and 19 purchases. A small fraction, 1%, of buyers made 20 or more purchases, indicating a long tail of high-volume customers.",
+  "processing_time": 1.0244863033294678,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-21T08:00:31.536960"
+}

@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_11_chain_5_cross",
+  "page_number": 11,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 11,
+      "start_pos": 2646,
+      "end_pos": 2877,
+      "html_size": 231,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_11.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 12,
+      "start_pos": 265,
+      "end_pos": 685,
+      "html_size": 420,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_12.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "11-12",
+  "merge_decision": {
+    "chain_id": "page_11_chain_5_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No collapsed column errors were detected or repaired."
+      },
+      "reasoning": "The first table provides the main header structure with column definitions (A, B, C, D). The second table contains data rows that align with these columns, starting with 'Buyers of brand'. The second table's first column acts as a label for the subsequent percentage data, and its structure complements the first table's header. Therefore, they are merged."
+    },
+    "final_merged_html": "<table><thead><tr><th></th><th colspan=\"4\">Percentage of buyers who also bought brand</th></tr></thead><tbody><tr><td>Buyers of brand</td><td></td><td></td><td></td><td></td></tr><tr><td>A</td><td>100%</td><td></td><td></td><td></td></tr><tr><td>B</td><td></td><td>100%</td><td></td><td></td></tr><tr><td>C</td><td></td><td></td><td>100%</td><td></td></tr><tr><td>D</td><td></td><td></td><td></td><td>100%</td></tr></tbody></table>",
+    "processing_time": 1.3627371788024902
+  },
+  "timestamp": "2025-11-21T08:00:31.533502"
+}

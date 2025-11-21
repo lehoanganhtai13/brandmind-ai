@@ -7,7 +7,11 @@ from loguru import logger
 
 from core.document_processing.llama_parser import LlamaPDFProcessor
 from core.document_processing.models import PDFParseResult, TableInfo, TableSummary
-from core.document_processing.table_extractor import HTMLTableExtractor
+from core.document_processing.page_file_updater import PageFileUpdater
+from core.document_processing.report_generator import ReportGenerator
+from core.document_processing.table_assembler import TableAssembler
+from core.document_processing.table_chain_collector import TableChainCollector
+from core.document_processing.table_extractor import TableExtractor
 from core.document_processing.table_summarizer import TableSummarizer
 
 
@@ -25,51 +29,146 @@ class PDFProcessor:
             llama_config (Dict[str, Any]): Configuration for the LlamaPDFProcessor.
         """
         self.llama_processor = LlamaPDFProcessor(**llama_config)
-        self.table_extractor = HTMLTableExtractor()
+        self.table_extractor = TableExtractor()
+        self.table_chain_collector = TableChainCollector()
+        self.table_assembler = TableAssembler()
+        self.page_file_updater = PageFileUpdater()
         self.table_summarizer = TableSummarizer()
+        self.report_generator = ReportGenerator()
 
     async def process_pdf(self, file_path: str) -> PDFParseResult:
         """
-        Processes a single PDF through a multi-step pipeline:
-        1. Parse PDF to individual page files.
-        2. Detect tables within those page files.
-        3. Summarize the detected tables using an LLM.
-        4. Update the page files by replacing HTML tables with their summaries.
+        Process PDF: parsing → table detection → merging → summarization → reports.
+
+        Enhanced pipeline with table fragmentation resolution:
+        1. Parse PDF to individual page files
+        2. Detect all tables in page files
+        3. Collect consecutive table chains
+        4. Use LLM to decide which chains to merge
+        5. Apply merge decisions and cleanup empty pages
+        6. Summarize final tables (merged or original)
+        7. Generate processing reports for traceability
 
         Args:
-            file_path (str): The path to the PDF file.
+            file_path (str): Path to PDF file
 
         Returns:
-            PDFParseResult: The result object from the initial parsing step,
-                            containing metadata about the processed document.
+            PDFParseResult: Result with file-based storage and processing metadata
 
         Raises:
             Exception: Propagates exceptions from underlying processing steps.
         """
         try:
+            # Step 1: Parse PDF to individual page files
             logger.info(f"Step 1: Parsing PDF to page files: {file_path}")
             parse_result = await self.llama_processor.parse_pdf(file_path)
 
+            # Step 2: Detect tables in page files
             logger.info(
-                f"Step 2: Detecting tables in {len(parse_result.page_files)} page files"
+                f"Step 2: Detecting tables in {len(parse_result.page_files)} "
+                "page files"
             )
             tables = self.table_extractor.detect_tables_in_files(
                 parse_result.page_files
             )
 
+            # NEW Step 3: Collect consecutive table chains
+            chains_by_page = {}
+            merge_decisions = []
+
             if tables:
-                logger.info(f"Step 3: Summarizing {len(tables)} detected tables")
+                logger.info("Step 3: Collecting consecutive table chains")
+                chains_by_page = self.table_chain_collector.collect_all_chains(
+                    parse_result.page_files, tables
+                )
+
+                # NEW Step 4: Assemble table chains using LLM
+                if chains_by_page:
+                    all_chains = [
+                        chain
+                        for chains in chains_by_page.values()
+                        for chain in chains
+                    ]
+                    logger.info(
+                        f"Step 4: Assembling {len(all_chains)} table chain(s) "
+                        "with LLM"
+                    )
+                    merge_decisions = (
+                        await self.table_assembler.analyze_chains_batch(all_chains)
+                    )
+
+                    # NEW Step 5: Apply assembly decisions and cleanup
+                    if merge_decisions:
+                        logger.info(
+                            "Step 5: Applying assembly decisions to page files"
+                        )
+                        modified_pages = (
+                            await self.page_file_updater.apply_merge_decisions(
+                                chains_by_page, merge_decisions
+                            )
+                        )
+
+                        # Cleanup empty pages
+                        removed_pages = (
+                            await self.page_file_updater.cleanup_empty_pages(
+                                parse_result.output_directory, modified_pages
+                            )
+                        )
+
+                        if removed_pages:
+                            # Update page_files list to remove deleted pages
+                            parse_result.page_files = [
+                                pf
+                                for pf in parse_result.page_files
+                                if not any(
+                                    f"page_{rp}.md" in pf for rp in removed_pages
+                                )
+                            ]
+
+                # Step 6: Re-detect tables after assembly (some may have been merged)
+                logger.info("Step 6: Re-detecting tables after assembly")
+                tables = self.table_extractor.detect_tables_in_files(
+                    parse_result.page_files
+                )
+
+            # Step 7: Summarize final tables
+            table_summaries = []
+            if tables:
+                logger.info(f"Step 7: Summarizing {len(tables)} final table(s)")
                 table_summaries = await self.table_summarizer.summarize_tables_batch(
                     tables
                 )
 
+                # Step 8: Update page files with summaries
                 if table_summaries:
-                    logger.info("Step 4: Updating page files with table summaries")
+                    logger.info("Step 8: Updating page files with table summaries")
                     await self._update_files_with_summaries(tables, table_summaries)
 
+            # NEW Step 9: Generate processing reports
+            logger.info("Step 9: Generating processing reports")
+            report_paths = self.report_generator.create_report_structure(
+                parse_result.output_directory
+            )
+
+            if chains_by_page and merge_decisions:
+                all_chains = [
+                    chain for chains in chains_by_page.values() for chain in chains
+                ]
+                await self.report_generator.generate_assembly_reports(
+                    all_chains, merge_decisions, report_paths["merge"]
+                )
+
+            if table_summaries:
+                await self.report_generator.generate_summarization_reports(
+                    table_summaries,
+                    chains_by_page,
+                    merge_decisions,
+                    report_paths["summarize"],
+                )
+
             logger.info(
-                f"PDF processing completed: {len(parse_result.page_files)} "
-                "page files created"
+                f"PDF processing completed: {len(parse_result.page_files)} page(s), "
+                f"{len(table_summaries)} table(s) summarized"
             )
             return parse_result
 
@@ -97,7 +196,7 @@ class PDFProcessor:
                         content = f.read()
 
                     updated_content = content.replace(
-                        table.html_content, f"\n\n{summary.summary_markdown}\n\n"
+                        table.html_content, f"{summary.summary_markdown}"
                     )
 
                     with open(table.page_file, "w", encoding="utf-8") as f:

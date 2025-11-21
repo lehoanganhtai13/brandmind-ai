@@ -1,0 +1,10 @@
+{
+  "table_id": "page_12_table_11",
+  "page_number": 12,
+  "original_table_html": "<table>\n    <thead>\n    <tr>\n        <th></th>\n        <th colspan=\"7\">Percentage of buyers who also bought brand</th>\n    </tr>\n    </thead>\n    <tr>\n        <td>Buyers of \n<br/>\nbrand:</td>\n<td>(Walls) \n<br/>\nCarte D’Or</td>\n<td>Walls \n<br/>\nDessert</td>\n<td>Ben & \n<br/>\nJerry’s</td>\n<td>Häagen Dazs</td>\n<td>Nestle</td>\n<td>Walls</td>\n<td>Mars</td>\n    </tr>\n<tr>\n        <td rowspan=\"4\">(Walls) \n<br/>\nCart D’Or\n<br/>\nWalls \n<br/>\nDessert\n<br/>\nBen & \n<br/>\nJerry’s</td>\n<td>-</td>\n<td>15</td>\n<td>8</td>\n<td>8</td>\n<td>9</td>\n<td>5</td>\n<td>4</td>\n    </tr>\n<tr>\n        <td>34</td>\n<td>-</td>\n<td>7</td>\n<td>8</td>\n<td>9</td>\n<td>4</td>\n<td>3</td>\n    </tr>\n<tr>\n        <td>38</td>\n<td>14</td>\n<td>-</td>\n<td>26</td>\n<td>13</td>\n<td>7</td>\n<td>8</td>\n    </tr>\n<tr>\n        <td></td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n    </tr>\n</table>",
+  "summary_markdown": "This data presents a cross-purchase matrix illustrating the percentage of buyers of specific ice cream brands who also purchased other brands. The structure is comparative, with rows indicating the primary brand purchased and columns showing the percentage of those buyers who also bought a secondary brand. For instance, buyers of Carte D'Or (Walls) also purchased Walls Dessert at a 15% rate, Ben & Jerry's at 8%, Häagen Dazs at 8%, Nestle at 9%, Walls at 5%, and Mars at 4%. Similarly, buyers of Walls Dessert showed a 34% cross-purchase rate with Carte D'Or, 7% with Ben & Jerry's, and so on. The diagonal is marked with a hyphen, indicating no cross-purchase within the same brand. The table highlights inter-brand purchasing behaviors, revealing which brands are frequently bought together by consumers.",
+  "processing_time": 1.4276392459869385,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-21T08:00:31.539850"
+}

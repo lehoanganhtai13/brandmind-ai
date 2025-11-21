@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_2_chain_1_cross",
+  "page_number": 2,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 2,
+      "start_pos": 263,
+      "end_pos": 608,
+      "html_size": 345,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_2.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 2,
+      "start_pos": 610,
+      "end_pos": 953,
+      "html_size": 343,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_test_20251121_075921/page_2.md"
+    }
+  ],
+  "is_cross_page": false,
+  "page_range": "2",
+  "merge_decision": {
+    "chain_id": "page_2_chain_1_cross",
+    "status": "NO_MERGE",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": true,
+        "description": "Split cells with <br> tags into multiple rows to correctly represent data."
+      },
+      "reasoning": "The tables have similar structures and footers, suggesting they represent comparable data. However, the headers ('Colgate consumer base' vs 'Crest consumer base') indicate distinct datasets, making a direct merge inappropriate. Each table is treated as a separate entity, and repairs were made to ensure internal consistency if they were to be considered independently."
+    },
+    "final_merged_html": null,
+    "processing_time": 1.5547151565551758
+  },
+  "timestamp": "2025-11-21T08:00:31.531272"
+}

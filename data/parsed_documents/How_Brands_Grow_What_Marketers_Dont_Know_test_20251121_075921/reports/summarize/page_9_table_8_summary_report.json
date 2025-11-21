@@ -1,0 +1,10 @@
+{
+  "table_id": "page_9_table_8",
+  "page_number": 9,
+  "original_table_html": "<table><thead><tr><td></td><td>Male (%)</td><td>Female (%)</td><td>Single (%)</td><td>Couple with no <br/> kids (%)</td><td>Family with <br/> kids (%)</td><td>Other (%)</td></tr></thead><tbody><tr><td>Cardholders</td><td>37</td><td>63</td><td>15</td><td>32</td><td>52</td><td>1</td></tr><tr><td>Non-cardholder customers</td><td>42</td><td>58</td><td>12</td><td>34</td><td>53</td><td>1</td></tr></tbody></table>",
+  "summary_markdown": "This data presents a comparative analysis of cardholder and non-cardholder customer demographics, focusing on gender and household composition.  Cardholders are predominantly female (63%) compared to males (37%), while non-cardholders show a slightly higher male proportion (42%) versus females (58%).  Regarding household structure, both groups exhibit similar patterns: a majority of cardholders (52%) and non-cardholders (53%) belong to families with children. Couples without children represent a significant segment for both, at 32% for cardholders and 34% for non-cardholders. Single individuals constitute a smaller portion, 15% of cardholders and 12% of non-cardholders, with a minimal 'Other' category for both. The structure is comparative, highlighting differences and similarities across two customer segments based on demographic attributes.",
+  "processing_time": 1.5561609268188477,
+  "was_merged": true,
+  "source_chain_id": "page_9_chain_4_cross",
+  "timestamp": "2025-11-21T08:00:31.538389"
+}
