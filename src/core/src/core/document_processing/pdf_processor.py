@@ -65,8 +65,7 @@ class PDFProcessor:
 
             # Step 2: Detect tables in page files
             logger.info(
-                f"Step 2: Detecting tables in {len(parse_result.page_files)} "
-                "page files"
+                f"Step 2: Detecting tables in {len(parse_result.page_files)} page files"
             )
             tables = self.table_extractor.detect_tables_in_files(
                 parse_result.page_files
@@ -85,23 +84,18 @@ class PDFProcessor:
                 # NEW Step 4: Assemble table chains using LLM
                 if chains_by_page:
                     all_chains = [
-                        chain
-                        for chains in chains_by_page.values()
-                        for chain in chains
+                        chain for chains in chains_by_page.values() for chain in chains
                     ]
                     logger.info(
-                        f"Step 4: Assembling {len(all_chains)} table chain(s) "
-                        "with LLM"
+                        f"Step 4: Assembling {len(all_chains)} table chain(s) with LLM"
                     )
-                    merge_decisions = (
-                        await self.table_assembler.analyze_chains_batch(all_chains)
+                    merge_decisions = await self.table_assembler.analyze_chains_batch(
+                        all_chains
                     )
 
                     # NEW Step 5: Apply assembly decisions and cleanup
                     if merge_decisions:
-                        logger.info(
-                            "Step 5: Applying assembly decisions to page files"
-                        )
+                        logger.info("Step 5: Applying assembly decisions to page files")
                         modified_pages = (
                             await self.page_file_updater.apply_merge_decisions(
                                 chains_by_page, merge_decisions

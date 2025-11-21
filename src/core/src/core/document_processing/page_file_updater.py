@@ -6,7 +6,7 @@ from typing import Dict, List, Set
 
 from loguru import logger
 
-from core.document_processing.models import TableChain, TableMergeDecision
+from core.document_processing.models import TableChain, TableInfo, TableMergeDecision
 
 
 class PageFileUpdater:
@@ -60,11 +60,11 @@ class PageFileUpdater:
                 # Apply merge to this chain
                 try:
                     await self._apply_single_merge(chain, decision)
-                    
-                    # Track all page numbers affected by this chain (including cross-page)
+
+                    # Track all affected pages (including cross-page chains)
                     affected_pages = set(table.page_number for table in chain.tables)
                     modified_pages.update(affected_pages)
-                    
+
                     logger.info(
                         f"Applied merge for chain {chain.chain_id}, "
                         f"affected pages: {sorted(affected_pages)}"
@@ -96,11 +96,13 @@ class PageFileUpdater:
             decision (TableMergeDecision): The assembly decision with final_merged_html
         """
         # Group tables by their page file
-        tables_by_file = {}
+        tables_by_file: dict[str, list[TableInfo]] = {}
         for table in chain.tables:
-            if table.page_file not in tables_by_file:
-                tables_by_file[table.page_file] = []
-            tables_by_file[table.page_file].append(table)
+            if not table.page_file or table.page_file not in tables_by_file:
+                if table.page_file:
+                    tables_by_file[table.page_file] = []
+            if table.page_file:
+                tables_by_file[table.page_file].append(table)
 
         # Process each affected page file
         first_table_processed = False
@@ -115,11 +117,11 @@ class PageFileUpdater:
 
             # Process tables in this file (sorted by position to handle overlaps)
             sorted_tables = sorted(tables, key=lambda t: t.start_pos)
-            
+
             for table in sorted_tables:
                 # Use exact content matching (works for both HTML and markdown)
                 original_content = table.html_content.strip()
-                
+
                 if not first_table_processed:
                     # Replace first table with assembled result (always HTML)
                     content = content.replace(
@@ -199,8 +201,6 @@ class PageFileUpdater:
                 logger.error(f"Failed to process page {page_number}: {e}")
 
         if removed_pages:
-            logger.info(
-                f"Removed {len(removed_pages)} empty page(s): {removed_pages}"
-            )
+            logger.info(f"Removed {len(removed_pages)} empty page(s): {removed_pages}")
 
         return removed_pages

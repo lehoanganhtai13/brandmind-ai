@@ -139,6 +139,11 @@ class TableAssembler:
 
             processing_time = time.time() - start_time
 
+            # Extract repair details for logging
+            collapsed_fixed = result["analysis"]["repairs_performed"][
+                "collapsed_columns_fixed"
+            ]
+
             # Map LLM response to our model
             decision = TableMergeDecision(
                 chain_id=chain.chain_id,
@@ -151,10 +156,8 @@ class TableAssembler:
             logger.debug(
                 f"Chain {chain.chain_id}: Assembly status = {decision.status} "
                 f"({result['analysis']['fragments_received']} fragments, "
-                f"repairs: {result['analysis']['repairs_performed']['collapsed_columns_fixed']}) "
-                f"in {processing_time:.2f}s"
+                f"repairs: {collapsed_fixed}) in {processing_time:.2f}s"
             )
-
             return decision
 
         except json.JSONDecodeError as e:

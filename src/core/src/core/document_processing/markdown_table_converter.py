@@ -52,17 +52,22 @@ class MarkdownTableConverter:
             return False
 
         # Check if we have pipe-separated rows (excluding separator)
-        pipe_rows = [line for line in lines if self.table_row_pattern.match(line) and not self.separator_pattern.match(line)]
-        
+        pipe_rows = [
+            line
+            for line in lines
+            if self.table_row_pattern.match(line)
+            and not self.separator_pattern.match(line)
+        ]
+
         # Must have at least 2 pipe rows
         if len(pipe_rows) < 2:
             return False
-        
+
         # If separator exists, it should be exactly 1
         separator_count = sum(1 for line in lines if self.separator_pattern.match(line))
         if separator_count > 1:
             return False
-        
+
         return True
 
     def convert_to_html(self, markdown_table: str) -> str:
@@ -80,19 +85,19 @@ class MarkdownTableConverter:
         Returns:
             html_table (str): Converted HTML table string
         """
-        lines = [line.strip() for line in markdown_table.strip().split("\n") if line.strip()]
+        lines = [
+            line.strip() for line in markdown_table.strip().split("\n") if line.strip()
+        ]
 
         # Parse rows and find separator
         header_rows = []
         body_rows = []
         separator_found = False
-        separator_line_number = -1
 
         for i, line in enumerate(lines):
             # Check separator first (separator also matches table_row_pattern)
             if self.separator_pattern.match(line):
                 separator_found = True
-                separator_line_number = i
                 continue
 
             # Then check if it's a table row (after excluding separator)
@@ -101,13 +106,13 @@ class MarkdownTableConverter:
                 cells = [cell.strip() for cell in line.split("|")]
                 # Remove empty first/last elements from splitting
                 cells = [cell for cell in cells if cell]
-                
+
                 # Classify as header or body based on separator position
                 if not separator_found:
                     header_rows.append(cells)
                 else:
                     body_rows.append(cells)
-        
+
         # If no separator found, treat first row as header, rest as body
         if not separator_found and header_rows:
             if len(header_rows) > 1:
@@ -178,14 +183,14 @@ class MarkdownTableConverter:
                     if not stripped_line:
                         # Empty line ends the table
                         break
-                    
+
                     # Check separator first
                     if self.separator_pattern.match(stripped_line):
                         has_separator = True
                         table_end_line = j
                         j += 1
                         continue
-                    
+
                     # Then check for table row
                     if self.table_row_pattern.match(stripped_line):
                         data_row_count += 1
@@ -199,7 +204,10 @@ class MarkdownTableConverter:
                 # If separator exists, total lines >= 3 (header + separator + data)
                 # If no separator, total lines >= 2 (header + data)
                 min_rows_needed = 3 if has_separator else 2
-                if data_row_count >= 2 and (table_end_line - table_start_line + 1) >= min_rows_needed:
+                if (
+                    data_row_count >= 2
+                    and (table_end_line - table_start_line + 1) >= min_rows_needed
+                ):
                     # Calculate character positions
                     start_pos = sum(len(lines[k]) + 1 for k in range(table_start_line))
                     end_pos = sum(len(lines[k]) + 1 for k in range(table_end_line + 1))

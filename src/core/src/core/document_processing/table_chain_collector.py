@@ -1,7 +1,6 @@
 """Table chain collector for detecting consecutive table fragments."""
 
 import re
-from pathlib import Path
 from typing import Dict, List
 
 from loguru import logger
@@ -78,7 +77,7 @@ class TableChainCollector:
             adjacency[i] = is_consecutive
 
         # Build chains using transitive closure
-        chains = []
+        chains: list[TableChain] = []
         visited = set()
 
         for i in range(len(sorted_tables)):
@@ -140,8 +139,10 @@ class TableChainCollector:
             chains_by_page (Dict[int, List[TableChain]]): Chains organized by page
         """
         # Group tables by page file
-        tables_by_file = {}
+        tables_by_file: dict[str, list[TableInfo]] = {}
         for table in all_tables:
+            if table.page_file is None:
+                continue
             if table.page_file not in tables_by_file:
                 tables_by_file[table.page_file] = []
             tables_by_file[table.page_file].append(table)
@@ -234,7 +235,8 @@ class TableChainCollector:
                     r"\n---\n.*$", "", content_after_last, flags=re.DOTALL
                 ).strip()
 
-                # Check if content before first table (after page header) is only whitespace
+                # Check if content before first table
+                # (after page header) is only whitespace
                 # Extract content after metadata header
                 header_match = re.search(
                     r"^#\s+Page\s+\d+.*?\n---\s*\n", next_content, flags=re.DOTALL
@@ -244,9 +246,7 @@ class TableChainCollector:
                         header_match.end() : first_table.start_pos
                     ].strip()
                 else:
-                    content_before_first = next_content[
-                        : first_table.start_pos
-                    ].strip()
+                    content_before_first = next_content[: first_table.start_pos].strip()
 
                 # If both gaps are empty (only whitespace), tables are connected
                 if content_after_last == "" and content_before_first == "":
@@ -314,7 +314,7 @@ class TableChainCollector:
 
         # Find connected components (complete chains) using DFS
         visited: set = set()
-        final_chains = []
+        final_chains: list[TableChain] = []
 
         for table_id in table_graph:
             if table_id in visited:
@@ -345,7 +345,7 @@ class TableChainCollector:
                 )
 
         # Organize by page number (use first table's page as key)
-        chains_by_page = {}
+        chains_by_page: dict[int, list[TableChain]] = {}
         for chain in final_chains:
             page_num = chain.page_number
             if page_num not in chains_by_page:

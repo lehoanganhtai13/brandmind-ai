@@ -53,10 +53,12 @@ class TableSummary(BaseModel):
 
 class TableChain(BaseModel):
     """
-    Represents a chain of consecutive tables that may be fragments of one logical table.
+    Represents a chain of consecutive tables that may be fragments of a single
+    logical table.
 
-    A chain is formed when multiple HTML tables appear consecutively with only whitespace
-    or newlines between them (no text content). Chains can span multiple pages:
+    A chain is formed when multiple tables appear consecutively with only
+    whitespace or newlines between them (no text content). Chains can span
+    multiple pages:
     - Within same page: table_A → table_B (no text between)
     - Cross-page: last table of page N → first table of page N+1 (no text at boundaries)
     - Multi-page: page1_A → page2_B → page2_C → page3_D (transitive closure)
@@ -118,7 +120,8 @@ class TableMergeReport(BaseModel):
     and the final merged result if applicable.
 
     Attributes:
-        chain_id (str): Identifier of the processed chain (includes "_cross" if spans pages)
+        chain_id (str): Identifier of the processed chain (includes "_cross" if
+            spans pages)
         page_number (int): Starting page number (first table's page)
         fragment_count (int): Number of table fragments in the chain
         fragments_info (List[Dict[str, Any]]): Metadata for each fragment including page
@@ -139,9 +142,7 @@ class TableMergeReport(BaseModel):
         default=False, description="True if chain spans multiple pages"
     )
     page_range: str = Field(..., description="Page range (e.g., '1', '1-2', '1-3')")
-    merge_decision: TableMergeDecision = Field(
-        ..., description="LLM assembly decision"
-    )
+    merge_decision: TableMergeDecision = Field(..., description="LLM assembly decision")
     timestamp: str = Field(..., description="Processing timestamp ISO format")
 
 

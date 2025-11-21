@@ -78,8 +78,8 @@ class TableExtractor:
                     tables.append(table_info)
 
                 # Detect markdown tables
-                markdown_positions = self.markdown_converter.detect_markdown_table_positions(
-                    content
+                markdown_positions = (
+                    self.markdown_converter.detect_markdown_table_positions(content)
                 )
                 for start_pos, end_pos in markdown_positions:
                     markdown_content = content[start_pos:end_pos]

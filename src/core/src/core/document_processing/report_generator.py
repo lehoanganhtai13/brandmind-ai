@@ -11,8 +11,8 @@ from core.document_processing.models import (
     TableChain,
     TableMergeDecision,
     TableMergeReport,
-    TableSummary,
     TableSummarizationReport,
+    TableSummary,
 )
 
 
