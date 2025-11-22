@@ -13,6 +13,7 @@ from core.document_processing.table_assembler import TableAssembler
 from core.document_processing.table_chain_collector import TableChainCollector
 from core.document_processing.table_extractor import TableExtractor
 from core.document_processing.table_summarizer import TableSummarizer
+from core.document_processing.text_integrity_processor import TextIntegrityProcessor
 
 
 class PDFProcessor:
@@ -35,6 +36,7 @@ class PDFProcessor:
         self.page_file_updater = PageFileUpdater()
         self.table_summarizer = TableSummarizer()
         self.report_generator = ReportGenerator()
+        self.text_integrity_processor = TextIntegrityProcessor()
 
     async def process_pdf(self, file_path: str) -> PDFParseResult:
         """
@@ -71,7 +73,7 @@ class PDFProcessor:
                 parse_result.page_files
             )
 
-            # NEW Step 3: Collect consecutive table chains
+            # Step 3: Collect consecutive table chains
             chains_by_page = {}
             merge_decisions = []
 
@@ -81,7 +83,7 @@ class PDFProcessor:
                     parse_result.page_files, tables
                 )
 
-                # NEW Step 4: Assemble table chains using LLM
+                # Step 4: Assemble table chains using LLM
                 if chains_by_page:
                     all_chains = [
                         chain for chains in chains_by_page.values() for chain in chains
@@ -93,7 +95,7 @@ class PDFProcessor:
                         all_chains
                     )
 
-                    # NEW Step 5: Apply assembly decisions and cleanup
+                    # Step 5: Apply assembly decisions and cleanup
                     if merge_decisions:
                         logger.info("Step 5: Applying assembly decisions to page files")
                         modified_pages = (
@@ -118,6 +120,16 @@ class PDFProcessor:
                                     f"page_{rp}.md" in pf for rp in removed_pages
                                 )
                             ]
+
+                # Step 5.5: Restore text integrity (cross-page fragmentation)
+                logger.info("Step 5.5: Restoring cross-page text integrity")
+                modified_text_pages = self.text_integrity_processor.process_pages(
+                    parse_result.page_files
+                )
+                if modified_text_pages:
+                    logger.info(
+                        f"Restored text integrity on {len(modified_text_pages)} pages"
+                    )
 
                 # Step 6: Re-detect tables after assembly (some may have been merged)
                 logger.info("Step 6: Re-detecting tables after assembly")
