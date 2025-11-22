@@ -31,6 +31,21 @@ async def async_main():
         "document_metadata.json.",
         required=False,
     )
+    parser.add_argument(
+        "--skip-table-merge",
+        action="store_true",
+        help="Skip table fragmentation merging step",
+    )
+    parser.add_argument(
+        "--skip-text-merge",
+        action="store_true",
+        help="Skip cross-page text integrity restoration step",
+    )
+    parser.add_argument(
+        "--skip-table-summarization",
+        action="store_true",
+        help="Skip table summarization step",
+    )
     args = parser.parse_args()
 
     # Load document metadata
@@ -75,7 +90,12 @@ async def async_main():
     # API keys are handled by the SETTINGS object within the processor's constructor
     processor = PDFProcessor(llama_config={})
     logger.info(f"Starting processing for {len(file_paths_to_process)} document(s)...")
-    await processor.process_pdf_batch(file_paths_to_process)
+    await processor.process_pdf_batch(
+        file_paths_to_process,
+        skip_table_merge=args.skip_table_merge,
+        skip_text_merge=args.skip_text_merge,
+        skip_table_summarization=args.skip_table_summarization,
+    )
     logger.info("All processing tasks completed.")
 
 

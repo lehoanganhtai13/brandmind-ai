@@ -38,21 +38,36 @@ class PDFProcessor:
         self.report_generator = ReportGenerator()
         self.text_integrity_processor = TextIntegrityProcessor()
 
-    async def process_pdf(self, file_path: str) -> PDFParseResult:
+    async def process_pdf(
+        self,
+        file_path: str,
+        skip_table_merge: bool = False,
+        skip_text_merge: bool = False,
+        skip_table_summarization: bool = False,
+    ) -> PDFParseResult:
         """
         Process PDF: parsing → table detection → merging → summarization → reports.
 
         Enhanced pipeline with table fragmentation resolution:
         1. Parse PDF to individual page files
         2. Detect all tables in page files
-        3. Collect consecutive table chains
-        4. Use LLM to decide which chains to merge
-        5. Apply merge decisions and cleanup empty pages
-        6. Summarize final tables (merged or original)
-        7. Generate processing reports for traceability
+        3. Collect consecutive table chains (Optional)
+        4. Use LLM to decide which chains to merge (Optional)
+        5. Apply merge decisions and cleanup empty pages (Optional)
+        6. Restore cross-page text integrity (Optional)
+        7. Re-detect tables after assembly
+        8. Summarize final tables (merged or original) (Optional)
+        9. Update page files with summaries
+        10. Generate processing reports for traceability
 
         Args:
             file_path (str): Path to PDF file
+            skip_table_merge (bool): If True, skip table fragmentation
+                merging (Steps 3-5)
+            skip_text_merge (bool): If True, skip text integrity
+                restoration (Step 6)
+            skip_table_summarization (bool): If True, skip table
+                summarization (Step 7)
 
         Returns:
             PDFParseResult: Result with file-based storage and processing metadata
@@ -77,83 +92,106 @@ class PDFProcessor:
             chains_by_page = {}
             merge_decisions = []
 
-            if tables:
-                logger.info("Step 3: Collecting consecutive table chains")
-                chains_by_page = self.table_chain_collector.collect_all_chains(
-                    parse_result.page_files, tables
-                )
-
-                # Step 4: Assemble table chains using LLM
-                if chains_by_page:
-                    all_chains = [
-                        chain for chains in chains_by_page.values() for chain in chains
-                    ]
-                    logger.info(
-                        f"Step 4: Assembling {len(all_chains)} table chain(s) with LLM"
-                    )
-                    merge_decisions = await self.table_assembler.analyze_chains_batch(
-                        all_chains
+            if not skip_table_merge:
+                if tables:
+                    logger.info("Step 3: Collecting consecutive table chains")
+                    chains_by_page = self.table_chain_collector.collect_all_chains(
+                        parse_result.page_files, tables
                     )
 
-                    # Step 5: Apply assembly decisions and cleanup
-                    if merge_decisions:
-                        logger.info("Step 5: Applying assembly decisions to page files")
-                        modified_pages = (
-                            await self.page_file_updater.apply_merge_decisions(
-                                chains_by_page, merge_decisions
-                            )
+                    # Step 4: Assemble table chains using LLM
+                    if chains_by_page:
+                        all_chains = [
+                            chain
+                            for chains in chains_by_page.values()
+                            for chain in chains
+                        ]
+                        logger.info(
+                            f"Step 4: Assembling {len(all_chains)} "
+                            "table chain(s) with LLM"
+                        )
+                        merge_decisions = (
+                            await self.table_assembler.analyze_chains_batch(all_chains)
                         )
 
-                        # Cleanup empty pages
-                        removed_pages = (
-                            await self.page_file_updater.cleanup_empty_pages(
-                                parse_result.output_directory, modified_pages
+                        # Step 5: Apply assembly decisions and cleanup
+                        if merge_decisions:
+                            logger.info(
+                                "Step 5: Applying assembly decisions to page files"
                             )
-                        )
-
-                        if removed_pages:
-                            # Update page_files list to remove deleted pages
-                            parse_result.page_files = [
-                                pf
-                                for pf in parse_result.page_files
-                                if not any(
-                                    f"page_{rp}.md" in pf for rp in removed_pages
+                            modified_pages = (
+                                await self.page_file_updater.apply_merge_decisions(
+                                    chains_by_page, merge_decisions
                                 )
-                            ]
+                            )
 
-                # Step 5.5: Restore text integrity (cross-page fragmentation)
-                logger.info("Step 5.5: Restoring cross-page text integrity")
+                            # Cleanup empty pages
+                            removed_pages = (
+                                await self.page_file_updater.cleanup_empty_pages(
+                                    parse_result.output_directory, modified_pages
+                                )
+                            )
+
+                            if removed_pages:
+                                # Update page_files list to remove deleted pages
+                                parse_result.page_files = [
+                                    pf
+                                    for pf in parse_result.page_files
+                                    if not any(
+                                        f"page_{rp}.md" in pf for rp in removed_pages
+                                    )
+                                ]
+            else:
+                logger.info("Skipping table merging (Steps 3-5) as requested")
+
+            # Step 6: Restore text integrity (cross-page fragmentation)
+            if not skip_text_merge:
+                logger.info("Step 6: Restoring cross-page text integrity")
                 modified_text_pages = self.text_integrity_processor.process_pages(
                     parse_result.page_files
                 )
+
                 if modified_text_pages:
                     logger.info(
                         f"Restored text integrity on {len(modified_text_pages)} pages"
                     )
+            else:
+                logger.info("Skipping text integrity restoration (Step 6) as requested")
 
-                # Step 6: Re-detect tables after assembly (some may have been merged)
-                logger.info("Step 6: Re-detecting tables after assembly")
-                tables = self.table_extractor.detect_tables_in_files(
-                    parse_result.page_files
-                )
+            # Step 7: Re-detect tables after assembly (some may have been merged)
+            logger.info("Step 7: Re-detecting tables after assembly")
+            final_tables = self.table_extractor.detect_tables_in_files(
+                parse_result.page_files
+            )
+            logger.info(
+                f"Detected {len(final_tables)} tables across "
+                f"{len(parse_result.page_files)} page files"
+            )
 
-            # Step 7: Summarize final tables
+            # Step 8: Summarizing final table(s)
             table_summaries = []
-            if tables:
-                logger.info(f"Step 7: Summarizing {len(tables)} final table(s)")
-                table_summaries = await self.table_summarizer.summarize_tables_batch(
-                    tables
-                )
+            if not skip_table_summarization:
+                if final_tables:
+                    logger.info(
+                        f"Step 8: Summarizing {len(final_tables)} final table(s)"
+                    )
+                    table_summaries = (
+                        await self.table_summarizer.summarize_tables_batch(
+                            tables=final_tables
+                        )
+                    )
+            else:
+                logger.info("Skipping table summarization (Step 8) as requested")
 
-                # Step 8: Update page files with summaries
-                if table_summaries:
-                    logger.info("Step 8: Updating page files with table summaries")
-                    await self._update_files_with_summaries(tables, table_summaries)
+            # Step 9: Update page files with table summaries
+            if table_summaries:
+                logger.info("Step 9: Updating page files with table summaries")
+                await self._update_files_with_summaries(final_tables, table_summaries)
 
-            # NEW Step 9: Generate processing reports
-            logger.info("Step 9: Generating processing reports")
+            # Step 10: Generating processing reports
+            logger.info("Step 10: Generating processing reports")
             report_paths = self.report_generator.create_report_structure(
-                parse_result.output_directory
+                output_directory=parse_result.output_directory
             )
 
             if chains_by_page and merge_decisions:
@@ -212,12 +250,24 @@ class PDFProcessor:
                 except Exception as e:
                     logger.error(f"Failed to update file {table.page_file}: {e}")
 
-    async def process_pdf_batch(self, file_paths: List[str]) -> List[PDFParseResult]:
+    async def process_pdf_batch(
+        self,
+        file_paths: List[str],
+        skip_table_merge: bool = False,
+        skip_text_merge: bool = False,
+        skip_table_summarization: bool = False,
+    ) -> List[PDFParseResult]:
         """
         Processes multiple PDF files sequentially with a progress bar.
 
         Args:
-            file_paths (List[str]): A list of paths to the PDF files.
+            file_paths (List[str]): List of PDF file paths
+            skip_table_merge (bool): If True, skip table
+                fragmentation merging (Steps 3-5)
+            skip_text_merge (bool): If True, skip text integrity
+                restoration (Step 6)
+            skip_table_summarization (bool): If True, skip table
+                summarization (Step 7)
 
         Returns:
             List[PDFParseResult]: A list of results for each successfully processed PDF.
@@ -230,14 +280,22 @@ class PDFProcessor:
         with tqdm(total=len(file_paths), desc="Processing PDFs") as pbar:
             for file_path in file_paths:
                 try:
-                    result = await self.process_pdf(file_path)
+                    result = await self.process_pdf(
+                        file_path,
+                        skip_table_merge=skip_table_merge,
+                        skip_text_merge=skip_text_merge,
+                        skip_table_summarization=skip_table_summarization,
+                    )
                     results.append(result)
                     pbar.set_description(f"Processed: {Path(file_path).name}")
                     pbar.update(1)
                 except Exception as e:
-                    logger.error(f"Failed to process {file_path}: {e}")
+                    logger.error(f"Failed to process {file_path}: {str(e)}")
                     pbar.update(1)
                     continue
 
-        logger.info(f"Completed batch processing: {len(results)} successful")
+        logger.info(
+            f"Completed batch processing: {len(results)} successful, "
+            f"{len(file_paths) - len(results)} failed"
+        )
         return results
