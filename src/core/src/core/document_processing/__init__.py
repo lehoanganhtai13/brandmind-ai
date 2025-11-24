@@ -1,5 +1,8 @@
 """Core components for the document processing pipeline."""
 
+from core.document_processing.content_cleanup_processor import (
+    ContentCleanupProcessor,
+)
 from core.document_processing.llama_parser import LlamaPDFProcessor
 from core.document_processing.markdown_table_converter import MarkdownTableConverter
 from core.document_processing.models import PDFParseResult, TableInfo, TableSummary
@@ -13,6 +16,7 @@ from core.document_processing.table_summarizer import TableSummarizer
 from core.document_processing.text_integrity_processor import TextIntegrityProcessor
 
 __all__ = [
+    "ContentCleanupProcessor",
     "PDFParseResult",
     "TableInfo",
     "TableSummary",

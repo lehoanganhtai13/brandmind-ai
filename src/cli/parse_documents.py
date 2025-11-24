@@ -46,6 +46,11 @@ async def async_main():
         action="store_true",
         help="Skip table summarization step",
     )
+    parser.add_argument(
+        "--skip-content-cleanup",
+        action="store_true",
+        help="Skip content formatting cleanup step",
+    )
     args = parser.parse_args()
 
     # Load document metadata
@@ -95,6 +100,7 @@ async def async_main():
         skip_table_merge=args.skip_table_merge,
         skip_text_merge=args.skip_text_merge,
         skip_table_summarization=args.skip_table_summarization,
+        skip_content_cleanup=args.skip_content_cleanup,
     )
     logger.info("All processing tasks completed.")
 

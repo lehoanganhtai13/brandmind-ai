@@ -5,6 +5,9 @@ from typing import Any, Dict, List
 
 from loguru import logger
 
+from core.document_processing.content_cleanup_processor import (
+    ContentCleanupProcessor,
+)
 from core.document_processing.llama_parser import LlamaPDFProcessor
 from core.document_processing.models import PDFParseResult, TableInfo, TableSummary
 from core.document_processing.page_file_updater import PageFileUpdater
@@ -37,6 +40,7 @@ class PDFProcessor:
         self.table_summarizer = TableSummarizer()
         self.report_generator = ReportGenerator()
         self.text_integrity_processor = TextIntegrityProcessor()
+        self.content_cleanup_processor = ContentCleanupProcessor()
 
     async def process_pdf(
         self,
@@ -44,6 +48,7 @@ class PDFProcessor:
         skip_table_merge: bool = False,
         skip_text_merge: bool = False,
         skip_table_summarization: bool = False,
+        skip_content_cleanup: bool = False,
     ) -> PDFParseResult:
         """
         Process PDF: parsing → table detection → merging → summarization → reports.
@@ -59,6 +64,7 @@ class PDFProcessor:
         8. Summarize final tables (merged or original) (Optional)
         9. Update page files with summaries
         10. Generate processing reports for traceability
+        11. Clean up content formatting (Optional)
 
         Args:
             file_path (str): Path to PDF file
@@ -67,7 +73,9 @@ class PDFProcessor:
             skip_text_merge (bool): If True, skip text integrity
                 restoration (Step 6)
             skip_table_summarization (bool): If True, skip table
-                summarization (Step 7)
+                summarization (Step 8)
+            skip_content_cleanup (bool): If True, skip content formatting
+                cleanup (Step 11)
 
         Returns:
             PDFParseResult: Result with file-based storage and processing metadata
@@ -210,6 +218,16 @@ class PDFProcessor:
                     report_paths["summarize"],
                 )
 
+            # Step 11: Clean up content formatting
+            if not skip_content_cleanup:
+                logger.info("Step 11: Cleaning up content formatting")
+                cleaned_files = self.content_cleanup_processor.process_pages(
+                    parse_result.page_files
+                )
+                logger.info(f"Cleaned up {len(cleaned_files)} page files")
+            else:
+                logger.info("Skipping content cleanup (Step 11) as requested")
+
             logger.info(
                 f"PDF processing completed: {len(parse_result.page_files)} page(s), "
                 f"{len(table_summaries)} table(s) summarized"
@@ -256,6 +274,7 @@ class PDFProcessor:
         skip_table_merge: bool = False,
         skip_text_merge: bool = False,
         skip_table_summarization: bool = False,
+        skip_content_cleanup: bool = False,
     ) -> List[PDFParseResult]:
         """
         Processes multiple PDF files sequentially with a progress bar.
@@ -267,7 +286,9 @@ class PDFProcessor:
             skip_text_merge (bool): If True, skip text integrity
                 restoration (Step 6)
             skip_table_summarization (bool): If True, skip table
-                summarization (Step 7)
+                summarization (Step 8)
+            skip_content_cleanup (bool): If True, skip content formatting
+                cleanup (Step 11)
 
         Returns:
             List[PDFParseResult]: A list of results for each successfully processed PDF.
@@ -285,6 +306,7 @@ class PDFProcessor:
                         skip_table_merge=skip_table_merge,
                         skip_text_merge=skip_text_merge,
                         skip_table_summarization=skip_table_summarization,
+                        skip_content_cleanup=skip_content_cleanup,
                     )
                     results.append(result)
                     pbar.set_description(f"Processed: {Path(file_path).name}")
