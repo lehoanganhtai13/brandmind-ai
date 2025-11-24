@@ -112,6 +112,7 @@ class LlamaPDFProcessor:
                 outlined_table_extraction=True,
                 output_tables_as_HTML=True,
                 result_type="markdown",
+                max_timeout=7200,  # 2 hours for large PDFs (default: 2000s)
                 **parser_config,
             )
         except ImportError as e:
