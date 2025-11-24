@@ -15,20 +15,38 @@ async def async_main():
     """
     Main asynchronous function to run the document processing CLI.
 
-    This script serves as the entry point for parsing PDF documents. It handles
-    command-line arguments to determine which documents to process, loads the
-    necessary metadata, and then invokes the PDFProcessor pipeline. It supports
-    both a batch mode to process all documents listed in the metadata and a
-    single-file mode.
+    This script serves as the entry point for parsing PDF documents or cleaning
+    up existing parsed documents. It supports three modes:
+    1. Batch mode: Process all documents from metadata
+    2. Single-file mode: Process a specific PDF file (--file)
+    3. Cleanup-only mode: Apply content cleanup to existing parsed folder
+       (--cleanup-folder)
     """
     parser = argparse.ArgumentParser(
-        description="Run the document processing pipeline."
+        description=(
+            "Run the document processing pipeline or cleanup existing "
+            "parsed documents."
+        )
     )
-    parser.add_argument(
+
+    # Create mutually exclusive group for processing modes
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument(
         "--file",
         type=str,
-        help="The specific filename of a document to process. Must be listed in "
-        "document_metadata.json.",
+        help="Process a specific PDF file from document_metadata.json",
+        required=False,
+    )
+    mode_group.add_argument(
+        "--cleanup-folder",
+        type=str,
+        metavar="FOLDER_NAME",
+        help=(
+            "Apply content cleanup to an existing parsed document folder. "
+            "Provide folder name only (e.g., "
+            "'Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123'). "
+            "The folder must exist in data/parsed_documents/."
+        ),
         required=False,
     )
     parser.add_argument(
@@ -52,6 +70,11 @@ async def async_main():
         help="Skip content formatting cleanup step",
     )
     args = parser.parse_args()
+
+    # Handle cleanup-only mode
+    if args.cleanup_folder:
+        await run_cleanup_mode(args.cleanup_folder)
+        return
 
     # Load document metadata
     metadata_path = Path("data/raw_documents/document_metadata.json")
@@ -103,6 +126,77 @@ async def async_main():
         skip_content_cleanup=args.skip_content_cleanup,
     )
     logger.info("All processing tasks completed.")
+
+
+async def run_cleanup_mode(folder_name: str):
+    """
+    Execute cleanup-only mode on an existing parsed document folder.
+
+    This mode applies ContentCleanupProcessor to all page_*.md files in the
+    specified folder without re-parsing the PDF or running other processing steps.
+    It normalizes whitespace (reduces 3+ blank lines to 2) and fixes metadata
+    separator spacing.
+
+    Args:
+        folder_name (str): Name of the folder in data/parsed_documents/ to clean
+
+    Returns:
+        None
+    """
+    from pathlib import Path
+
+    from tqdm import tqdm
+
+    from core.document_processing.content_cleanup_processor import (
+        ContentCleanupProcessor,
+    )
+
+    # Construct full folder path
+    base_dir = Path("data/parsed_documents")
+    folder_path = base_dir / folder_name
+
+    # Validate folder exists
+    if not folder_path.exists():
+        logger.error(f"Folder not found: {folder_path}")
+        logger.info(f"Available folders in {base_dir}:")
+        for f in sorted(base_dir.iterdir()):
+            if f.is_dir():
+                logger.info(f"  - {f.name}")
+        return
+
+    # Find all page files
+    page_files = sorted(folder_path.glob("page_*.md"))
+
+    if not page_files:
+        logger.error(f"No page_*.md files found in {folder_path}")
+        return
+
+    logger.info(f"Found {len(page_files)} page files in {folder_name}")
+    logger.info("Starting content cleanup...")
+
+    # Initialize processor
+    processor = ContentCleanupProcessor()
+
+    # Process files with progress bar
+    page_file_paths = [str(f) for f in page_files]
+    cleaned_files = []
+
+    with tqdm(total=len(page_file_paths), desc="Cleaning pages") as pbar:
+        for file_path in page_file_paths:
+            try:
+                if processor.process_file(file_path):
+                    cleaned_files.append(file_path)
+                pbar.update(1)
+            except Exception as e:
+                logger.error(f"Failed to process {Path(file_path).name}: {e}")
+                pbar.update(1)
+                continue
+
+    # Report summary
+    logger.info(
+        f"Cleanup completed: {len(cleaned_files)}/{len(page_file_paths)} "
+        f"files processed successfully"
+    )
 
 
 def main():
