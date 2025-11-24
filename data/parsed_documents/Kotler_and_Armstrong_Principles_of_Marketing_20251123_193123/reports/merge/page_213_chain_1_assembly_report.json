@@ -1,0 +1,56 @@
+{
+  "chain_id": "page_213_chain_1",
+  "page_number": 213,
+  "fragment_count": 4,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 213,
+      "start_pos": 300,
+      "end_pos": 523,
+      "html_size": 223,
+      "page_file": "data/parsed_documents/Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123/page_213.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 213,
+      "start_pos": 524,
+      "end_pos": 681,
+      "html_size": 157,
+      "page_file": "data/parsed_documents/Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123/page_213.md"
+    },
+    {
+      "fragment_index": 3,
+      "page_number": 213,
+      "start_pos": 682,
+      "end_pos": 855,
+      "html_size": 173,
+      "page_file": "data/parsed_documents/Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123/page_213.md"
+    },
+    {
+      "fragment_index": 4,
+      "page_number": 213,
+      "start_pos": 856,
+      "end_pos": 1045,
+      "html_size": 189,
+      "page_file": "data/parsed_documents/Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123/page_213.md"
+    }
+  ],
+  "is_cross_page": false,
+  "page_range": "213",
+  "merge_decision": {
+    "chain_id": "page_213_chain_1",
+    "status": "NO_MERGE",
+    "analysis": {
+      "fragments_received": 4,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No collapsed column errors were found or repaired."
+      },
+      "reasoning": "The input fragments represent distinct objectives, each with a clear header and a single body row. They do not appear to be parts of a single, larger table, but rather separate entries that share a common structural pattern. Therefore, they cannot be merged into a single coherent table."
+    },
+    "final_merged_html": null,
+    "processing_time": 2.0281920433044434
+  },
+  "timestamp": "2025-11-23T20:05:48.238089"
+}

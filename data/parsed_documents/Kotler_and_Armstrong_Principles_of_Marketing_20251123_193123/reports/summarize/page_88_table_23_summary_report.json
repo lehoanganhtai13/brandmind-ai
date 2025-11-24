@@ -1,0 +1,10 @@
+{
+  "table_id": "page_88_table_23",
+  "page_number": 88,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th></th>\n<th>Apple</th>\n<th>Microsoft</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Sales</td>\n<td>$182,795,000</td>\n<td>$86,833,000</td>\n</tr>\n<tr>\n<td>Gross Profit</td>\n<td>$70,537,000</td>\n<td>$59,899,000</td>\n</tr>\n<tr>\n<td>Marketing Expenses</td>\n<td>$8,994,750</td>\n<td>$15,474,000</td>\n</tr>\n<tr>\n<td>Net Income (Profit)</td>\n<td>$52,503,000</td>\n<td>$27,759,000</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative financial overview of Apple and Microsoft, detailing key performance indicators for each company. It highlights Apple's significantly higher Sales of $182,795,000 compared to Microsoft's $86,833,000. Correspondingly, Apple also reports a larger Gross Profit of $70,537,000 against Microsoft's $59,899,000. In terms of expenses, Microsoft's Marketing Expenses are notably higher at $15,474,000 than Apple's $8,994,750. Ultimately, this leads to a substantial difference in Net Income (Profit), with Apple achieving $52,503,000, more than double Microsoft's $27,759,000. The structure is a direct comparison of financial metrics between two major technology companies.",
+  "processing_time": 1.7068469524383545,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.268599"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_561_table_134",
+  "page_number": 561,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th></th>\n  <th colspan=\"2\" style=\"text-align:center;\">Customer-centered</th>\n</tr>\n<tr>\n  <th>Competitor-centered</th>\n  <th style=\"text-align:center;\">No</th>\n  <th style=\"text-align:center;\">Yes</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td style=\"text-align:center;\">No</td>\n<td>Product orientation</td>\n<td>Customer orientation</td>\n</tr>\n<tr>\n  <td style=\"text-align:center;\">Yes</td>\n<td>Competitor orientation</td>\n<td>Market orientation</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a framework for understanding different market orientations based on two dimensions: customer-centeredness and competitor-centeredness. The structure is a 2x2 matrix, categorizing orientations into four distinct types. When a company is not customer-centered and not competitor-centered, it exhibits a product orientation, focusing primarily on its offerings. If a company is not customer-centered but is competitor-centered, it adopts a competitor orientation, emphasizing rivals' actions. Conversely, a company that is customer-centered but not competitor-centered demonstrates a customer orientation, prioritizing customer needs and satisfaction. Finally, when a company is both customer-centered and competitor-centered, it achieves a market orientation, integrating insights from both customers and competitors to guide its strategies. This matrix highlights how the interplay of these two focus areas defines a company's strategic approach to the market.",
+  "processing_time": 2.1486642360687256,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.389221"
+}

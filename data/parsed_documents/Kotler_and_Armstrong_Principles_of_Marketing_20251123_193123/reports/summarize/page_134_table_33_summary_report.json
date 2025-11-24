@@ -1,0 +1,10 @@
+{
+  "table_id": "page_134_table_33",
+  "page_number": 134,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Research Approaches</th>\n<th>Contact Methods</th>\n<th>Sampling Plan</th>\n<th>Research Instruments</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Observation</td>\n<td>Mail</td>\n<td>Sampling unit</td>\n<td>Questionnaire</td>\n</tr>\n<tr>\n<td>Survey</td>\n<td>Telephone</td>\n<td>Sample size</td>\n<td>Mechanical instruments</td>\n</tr>\n<tr>\n<td>Experiment</td>\n<td>Personal<br>Online</td>\n<td>Sampling procedure</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines key components of research design, presenting a comparative structure across four main categories: Research Approaches, Contact Methods, Sampling Plan, and Research Instruments. Under Research Approaches, the methods include Observation, Survey, and Experiment. Contact Methods are categorized as Mail, Telephone, Personal, and Online. The Sampling Plan encompasses the Sampling unit, Sample size, and Sampling procedure. Finally, Research Instruments are listed as Questionnaire and Mechanical instruments. The arrangement suggests that for any given research endeavor, choices must be made within each of these four areas to define the overall research strategy and execution.",
+  "processing_time": 1.2286138534545898,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.282655"
+}

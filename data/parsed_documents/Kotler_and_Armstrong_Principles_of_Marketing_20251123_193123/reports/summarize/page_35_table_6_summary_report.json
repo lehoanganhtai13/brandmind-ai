@@ -1,0 +1,10 @@
+{
+  "table_id": "page_35_table_6",
+  "page_number": 35,
+  "original_table_html": "<table>\n  <tr>\n    <td rowspan=\"3\">Suppliers</td>\n<td>Company</td>\n    <td rowspan=\"2\">Marketing intermediaries</td>\n    <td rowspan=\"3\" style=\"background-color:#cc0000; color:#fff; font-weight:bold;\">Final consumers</td>\n  </tr>\n<tr>\n    <td>Competitors</td>\n  </tr>\n<tr>\n    <td colspan=\"2\" style=\"text-align:center;\">Major environmental forces</td>\n  </tr>\n</table>",
+  "summary_markdown": "This diagram illustrates the relationship between suppliers, marketing intermediaries, and final consumers within a market environment. Suppliers, encompassing both individual companies and competitors, interact with marketing intermediaries. These intermediaries, in turn, facilitate the flow of goods or services to the final consumers. The entire system is influenced by major environmental forces, which are presented as an overarching element impacting all other components. The structure suggests a supply chain or distribution channel model, highlighting the roles of different entities and the external factors that shape their interactions in reaching the end-user.",
+  "processing_time": 1.9421792030334473,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.245076"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_184_table_44",
+  "page_number": 184,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Attributes</th>\n<th>Importance Weight (e)</th>\n<th colspan=\"3\">Alternative Brands</th>\n</tr>\n<tr>\n<th></th>\n<th></th>\n<th>A</th>\n<th>B</th>\n<th>C</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Screen size</td>\n<td>0.2</td>\n<td>4</td>\n<td>6</td>\n<td>2</td>\n</tr>\n<tr>\n<td>Price</td>\n<td>0.5</td>\n<td>6</td>\n<td>3</td>\n<td>7</td>\n</tr>\n<tr>\n<td>Operating system</td>\n<td>0.1</td>\n<td>5</td>\n<td>5</td>\n<td>4</td>\n</tr>\n<tr>\n<td>Apps available</td>\n<td>0.2</td>\n<td>4</td>\n<td>6</td>\n<td>7</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a comparative analysis of three alternative brands (A, B, and C) based on four key attributes: Screen size, Price, Operating system, and Apps available. Each attribute is assigned an importance weight, with Price holding the highest weight (0.5), followed by Screen size and Apps available (both 0.2), and Operating system with the lowest weight (0.1). For each brand, a score is provided for every attribute, indicating its performance or characteristic in that area. For instance, Brand A scores 4 for Screen size, 6 for Price, 5 for Operating system, and 4 for Apps available. This structure allows for a quantitative evaluation and comparison of the brands across different criteria, weighted by their perceived importance.",
+  "processing_time": 1.2659001350402832,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.290034"
+}

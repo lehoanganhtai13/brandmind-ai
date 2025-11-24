@@ -1,0 +1,10 @@
+{
+  "table_id": "page_489_table_126",
+  "page_number": 489,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"2\">How Salespeople Spend Their Time</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>37.1%</td>\n<td><b>Active selling (face-to-face or phone)</b></td>\n</tr>\n<tr>\n<td>21.7%</td>\n<td>Researching accounts, pursuing leads</td>\n</tr>\n<tr>\n<td>17.1%</td>\n<td>Post-sales tasks</td>\n</tr>\n<tr>\n<td>13.9%</td>\n<td>Meetings, administrative</td>\n</tr>\n<tr>\n<td>10%</td>\n<td>Travel, training</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data illustrates the time allocation of salespeople, revealing a breakdown of their activities. The largest portion of time, 37.1%, is dedicated to **Active selling (face-to-face or phone)**, indicating direct customer interaction as the primary focus. Following this, 21.7% of their time is spent on **Researching accounts, pursuing leads**, highlighting the importance of lead generation and prospect qualification. **Post-sales tasks** account for 17.1%, suggesting a significant investment in customer retention and support. A smaller but notable segment, 13.9%, is allocated to **Meetings, administrative** duties, reflecting the operational overhead. Finally, **Travel, training** comprises the remaining 10%, underscoring the time commitment to professional development and logistical necessities. The structure is comparative, detailing the proportional distribution of a salesperson's working hours across distinct functional areas.",
+  "processing_time": 2.5559232234954834,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.379119"
+}

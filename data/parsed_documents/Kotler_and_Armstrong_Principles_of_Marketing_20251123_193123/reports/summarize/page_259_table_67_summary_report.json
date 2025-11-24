@@ -1,0 +1,10 @@
+{
+  "table_id": "page_259_table_67",
+  "page_number": 259,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Intangibility</th>\n<th></th>\n<th>Inseparability</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Services cannot be seen, tasted, felt, heard, or smelled before purchase</td>\n<td rowspan=\"2\" style=\"text-align:center;\"><strong>Services</strong></td>\n<td>Services cannot be separated from their providers</td>\n</tr>\n<tr>\n<th>Variability</th>\n<th>Perishability</th>\n</tr>\n<tr>\n<td>Quality of services depends on who provides them and when, where, and how</td>\n<td>Services cannot be stored for later sale or use</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines the four key characteristics of services: intangibility, inseparability, variability, and perishability. Intangibility signifies that services cannot be experienced through the senses prior to consumption. Inseparability highlights that services are produced and consumed simultaneously, making them inseparable from their providers. Variability indicates that the quality of a service can differ significantly depending on the provider, time, location, and circumstances of its delivery. Finally, perishability means that services cannot be stored for future use or sale, as they are consumed at the moment of production. These characteristics collectively differentiate services from tangible goods and influence their marketing and management strategies.",
+  "processing_time": 1.1605989933013916,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.315774"
+}

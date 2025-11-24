@@ -1,0 +1,10 @@
+{
+  "table_id": "page_196_table_50",
+  "page_number": 196,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"8\">Figure 6.3<br>Stages of the Business Buyer Decision Process</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td colspan=\"8\">Buyers facing new, complex buying decisions usually go through all of these stages. Those making rebuys often skip some of the stages. Either way, the business buyer decision process is usually much more complicated than this simple flow diagram suggests.</td>\n</tr>\n<tr>\n<td>Problem<br>recognition</td>\n<td>General need<br>description</td>\n<td>Product<br>specification</td>\n<td>Supplier<br>search</td>\n<td>Proposal<br>solicitation</td>\n<td>Supplier<br>selection</td>\n<td>Order-routine<br>specification</td>\n<td>Performance<br>review</td>\n</tr>\n<tr>\n<td colspan=\"8\" style=\"text-align:center;\">→ → → → → → → →</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "The Business Buyer Decision Process, as depicted in Figure 6.3, outlines a sequential flow of eight stages typically encountered by buyers in complex purchasing situations. This process begins with Problem Recognition, leading to a General Need Description, and then a detailed Product Specification. Subsequently, buyers engage in Supplier Search, followed by Proposal Solicitation from potential vendors. The core of the process involves Supplier Selection, after which an Order-Routine Specification is established. The cycle concludes with a Performance Review of the chosen supplier and product. While this diagram presents a linear progression, it's noted that buyers making rebuys may bypass certain stages, and the actual process is often more intricate than this simplified model suggests.",
+  "processing_time": 2.0177879333496094,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.294296"
+}

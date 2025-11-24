@@ -1,0 +1,10 @@
+{
+  "table_id": "page_160_table_37",
+  "page_number": 160,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>The environment</th>\n      <th>Buyer’s black box</th>\n      <th>Buyer responses</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>\n        Marketing stimuli<br>\n        Product<br>\n        Price<br>\n        Place<br>\n        Promotion\n      </td>\n<td>\n        Buyer’s characteristics<br>\n        Buyer’s decision process\n      </td>\n<td>\n        Buying attitudes and preferences<br>\n        Purchase behavior: what the buyer buys, when, where, and how much<br>\n        Brand engagements and relationships\n      </td>\n    </tr>\n<tr>\n      <td>\n        Other<br>\n        Economic<br>\n        Technological<br>\n        Social<br>\n        Cultural\n      </td>\n<td></td>\n<td></td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This diagram illustrates a model of buyer behavior, depicting a process with three main stages: the environment, the buyer's black box, and buyer responses. The environment encompasses both marketing stimuli, specifically product, price, place, and promotion, and other external factors such as economic, technological, social, and cultural influences. These environmental elements feed into the buyer's black box, which contains the buyer's characteristics and their decision process. The output of this black box is the buyer's responses, manifesting as buying attitudes and preferences, purchase behavior (including what, when, where, and how much is bought), and ultimately, brand engagements and relationships. The structure suggests a cause-and-effect relationship, where environmental inputs are processed internally by the buyer, leading to observable behavioral outputs.",
+  "processing_time": 1.9398658275604248,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.285936"
+}

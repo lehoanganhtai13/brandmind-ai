@@ -1,0 +1,10 @@
+{
+  "table_id": "page_68_table_14",
+  "page_number": 68,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"2\"></th>\n<th colspan=\"2\"></th>\n</tr>\n<tr>\n<th colspan=\"2\" style=\"text-align:center;\">Star</th>\n<th colspan=\"2\" style=\"text-align:center;\">Question mark</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td colspan=\"2\" rowspan=\"2\" style=\"vertical-align:middle; text-align:center; font-size: 2em;\">$</td>\n<td colspan=\"2\" rowspan=\"2\" style=\"vertical-align:middle; text-align:center; font-size: 2em;\">?</td>\n</tr>\n<tr></tr>\n<tr>\n<td colspan=\"2\" style=\"text-align:center; font-size: 2em;\">Cash cow</td>\n<td colspan=\"2\" style=\"text-align:center; font-size: 2em;\">Dog</td>\n</tr>\n<tr>\n<td colspan=\"2\" style=\"text-align:center; color: blue;\">High</td>\n<td colspan=\"2\" style=\"text-align:center; color: red;\">Low</td>\n</tr>\n<tr>\n<td colspan=\"2\" style=\"text-align:center;\">Relative market share</td>\n<td colspan=\"2\" style=\"text-align:center;\">Relative market share</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a two-by-two matrix, the Boston Consulting Group (BCG) Growth-Share Matrix, used for strategic portfolio analysis. The matrix categorizes business units or products based on two dimensions: relative market share (horizontal axis) and market growth rate (vertical axis). The upper-left quadrant, labeled \"Star,\" represents high market share and high market growth. The upper-right quadrant, labeled \"Question mark,\" signifies low market share and high market growth. The lower-left quadrant, termed \"Cash cow,\" indicates high market share and low market growth. Finally, the lower-right quadrant, designated as \"Dog,\" represents low market share and low market growth. This structure facilitates decisions regarding resource allocation and strategic planning for different business units.",
+  "processing_time": 2.0519628524780273,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.257040"
+}

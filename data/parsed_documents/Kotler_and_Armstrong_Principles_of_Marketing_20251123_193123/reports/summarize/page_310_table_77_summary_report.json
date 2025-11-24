@@ -1,0 +1,10 @@
+{
+  "table_id": "page_310_table_77",
+  "page_number": 310,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Product costs</th>\n<th rowspan=\"3\">Competition and other external factors<br>Competitors’ strategies and prices<br>Marketing strategy, objectives, and mix<br>Nature of the market and demand</th>\n<th>Consumer perceptions of value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>\n<b>Price floor</b><br>No profits below this price\n</td>\n<td>\n<b>Price ceiling</b><br>No demand above this price\n</td>\n</tr>\n<tr>\n<td colspan=\"3\">\nIf customers perceive that a product’s price is greater than its value, they won’t buy it. If the company prices the product below its costs, profits will suffer. Between the two extremes, the “right” pricing strategy is one that delivers both value to the customer and profits to the company.\n</td>\n</tr>\n<tr>\n<td>$</td>\n<td></td>\n<td>$$</td>\n</tr>\n<tr>\n<td colspan=\"3\" style=\"text-align:center;\"><b>Price</b></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This diagram illustrates the fundamental constraints and considerations in setting a product's price. The core structure is a range defined by a **price floor**, representing the minimum price at which a company can avoid losses, and a **price ceiling**, beyond which consumer demand ceases. Between these two limits, the optimal pricing strategy is determined by balancing **consumer perceptions of value** against the company's **product costs**. External influences, including **competition and other external factors** such as competitors' strategies and prices, as well as the company's own **marketing strategy, objectives, and mix**, and the **nature of the market and demand**, also play crucial roles in shaping the final price. The ultimate goal is to establish a price that simultaneously offers perceived value to customers and ensures profitability for the company.",
+  "processing_time": 2.234426736831665,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.329796"
+}

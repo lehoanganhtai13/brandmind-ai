@@ -1,0 +1,25 @@
+# Page 19
+
+**Document Title**: Principles of Marketing 17th Edition
+**Author**: Philip Kotler, Gary Armstrong
+**Original File**: data/raw_documents/Kotler_and_Armstrong_Principles_of_Marketing.pdf
+**Page Number**: 19/736
+**Processing Time**: 2025-11-23T20:00:41.601450
+
+---
+
+# Preface
+
+* The seventeenth edition adds fresh coverage in both traditional marketing areas and on fast-changing and trending topics such as customer engagement marketing, mobile and social media, big data and the new marketing analytics, the Internet of Things, omni-channel marketing and retailing, customer co-creation and empowerment, real-time customer listening and marketing, building brand community, marketing content creation and native advertising, B-to-B social media and social selling, monetizing social media, tiered and dynamic pricing, consumer privacy, sustainability, global marketing, and much more.
+
+* This new edition continues to build on its *customer engagement* framework—creating direct and continuous customer involvement in shaping brands, brand conversations, brand experiences, and brand community. New coverage and fresh examples throughout the text address the latest customer engagement tools, practices, and developments. See especially Chapter 1 (refreshed sections on *Customer Engagement and Today’s Digital and Social Media* and *Consumer-Generated Marketing*); Chapter 4 (big data and real-time research to gain deeper customer insights); Chapter 5 (creating social influence and customer community through digital and social media marketing); Chapter 9 (customer co-creation and customer-driven new-product development); Chapter 13 (omni-channel retailing); Chapters 14 and 15 (marketing content curation and native advertising); Chapter 16 (sales force social selling); and Chapter 17 (direct digital, online, social media, and mobile marketing).
+
+* No area of marketing is changing faster than online, mobile, social media, and other digital marketing technologies. Keeping up with digital concepts, technologies, and practices has become a top priority and major challenge for today’s marketers. The seventeenth edition of *Principles of Marketing* provides thoroughly refreshed, up-to-date coverage of these explosive developments in every chapter—from online, mobile, and social media engagement technologies discussed in Chapters 1, 5, 14, 15, and 17 to “real-time listening” and “big data” research tools in Chapter 4, real-time dynamic pricing in Chapter 11, omni-channel retailing in Chapter 13, and social selling in Chapter 16. A Chapter 1 section on *The Digital Age: Online, Mobile, and Social Media Marketing* introduces the exciting new developments in digital and social media marketing. Then a Chapter 17 section on *Direct, Online, Social Media, and Mobile Marketing* digs more deeply into digital marketing tools such as online sites, social media, mobile ads and apps, online video, email, blogs, and other digital platforms that engage consumers anywhere, anytime via their computers, smartphones, tablets, internet-ready TVs, and other digital devices.
+
+* The seventeenth edition continues to track fast-changing developments in marketing communications and the creation of marketing content. Marketers are no longer simply creating integrated marketing communications programs; they are joining with customers and media to curate customer-driven marketing content in paid, owned, earned, and shared media. You won’t find fresher coverage of these important topics in any other marketing text.
+
+* The seventeenth edition of *Principles of Marketing* continues to improve on its innovative learning design. The text’s active and integrative presentation includes learning enhancements such as annotated chapter-opening stories, a chapter-opening objective outline, explanatory author comments on major chapter sections and figures, and Real Marketing highlights that provide in-depth examples of marketing concepts and practices at work. The chapter-opening layout helps to preview and position the chapter and its key concepts. Figures annotated with author comments help students to simplify and organize chapter material. New and substantially revised end-of-chapter features help to summarize important chapter concepts and highlight important themes, such as marketing ethics, financial marketing analysis, and online, mobile, and social media marketing. This innovative learning design facilitates student understanding and eases learning.
+
+* The seventeenth edition provides 18 new end-of-chapter company cases by which students can apply what they learn to actual company situations. It also features 16 new video cases, with brief end-of-chapter summaries and discussion questions. Finally, all of the chapter-opening stories, Real Marketing highlights, and end-of-chapter features in the seventeenth edition are either new or revised.
+
+* New material throughout the seventeenth edition highlights the increasing importance of *sustainable marketing*. The discussion begins in Chapter 1 and ends in Chapter 20, which pulls marketing together under a sustainable marketing framework.

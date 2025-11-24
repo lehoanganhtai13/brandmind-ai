@@ -1,0 +1,10 @@
+{
+  "table_id": "page_416_table_111",
+  "page_number": 416,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Wholesale strategy</th>\n      <th>Wholesale marketing mix</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>\n        Wholesale segmentation and targeting<br>\n        Differentiation and service positioning\n      </td>\n<td>\n        Product and service assortment<br>\n        Wholesale prices<br>\n        Promotion<br>\n        Distribution (location)\n      </td>\n    </tr>\n<tr>\n      <td colspan=\"2\" style=\"text-align:center; font-weight:bold; color:red;\">\n        Create value for targeted wholesale customers\n      </td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines a wholesale strategy focused on creating value for targeted wholesale customers. The strategy encompasses two main areas: segmentation and targeting, and differentiation and service positioning. These strategic elements inform the wholesale marketing mix, which comprises product and service assortment, wholesale prices, promotion, and distribution, specifically location. The overarching goal is to leverage these marketing mix components to effectively serve and add value to chosen wholesale customer segments. The structure is hierarchical, with the overarching strategy guiding the tactical marketing mix elements, all aimed at the central objective of customer value creation.",
+  "processing_time": 1.850214958190918,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.361077"
+}

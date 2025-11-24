@@ -1,0 +1,10 @@
+{
+  "table_id": "page_81_table_20",
+  "page_number": 81,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th></th>\n  <th>Internal</th>\n  <th>Internal</th>\n</tr>\n<tr>\n  <th></th>\n  <th>Strengths</th>\n  <th>Weaknesses</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td></td>\n<td>Internal capabilities that may help a company reach its objectives</td>\n<td>Internal limitations that may interfere with a company’s ability to achieve its objectives</td>\n</tr>\n<tr>\n  <th>External</th>\n  <th>Opportunities</th>\n  <th>Threats</th>\n</tr>\n<tr>\n  <td></td>\n<td>External factors that the company may be able to exploit to its advantage</td>\n<td>Current and emerging external factors that may challenge the company’s performance</td>\n</tr>\n<tr>\n  <td></td>\n<td><b>Positive</b></td>\n<td><b>Negative</b></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines the four components of a SWOT analysis, a strategic planning framework. It categorizes factors as either internal or external to an organization, and as either positive or negative in their impact. Internal strengths represent capabilities that aid in achieving objectives, while internal weaknesses are limitations that hinder objective achievement. External opportunities are factors the company can leverage for advantage, whereas external threats are current or emerging factors that challenge performance. The framework thus provides a structured approach to assessing both an organization's internal resources and the external environment to inform strategic decision-making.",
+  "processing_time": 1.778273105621338,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.265381"
+}

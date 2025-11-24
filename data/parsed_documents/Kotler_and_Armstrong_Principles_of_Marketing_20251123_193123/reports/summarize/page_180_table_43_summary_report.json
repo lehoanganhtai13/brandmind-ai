@@ -1,0 +1,10 @@
+{
+  "table_id": "page_180_table_43",
+  "page_number": 180,
+  "original_table_html": "<table>\n    <thead>\n    <tr>\n        <th rowspan=\"5\">Innovators\n<br/>\n2.5%</th>\n        <th rowspan=\"4\">Early adopters\n<br/>\n13.5%</th>\n        <th rowspan=\"3\">Early mainstream\n<br/>\n34%</th>\n        <th rowspan=\"2\">Late mainstream\n<br/>\n34%</th>\n        <th>16%</th>\n    </tr>\n<tr>\n        <th></th>\n    </tr>\n<tr>\n        <th></th>\n        <th rowspan=\"4\"></th>\n    </tr>\n<tr>\n        <th></th>\n        <th rowspan=\"3\"></th>\n    </tr>\n<tr>\n        <th></th>\n        <th rowspan=\"2\"></th>\n    </tr>\n<tr>\n        <th></th>\n        <th></th>\n    </tr>\n</table>",
+  "summary_markdown": "This table illustrates the Diffusion of Innovations theory, depicting a population's adoption rate of new ideas or technologies over time. The structure is hierarchical, progressing from the earliest adopters to the latest. At the apex are the **Innovators**, representing a small 2.5% of the population who are eager to try new things. Following them are the **Early adopters** (13.5%), influential individuals who adopt early and are respected opinion leaders. Next are the **Early mainstream** (34%), who adopt new ideas just before the average person. This group is followed by the **Late mainstream** (34%), who are skeptical and adopt only after the majority has. Finally, the largest remaining segment, **Laggards** (16%), are traditionalists who are highly skeptical of change and adopt innovations last, if at all. This distribution forms a bell curve, showing a gradual adoption process across different societal segments.",
+  "processing_time": 2.8164401054382324,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.289361"
+}

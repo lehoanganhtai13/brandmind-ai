@@ -1,0 +1,10 @@
+{
+  "table_id": "page_194_table_49",
+  "page_number": 194,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Environmental</th>\n      <th>Organizational</th>\n      <th>Interpersonal</th>\n      <th>Individual</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>\n        The economy<br>\n        Supply conditions<br>\n        Technology<br>\n        Politics/regulation<br>\n        Competition<br>\n        Culture and customs\n      </td>\n<td>\n        Objectives<br>\n        Strategies<br>\n        Structure<br>\n        Systems<br>\n        Procedures\n      </td>\n<td>\n        Influence<br>\n        Expertise<br>\n        Authority<br>\n        Dynamics\n      </td>\n<td>\n        Age/education<br>\n        Job position<br>\n        Motives<br>\n        Personality<br>\n        Preferences<br>\n        Buying style\n      </td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines four distinct categories of factors influencing decision-making: Environmental, Organizational, Interpersonal, and Individual. The Environmental category encompasses external forces such as the economy, supply conditions, technology, politics/regulation, competition, and culture. Internally, Organizational factors include objectives, strategies, structure, systems, and procedures. Interpersonal influences are characterized by dynamics related to influence, expertise, authority, and interpersonal relationships. Finally, Individual factors represent personal attributes like age/education, job position, motives, personality, preferences, and buying style. These categories collectively illustrate a multi-layered framework where external conditions, internal structures, social interactions, and personal characteristics interact to shape outcomes.",
+  "processing_time": 1.811025857925415,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.293532"
+}

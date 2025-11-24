@@ -1,0 +1,10 @@
+{
+  "table_id": "page_654_table_158",
+  "page_number": 654,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th></th>\n      <th>Current Hair Gel</th>\n      <th>New Foam Product</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Unit selling price</td>\n<td>$2.00</td>\n<td>$2.25</td>\n    </tr>\n<tr>\n      <td>Unit variable costs</td>\n<td>$0.85</td>\n<td>$1.25</td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of a \"Current Hair Gel\" and a \"New Foam Product\" based on key financial metrics. The structure highlights two distinct products and evaluates them across two primary cost/revenue drivers: unit selling price and unit variable costs. For the \"Current Hair Gel,\" the unit selling price is $2.00, with unit variable costs at $0.85. In contrast, the \"New Foam Product\" has a higher unit selling price of $2.25 but also incurs higher unit variable costs of $1.25. This comparison allows for an assessment of the profitability and cost structure differences between the existing product and the proposed new offering.",
+  "processing_time": 1.3483409881591797,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.416348"
+}

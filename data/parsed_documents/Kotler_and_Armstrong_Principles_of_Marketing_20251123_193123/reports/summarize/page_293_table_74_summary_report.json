@@ -1,0 +1,10 @@
+{
+  "table_id": "page_293_table_74",
+  "page_number": 293,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th>Style</th>\n  <th>Fashion</th>\n  <th>Fad</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Sales</td>\n<td>Sales</td>\n<td>Sales</td>\n</tr>\n<tr>\n  <td>\n    <svg width=\"100\" height=\"50\">\n      <polyline points=\"0,50 20,30 40,40 60,20 80,30 100,25\" style=\"fill:none;stroke:blue;stroke-width:2\"/>\n    </svg>\n  </td>\n<td>\n    <svg width=\"100\" height=\"50\">\n      <polyline points=\"0,50 20,20 40,40 60,40 80,30 100,50\" style=\"fill:none;stroke:black;stroke-width:2\"/>\n    </svg>\n  </td>\n<td>\n    <svg width=\"100\" height=\"50\">\n      <polyline points=\"0,50 20,10 40,50 60,50 80,50 100,50\" style=\"fill:none;stroke:red;stroke-width:2\"/>\n    </svg>\n  </td>\n</tr>\n<tr>\n  <td>Time</td>\n<td>Time</td>\n<td>Time</td>\n</tr>\n<tr>\n  <td colspan=\"3\" style=\"font-size: smaller; padding-top: 10px;\">\n    Examples of fads:<br/>\n    The Pet Rock fad broke out one October but had sunk like a stone by the next February. Low-carb diets followed a similar pattern.\n  </td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table illustrates the distinct lifecycles of Style, Fashion, and Fad, all represented in relation to Sales over Time. Style exhibits a relatively stable sales trajectory, suggesting enduring appeal. Fashion shows a more pronounced but still sustained sales curve, indicating a trend with a longer lifespan. In contrast, Fad demonstrates a rapid and sharp increase in sales, followed by an equally swift decline, highlighting its ephemeral nature. The examples provided, such as the Pet Rock and low-carb diets, exemplify this characteristic short-lived, intense popularity of fads. The visual representation of sales over time, depicted by polylines, clearly differentiates the duration and intensity of these three concepts.",
+  "processing_time": 2.2732088565826416,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.325953"
+}

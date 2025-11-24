@@ -1,0 +1,10 @@
+{
+  "table_id": "page_47_table_9",
+  "page_number": 47,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th></th>\n  <th colspan=\"2\" style=\"text-align:center;\">Projected loyalty</th>\n</tr>\n<tr>\n  <th style=\"writing-mode: vertical-rl; text-orientation: mixed;\">Potential profitability</th>\n  <th>Short-term</th>\n  <th>Long-term</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>High</td>\n<td><b>Butterflies</b></td>\n<td><b>True friends</b></td>\n</tr>\n<tr>\n  <td>Low</td>\n<td><b>Strangers</b></td>\n<td><b>Barnacles</b></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a framework for categorizing customer loyalty based on two dimensions: potential profitability and projected loyalty duration. The structure is a 2x2 matrix, illustrating four distinct customer segments. High potential profitability combined with short-term projected loyalty characterizes \"Butterflies,\" while high profitability and long-term loyalty define \"True friends.\" Conversely, low potential profitability coupled with short-term loyalty results in \"Strangers,\" and low profitability with long-term loyalty identifies \"Barnacles.\" This model visually maps customer relationships, suggesting strategic approaches may differ based on a customer's profitability and expected duration of engagement.",
+  "processing_time": 1.8062903881072998,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.249298"
+}

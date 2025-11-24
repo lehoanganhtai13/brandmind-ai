@@ -1,0 +1,10 @@
+{
+  "table_id": "page_160_table_38",
+  "page_number": 160,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Cultural</th>\n      <th>Social</th>\n      <th>Personal</th>\n      <th>Psychological</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>\n        Culture<br>\n        Subculture<br>\n        Social class\n      </td>\n<td>\n        Groups and social networks<br>\n        Family<br>\n        Roles and status\n      </td>\n<td>\n        Age and life-cycle stage<br>\n        Occupation<br>\n        Economic situation<br>\n        Lifestyle<br>\n        Personality and self-concept\n      </td>\n<td>\n        Motivation<br>\n        Perception<br>\n        Learning<br>\n        Beliefs and attitudes\n      </td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines four key categories of factors influencing consumer behavior: Cultural, Social, Personal, and Psychological. The Cultural category encompasses broad societal influences like Culture, Subculture, and Social class. Social influences are more immediate, including Groups and social networks, Family, and Roles and status. Personal factors are individual-specific, such as Age and life-cycle stage, Occupation, Economic situation, Lifestyle, and Personality and self-concept. Finally, Psychological factors represent internal cognitive and emotional processes, comprising Motivation, Perception, Learning, and Beliefs and attitudes. These categories collectively represent a hierarchical structure of influences, moving from the broadest societal context to the most internal individual processes that shape consumer decision-making.",
+  "processing_time": 1.9348900318145752,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.286506"
+}

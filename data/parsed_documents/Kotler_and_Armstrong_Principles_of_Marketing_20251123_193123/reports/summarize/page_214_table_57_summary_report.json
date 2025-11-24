@@ -1,0 +1,10 @@
+{
+  "table_id": "page_214_table_57",
+  "page_number": 214,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Segmentation Variable</th>\n<th>Examples</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Geographic</td>\n<td>Nations, regions, states, counties, cities, neighborhoods, population density (urban, suburban, rural), climate</td>\n</tr>\n<tr>\n<td>Demographic</td>\n<td>Age, life-cycle stage, gender, income, occupation, education, religion, ethnicity, generation</td>\n</tr>\n<tr>\n<td>Psychographic</td>\n<td>Lifestyle, personality</td>\n</tr>\n<tr>\n<td>Behavioral</td>\n<td>Occasions, benefits, user status, usage rate, loyalty status</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines the four primary bases for market segmentation: Geographic, Demographic, Psychographic, and Behavioral. Geographic segmentation divides markets based on location, such as nations, regions, or population density. Demographic segmentation categorizes consumers by observable characteristics like age, income, gender, and education. Psychographic segmentation focuses on internal consumer traits, including lifestyle and personality. Finally, Behavioral segmentation groups consumers based on their interactions with a product or service, considering factors such as purchase occasions, benefits sought, user status, usage rate, and loyalty. These variables collectively provide a framework for understanding and targeting diverse consumer groups.",
+  "processing_time": 2.0554559230804443,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.302563"
+}

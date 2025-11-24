@@ -1,0 +1,10 @@
+{
+  "table_id": "page_317_table_85",
+  "page_number": 317,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th>Price</th>\n  <th>Unit Demand Needed to Break Even</th>\n  <th>Expected Unit Demand at Given Price</th>\n  <th>Total Revenue (1) × (3)</th>\n  <th>Total Costs*</th>\n  <th>Profit (4) − (5)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>$14</td>\n<td>75,000</td>\n<td>71,000</td>\n<td>$994,000</td>\n<td>$1,010,000</td>\n<td>−$16,000</td>\n</tr>\n<tr>\n  <td>16</td>\n<td>50,000</td>\n<td>67,000</td>\n<td>$1,072,000</td>\n<td>$970,000</td>\n<td>$102,000</td>\n</tr>\n<tr>\n  <td>18</td>\n<td>37,500</td>\n<td>60,000</td>\n<td>$1,080,000</td>\n<td>$900,000</td>\n<td>$180,000</td>\n</tr>\n<tr>\n  <td>20</td>\n<td>30,000</td>\n<td>42,000</td>\n<td>$840,000</td>\n<td>$720,000</td>\n<td>$120,000</td>\n</tr>\n<tr>\n  <td>22</td>\n<td>25,000</td>\n<td>23,000</td>\n<td>$506,000</td>\n<td>$530,000</td>\n<td>−$24,000</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a comparative analysis of pricing strategies, detailing the financial implications of different price points. For each price level, it outlines the Unit Demand Needed to Break Even, the Expected Unit Demand at that price, and calculates the resulting Total Revenue, Total Costs, and Profit. The data demonstrates a trend where increasing the price from $14 to $18 initially boosts profit, reaching a maximum of $180,000 at $18, driven by a higher profit margin per unit despite a decrease in expected demand. However, further price increases to $20 and $22 lead to a decline in profit, with expected demand falling below the break-even point at $22, resulting in a loss. This structure highlights the trade-off between price, demand, and profitability, illustrating how optimal pricing balances these factors to maximize financial gain.",
+  "processing_time": 1.2269117832183838,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.335360"
+}

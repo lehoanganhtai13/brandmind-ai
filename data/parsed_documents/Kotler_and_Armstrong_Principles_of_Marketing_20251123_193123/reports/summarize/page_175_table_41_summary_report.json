@@ -1,0 +1,10 @@
+{
+  "table_id": "page_175_table_41",
+  "page_number": 175,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th></th>\n  <th colspan=\"2\">High involvement</th>\n  <th colspan=\"2\">Low involvement</th>\n</tr>\n<tr>\n  <th></th>\n  <th colspan=\"2\">Significant differences between brands</th>\n  <th colspan=\"2\">Few differences between brands</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td></td>\n<td>Complex buying behavior</td>\n<td></td>\n<td>Variety-seeking buying behavior</td>\n<td></td>\n</tr>\n<tr>\n  <td></td>\n<td>Dissonance-reducing buying behavior</td>\n<td></td>\n<td>Habitual buying behavior</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a framework for classifying consumer buying behavior based on two key dimensions: consumer involvement and perceived brand differences. High involvement, characterized by significant differences between brands, encompasses complex buying behavior, where consumers engage in extensive information gathering and evaluation. Conversely, low involvement, with few perceived brand differences, includes variety-seeking buying behavior, where consumers switch brands for novelty, and habitual buying behavior, where purchases are routine and require minimal cognitive effort. Dissonance-reducing buying behavior also falls under high involvement but is distinguished by a situation where consumers may still be highly involved but perceive fewer brand differences, leading to post-purchase reassurance. The structure is a 2x2 matrix, mapping involvement levels against brand differentiation to categorize these four distinct buying behavior types.",
+  "processing_time": 2.652113199234009,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.288177"
+}

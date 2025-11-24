@@ -1,0 +1,197 @@
+# Page 715
+
+**Document Title**: Principles of Marketing 17th Edition
+**Author**: Philip Kotler, Gary Armstrong
+**Original File**: data/raw_documents/Kotler_and_Armstrong_Principles_of_Marketing.pdf
+**Page Number**: 715/736
+**Processing Time**: 2025-11-23T20:00:41.975050
+
+---
+
+# Index
+
+- National Do Not Call Registry, 530  
+- *National Enquirer*, 464, 467  
+- *National Geographic*, 523  
+- National Highway Traffic Safety  
+  - ¡Administration, 31  
+- National Retail Federation, 399n  
+- NatWest, 95  
+- Naughton, Nora, 253n14  
+- Nautica, 83  
+- Nazario, Marina, 27n1  
+- NBCUniversal, 69, 239, 564  
+- NCIS, 439  
+- Neate, Rupert, 166n19  
+- Nebraska, 584  
+- Neeli-Bendapudi, 258n21  
+- Neeson, Liam, 439  
+- Neff, Jack, 143n23, 166n18, 223n16, 266n32, 287n15, 556n17, 614n22  
+- Neher, Krista E., 157n1  
+- Neilan, C., 94n3  
+- Neiman Marcus, 104, 170, 393, 396  
+- Nelson, Tammy R., 292n18  
+- Nest, 267, 270, 281  
+- Nestlé, 37, 52, 122, 289, 290, 372, 382, 562–363, 569, 589, 590, 622  
+- Nestlé Boycott Committee, 622  
+- Netflix, 70, 141–143, 279, 366, 435, 513, 520, 539, 554, 564, 565, 568  
+- Netherlands, 567  
+- Network Advertising Initiative, 533  
+- Netz, 501  
+- Neve, Jim, 507  
+- New Jersey, 153, 172, 335  
+- New Orleans Jazz and Heritage Festival, 248  
+- New York City, 184  
+- New York City Department of Consumer Affairs, 337  
+- New York International Auto Show, 464  
+- New York Stock Exchange, 471  
+- *New York Times*, 460, 470, 471, 506, 515, 545n  
+- New York Yankees, 46  
+- New Zealand, 572  
+- Newcomer, Eric, 358n1  
+- Newlands, Murray, 354n  
+- Newman, Andrew Adam, 164n15, 426n4  
+- Newman, Daniel, 518n13  
+- Newman, Jared, 279n1  
+- Newman, Nathan, 606n15  
+- Neymar, 248  
+- Ng, Serena, 223n16, 344n18, 375n  
+- Nguyen, Hope, 373n17  
+- Niantic, 428  
+- Nicaragua, 572, 575  
+- Nicas, Jack, 340n13  
+- Nicher Allegiant, 75  
+- Nichols, Laura, 49n31  
+- Nichols, Travis, 338n10  
+- Nickelodeon, 99  
+- Nieburg, Oliver, 157n1  
+- Nielsen, 132, 139–140, 142, 146, 152, 217, 239, 422, 446, 465, 550  
+- Nielsen Media Research, 139–140  
+- Nielsen PRIZM Lifestage Group system, 167  
+- Nigeria, 573, 574, 581, 589  
+- Nijjar, Palbir, 70n8, 320n  
+
+- Nike, 52, 103, 105, 214, 223, 226, 231, 245, 248, 264–266, 269, 323, 349, 354, 359, 378, 406, 426, 436, 456, 463, 464, 481, 520, 521, 525, 539, 551, 554, 568, 575, 576, 587, 588, 614, 624  
+- Nike+iPod Sport, 269  
+- Nikon, 173  
+- Nino, Richard, 468n24  
+- Nintendo, 428, 578  
+- Nissan Leaf, 180, 284  
+- Nissan Versa, 228  
+- Nivea, 214, 293  
+- Nokia (Microsoft), 168, 541  
+- Nolan, Paul, 490n18, 492n  
+- Nordstrom department stores, 34, 40, 103, 104, 124, 170, 223, 393, 402, 406, 407, 520, 543, 553  
+- Nordstrom, Erik, 553  
+- Nordstrom, Jamie, 552  
+- Nordstrom, John W., 552  
+- Nordstrom, Pete, 552  
+- Nordstrom Rack, 396, 405  
+- Norris, Chuck, 448  
+- North America, 573  
+- North American Free Trade Agreement (NAFTA), 206  
+- North American Industry Classification System (NAICS), 206  
+- North American International Auto Show, 467  
+- North American International Toy Fair, 185  
+- North Face, 83, 410, 518, 559, 612  
+- North Face Youth Design Team, 99–100  
+- Northwestern University, 475  
+- NOS energy drink, 224  
+- Novartis, 267  
+- Noxema, 208, 596  
+- Nudd, Tim, 113n47, 162n10, 424n1, 439n15, 519n19  
+- Nusca, Andrew, 141n21  
+- Nutrisystem, 537–538  
+- NYX Professional Make Up, 75  
+
+- O  
+  - O’Brien, Charles, 288n18  
+  - O’Brien, Keith, 166n  
+  - O’Connell, A., 313n  
+  - O’Connor, Clare, 216n8  
+  - Octagon, 292  
+  - Oculus VR, 88  
+  - O’Donnell, Kevin, 313n  
+  - Odwalla, 224  
+  - Offer, Vince, 530  
+  - Office Depot, 299, 404, 405  
+  - *Office, The*, 480  
+  - O’Hare Airport, Chicago, 48  
+  - Ola (car service), 357  
+  - Old Navy, 225  
+  - Old Navy Kids, 99  
+  - Old Spice, 296  
+  - Oldsmobile, 72  
+  - O’Leary, Michael, 341  
+  - Olive Garden, 327  
+  - Oliver, Keith, 313n  
+  - Olmstead, Kenneth, 525n32  
+  - O’Loughlin, Sandra, 502  
+
+- Olsson, Magnus, 234  
+- Omaha Steaks, 361  
+- Oman Air, 553  
+- OMO, 596  
+- OneDrive cloud storage, 541  
+- Oneworld, 365, 553  
+- Online marketing,. See also Mobile marketing  
+- OPPO Electronics Corp, 455  
+- Opresnik, Marc, 368n  
+- Optimor, Millward Brown, 265n30  
+- Oracle (software), 141, 382  
+- Oral-B, 343  
+- *Orange Is the New Black*, 143, 564  
+- Orange Leaf frozen yogurt, 496  
+- Orbitz, 513  
+- Oregon, 563  
+- O’Reilly, Lara, 426n3, 441n17  
+- Oreo (Nabisco), 48–49, 469  
+- Orlando, Florida, 214, 226  
+- Osberg, Molly, 577n27  
+- Oscar Mayer, 143, 214  
+- Osram, 90  
+- Oster, Erik, 112n45, 605n12  
+- Otis Elevator, 569  
+- Outdoor World, 420  
+- Ove Glove, 480  
+- Overstock.com, 338, 396, 601  
+- Ovide, Shira, 331n1  
+- OxiClean, 530  
+- OXO kitchen gadgets, 447  
+- Oxygen channel, 219  
+
+- P  
+  - Pace, 153  
+  - Pacific Rim, 220, 569, 572  
+  - Pacquiano, Manny, 471  
+  - Page, Larry, 539  
+  - Palmeri, Christopher, 49n, 106n40  
+  - Pampered Chef, 370  
+  - Pampers (P&G), 207, 208, 216, 466, 556, 574  
+  - Panasonic, 518, 578, 586  
+  - Pandora, 240  
+  - Pandora iHeartRadio, 501  
+  - Panera, 75, 267, 405  
+  - Pangarkar, Nitin, 164n16  
+  - Papa John’s Pizza, 359  
+  - Paquette, Danielle, 337n8  
+  - Parekh, Rupal, 368n  
+  - *Parents* magazine, 467  
+  - Park, James, 119–121  
+  - Parker, Geoffrey, 277n  
+  - Parker, Warby, 111n43  
+  - Pasqarelli, Adrianne, 98n14  
+  - Passy, Jacob, 103n31  
+  - Patagonia, 53, 163, 217, 529, 605, 623  
+  - Patek Philippe watches, 232, 310  
+  - Pathak, Shareen, 125n3  
+  - Patton, Leslie, 362n2  
+  - Paul, Logan, 163, 164  
+  - Pay4Bugs, 286  
+  - PayPal, 387, 539  
+  - Peace One Day, 471  
+  - Pearle Vision, 364  
+  - Pearson, Bryan, 63n1  
+  - Peeps candy, 467  
+  - Peltier, Dan, 277n  
+  - Penske Logistics, 382 People Magazine, 523

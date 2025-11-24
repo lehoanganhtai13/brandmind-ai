@@ -1,0 +1,10 @@
+{
+  "table_id": "page_213_table_52",
+  "page_number": 213,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"2\">Select customers to serve</th>\n  <th></th>\n  <th colspan=\"2\">Decide on a value proposition</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td><b>Segmentation</b><br>Divide the total market into smaller segments</td>\n  <td rowspan=\"2\" style=\"text-align:center; vertical-align:middle; font-weight:bold; background-color:#d32f2f; color:#fff;\">Create value for targeted customers</td>\n<td></td>\n<td><b>Differentiation</b><br>Differentiation the market offering to create superior customer value</td>\n</tr>\n<tr>\n  <td><b>Targeting</b><br>Select the segment or segments to enter</td>\n<td></td>\n<td><b>Positioning</b><br>Position the market offering in the minds of target customers</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a strategic marketing framework for creating value for targeted customers. The process begins with \"Select customers to serve,\" which involves two key steps: \"Segmentation,\" dividing the total market into smaller, distinct groups, and \"Targeting,\" choosing which of these segments to enter. Concurrently, the framework addresses how to \"Decide on a value proposition.\" This is achieved through \"Differentiation,\" modifying the market offering to deliver superior customer value compared to competitors, and \"Positioning,\" establishing a clear and desirable place for the offering in the minds of the selected target customers. The central theme emphasizes creating value specifically for these identified and targeted customer groups.",
+  "processing_time": 1.8116850852966309,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.296494"
+}

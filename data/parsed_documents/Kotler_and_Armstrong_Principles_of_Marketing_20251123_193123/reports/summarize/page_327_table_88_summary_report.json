@@ -1,0 +1,10 @@
+{
+  "table_id": "page_327_table_88",
+  "page_number": 327,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Cost/King-Size Set</th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Raw cotton</td>\n<td>$28.00</td>\n</tr>\n<tr>\n<td>Spinning/weaving/dyeing</td>\n<td>$12.00</td>\n</tr>\n<tr>\n<td>Cut/sew/finishing</td>\n<td>$10.00</td>\n</tr>\n<tr>\n<td>Material transportation</td>\n<td>$3.00</td>\n</tr>\n<tr>\n<td>Factory fee</td>\n<td>$16.00</td>\n</tr>\n<tr>\n<td>Inspection and import fees</td>\n<td>$14.00</td>\n</tr>\n<tr>\n<td>Ocean freight/insurance</td>\n<td>$5.00</td>\n</tr>\n<tr>\n<td>Warehousing</td>\n<td>$8.00</td>\n</tr>\n<tr>\n<td>Packaging</td>\n<td>$15.00</td>\n</tr>\n<tr>\n<td>Promotion</td>\n<td>$30.00</td>\n</tr>\n<tr>\n<td>Customer shipping</td>\n<td>$15.00</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data outlines the cost breakdown for a King-Size Set, presenting a process-based structure of expenses from raw materials to customer delivery. The initial stage involves the cost of raw cotton at $28.00, followed by manufacturing processes including spinning, weaving, dyeing ($12.00), and cut, sew, and finishing ($10.00). Subsequent costs cover logistics such as material transportation ($3.00), factory fees ($16.00), and inspection/import fees ($14.00). Further transportation and handling expenses include ocean freight and insurance ($5.00), warehousing ($8.00), and packaging ($15.00). The final stages involve marketing and distribution, with promotion costs at $30.00 and customer shipping at $15.00, culminating the cost accumulation for the product.",
+  "processing_time": 2.099634885787964,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.337023"
+}

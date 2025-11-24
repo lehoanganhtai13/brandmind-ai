@@ -1,0 +1,10 @@
+{
+  "table_id": "page_586_table_139",
+  "page_number": 586,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"2\"></th>\n  <th colspan=\"3\">Product</th>\n</tr>\n<tr>\n  <th colspan=\"2\"></th>\n  <th>Don’t change<br>product</th>\n  <th>Adapt<br>product</th>\n  <th>Develop new<br>product</th>\n</tr>\n<tr>\n  <th rowspan=\"2\">Communications</th>\n  <th>Don’t change<br>communications</th>\n  <td>Straight extension</td>\n<td>Product adaptation</td>\n  <td rowspan=\"2\" style=\"text-align:center;\">Product invention</td>\n</tr>\n<tr>\n  <th>Adapt<br>communications</th>\n  <td>Communication adaptation</td>\n<td>Dual adaptation</td>\n</tr>\n</thead>\n</table>",
+  "summary_markdown": "This table outlines a framework for product and communications strategy, categorizing approaches based on whether the product and its associated communications are changed or adapted. The structure presents a 2x3 matrix, where the rows represent the level of change in communications (\"Don't change communications\" and \"Adapt communications\") and the columns represent the level of change in the product (\"Don't change product,\" \"Adapt product,\" and \"Develop new product\"). The intersections yield four distinct strategic approaches: \"Straight extension\" (no change in either product or communications), \"Product adaptation\" (product adapted, communications unchanged), \"Communication adaptation\" (communications adapted, product unchanged), and \"Dual adaptation\" (both product and communications adapted). A fifth category, \"Product invention,\" arises when new products are developed, irrespective of whether communications are changed or adapted. This framework illustrates how product and communication modifications can be combined to create different market entry or repositioning strategies.",
+  "processing_time": 2.2064578533172607,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.395781"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_247_table_63",
+  "page_number": 247,
+  "original_table_html": "<table>\n  <tbody>\n    <tr>\n      <td><strong>Consumer product</strong></td>\n<td>A product bought by final consumers for personal consumption.</td>\n    </tr>\n<tr>\n      <td><strong>Convenience product</strong></td>\n<td>A consumer product that customers usually buy frequently, immediately, and with minimal comparison and buying effort.</td>\n    </tr>\n<tr>\n      <td><strong>Shopping product</strong></td>\n<td>A consumer product that the customer, in the process of selecting and purchasing, usually compares on such attributes as suitability, quality, price, and style.</td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines a classification of consumer products, differentiating them based on purchasing behavior and effort. A **Consumer product** is defined as an item acquired by end-users for personal use. Within this category, **Convenience products** are characterized by frequent, immediate purchases with minimal deliberation or effort. In contrast, **Shopping products** require customers to engage in a comparison process, evaluating attributes like suitability, quality, price, and style before making a selection and purchase. This structure presents a hierarchical breakdown of consumer goods, moving from the general definition to more specific types defined by customer engagement levels.",
+  "processing_time": 1.8815021514892578,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.309299"
+}

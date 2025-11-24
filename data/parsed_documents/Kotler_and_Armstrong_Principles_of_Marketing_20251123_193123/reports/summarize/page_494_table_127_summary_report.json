@@ -1,0 +1,10 @@
+{
+  "table_id": "page_494_table_127",
+  "page_number": 494,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Prospecting and qualifying</th>\n      <th>Preapproach</th>\n      <th>Approach</th>\n      <th>Presentation and demonstration</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td colspan=\"4\" style=\"text-align:center;\">(transaction-oriented—aimed at closing a specific sale with the customer…)</td>\n    </tr>\n<tr>\n      <td>Handling objections</td>\n<td>Closing</td>\n      <td colspan=\"2\">Follow-up</td>\n    </tr>\n<tr>\n      <td colspan=\"4\" style=\"text-align:center; font-weight:bold; color:#b22222;\">Building and maintaining profitable customer relationships</td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines a sales process, differentiating between a transaction-oriented approach and one focused on building long-term customer relationships. The transaction-oriented sequence includes prospecting and qualifying leads, the preapproach phase, the initial approach to the customer, and the presentation and demonstration of the product or service. This is followed by handling objections, closing the sale, and finally, a follow-up. In contrast, the overarching goal of building and maintaining profitable customer relationships is presented as a distinct, more encompassing objective, suggesting that the preceding steps, while potentially transactional, should ideally contribute to this broader aim. The structure implies a sequential flow for individual sales interactions, with a superimposed, continuous objective of relationship cultivation.",
+  "processing_time": 1.8626580238342285,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.379912"
+}

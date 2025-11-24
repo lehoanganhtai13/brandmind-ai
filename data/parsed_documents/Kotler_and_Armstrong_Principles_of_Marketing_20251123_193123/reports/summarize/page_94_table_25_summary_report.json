@@ -1,0 +1,10 @@
+{
+  "table_id": "page_94_table_25",
+  "page_number": 94,
+  "original_table_html": "<table>\n  <tr>\n    <td colspan=\"3\" rowspan=\"2\" style=\"text-align:center; vertical-align:middle;\">\n      <b>Marketing</b>\n    </td>\n    <td colspan=\"4\" style=\"text-align:center;\">Marketing intermediaries</td>\n    <td style=\"text-align:center;\">Competitors</td>\n    <td style=\"text-align:center;\">Publics</td>\n  </tr>\n<tr>\n    <td colspan=\"4\" style=\"text-align:center;\">Suppliers</td>\n    <td colspan=\"3\" style=\"text-align:center;\">Customers</td>\n  </tr>\n<tr>\n    <td colspan=\"4\" style=\"text-align:center; writing-mode: vertical-rl; transform: rotate(180deg); color: blue;\">\n      <b>The company</b>\n    </td>\n    <td colspan=\"5\"></td>\n    <td colspan=\"3\" style=\"color: red;\">\n      <b>Customers</b>\n    </td>\n  </tr>\n</table>",
+  "summary_markdown": "This diagram illustrates the microenvironment of a company's marketing efforts, depicting key external actors that influence its ability to serve customers. At the center is **The company**, which interacts with various external entities. Directly surrounding the company are **Marketing intermediaries**, who assist the company in promoting, selling, and distributing its products. Also closely linked are **Suppliers**, providing resources for the company's operations. Further out, the diagram shows **Competitors**, who offer similar products or services to the same customers. Crucially, **Customers** are presented as the ultimate focus, both as a direct external group and implicitly through the actions of intermediaries and competitors. Finally, **Publics**, representing various groups with an interest in the company's activities, are also identified as external influences. The structure is largely concentric, radiating outward from the company to its immediate marketing environment and then to broader external forces.",
+  "processing_time": 2.5629119873046875,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.271310"
+}

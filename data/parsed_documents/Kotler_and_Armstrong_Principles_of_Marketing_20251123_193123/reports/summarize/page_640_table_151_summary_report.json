@@ -1,0 +1,10 @@
+{
+  "table_id": "page_640_table_151",
+  "page_number": 640,
+  "original_table_html": "<table>\n  <tr>\n    <td>Suggested retail price:</td>\n<td>$300</td>\n  </tr>\n<tr>\n    <td>minus retail margin (30%):</td>\n<td>−$90</td>\n  </tr>\n<tr>\n    <td>Retailer’s cost/wholesaler’s price:</td>\n<td>$210</td>\n  </tr>\n<tr>\n    <td>minus wholesaler’s margin (20%):</td>\n<td>−$42</td>\n  </tr>\n<tr>\n    <td>Wholesaler’s cost/HD’s price:</td>\n<td>$168</td>\n  </tr>\n</table>",
+  "summary_markdown": "This data outlines a cost breakdown, illustrating a hierarchical price reduction from suggested retail price to the manufacturer's (HD's) price. It begins with a suggested retail price of $300, from which a 30% retail margin of $90 is subtracted, resulting in a retailer's cost or wholesaler's price of $210. This wholesaler's price is then reduced by a 20% wholesaler's margin of $42. The final figure presented is the wholesaler's cost, which is also identified as HD's price, calculated at $168. The structure is comparative, showing how each successive margin reduces the overall price down the supply chain.",
+  "processing_time": 2.2446300983428955,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.407487"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_246_table_62",
+  "page_number": 246,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"3\" style=\"text-align:center;\">Three Levels of Product</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:center; font-weight:bold; color:white; background-color:red;\">Core<br>Customer<br>Value</td>\n<td style=\"text-align:center; font-weight:bold; color:blue;\">Actual Product</td>\n<td style=\"text-align:center; font-weight:bold; color:blue;\">Augmented Product</td>\n</tr>\n<tr>\n<td></td>\n<td>\n<ul>\n<li>Brand name</li>\n<li>Quality level</li>\n<li>Packaging</li>\n<li>Design</li>\n<li>Features</li>\n</ul>\n</td>\n<td>\n<ul>\n<li>Delivery and credit</li>\n<li>Product support</li>\n<li>Warranty</li>\n<li>After-sale service</li>\n</ul>\n</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines the \"Three Levels of Product,\" presenting a hierarchical structure that builds from fundamental customer needs to enhanced offerings. At the base is the \"Core Customer Value,\" representing the essential benefit a consumer seeks. Surrounding this core is the \"Actual Product,\" which comprises tangible attributes such as brand name, quality level, packaging, design, and features, all designed to deliver the core value. Finally, the \"Augmented Product\" encompasses additional services and benefits that go beyond the actual product, including delivery and credit, product support, warranty, and after-sale service, further differentiating the offering and enhancing customer satisfaction.",
+  "processing_time": 1.4757702350616455,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.308011"
+}

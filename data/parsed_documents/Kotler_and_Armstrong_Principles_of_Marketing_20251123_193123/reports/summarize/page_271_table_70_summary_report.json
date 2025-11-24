@@ -1,0 +1,10 @@
+{
+  "table_id": "page_271_table_70",
+  "page_number": 271,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th rowspan=\"2\">Brand name</th>\n<th colspan=\"2\">Product category</th>\n<th rowspan=\"2\" style=\"vertical-align:top; padding-left:10px;\">\nThis is a very handy framework for analyzing brand development opportunities. For example, what strategy did Toyota use when it introduced the Toyota Camry Hybrid? When it introduced the Toyota Prius? The Scion?\n</th>\n</tr>\n<tr>\n<th>Existing</th>\n<th>New</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Existing</td>\n<td>Line extension</td>\n<td>Brand extension</td>\n<td></td>\n</tr>\n<tr>\n<td>New</td>\n<td>Multibrands</td>\n<td>New brands</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This framework analyzes brand development opportunities by categorizing strategies based on whether the product category is existing or new, and whether the brand itself is existing or new. When a company uses an existing brand for an existing product category, it's a line extension. Introducing an existing brand into a new product category constitutes a brand extension. If a company uses a new brand for an existing product category, it's a multibrands strategy. Finally, launching a new brand in a new product category is categorized as a new brands strategy. This structure provides a clear matrix for understanding different approaches to brand expansion and market entry.",
+  "processing_time": 1.6643719673156738,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.320682"
+}

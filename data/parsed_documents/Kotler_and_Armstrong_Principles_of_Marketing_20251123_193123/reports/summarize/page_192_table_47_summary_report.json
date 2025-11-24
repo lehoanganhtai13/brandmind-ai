@@ -1,0 +1,10 @@
+{
+  "table_id": "page_192_table_47",
+  "page_number": 192,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>The environment</th>\n<th>The buying organization</th>\n<th>Buyer responses</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>\n\n<table>\n<tr><th>Marketing stimuli</th><th>Other stimuli</th></tr>\n<tr><td>Product</td><td>Economic</td></tr>\n<tr><td>Price</td><td>Technological</td></tr>\n<tr><td>Place</td><td>Political</td></tr>\n<tr><td>Promotion</td><td>Cultural</td></tr>\n<tr><td></td><td>Competitive</td></tr>\n</table>",
+  "summary_markdown": "This table outlines a model of buyer behavior, depicting the interplay between external stimuli, the characteristics of the buying organization, and the resulting buyer responses. The environment is categorized into marketing stimuli, encompassing product, price, place, and promotion, and other stimuli, including economic, technological, political, cultural, and competitive factors. These environmental influences are presented as inputs that interact with the buying organization. The buying organization itself is implicitly understood to process these stimuli, though its internal components are not detailed in this specific table. The ultimate outcome of this interaction is the buyer responses, which represent the actions taken by the organization as a result of the environmental inputs and internal processing. The structure suggests a stimulus-response framework, where external factors trigger a decision-making process within the organization, leading to observable responses.",
+  "processing_time": 1.1762521266937256,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.292066"
+}

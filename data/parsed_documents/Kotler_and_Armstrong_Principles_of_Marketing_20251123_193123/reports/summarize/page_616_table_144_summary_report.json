@@ -1,0 +1,10 @@
+{
+  "table_id": "page_616_table_144",
+  "page_number": 616,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"3\">Immediate Satisfaction</th>\n</tr>\n<tr>\n  <th></th>\n  <th>Low</th>\n  <th>High</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Long-run Consumer Benefit: High</td>\n<td>Salutary products</td>\n<td><b>Desirable products</b></td>\n</tr>\n<tr>\n  <td>Long-run Consumer Benefit: Low</td>\n<td>Deficient products</td>\n<td>Pleasing products</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a four-category framework for classifying products based on their immediate consumer satisfaction and long-run consumer benefit. The framework is structured as a 2x2 matrix. Products offering high immediate satisfaction and high long-run consumer benefit are categorized as **Desirable products**. Conversely, those with low immediate satisfaction and low long-run consumer benefit are termed Deficient products. Products that provide high immediate satisfaction but offer low long-run consumer benefit are classified as Pleasing products. Finally, products with low immediate satisfaction but high long-run consumer benefit are identified as Salutary products. This classification system highlights the trade-offs between short-term gratification and sustained value for consumers.",
+  "processing_time": 1.4207580089569092,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.398812"
+}

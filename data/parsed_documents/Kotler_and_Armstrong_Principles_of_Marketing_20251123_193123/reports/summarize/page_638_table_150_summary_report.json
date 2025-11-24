@@ -1,0 +1,10 @@
+{
+  "table_id": "page_638_table_150",
+  "page_number": 638,
+  "original_table_html": "<table>\n  <tr>\n    <td><b>Fixed costs</b></td>\n<td>Costs that do not vary with production or sales level.</td>\n  </tr>\n<tr>\n    <td><b>Variable costs</b></td>\n<td>Costs that vary directly with the level of production.</td>\n  </tr>\n<tr>\n    <td><b>Total costs</b></td>\n<td>The sum of the fixed and variable costs for any given level of production.</td>\n  </tr>\n</table>",
+  "summary_markdown": "This table outlines fundamental cost concepts in production economics. It defines **Fixed costs** as expenses that remain constant regardless of output volume, and **Variable costs** as those that fluctuate directly with the level of production. The table further establishes **Total costs** as the aggregate of fixed and variable costs at any specific production output. This structure presents a comparative framework for understanding cost behavior, differentiating between static and dynamic cost elements to arrive at an overall cost picture.",
+  "processing_time": 1.8487942218780518,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.406368"
+}

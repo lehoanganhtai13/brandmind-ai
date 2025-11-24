@@ -1,0 +1,10 @@
+{
+  "table_id": "page_85_table_22",
+  "page_number": 85,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th colspan=\"3\">Marketing investments</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td colspan=\"3\" style=\"text-align:center;\">Marketing returns</td>\n    </tr>\n<tr>\n      <td colspan=\"3\" style=\"text-align:center;\">Improved customer value and engagement</td>\n    </tr>\n<tr>\n      <td style=\"text-align:center;\">Increased customer attraction</td>\n      <td style=\"text-align:center;\">Increased customer retention</td>\n      <td rowspan=\"3\" style=\"text-align:center; vertical-align:middle;\">Cost of marketing investment</td>\n    </tr>\n<tr>\n      <td colspan=\"2\" style=\"text-align:center;\">Increased customer lifetime values and customer equity</td>\n    </tr>\n<tr>\n      <td colspan=\"2\" style=\"text-align:center; font-weight:bold;\">Marketing return on investment</td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This diagram illustrates the relationship between marketing investments and their returns, structured as a causal flow. Marketing investments are presented as the initial input, leading to various marketing returns. These returns encompass improved customer value and engagement, which in turn manifest as increased customer attraction and increased customer retention. These two outcomes then contribute to increased customer lifetime values and customer equity. Ultimately, the overarching metric of Marketing return on investment is presented as the key outcome, juxtaposed against the Cost of marketing investment, suggesting a comparative analysis of profitability. The structure highlights a progression from initial investment through intermediate customer-centric outcomes to a final financial evaluation.",
+  "processing_time": 1.1240277290344238,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.267328"
+}

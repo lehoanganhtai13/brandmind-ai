@@ -1,0 +1,10 @@
+{
+  "table_id": "page_316_table_83",
+  "page_number": 316,
+  "original_table_html": "<table>\n  <tr>\n    <td><b>Fixed costs</b></td>\n<td>$300,000 (regardless of sales volume)</td>\n  </tr>\n<tr>\n    <td><b>Variable costs</b></td>\n<td>Added to fixed costs to form total costs, which rise with volume</td>\n  </tr>\n<tr>\n    <td><b>Total revenue curve</b></td>\n<td>Starts at zero and rises with each unit sold. The slope reflects the price of $20 per unit.</td>\n  </tr>\n</table>",
+  "summary_markdown": "This data illustrates a cost-volume-profit analysis framework, presenting a comparative structure of financial elements. It begins with **Fixed costs**, established at $300,000 and independent of sales volume. These are then combined with **Variable costs**, which are directly proportional to sales volume, to determine **Total costs**. The analysis also includes a **Total revenue curve**, which originates at zero and increases with each unit sold, with its slope dictated by a price of $20 per unit. The core relationship depicted is how these cost and revenue components interact to influence profitability based on sales volume.",
+  "processing_time": 1.741537094116211,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.334270"
+}

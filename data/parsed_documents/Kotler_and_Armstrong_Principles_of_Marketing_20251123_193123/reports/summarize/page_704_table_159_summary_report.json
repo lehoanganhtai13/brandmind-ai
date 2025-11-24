@@ -1,0 +1,10 @@
+{
+  "table_id": "page_704_table_159",
+  "page_number": 704,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th></th>\n<th>Old</th>\n<th>New (reduced 10%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Price</td>\n<td>$1.00</td>\n<td>$0.90</td>\n</tr>\n<tr>\n<td>– Unit variable cost</td>\n<td>$0.79</td>\n<td>$0.79</td>\n</tr>\n<tr>\n<td>= Unit contribution</td>\n<td>$0.21</td>\n<td>$0.11</td>\n</tr>\n<tr>\n<td>Contribution margin</td>\n<td>$0.21/$1.00<br>= 0.21 or 21%</td>\n<td>$0.11/$0.90<br>= 0.12 or 12%</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of pricing and contribution metrics under an \"Old\" and \"New\" scenario, where the new scenario reflects a 10% price reduction. The \"Old\" price is $1.00 with a unit variable cost of $0.79, resulting in a unit contribution of $0.21 and a contribution margin of 21%. In the \"New\" scenario, the price is reduced to $0.90, while the unit variable cost remains constant at $0.79. This price reduction leads to a decreased unit contribution of $0.11 and a significantly lower contribution margin of 12%. The structure highlights the direct impact of a price decrease on profitability, assuming stable variable costs.",
+  "processing_time": 1.3235490322113037,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.417812"
+}

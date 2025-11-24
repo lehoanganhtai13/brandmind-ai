@@ -1,0 +1,10 @@
+{
+  "table_id": "page_315_table_81",
+  "page_number": 315,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Cost per unit</th>\n<th>Accumulated production</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>$10</td>\n<td>100,000</td>\n</tr>\n<tr>\n<td>$8</td>\n<td>200,000</td>\n</tr>\n<tr>\n<td>$6</td>\n<td>400,000</td>\n</tr>\n<tr>\n<td>$4</td>\n<td>800,000</td>\n</tr>\n<tr>\n<td>$2</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data illustrates a cost-volume relationship, specifically demonstrating how the cost per unit decreases as accumulated production increases. The structure is comparative, showing discrete production levels and their corresponding unit costs. Starting at a production of 100,000 units with a cost of $10 per unit, the cost per unit halves with each doubling of accumulated production. This trend continues through 200,000 units ($8/unit) and 400,000 units ($6/unit), reaching 800,000 units at a cost of $4 per unit. The final entry indicates a cost of $2 per unit with no specified accumulated production, suggesting a potential extrapolation or a further point in this decreasing cost trend. The overall pattern highlights economies of scale, where higher production volumes lead to lower per-unit expenses.",
+  "processing_time": 2.185748815536499,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.332933"
+}

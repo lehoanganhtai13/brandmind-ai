@@ -1,0 +1,10 @@
+{
+  "table_id": "page_433_table_117",
+  "page_number": 433,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Awareness</th>\n      <th>Knowledge</th>\n      <th>Liking</th>\n      <th>Preference</th>\n      <th>Conviction</th>\n      <th>Purchase</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td><b>Awareness</b></td>\n<td>Knowledge</td>\n<td>Liking</td>\n<td>Preference</td>\n<td>Conviction</td>\n<td><b>Purchase</b></td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table illustrates a hierarchical progression of consumer engagement, moving from initial **Awareness** to a final **Purchase**. The stages represent a funnel, where consumers gradually move through distinct levels of interaction and commitment. Following **Awareness**, consumers develop **Knowledge** about a product or brand. This knowledge then influences their **Liking**, leading to a **Preference** over alternatives. A stronger **Preference** can evolve into **Conviction**, a firm belief in the product's superiority. Ultimately, this conviction is intended to culminate in the desired **Purchase**. Each stage builds upon the previous one, signifying an increasing level of consumer involvement and a reduced likelihood of dropping out of the funnel.",
+  "processing_time": 2.1212379932403564,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.367933"
+}

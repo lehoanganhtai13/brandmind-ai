@@ -1,0 +1,10 @@
+{
+  "table_id": "page_97_table_26",
+  "page_number": 97,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th colspan=\"7\" style=\"text-align:center;\">Company</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Demographic</td>\n<td>Economic</td>\n<td>Natural</td>\n<td>Technological</td>\n<td>Political</td>\n<td>Cultural</td>\n<td></td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines the six key external environmental factors that influence a company's operations and strategy. These factors are categorized as Demographic, Economic, Natural, Technological, Political, and Cultural. Each category represents a distinct area of external influence that companies must monitor and adapt to. The structure is comparative, presenting these six environmental forces as distinct but interconnected elements that collectively shape the business landscape. Understanding and responding to changes within each of these domains is crucial for a company's strategic planning and long-term success.",
+  "processing_time": 1.5772390365600586,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.272398"
+}

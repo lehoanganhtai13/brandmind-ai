@@ -1,0 +1,10 @@
+{
+  "table_id": "page_314_table_79",
+  "page_number": 314,
+  "original_table_html": "| Term               | Definition                                                                                  |\n|--------------------|---------------------------------------------------------------------------------------------|\n| Cost-based pricing | Setting prices based on the costs of producing, distributing, and selling the product plus a fair rate of return for effort and risk. |\n| Fixed costs (overhead) | Costs that do not vary with production or sales level.                                   |\n| Variable costs     | Costs that vary directly with the level of production.                                      |\n| Total costs       | The sum of the fixed and variable costs for any given level of production.                   |\n",
+  "summary_markdown": "This table outlines the fundamental components of cost-based pricing, a strategy where product prices are determined by production, distribution, and selling expenses, augmented by a reasonable profit margin to account for effort and risk. The core elements include fixed costs, also known as overhead, which remain constant regardless of production or sales volume. In contrast, variable costs fluctuate directly with the level of production. Finally, total costs represent the aggregate of both fixed and variable costs at any specific production output. This structure establishes a clear relationship between different cost categories and their impact on overall pricing decisions.",
+  "processing_time": 1.717491865158081,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.331679"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_80_table_18",
+  "page_number": 80,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Four Ps</th>\n<th>Four As</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Product</td>\n<td>Acceptability</td>\n</tr>\n<tr>\n<td>Price</td>\n<td>Affordability</td>\n</tr>\n<tr>\n<td>Place</td>\n<td>Accessibility</td>\n</tr>\n<tr>\n<td>Promotion</td>\n<td>Awareness</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a comparative framework, aligning the traditional \"Four Ps\" of marketing with a corresponding set of \"Four As.\" The Four Ps, representing Product, Price, Place, and Promotion, are mapped to the Four As: Acceptability, Affordability, Accessibility, and Awareness, respectively. This structure suggests a customer-centric reinterpretation of marketing strategy, where each \"P\" is viewed through the lens of its corresponding \"A.\" Product is considered in terms of its Acceptability to the target market; Price is evaluated for its Affordability; Place is assessed by its Accessibility to consumers; and Promotion is measured by the level of Awareness it generates. The overarching organization is a direct, one-to-one correspondence, illustrating how fundamental marketing elements can be reframed to emphasize consumer perception and engagement.",
+  "processing_time": 1.8616280555725098,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.262545"
+}

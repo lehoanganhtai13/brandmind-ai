@@ -1,0 +1,10 @@
+{
+  "table_id": "page_311_table_78",
+  "page_number": 311,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"4\" style=\"color:red;\">Cost-based pricing</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Design a good product</td>\n<td>Determine product costs</td>\n<td>Set price based on cost</td>\n<td>Convince buyers of product’s value</td>\n</tr>\n</tbody>\n<thead>\n<tr>\n  <th colspan=\"4\" style=\"color:blue;\">Value-based pricing</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Assess customer needs and value perceptions</td>\n<td>Set target price to match customer-perceived value</td>\n<td>Determine costs that can be incurred</td>\n<td>Design product to deliver desired value at target price</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines two distinct pricing strategies: Cost-based pricing and Value-based pricing. Cost-based pricing follows a linear progression, beginning with product design, followed by determining the associated costs, setting a price derived from these costs, and finally, persuading customers of the product's worth. In contrast, Value-based pricing adopts an inverted approach, starting with an assessment of customer needs and their perception of value, then establishing a target price aligned with this perceived value. Subsequently, it determines the costs that can be accommodated within this target price, and finally, designs the product to deliver the desired value at that predetermined price. The core difference lies in the starting point: cost-based pricing originates from internal cost considerations, while value-based pricing is driven by external customer perceptions and willingness to pay.",
+  "processing_time": 2.0005998611450195,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.330947"
+}

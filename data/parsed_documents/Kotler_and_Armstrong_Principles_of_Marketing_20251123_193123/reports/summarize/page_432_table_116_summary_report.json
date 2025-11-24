@@ -1,0 +1,10 @@
+{
+  "table_id": "page_432_table_116",
+  "page_number": 432,
+  "original_table_html": "<table>\n  <tr>\n    <td><b>Sender</b></td>\n<td>Encoding</td>\n<td><b>Message</b></td>\n<td>Decoding</td>\n<td><b>Receiver</b></td>\n  </tr>\n<tr>\n    <td colspan=\"5\" align=\"center\">Media</td>\n  </tr>\n<tr>\n    <td colspan=\"5\" align=\"center\">Noise</td>\n  </tr>\n<tr>\n    <td>Feedback</td>\n    <td colspan=\"3\"></td>\n<td>Response</td>\n  </tr>\n<tr>\n    <td>Sender’s field of experience</td>\n    <td colspan=\"3\"></td>\n<td>Receiver’s field of experience</td>\n  </tr>\n</table>",
+  "summary_markdown": "This table illustrates a communication model, outlining a process-based flow. The core components are the Sender and Receiver, who engage in communication through a Message. The process involves the Sender Encoding the message, which then travels through Media, potentially affected by Noise. The Receiver then Decodes the message. Crucially, the model incorporates Feedback from the Receiver, which influences the Sender, and a Response from the Receiver. The effectiveness of this communication is further contextualized by the Sender's and Receiver's respective fields of experience, suggesting that shared understanding or differences in these areas can impact the communication process.",
+  "processing_time": 1.1728568077087402,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.366604"
+}

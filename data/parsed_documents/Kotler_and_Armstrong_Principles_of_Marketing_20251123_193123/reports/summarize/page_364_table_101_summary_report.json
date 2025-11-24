@@ -1,0 +1,10 @@
+{
+  "table_id": "page_364_table_101",
+  "page_number": 364,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Conventional marketing channel</th>\n      <th>Vertical marketing system</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Producer</td>\n<td>Producer</td>\n    </tr>\n<tr>\n      <td>Wholesaler</td>\n<td>\n        \n\n<table>\n          <tr>\n            <td>Wholesaler</td>\n<td><span style=\"color:red;\">Retailer</span></td>\n          </tr>\n        </table>",
+  "summary_markdown": "This table contrasts conventional marketing channels with vertical marketing systems, illustrating their structural differences. In a conventional channel, the flow is linear: a Producer sells to a Wholesaler, who then sells to a Retailer, and finally to the Consumer. This represents a series of independent entities operating sequentially. In contrast, a vertical marketing system, as depicted, shows a more integrated structure where a Producer might directly engage with a Wholesaler, who in turn works with a Retailer. The key distinction lies in the coordinated efforts within a vertical system, aiming for greater efficiency and control compared to the fragmented nature of conventional channels. The red highlighting on \"Retailer\" within the vertical system suggests a potential point of emphasis or a specific type of integration being illustrated.",
+  "processing_time": 2.246530771255493,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.349270"
+}

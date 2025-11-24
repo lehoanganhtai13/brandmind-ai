@@ -1,0 +1,10 @@
+{
+  "table_id": "page_643_table_152",
+  "page_number": 643,
+  "original_table_html": "<table>\n  <tr>\n    <td>DVD package and disc</td>\n<td>$2.50/DVD</td>\n  </tr>\n<tr>\n    <td>Royalties</td>\n<td>$2.25/DVD</td>\n  </tr>\n<tr>\n    <td>Advertising and promotion</td>\n<td>$500,000</td>\n  </tr>\n<tr>\n    <td>Overhead</td>\n<td>$200,000</td>\n  </tr>\n</table>",
+  "summary_markdown": "This data outlines the cost structure associated with DVD production and distribution, presenting a breakdown of expenses per unit and fixed costs. Variable costs include the DVD package and disc at $2.50 per unit and royalties at $2.25 per unit. Fixed costs, incurred regardless of the number of DVDs produced, consist of advertising and promotion totaling $500,000 and overhead expenses amounting to $200,000. This structure highlights a cost model where per-unit expenses are supplemented by significant upfront investments in marketing and operational infrastructure.",
+  "processing_time": 2.049520969390869,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.408445"
+}

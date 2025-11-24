@@ -1,0 +1,28 @@
+# Page 291
+
+**Document Title**: Principles of Marketing 17th Edition
+**Author**: Philip Kotler, Gary Armstrong
+**Original File**: data/raw_documents/Kotler_and_Armstrong_Principles_of_Marketing.pdf
+**Page Number**: 291/736
+**Processing Time**: 2025-11-23T20:00:41.731493
+
+---
+
+# 9.1 Nestlé: How the Food Industry Leader Utilizes New Product Development and Innovation
+
+Nestlé S.A. is a Swiss global food and beverage company formed in 1905 through the merger of the Anglo-Swiss Milk Company and Farine Lactée Henri Nestlé. Since its inception by Henri Nestlé to provide an infant food product, Nestlé has been associated with providing high-quality, consumer-focused products. It is the largest food company in the world by revenue and was ranked among the Top 100 companies on the Fortune Global 500 list in 2016.
+
+Innovation and new product development have always been at the heart of Nestlé since its beginning, for it has had to keep up with an ever-changing environment as well as to define and to drive new markets. This would not be possible without Nestlé’s extensive R&D capability. It has the largest R&D network of any food company in the world, with 34 R&D facilities (3 science and research centers, and 31 product technology and R&D centers worldwide), and over 5,000 people involved solely in R&D. Behind every one of Nestlé’s products is a team of scientists, engineers, nutritionists, designers, regulatory specialists, and consumer care representatives dedicated to earning the trust of its consumers with safe products of the highest quality. In recent years it has focused on becoming a nutrition, health, and wellness company; as such, part of the company’s vision is to continuously strive to make its products tastier and offer healthier choices that help consumers care for themselves and their families.
+
+Let us look at an example from the United Kingdom: Maggi—A Natural Choice, a new brand that was developed solely to target customers in the United Kingdom as a result of extensive market and customer analysis. In the United Kingdom, Maggi consists of a range of culinary aid products such as bouillons, soups, seasonings, and sauces to aid cooking and add flavor. Nestlé found that the UK foodservice market is a very competitive one, and companies must apply high standards to products and their nutritional content to meet stringent food safety and labeling laws. Furthermore, as a result of food scares and greater incidences of food allergies, customers worldwide are becoming increasingly knowledgeable and demanding about what they eat, leading to even more stringent specifications.
+
+The Maggi brand came to be seen as uninteresting and old-fashioned in the United Kingdom due to its dehydrated format and flavor, resulting in declining sales. Nestlé decided to act to meet customers’ increasing requirements for fresh-tasting culinary aids and regain market share. A central element of the innovation and new product development process at Nestlé is to put the customers at the core of its innovation movement. Maggi first commissioned face-to-face qualitative research to get deeper insight into the views and attitudes of chefs and consumers. The results showed that customers believed that fresh was best.
+
+However, the views and attitudes of chefs were different. They generally stated that their customers preferred that everything be made from scratch (that is, made from basic raw ingredients), but they do not have the time and the money to do this. Consequently, the research showed that there was a sizeable market potential for chefs who aim to please their customers with time- and money-saving culinary aid products with natural qualities that make their cooking as fresh tasting as possible. Following these market research results, Nestlé launched the brand Maggi—A Natural Choice with the brand proposition to combine real and fresh ingredients with the time- and cost-saving effects of culinary aid products.
+
+Using chefs and their customers as external idea sources and drivers for innovation and new product development, Nestlé decided that in addition to needing a more natural taste, the new products needed to offer value for money at the same time. Following its internal and generic new product development process, the first step involved a clearly written product brief for Maggi’s factories based on the new brand proposition. The brief gives comprehensive product specifications, including salt content, fat type, and any specific dietary needs (such as “gluten-free”) as well as the final price range. In the second step, Maggi’s food technologists develop a variety of kitchen samples that are tasted by a panel of specialists, including chefs and their customers. The third step involves reporting the results of the product testing in the framework of an interactive and revolving process in which any changes needed are incorporated into further samples. The final step of the product development process is the sign-off stage, in which an agreement on the samples is confirmed along with the pricing. The Maggi factories then commence production. In parallel, front labels are designed, product photography commissioned, recipe sheets produced, and sales presenters prepared to ensure a successful product launch.
+
+The final products being developed and launched under the Maggi—A Natural Choice range were lower in salt and made using
+
+The brand proposition of Maggi—A Natural Choice was to combine the goodness and taste of real and fresh ingredients with the time- and cost-saving effects of culinary aid products.
+Bob Pardue-Signs/Alamy Stock Photo sunflower oil.

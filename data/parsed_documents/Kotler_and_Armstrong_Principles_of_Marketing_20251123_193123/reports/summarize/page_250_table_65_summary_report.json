@@ -1,0 +1,10 @@
+{
+  "table_id": "page_250_table_65",
+  "page_number": 250,
+  "original_table_html": "<table>\n  <tr>\n    <td>Product attributes</td>\n<td>→</td>\n<td>Branding</td>\n<td>→</td>\n<td>Packaging</td>\n<td>→</td>\n<td>Labeling and logos</td>\n<td>→</td>\n<td>Product support services</td>\n  </tr>\n</table>",
+  "summary_markdown": "This table outlines a sequential, linear process for developing and presenting a product, moving from its intrinsic characteristics to its external presentation and post-purchase experience. The process begins with defining core **Product attributes**, which then inform the creation of a **Branding** strategy. This branding is subsequently translated into the **Packaging** design. Following packaging, **Labeling and logos** are applied, serving as key visual identifiers. Finally, the product offering is augmented by **Product support services**, completing the comprehensive product development and marketing framework. The arrows indicate a clear progression, suggesting that each stage builds upon the decisions made in the preceding one.",
+  "processing_time": 1.9477241039276123,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.312365"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_282_table_72",
+  "page_number": 282,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Idea generation</th>\n      <th>Idea screening</th>\n      <th>Concept development and testing</th>\n      <th>Marketing strategy development</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Business analysis</td>\n<td>Product development</td>\n<td>Test marketing</td>\n<td><b>Commercialization</b></td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines a sequential process for new product development, beginning with **Idea generation** and progressing through several distinct stages. Following idea generation, **Idea screening** serves to filter and select promising concepts. The selected ideas then move to **Concept development and testing**, where they are refined and evaluated with potential customers. Subsequently, **Marketing strategy development** focuses on planning how to bring the product to market. The process continues with **Business analysis**, which assesses the financial viability of the product. This leads to **Product development**, the actual creation of the product. **Test marketing** then involves a trial launch in a limited market to gauge consumer response and refine the strategy. Finally, the process culminates in **Commercialization**, the full-scale introduction of the product to the market. The structure is linear and progressive, with each stage building upon the outcomes of the previous one.",
+  "processing_time": 2.0457212924957275,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.323490"
+}

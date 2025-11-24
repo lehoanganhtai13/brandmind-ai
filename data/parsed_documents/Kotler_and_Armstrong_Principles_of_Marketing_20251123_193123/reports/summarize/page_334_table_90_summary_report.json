@@ -1,0 +1,10 @@
+{
+  "table_id": "page_334_table_90",
+  "page_number": 334,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Pricing Situation</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Product line pricing</td>\n<td>Setting prices across an entire product line</td>\n</tr>\n<tr>\n<td>Optional-product pricing</td>\n<td>Pricing optional or accessory products sold with the main product</td>\n</tr>\n<tr>\n<td>Captive-product pricing</td>\n<td>Pricing products that must be used with the main product</td>\n</tr>\n<tr>\n<td>By-product pricing</td>\n<td>Pricing low-value by-products to get rid of or make money on them</td>\n</tr>\n<tr>\n<td>Product bundle pricing</td>\n<td>Pricing bundles of products sold together</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines five distinct pricing situations related to product strategy. Product line pricing involves setting prices for a range of related products. Optional-product pricing focuses on the pricing of accessories or add-ons that accompany a main product. Captive-product pricing addresses the pricing of essential complementary products required for the main product's use. By-product pricing deals with the strategic pricing of secondary, often low-value, outputs generated during the production of a primary product, either for disposal or profit. Finally, product bundle pricing involves setting a single price for a package of multiple products sold together. These strategies represent different approaches to managing pricing across a company's product offerings and their associated components or combinations.",
+  "processing_time": 2.0399351119995117,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.339298"
+}

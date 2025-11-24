@@ -1,0 +1,10 @@
+{
+  "table_id": "page_401_table_108",
+  "page_number": 401,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Retail strategy</th>\n<th>Retail marketing mix</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>\n<ul>\n<li>Retail segmentation and targeting</li>\n<li>Store differentiation and positioning</li>\n</ul>\n</td>\n<td>\n<ul>\n<li>Product and service assortment</li>\n<li>Retail prices</li>\n<li>Promotion</li>\n<li>Distribution (location)</li>\n</ul>\n</td>\n</tr>\n<tr>\n<td colspan=\"2\" style=\"text-align:center; font-weight:bold;\">\nCreate value for targeted retail customers\n</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines the relationship between retail strategy and the retail marketing mix, both aimed at creating value for targeted retail customers. The retail strategy encompasses segmentation and targeting, defining which customer groups to serve, and store differentiation and positioning, establishing how the retail offering will be perceived relative to competitors. These strategic decisions then inform the development of the retail marketing mix, which comprises four key elements: the product and service assortment offered, the retail prices set, the promotional activities undertaken, and the distribution strategy, primarily focusing on store location. Together, these components form a cohesive approach to attracting and serving specific customer segments.",
+  "processing_time": 1.5371289253234863,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.357990"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_318_table_86",
+  "page_number": 318,
+  "original_table_html": "<table>\n  <tbody>\n    <tr>\n      <td>$420,000</td>\n<td>the Caterpillar’s price if equivalent to the competitor’s bulldozer</td>\n    </tr>\n<tr>\n      <td>$50,000</td>\n<td>the value added by Caterpillar’s superior reliability and durability</td>\n    </tr>\n<tr>\n      <td>$40,000</td>\n<td>the value added by Caterpillar’s lower lifetime operating costs</td>\n    </tr>\n<tr>\n      <td>$40,000</td>\n<td>the value added by Caterpillar’s superior service</td>\n    </tr>\n<tr>\n      <td>$20,000</td>\n<td>the value added by Caterpillar’s longer parts warranty</td>\n    </tr>\n<tr>\n      <td>$570,000</td>\n<td>the value-added price for Caterpillar’s bulldozer</td>\n    </tr>\n<tr>\n      <td>−$70,000</td>\n<td>discount</td>\n    </tr>\n<tr>\n      <td>$500,000</td>\n<td>final price</td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative pricing structure for a Caterpillar bulldozer, detailing its value-added components relative to a competitor's equivalent model priced at $420,000. Caterpillar's bulldozer incorporates several value-adding features: superior reliability and durability contribute $50,000, lower lifetime operating costs add $40,000, superior service adds $40,000, and a longer parts warranty contributes $20,000. These cumulative additions result in a total value-added price of $570,000 for the Caterpillar bulldozer. A discount of $70,000 is then applied, leading to a final price of $500,000. The structure highlights how specific attributes enhance the perceived and actual value of the Caterpillar product beyond its base price equivalence.",
+  "processing_time": 2.104294776916504,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.335907"
+}

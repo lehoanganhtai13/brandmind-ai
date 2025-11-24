@@ -1,0 +1,10 @@
+{
+  "table_id": "page_31_table_5",
+  "page_number": 31,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th colspan=\"4\" style=\"text-align:center;\">Create value <i>for customers</i> and build customer relationships</th>\n      <th style=\"text-align:center;\">Capture value <i>from</i> customers in return</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Understand the marketplace and customer needs and wants</td>\n<td>Design a customer value–driven marketing strategy</td>\n<td>Construct an integrated marketing program that delivers superior value</td>\n<td>Engage customers, build profitable relationships, and create customer delight</td>\n      <td style=\"background-color:#c00; color:#fff; font-weight:bold; text-align:center;\">\n        Capture value from customers to create profits and customer equity\n      </td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines a five-step marketing process, structured around two overarching goals: creating value for customers and capturing value from them. The initial four steps focus on customer value creation: understanding the marketplace and customer needs, designing a customer value-driven marketing strategy, constructing an integrated marketing program to deliver superior value, and engaging customers to build profitable relationships and achieve delight. The final, overarching step, which captures value in return, is to leverage these customer relationships to generate profits and build customer equity. This represents a cyclical, customer-centric approach to marketing, where value creation directly enables value capture.",
+  "processing_time": 1.7465260028839111,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.244053"
+}

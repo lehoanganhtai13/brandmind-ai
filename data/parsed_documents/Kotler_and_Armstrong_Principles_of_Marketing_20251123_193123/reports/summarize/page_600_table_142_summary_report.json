@@ -1,0 +1,10 @@
+{
+  "table_id": "page_600_table_142",
+  "page_number": 600,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th></th>\n  <th>Needs of Consumers</th>\n  <th></th>\n</tr>\n<tr>\n  <th></th>\n  <th>Now</th>\n  <th>Future</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <th>Needs of Business</th>\n  <td>\n    Marketing concept\n  </td>\n<td>\n    Strategic planning concept\n  </td>\n</tr>\n<tr>\n  <th>Future</th>\n  <td>\n    Societal marketing concept\n  </td>\n  <td style=\"background-color:#d32f2f; color:white;\">\n    Sustainable marketing concept\n  </td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines the evolution of marketing concepts based on the changing needs of consumers and businesses. Initially, businesses focused on the \"Marketing concept\" to meet current consumer demands. Looking towards the future, businesses adopted a \"Strategic planning concept\" to anticipate and address evolving consumer needs. Concurrently, the needs of consumers themselves shifted, leading to the development of the \"Societal marketing concept,\" which considers broader societal welfare alongside consumer satisfaction. The ultimate future state, highlighted in red, represents the \"Sustainable marketing concept,\" indicating a comprehensive approach that integrates business strategies, future consumer needs, and long-term environmental and social sustainability. This demonstrates a progression from a product-centric to a strategically planned, societally aware, and ultimately sustainable marketing paradigm.",
+  "processing_time": 1.9897348880767822,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.397764"
+}

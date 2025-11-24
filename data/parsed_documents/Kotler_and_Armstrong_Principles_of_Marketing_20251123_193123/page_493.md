@@ -1,0 +1,28 @@
+# Page 493
+
+**Document Title**: Principles of Marketing 17th Edition
+**Author**: Philip Kotler, Gary Armstrong
+**Original File**: data/raw_documents/Kotler_and_Armstrong_Principles_of_Marketing.pdf
+**Page Number**: 493/736
+**Processing Time**: 2025-11-23T20:00:41.830459
+
+---
+
+Case in point: Enterprise-software company SAP, which six years ago set up EcoHub, its own online, community-powered social media and mobile marketplace consisting of customers, SAP software experts, partners, and almost anyone else who wanted to join. The EcoHub community grew quickly to more than 2 million users in 200 countries, extending across a broad online spectrum—a dedicated website, mobile apps, Twitter channels, LinkedIn groups, Facebook and Google+ pages, YouTube channels, and more. EcoHub grew to more than 600 “solution storefronts,” where visitors could “discover, evaluate, and buy” software solutions and services from SAP and its partners. EcoHub also let users rate and share the solutions and advice they got from other community members.
+
+SAP was surprised to learn that what it had originally seen as a place for customers to discuss issues, problems, and solutions turned into a significant point of sale. The information, give-and-take discussions, and conversations at the site drew in customers, even for big-ticket sales of $20 to $30 million or more. In fact, EcoHub has now evolved into SAP Store, a gigantic SAP marketplace where customers can engage with SAP, its partners, and each other to share information, post comments and reviews, discover problems, and evaluate and buy SAP solutions.
+
+However, although the SAP Store draws in new potential customers and takes them through many of the initial stages of product discovery and evaluation, it doesn’t replace SAP’s or its partners’ salespeople. Instead, it extends their reach and effectiveness. Its real value is the flood of sales leads it creates for the SAP and partner sales forces. Once prospective customers have discovered, discussed, and evaluated SAP solutions online, SAP invites them to initiate contact, request a proposal, or start the negotiation process.
+
+> That’s where the person-to-person selling begins.
+
+All this suggests that B-to-B selling isn’t dying, it’s just changing. The tools and techniques may be different as sales forces leverage and adapt to selling in the digital and social media age. But the panelists agree strongly that B-to-B marketers will never be able to do without strong sales teams. Salespeople who can engage customers, discover customer needs, solve customer problems, and build relationships will be needed and successful, regardless of what else changes. Especially for those big-ticket B-to-B sales, “all the new technology may make it easier to sell by building strong ties to customers even before the first sit-down, but when the signature hits the dotted line, there will be a sales rep there.”
+
+Sources: Based on information from Andy Hoar, “Death of a (B2B) Salesman,” *Forbes*, April 15, 2015, www.forbes.com/sites/forrester/2015/04/15/death-of-a-b2b-salesman/#2bfaac2539be; “Robots Can’t Close,” *Sales & Marketing Management,* November 13, 2015, https://salesandmarketing.com/content/robots-can’t-close; Lain Chroust Ehmann, “Sales Up!” *SellingPower,* January/February 2011, p. 40; Paul Nolan, “Mapping the Buyer’s Journey,” *Sales and Marketing Management,* March 27, 2015, www.salesandmarketing.com/content/mapping-buyer’s-journey; John Ellett, “SAP’s Success Formula for B2B Social Selling,” *Forbes,* April 1, 2016, www.forbes.com/sites/johnellett/2016/04/01/saps-success-formula-for-btob-social-selling/#1ecd7ec213cb; and https://store.sap.com/ and https://scn.sap.com, accessed October 2016.
+
+----
+
+online customer communities to webinars and social media and mobile applications. Consider Makino, a leading manufacturer of metal cutting and machining technology:  
+- There’s a hot new video on YouTube these days, featured at the Makino Machine Tools YouTube channel. It shows a Makino five-axis vertical machining center in action, with metal chips flying as the machinery mills a new industrial part. Sound exciting? Probably not to you. But to the right industrial customer, the video is downright spellbinding. YouTube is just one of a wide variety of social media initiatives that Makino uses to complement its salespeople in their efforts to engage and inform customers and enhance customer relationships. For example, Makino hosts an ongoing series of industry-specific webinars that position the company as an industry thought leader. Makino produced and archived hundreds webinars on topics ranging from how to get the most out of your machine tools to how metal-cutting processes are done. Webinar content is tailored to specific industries, such as aerospace or medical, and is promoted through carefully targeted online ads and email invitations. The webinars help to build Makino’s customer database, generate sales leads, build customer relationships, and prepare the way for salespeople by serving up relevant information and educating customers online. Makino also uses Facebook, YouTube, and Twitter to inform customers and prospects about the latest Makino innovations and events and to demonstrate the company’s machines in action. Such digital content and social media don’t replace salespeople. Instead, they help salespeople build
+
+Social selling: Machine tool manufacturer Makino engages customers through extensive digital content and social media, which complement sales force efforts to engage customers and build product–customer relationships. Courtesy of Makino We now turn from designing and managing a sales force to the personal selling process.

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_367_table_102",
+  "page_number": 367,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"5\">Producer</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td colspan=\"2\" rowspan=\"2\" style=\"vertical-align:top;\">\nFor example, you could buy a familiar green-and-yellow John Deere lawn tractor from a neighborhood John Deere dealer or from Lowe’s. A large farm or forestry business would buy larger John Deere equipment from a premium full-service John Deere dealer and its sales force.\n</td>\n<td>Catalogs, online, mobile</td>\n<td></td>\n<td rowspan=\"2\" style=\"vertical-align:top;\">Sales force</td>\n</tr>\n<tr>\n<td>Retailers</td>\n<td>Dealers</td>\n</tr>\n<tr>\n<td>Consumer segment 1</td>\n<td>Consumer segment 2</td>\n<td>Business segment 1</td>\n<td>Business segment 2</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table illustrates a producer's distribution channels and customer segmentation. The producer, exemplified by John Deere, utilizes multiple channels to reach its customers. Direct sales can occur through catalogs, online platforms, and mobile interfaces. Additionally, the producer employs intermediaries such as retailers and specialized dealers. These dealers can be further categorized into premium full-service dealers, catering to large farm or forestry businesses, and neighborhood dealers, serving individual consumers. The sales force plays a crucial role across these channels, interacting with both consumer segments and business segments, which are themselves divided into distinct categories. This structure highlights a multi-channel strategy designed to serve a diverse customer base, ranging from individual consumers to large commercial enterprises.",
+  "processing_time": 2.3556969165802,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.351711"
+}

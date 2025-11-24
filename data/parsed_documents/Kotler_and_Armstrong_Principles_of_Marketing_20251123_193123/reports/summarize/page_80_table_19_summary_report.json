@@ -1,0 +1,10 @@
+{
+  "table_id": "page_80_table_19",
+  "page_number": 80,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"3\">Analysis</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>\n<strong>Planning</strong><br>\nDevelop strategic plans<br><br>\nDevelop marketing plans\n</td>\n<td>\n<strong>Implementation and Organization</strong><br>\nCarry out the plans\n</td>\n<td>\n<strong>Control</strong><br>\nMeasure results<br>\nEvaluate results<br>\nTake corrective action\n</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a three-phase management process: Planning, Implementation and Organization, and Control. The Planning phase involves the development of strategic and marketing plans. The subsequent Implementation and Organization phase focuses on executing these developed plans. Finally, the Control phase encompasses measuring and evaluating the results of the implemented plans, with the ultimate goal of taking corrective action. This structure represents a cyclical, process-based approach to management, where planning informs execution, and control mechanisms provide feedback for future planning.",
+  "processing_time": 1.4028611183166504,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.263986"
+}

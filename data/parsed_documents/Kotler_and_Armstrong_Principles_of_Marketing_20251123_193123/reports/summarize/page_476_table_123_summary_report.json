@@ -1,0 +1,10 @@
+{
+  "table_id": "page_476_table_123",
+  "page_number": 476,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Type of Banner</th>\n<th>Cost</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Standard banner</td>\n<td>$25 CPM</td>\n</tr>\n<tr>\n<td>Leaderboard banner</td>\n<td>$40 CPM</td>\n</tr>\n<tr>\n<td>Skyscraper banner</td>\n<td>$35 CPM</td>\n</tr>\n<tr>\n<td>Space banner</td>\n<td>$50 CPM</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of different banner ad types and their associated costs, specifically measured in Cost Per Mille (CPM), which represents the cost per thousand impressions. The structure is a simple categorization of banner types against their pricing. The types of banners include Standard banner, Leaderboard banner, Skyscraper banner, and Space banner. Each of these banner types has a distinct CPM cost: Standard banners are priced at $25 CPM, Leaderboard banners at $40 CPM, Skyscraper banners at $35 CPM, and Space banners at the highest cost of $50 CPM. This indicates a direct relationship between the banner type and its associated advertising expense, with Space banners being the most expensive and Standard banners the least expensive among those listed.",
+  "processing_time": 1.8400602340698242,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.375344"
+}

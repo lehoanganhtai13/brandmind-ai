@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_55_chain_1",
+  "page_number": 55,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 55,
+      "start_pos": 393,
+      "end_pos": 2169,
+      "html_size": 1776,
+      "page_file": "data/parsed_documents/Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123/page_55.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 55,
+      "start_pos": 2171,
+      "end_pos": 2325,
+      "html_size": 154,
+      "page_file": "data/parsed_documents/Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123/page_55.md"
+    }
+  ],
+  "is_cross_page": false,
+  "page_range": "55",
+  "merge_decision": {
+    "chain_id": "page_55_chain_1",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No collapsed column errors were found or fixed."
+      },
+      "reasoning": "The first table provides a comprehensive header and structure for a marketing strategy framework. The second table contains rows that logically follow and expand upon the concepts introduced in the first table, specifically regarding broader marketing considerations. Both tables appear to be parts of the same larger marketing strategy document."
+    },
+    "final_merged_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"5\" style=\"text-align:center;\">Create value <i>for</i> customers and build customer relationships</th>\n  <th rowspan=\"7\" style=\"text-align:center; vertical-align:middle; color: white; background-color: #cc0000;\">\n    Capture value <i>from</i> customers in return\n  </th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Understand the marketplace and customer needs and wants</td>\n<td>Design a customer value–driven marketing strategy</td>\n<td>Construct an integrated marketing program that delivers superior value</td>\n<td>Engage customers, build profitable relationships, and create customer delight</td>\n  <td rowspan=\"6\" style=\"text-align:center; vertical-align:middle; color: white; background-color: #cc0000;\">\n    <b>Capture value from customers to create profits and customer equity</b><br><br>\n    <b>Create satisfied, loyal customers</b><br><br>\n    <b>Capture customer lifetime value</b><br><br>\n    <b>Increase share of market and share of customer</b>\n  </td>\n</tr>\n<tr>\n  <td>Research customers and the marketplace</td>\n<td>Select customers to serve: market segmentation and targeting</td>\n<td>Product and service design: build strong brands</td>\n<td>Customer relationship management: build engagement and strong relationships with chosen customers</td>\n</tr>\n<tr>\n  <td>Manage marketing information and customer data</td>\n<td>Decide on a value proposition: differentiation and positioning</td>\n<td>Pricing: create real value</td>\n<td>Partner relationship management: build strong relationships with marketing partners</td>\n</tr>\n<tr>\n  <td></td>\n<td></td>\n<td>Distribution: manage demand and supply chains</td>\n<td></td>\n</tr>\n<tr>\n  <td></td>\n<td></td>\n<td>Promotion: communicate the value proposition</td>\n<td></td>\n</tr>\n<tr>\n  <td>Harness marketing technology</td>\n<td>Manage global markets</td>\n<td>Ensure environmental and social responsibility</td>\n</tr>\n</tbody>\n</table>",
+    "processing_time": 4.136804819107056
+  },
+  "timestamp": "2025-11-23T20:05:48.236394"
+}

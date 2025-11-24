@@ -1,0 +1,10 @@
+{
+  "table_id": "page_66_table_12",
+  "page_number": 66,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"3\">Corporate <em>level</em></th>\n<th rowspan=\"2\">Business unit, product, and market <em>level</em></th>\n</tr>\n<tr>\n<th>Defining the company mission</th>\n<th>Setting company objectives and goals</th>\n<th>Designing the business portfolio</th>\n</tr>\n<tr>\n<td colspan=\"3\">Like the marketing strategy, the broader company strategy must be customer focused.</td>\n<td>Company-wide strategic planning guides marketing strategy and planning.</td>\n</tr>\n</thead>\n</table>",
+  "summary_markdown": "This table outlines a hierarchical strategic planning framework, starting at the corporate level and cascading down to business units. At the highest corporate level, strategy is defined by three key components: establishing the company mission, setting overarching company objectives and goals, and designing the overall business portfolio. These corporate-level decisions then inform and guide the strategy and planning at the business unit, product, and market level. A crucial overarching principle is that the broader company strategy, much like marketing strategy, must be customer-focused. This customer-centric approach ensures alignment and relevance across all levels of strategic planning within the organization.",
+  "processing_time": 1.6961500644683838,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.253819"
+}

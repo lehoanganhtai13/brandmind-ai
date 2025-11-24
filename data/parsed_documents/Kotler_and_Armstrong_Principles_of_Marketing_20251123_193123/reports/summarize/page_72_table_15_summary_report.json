@@ -1,0 +1,10 @@
+{
+  "table_id": "page_72_table_15",
+  "page_number": 72,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th></th>\n  <th>Existing products</th>\n  <th>New products</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Existing markets</td>\n<td>Market penetration</td>\n<td>Product development</td>\n</tr>\n<tr>\n  <td>New markets</td>\n<td>Market development</td>\n<td>Diversification</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table illustrates the Ansoff Matrix, a strategic framework for product and market growth. It categorizes growth strategies based on whether they involve existing or new products and existing or new markets. The four strategies presented are: Market Penetration, which focuses on increasing market share with existing products in existing markets; Product Development, involving the creation of new products for existing markets; Market Development, which entails entering new markets with existing products; and Diversification, representing the most significant risk, involving new products in new markets. The matrix provides a structured approach to understanding the strategic options available to businesses for expansion.",
+  "processing_time": 1.841294765472412,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.258266"
+}

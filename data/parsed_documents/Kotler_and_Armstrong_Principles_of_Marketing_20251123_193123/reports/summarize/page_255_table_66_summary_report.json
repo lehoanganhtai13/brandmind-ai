@@ -1,0 +1,10 @@
+{
+  "table_id": "page_255_table_66",
+  "page_number": 255,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Old logo</th>\n<th>New logo</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>HERSHEY'S  \nThe Hershey Company</td>\n<td>HERSHEY  \nTHE HERSHEY COMPANY</td>\n</tr>\n<tr>\n<td>Pizza Hut (logo with red roof)</td>\n<td>Pizza Hut (red circle with white text)</td>\n</tr>\n<tr>\n<td>SOUTHWEST (black capital letters with jet)</td>\n<td>Southwest (blue title case letters with heart icon)</td>\n</tr>\n<tr>\n<td>IHOP (blue with red banner)</td>\n<td>IHOP (blue letters with red smile under \"OP\")</td>\n</tr>\n<tr>\n<td>Google (multicolor serif font)</td>\n<td>Google (multicolor sans serif font)</td>\n</tr>\n<tr>\n<td></td>\n<td>G (one letter in four colors)</td>\n</tr>\n<tr>\n<td></td>\n<td>Four colored dots and microphone icon</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table illustrates a comparative analysis of old and new logos for several prominent brands, highlighting design evolution. For HERSHEY'S, the transition moved from a more descriptive company name to a simplified brand name and company identifier. Pizza Hut shifted from a literal representation of its iconic red roof to a more abstract circular design with text. Southwest Airlines evolved from bold, all-caps lettering with a jet graphic to a softer, title-case font incorporating a heart symbol. IHOP's logo changed from a blue design with a red banner to a blue wordmark featuring a red smile element. Google underwent a significant transformation, moving from a multicolor serif font to a multicolor sans-serif font, and also introduced a single-letter \"G\" logo in four colors, alongside a favicon-like design of four colored dots and a microphone icon. The overall structure is comparative, showcasing the \"before\" and \"after\" of brand identity redesigns.",
+  "processing_time": 2.516813039779663,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.314187"
+}

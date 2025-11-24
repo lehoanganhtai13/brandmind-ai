@@ -1,0 +1,10 @@
+{
+  "table_id": "page_120_table_29",
+  "page_number": 120,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th></th>\n<th colspan=\"2\">2000</th>\n<th colspan=\"2\">2010</th>\n</tr>\n<tr>\n<th>State</th>\n<th>Total</th>\n<th>Hispanic</th>\n<th>Total</th>\n<th>Hispanic</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Georgia</td>\n<td>8,186,453</td>\n<td>435,227</td>\n<td>9,687,653</td>\n<td>853,689</td>\n</tr>\n<tr>\n<td>Michigan</td>\n<td>9,938,444</td>\n<td>323,877</td>\n<td>9,883,640</td>\n<td>436,358</td>\n</tr>\n<tr>\n<td>California</td>\n<td>33,871,648</td>\n<td>10,966,556</td>\n<td>37,253,956</td>\n<td>14,013,719</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of total and Hispanic populations across Georgia, Michigan, and California for the years 2000 and 2010. The structure is a state-by-state comparison, with each state's data further broken down by population type (Total and Hispanic) and then by year. Key relationships highlight population changes over the decade. For instance, California shows the largest total population in both years and the most significant Hispanic population, which also grew substantially. Georgia experienced growth in both its total and Hispanic populations. Michigan's total population saw a slight decrease between 2000 and 2010, while its Hispanic population increased. The overarching structure is a time-series comparison of demographic data across distinct geographical entities.",
+  "processing_time": 1.723120927810669,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.276507"
+}

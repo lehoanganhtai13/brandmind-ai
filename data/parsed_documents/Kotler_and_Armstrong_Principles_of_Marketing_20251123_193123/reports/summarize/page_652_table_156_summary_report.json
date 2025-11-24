@@ -1,0 +1,10 @@
+{
+  "table_id": "page_652_table_156",
+  "page_number": 652,
+  "original_table_html": "<table>\n  <tr>\n    <td>Retail price:</td>\n<td>$250</td>\n  </tr>\n<tr>\n    <td>minus retail margin (30%):</td>\n<td>− $75</td>\n  </tr>\n<tr>\n    <td>Retailer’s cost/wholesaler’s price:</td>\n<td>$175</td>\n  </tr>\n<tr>\n    <td>minus wholesaler’s margin (20%):</td>\n<td>− $35</td>\n  </tr>\n<tr>\n    <td>Wholesaler’s cost/HD’s price</td>\n<td>$140</td>\n  </tr>\n</table>",
+  "summary_markdown": "This data illustrates a cost breakdown for a product, demonstrating a sequential reduction in price through different distribution channels. It begins with the initial Retail price of $250. A Retail margin of 30% is then subtracted, resulting in a reduction of $75. This leads to the Retailer’s cost, which is also identified as the Wholesaler’s price, standing at $175. Subsequently, a Wholesaler’s margin of 20% is applied, subtracting $35 from the price. The final figure presented is the Wholesaler’s cost, also termed HD’s price, which is $140. The structure is comparative, showing how the price is successively lowered by margins at each stage of the supply chain.",
+  "processing_time": 1.838376760482788,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.412005"
+}

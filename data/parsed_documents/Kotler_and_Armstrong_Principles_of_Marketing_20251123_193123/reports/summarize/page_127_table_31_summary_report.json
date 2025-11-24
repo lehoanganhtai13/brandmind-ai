@@ -1,0 +1,10 @@
+{
+  "table_id": "page_127_table_31",
+  "page_number": 127,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"7\">Marketing managers and other information users</th>\n</tr>\n<tr>\n  <td colspan=\"7\">Obtaining customer and market insights from marketing information</td>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td colspan=\"7\" style=\"text-align:center; font-weight:bold; color:blue;\">Marketing information system</td>\n</tr>\n<tr>\n  <td colspan=\"7\" style=\"text-align:center; font-weight:bold; color:red;\">Developing needed information</td>\n</tr>\n<tr>\n  <td style=\"color:red; font-weight:bold;\">Assessing<br>information<br>needs</td>\n<td>Internal<br>databases</td>\n<td>Marketing<br>intelligence</td>\n<td>Marketing<br>research</td>\n  <td style=\"color:red; font-weight:bold;\">Analyzing<br>and using<br>information</td>\n  <td colspan=\"2\"></td>\n</tr>\n<tr>\n  <td colspan=\"7\" style=\"text-align:center; font-weight:bold;\">Marketing environment</td>\n</tr>\n<tr>\n  <td>Target<br>markets</td>\n<td>Marketing<br>channels</td>\n<td>Competitors</td>\n<td>Publics</td>\n  <td colspan=\"3\">Macroenvironment<br>forces</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This diagram illustrates a Marketing Information System (MIS) designed to provide marketing managers and other users with customer and market insights. The MIS is structured around the core process of developing and utilizing information. It begins with assessing information needs, which are then met through internal databases, marketing intelligence, and marketing research. Following the development of needed information, the system moves to analyzing and using this information. All these processes are influenced by the broader marketing environment, which encompasses target markets, marketing channels, competitors, publics, and macroenvironment forces. The overall structure depicts a cyclical flow where information is gathered, processed, and applied to inform marketing decisions within a dynamic environmental context.",
+  "processing_time": 1.7371840476989746,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.279441"
+}

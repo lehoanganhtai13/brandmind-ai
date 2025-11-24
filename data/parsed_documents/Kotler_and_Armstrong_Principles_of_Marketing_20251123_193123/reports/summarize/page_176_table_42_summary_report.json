@@ -1,0 +1,10 @@
+{
+  "table_id": "page_176_table_42",
+  "page_number": 176,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Need recognition</th>\n      <th>Information search</th>\n      <th>Evaluation of alternatives</th>\n      <th>Purchase decision</th>\n      <th>Postpurchase behavior</th>\n    </tr>\n  </thead>\n</table>",
+  "summary_markdown": "This table outlines the five key stages of the consumer decision-making process. It begins with **Need recognition**, where a consumer identifies a problem or unmet need. This is followed by **Information search**, where the consumer actively seeks information about potential solutions. Next, **Evaluation of alternatives** involves assessing the various options identified during the search phase based on specific criteria. The process then moves to the **Purchase decision**, where the consumer chooses a product or service. Finally, **Postpurchase behavior** encompasses the consumer's experience after the purchase, including satisfaction, dissatisfaction, and potential repurchase or word-of-mouth communication. This represents a sequential, linear model of consumer behavior, guiding a consumer from initial awareness to post-purchase evaluation.",
+  "processing_time": 1.8832077980041504,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.288753"
+}

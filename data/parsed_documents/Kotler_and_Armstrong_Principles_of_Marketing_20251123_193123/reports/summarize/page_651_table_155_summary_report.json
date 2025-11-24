@@ -1,0 +1,10 @@
+{
+  "table_id": "page_651_table_155",
+  "page_number": 651,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Old</th>\n<th>New (reduced 10%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Price</td>\n<td>$168</td>\n<td>$151.20</td>\n</tr>\n<tr>\n<td>− Unit variable cost</td>\n<td>$132.72</td>\n<td>$132.72</td>\n</tr>\n<tr>\n<td>= Unit contribution</td>\n<td>$35.28</td>\n<td>$18.48</td>\n</tr>\n<tr>\n<td>Contribution margin</td>\n<td>$35.28 / 168 = 0.21 \\text{ or } 21\\%</td>\n<td>$18.48 / 151.20 = 0.12 \\text{ or } 12\\%</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of pricing and cost components before and after a 10% price reduction. The 'Old' column shows an initial price of $168 with a unit variable cost of $132.72, resulting in a unit contribution of $35.28 and a contribution margin of 21%. The 'New (reduced 10%)' column illustrates the impact of the price decrease, with the new price set at $151.20. Crucially, the unit variable cost remains unchanged at $132.72. This leads to a significantly reduced unit contribution of $18.48 and a corresponding drop in the contribution margin to 12%. The structure highlights the direct relationship between price changes and contribution margin, assuming stable variable costs.",
+  "processing_time": 1.735253095626831,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.411281"
+}

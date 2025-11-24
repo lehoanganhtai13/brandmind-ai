@@ -1,0 +1,170 @@
+# Page 706
+
+**Document Title**: Principles of Marketing 17th Edition
+**Author**: Philip Kotler, Gary Armstrong
+**Original File**: data/raw_documents/Kotler_and_Armstrong_Principles_of_Marketing.pdf
+**Page Number**: 706/736
+**Processing Time**: 2025-11-23T20:00:41.967426
+
+---
+
+# Index
+
+## Brand, Company, Name, and Organization Index  
+### A
+- A380 Emirates, 553  
+- AACSB, 446  
+- Aaker, Jennifer, 169n23  
+- AARP, 336  
+- *Abayas*, 211  
+- ABC, 564  
+- *ABC World News*, 467  
+- Abercrombie & Fitch, 554  
+- Abercrombie Kids, 99  
+- Abramovich, Giselle, 99n15, 129n  
+- Academy Awards, 48, 423, 564  
+- Accenture, 267  
+- Active Fitness, 216  
+- Acura, 587  
+- Acxiom, 217  
+- Ad Council, 31, 139, 161, 249  
+- Adams, Susan, 77n, 195n, 586n40  
+- Adamson, Brent, 192n8  
+- Addady, Michael, 454n5  
+- Adidas, 103, 463, 519–520, 569, 623–624  
+- ADP administrative services, 486  
+- AdSense (Google), 550  
+- *Advertising Age*, 451, 533  
+- *Adweek*, 449n, 477n, 523n, 617n  
+- AEG, 90  
+- Aflac, 263  
+- Africa, 220, 372, 385, 564, 572, 573, 578, 581  
+- African Beauty Brand, 75  
+- Agarwal, Mohit, 164n16  
+- Agdal, Nina, 217  
+- AGIT Global, 333  
+- Ahrendts, Angela, 166n19, 173  
+- Air Canada, 365  
+- Air China, 365  
+- Air Malta, 553  
+- Air Mauritius, 553  
+- Air Wick, 545  
+- Airbnb, 118, 275–277  
+- Airbus, 42  
+- Alameda, California, 612  
+- Alaska Airlines, 241  
+- Albright, Todd, 508  
+- ALDI, 40, 268, 311, 319, 403, 405, 411  
+- ALDI Australia, 524  
+- Aleve pain reliever, 72, 208, 434  
+- Alibaba, 265, 538–539  
+- All Nippon Airways (ANA), 447  
+- Allison, Melissa, 525n31  
+- Allred, Anthony, 338n10  
+- Allstate, 102, 103, 263, 450, 451, 475–477  
+- *Allure* magazine, 137  
+- Alphabet (Google), 86, 331, 563  
+- Alpino, 123  
+- Alsever, Jennifer, 141n20  
+- Alstyne, Marshall, 277n  
+- *Alu Mind*, 354n  
+- Amano, Tomofumi, 586n38  
+- Amazon.com, 28, 40, 45, 59, 103, 114, 129, 137, 138, 163, 176, 184, 230, 233, 252, 265, 301, 306–308, 334, 340, 342, 349, 356, 359, 366, 368, 373–375, 379, 392, 406, 411, 419, 510–511, 513–514, 518–519, 526, 538–541, 543, 547–548, 554, 563, 577, 579, 614  
+- AMC theaters, 142, 346  
+- American Advertising Federation, 533  
+- American Airlines, 254, 349  
+- American Apparel, 106, 526  
+- American Association of Advertising ¡Agencies, 172, 533  
+- American Express, 148, 291  
+- American Girl (Mattel), 31  
+- American Marketing Association, 148, 619  
+- American Pharaoh (horse), 471  
+- American Red Cross, 128–129, 247, 514, 525  
+- American Society for Quality, 249  
+- Amway, 361  
+- Anchorage, Alaska, 267  
+- Anders, Melissa, 106n39  
+- Anderson, George, 409n30  
+- Anderson, James C., 496n20  
+- Andrew, Marc, 398  
+- Android, 269, 330, 388, 519, 563, 606  
+- Android Wear, 254  
+- Anglo-Swiss Milk Company, 290  
+- Anheuser-Busch, 437, 550  
+- Annie’s Homegrown, 114  
+- Ansoff, H. Igor, 70n7  
+- Anthem, 120  
+- Anthropologie, 215, 529  
+- Antitrust Division, of Attorney General’s Office, 109  
+- Any.do, 527  
+- Anytime Fitness, 402–403  
+- AOL, 548  
+- Aponte, Gianluigi, 327  
+- Appirio, 120  
+- Apple Health, 121  
+- Apple Inc., 48, 76, 87, 94, 103, 113, 114, 125, 129, 138, 148, 168, 169, 189, 217, 231, 244, 245, 246, 253, 265, 266, 269, 274, 279, 280, 287, 301, 302, 313, 318, 330–331, 332, 340–343, 349, 356, 359, 364, 370, 387–388, 404, 443, 454, 455, 456, 510, 530, 531, 534, 539, 541, 543, 547–548, 554, 556, 563, 568, 577, 585, 588, 603  
+- Apple Music, 366  
+- Apple Watch, 121, 182, 243, 287, 330–331  
+- Applebee’s, 405  
+- Apt., 33, 402  
+- Aquafina, 271  
+- Aqulla, 89  
+- Arby’s, 468  
+- Arcadia Group, 419  
+- Argentina, 299, 470, 587  
+- Argos, 59  
+- Ariker, Matt, 141n22  
+- Armani, 269, 396  
+- Armstrong, A., 60n  
+- Armstrong, Lance, 437  
+- Arrow Electronics, 412  
+- Arthur, Charles, 331n1, 344n17  
+- Asia, 372, 569, 576, 587, 588  
+- Association of National Advertisers, 533  
+- Aston Martin, 226  
+- Athleta, 461  
+- Athlete’s Foot, 364  
+- Atkins, Amy, 218  
+- Atkins, Chester, 218  
+- Atkinson, Michelle, 525n32  
+- AT&T, 98, 111, 160, 265, 281, 322, 335, 410, 443, 534, 547, 557  
+- Audi, 45, 410, 434, 457, 545  
+- Audience Network, 474  
+- Ausick, Paul, 571n7  
+- Austin, Christina, 271n45  
+- Australia, 248, 469, 470, 559, 572, 619  
+- Austria, 588  
+- Avalon (Toyota), 251  
+- *Avengers: Age of Ultron*, 459  
+- Aventis, 267  
+- Avery, Jill, 46n27  
+- Avis, car rental, 224  
+- Avon, 293  
+- Awesome Auger, 530  
+- Axe fragrances, 295, 596  
+
+### B
+- Baar, Aaron, 456n  
+- Bachelor, Lisa, 342n  
+- Bachman, Justice, 553n  
+- Bachman, Justin, 313n  
+- Back, Aaron, 539n  
+- *Bad Samaritans*, 143  
+- Baffert, Bob, 471  
+- Bahadur, Nina, 458n10  
+- Baig, Edward C., 270n44  
+- Baja Blast, 42–43  
+- Baker, Walter, L., 348n19  
+- BAND-AID, 267, 549  
+- Bangkok, 469  
+- Banjo, Sally, 308n1  
+- Banquet frozen dinners, 322  
+- Barclays, 120, 406  
+- Barker, Donald I., 157n1  
+- Barker, Melissa, 157n1  
+- Barnes & Noble, 366, 405  
+- Barnes, Brooks, 106n40  
+- Barnum & Bailey, 548–549  
+- Bass Pro Shops, 401, 420–421  
+- Bath & Body Works, 295  
+- BatteryDepot, 401 * Bauma trade show, 502

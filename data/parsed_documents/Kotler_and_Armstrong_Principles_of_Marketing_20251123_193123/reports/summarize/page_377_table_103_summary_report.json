@@ -1,0 +1,10 @@
+{
+  "table_id": "page_377_table_103",
+  "page_number": 377,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"2\"></th>\n<th>Inbound logistics</th>\n<th>Outbound logistics</th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Suppliers</td>\n<td>→</td>\n<td>Company</td>\n<td>→</td>\n<td>Resellers</td>\n<td>→</td>\n<td><b>Customers</b></td>\n</tr>\n<tr>\n<td colspan=\"7\" style=\"text-align:center;\"><b>Reverse logistics</b></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This diagram illustrates a value chain model, depicting the flow of goods and services from origin to consumption, and importantly, the return flow. The primary flow begins with **Suppliers** providing inputs to the **Company**. The Company then processes these inputs and distributes finished products to **Resellers**. Finally, **Resellers** deliver these products to the end **Customers**. Complementing this forward flow is the concept of **Reverse logistics**, which represents the movement of goods from **Customers** back through **Resellers** and potentially to the **Company** or even back to **Suppliers**, encompassing returns, repairs, or recycling. This structure highlights both the primary operational flow and the critical feedback loop for product lifecycle management.",
+  "processing_time": 1.942004919052124,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2025-11-23T20:05:48.353037"
+}
