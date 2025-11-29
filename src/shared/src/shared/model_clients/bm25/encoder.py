@@ -129,12 +129,12 @@ class BM25Client:
                 return
 
             # Check if the bucket exists and create it if not
-            if not self.storage_client.bucket_exists(self.bucket_name):
+            if not self.storage_client.bucket_exists(bucket_name=self.bucket_name):
                 logger.info(
                     f"Bucket '{self.bucket_name}' does not exist. "
                     "Creating a new bucket..."
                 )
-                self.storage_client.make_bucket(self.bucket_name)
+                self.storage_client.make_bucket(bucket_name=self.bucket_name)
                 logger.info(f"Created bucket '{self.bucket_name}'")
                 return
 
@@ -142,7 +142,7 @@ class BM25Client:
                 # List all objects in the bucket with the prefix "bm25/"
                 objects = list(
                     self.storage_client.list_objects(
-                        self.bucket_name, prefix="bm25/", recursive=True
+                        bucket_name=self.bucket_name, prefix="bm25/", recursive=True
                     )
                 )
 
@@ -162,9 +162,12 @@ class BM25Client:
                             unit="object",
                         )
                         for obj in objects:
-                            self.storage_client.remove_object(
-                                self.bucket_name, obj.object_name
-                            )
+                            object_name = obj.object_name
+                            if object_name:  # Type narrowing: str | None -> str
+                                self.storage_client.remove_object(
+                                    bucket_name=self.bucket_name,
+                                    object_name=object_name,
+                                )
                             progress_bar.update(1)
                         progress_bar.close()
 

@@ -24,8 +24,7 @@ async def async_main():
     """
     parser = argparse.ArgumentParser(
         description=(
-            "Run the document processing pipeline or cleanup existing "
-            "parsed documents."
+            "Run the document processing pipeline or cleanup existing parsed documents."
         )
     )
 

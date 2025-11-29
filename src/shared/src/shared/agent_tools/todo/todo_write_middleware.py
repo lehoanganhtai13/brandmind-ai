@@ -18,7 +18,7 @@ from langchain.agents.middleware.types import (
     ModelResponse,
 )
 from langchain.tools import InjectedToolCallId
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import SystemMessage, ToolMessage
 from langchain_core.tools import tool
 from langgraph.types import Command
 from loguru import logger
@@ -111,7 +111,7 @@ class TodoWriteMiddleware(AgentMiddleware):
         try:
             # Always inject the main TodoWrite system prompt
             existing_prompt = request.system_prompt or ""
-            request.system_prompt = f"{existing_prompt}\n\n{self.system_prompt}"
+            updated_prompt = f"{existing_prompt}\n\n{self.system_prompt}"
 
             # Get todos from request state, default to empty list
             todos = request.state.get("todos", [])
@@ -123,9 +123,12 @@ class TodoWriteMiddleware(AgentMiddleware):
                 # Return EMPTY_TODO_REMINDER
                 reminder = self._generate_reminder(todos)
                 if reminder:
-                    request.system_prompt = f"{request.system_prompt}\n\n{reminder}"
+                    updated_prompt = f"{updated_prompt}\n\n{reminder}"
 
-            return handler(request)
+            # Create new request with updated system prompt
+            system_message = SystemMessage(content=updated_prompt)
+            updated_request = request.override(system_message=system_message)
+            return handler(updated_request)
         except Exception as e:
             # Log error but don't break the middleware chain
             logger.error(f"Failed to inject system reminder: {e}")
@@ -154,7 +157,7 @@ class TodoWriteMiddleware(AgentMiddleware):
         try:
             # Always inject the main TodoWrite system prompt
             existing_prompt = request.system_prompt or ""
-            request.system_prompt = f"{existing_prompt}\n\n{self.system_prompt}"
+            updated_prompt = f"{existing_prompt}\n\n{self.system_prompt}"
 
             # Get todos from request state, default to empty list
             todos = request.state.get("todos", [])
@@ -166,9 +169,12 @@ class TodoWriteMiddleware(AgentMiddleware):
                 # Return EMPTY_TODO_REMINDER
                 reminder = self._generate_reminder(todos)
                 if reminder:
-                    request.system_prompt = f"{request.system_prompt}\n\n{reminder}"
+                    updated_prompt = f"{updated_prompt}\n\n{reminder}"
 
-            return await handler(request)
+            # Create new request with updated system prompt
+            system_message = SystemMessage(content=updated_prompt)
+            updated_request = request.override(system_message=system_message)
+            return await handler(updated_request)
         except Exception as e:
             # Log error but don't break the middleware chain
             logger.error(f"Failed to inject system reminder: {e}")
@@ -202,6 +208,7 @@ class TodoWriteMiddleware(AgentMiddleware):
             - ONLY mark tasks completed when FULLY done and verified
             - Include validation/testing steps in your task breakdowns
             """
+            logger.info("🛠️ Write todos tool called")
 
             try:
                 # Validation with mandatory activeForm check

@@ -10,6 +10,7 @@ dependencies = []
 
 [project.scripts]
 parse-docs = "cli.parse_documents:main"
+build-kg = "cli.build_knowledge_graph:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cli", "src/config", "src/prompts", "src/services"]
