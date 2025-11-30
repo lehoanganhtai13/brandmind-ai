@@ -613,14 +613,18 @@ document-processing = [
     { name = "beautifulsoup4" },
     { name = "llama-cloud-services" },
 ]
+knowledge-graph = [
+    { name = "langchain-text-splitters" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'document-processing'", specifier = ">=4.14.2" },
+    { name = "langchain-text-splitters", marker = "extra == 'knowledge-graph'", specifier = ">=1.0.0" },
     { name = "llama-cloud-services", marker = "extra == 'document-processing'", specifier = ">=0.6.79" },
     { name = "shared", editable = "src/shared" },
 ]
-provides-extras = ["document-processing"]
+provides-extras = ["document-processing", "knowledge-graph"]
 
 [[package]]
 name = "crawl4ai"
@@ -1515,6 +1519,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ff/27/f3c8f47b7c194c42a7ea38e5b91b412c4bd45f97e702a96edad659312437/langchain_google_genai-3.2.0.tar.gz", hash = "sha256:1fa620ea9c655a37537e95438857c423e1a3599b5a665b8dd87064c76ee95b72", size = 242146 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/83/9d/c79a367e3379cf6b7d0cc43d558a411a5097d55291f2ce2f573420adb523/langchain_google_genai-3.2.0-py3-none-any.whl", hash = "sha256:689fc159d4623a184678e24771f6d52373e983a8fc8d342e44352aaf28e9445d", size = 57604 },
+]
+
+[[package]]
+name = "langchain-text-splitters"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "langchain-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/2e/c833dcc379c1c086453708ef5eef7d4d1f808559ca4458bd6569d5d83ad7/langchain_text_splitters-1.0.0.tar.gz", hash = "sha256:d8580a20ad7ed10b432feb273e5758b2cc0902d094919629cec0e1ad691a6744", size = 264257 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/97/d362353ab04f865af6f81d4d46e7aa428734aa032de0017934b771fc34b7/langchain_text_splitters-1.0.0-py3-none-any.whl", hash = "sha256:f00c8219d3468f2c5bd951b708b6a7dd9bc3c62d0cfb83124c377f7170f33b2e", size = 33851 },
 ]
 
 [[package]]

@@ -11,6 +11,9 @@ document-processing = [
     "beautifulsoup4>=4.14.2",
     "llama-cloud-services>=0.6.79",
 ]
+knowledge-graph = [
+    "langchain-text-splitters>=1.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]

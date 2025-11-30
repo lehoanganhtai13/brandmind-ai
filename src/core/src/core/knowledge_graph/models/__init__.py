@@ -1,5 +1,6 @@
-"""Knowledge graph models."""
+"""Models for knowledge graph components."""
 
-from .global_map import GlobalMap, SectionNode
+from core.knowledge_graph.models.chunk import Chunk, ChunkingResult, ChunkMetadata
+from core.knowledge_graph.models.global_map import GlobalMap, SectionNode
 
-__all__ = ["GlobalMap", "SectionNode"]
+__all__ = ["GlobalMap", "SectionNode", "Chunk", "ChunkMetadata", "ChunkingResult"]

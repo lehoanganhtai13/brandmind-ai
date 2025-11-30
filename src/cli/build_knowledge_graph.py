@@ -62,7 +62,36 @@ async def async_main() -> None:
         logger.info(f"✅ Saved message log to {log_file}")
         logger.info(f"📊 Mapped {len(global_map.structure)} top-level sections")
 
-    # TODO: Stage 2 (Chunking) - Future task
+    # Stage 2: Chunking
+    if args.stage in ["chunking", "all"]:
+        logger.info("=" * 80)
+        logger.info("STAGE 2: SEMANTIC CHUNKING")
+        logger.info("=" * 80)
+
+        from core.knowledge_graph.chunker.document_chunker import DocumentChunker
+
+        # Check if global_map.json exists
+        global_map_file = folder_path / "global_map.json"
+        if not global_map_file.exists():
+            logger.error("global_map.json not found. Run Stage 1 (mapping) first.")
+            return
+
+        chunker = DocumentChunker(
+            document_folder=str(folder_path), global_map_path=str(global_map_file)
+        )
+
+        # Run chunking
+        result = chunker.chunk_document()
+
+        # Save output
+        output_file = folder_path / "chunks.json"
+        result.to_json_file(str(output_file))
+        logger.info(f"✅ Saved chunks.json to {output_file}")
+        logger.info(
+            f"📊 Generated {result.total_chunks} chunks "
+            f"(avg {result.avg_chunk_size:.0f} words/chunk)"
+        )
+
     # TODO: Stage 3 (Building) - Future task
 
     logger.info("=" * 80)

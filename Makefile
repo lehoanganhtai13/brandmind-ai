@@ -66,6 +66,10 @@ remove-shared: ## Remove package from shared package. Usage: make remove-shared 
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
 	cd src/shared && uv remove $(PKG)
 
+remove-core: ## Remove package from core package. Usage: make remove-core PKG=package_name
+	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
+	cd src/core && uv remove $(PKG)
+
 remove-dev: ## Remove development dependency. Usage: make remove-dev PKG=package_name
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
 	uv remove --group dev $(PKG)

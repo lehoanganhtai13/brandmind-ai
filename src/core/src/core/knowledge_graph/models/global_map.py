@@ -39,5 +39,20 @@ class GlobalMap(BaseModel):
             filepath: Path to save JSON file
         """
         Path(filepath).write_text(
-            json.dumps(self.model_dump(), indent=2, ensure_ascii=False)
+            json.dumps(self.model_dump(), indent=2, ensure_ascii=False),
+            encoding="utf-8",
         )
+
+    @classmethod
+    def from_json_file(cls, filepath: str) -> "GlobalMap":
+        """Load GlobalMap from JSON file.
+
+        Args:
+            filepath: Path to JSON file
+
+        Returns:
+            GlobalMap instance
+        """
+        content = Path(filepath).read_text(encoding="utf-8")
+        data = json.loads(content)
+        return cls(**data)
