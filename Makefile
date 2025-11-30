@@ -109,10 +109,34 @@ lint: ## Lint code with ruff and mypy
 	uv run mypy src/core/src --ignore-missing-imports
 	uv run mypy src/config --ignore-missing-imports
 
-security-check: ## Run security scan with bandit
+security-check: ## Run security scan with bandit on src/ folder
 	uv run bandit -r src/ -s B101,B603 -ll
 
-typecheck: format lint security-check ## Run type checking and linting
+secrets-baseline: ## Create/update secrets baseline (excludes .env files - they're allowed to have secrets)
+	@echo "Creating baseline (excluding .env files from scan)..."
+	@uv run detect-secrets scan --all-files --exclude-files '.venv/|venv/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/|node_modules/|environments/\.env$$|\.env$$|\.env\..*$$|\.secrets\.baseline$$' > .secrets.baseline
+	@echo "✓ Baseline created: .secrets.baseline"
+	@echo "Note: .env files are excluded - they're allowed to contain secrets"
+
+secrets-scan: ## Scan for NEW secrets in code (fails if found - excludes .env files)
+	@if [ ! -f .secrets.baseline ]; then \
+		echo "❌ Error: .secrets.baseline not found."; \
+		echo "Run 'make secrets-baseline' first to create baseline."; \
+		exit 1; \
+	fi
+	@echo "🔍 Scanning for secrets in code..."
+	@uv run detect-secrets scan --all-files --exclude-files '.venv/|venv/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/|node_modules/|environments/\.env$$|\.env$$|\.env\..*$$|\.secrets\.baseline$$' > /tmp/secrets-current-scan.json 2>&1
+	@python3 scripts/compare_secrets.py
+	@rm -f /tmp/secrets-current-scan.json
+
+secrets-audit: ## Audit detected secrets interactively
+	@if [ ! -f .secrets.baseline ]; then \
+		echo "Error: .secrets.baseline not found. Run 'make secrets-baseline' first."; \
+		exit 1; \
+	fi
+	uv run detect-secrets audit .secrets.baseline
+
+typecheck: format lint security-check secrets-scan ## Run type checking, linting, and secrets scan
 
 ## Info
 show-deps: ## Show installed packages
