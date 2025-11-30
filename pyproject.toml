@@ -24,6 +24,7 @@ chatbot = ["shared", "core"]
 indexer = [
     "shared",
     "core[document_processing]",
+    "core[knowledge_graph]",
 ]
 dev = [
  "pytest>=7.0.0",

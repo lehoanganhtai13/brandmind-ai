@@ -361,7 +361,7 @@ dev = [
     { name = "types-tqdm" },
 ]
 indexer = [
-    { name = "core", extra = ["document-processing"] },
+    { name = "core", extra = ["document-processing", "knowledge-graph"] },
     { name = "shared" },
 ]
 
@@ -387,6 +387,7 @@ dev = [
 ]
 indexer = [
     { name = "core", extras = ["document-processing"], editable = "src/core" },
+    { name = "core", extras = ["knowledge-graph"], editable = "src/core" },
     { name = "shared", editable = "src/shared" },
 ]
 
