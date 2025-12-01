@@ -108,6 +108,7 @@ brandmind-ai/
 │   └── services/        # Service-specific implementations (not used yet)
 ├── tests/               # Test suites (unit, integration, e2e)
 ├── infra/               # Infrastructure services (Docker Compose)
+├── scripts/             # Utility scripts for development and CI/CD
 ├── tasks/               # Detailed task and feature documentation
 ├── pyproject.toml       # Project metadata and dependencies (PEP 621)
 └── Makefile             # Command runner for development tasks
