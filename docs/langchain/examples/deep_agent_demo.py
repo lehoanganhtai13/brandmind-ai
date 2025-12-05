@@ -31,6 +31,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from loguru import logger
 
 from config.system_config import SETTINGS
+from shared.agent_middlewares import (
+    EnsureTasksFinishedMiddleware,
+    LogModelMessageMiddleware,
+)
 from shared.agent_tools import TodoWriteMiddleware, search_web, scrape_web_content
 
 # Import DeepAgent components
@@ -86,6 +90,12 @@ def create_custom_deep_agent():
     logger.info("Setting up PatchToolCalls middleware...")
     patch_middleware = PatchToolCallsMiddleware()
 
+    # Stop check middleware (ensure tasks are completed)
+    stop_check_middleware = EnsureTasksFinishedMiddleware()
+
+    # Log model message middleware (log model messages)
+    log_message_middleware = LogModelMessageMiddleware()
+
     # 5. Collect all tools
     logger.info("Collecting tools...")
     tools = []
@@ -104,7 +114,9 @@ def create_custom_deep_agent():
             fs_middleware,
             todo_middleware,
             patch_middleware,
+            log_message_middleware,
             ToolRetryMiddleware(on_failure="Tool call failed, please try again."),
+            stop_check_middleware,
         ],
         default_tools=tools,
         general_purpose_agent=True,
@@ -120,7 +132,9 @@ def create_custom_deep_agent():
             fs_middleware,
             subagent_middleware,
             patch_middleware,
+            log_message_middleware,
             ToolRetryMiddleware(on_failure="Tool call failed, please try again."),
+            stop_check_middleware,
         ],
     )
 

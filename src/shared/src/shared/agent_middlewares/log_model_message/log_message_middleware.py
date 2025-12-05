@@ -13,6 +13,9 @@ from langchain.agents.middleware.types import (
     ModelRequest,
     ModelResponse,
 )
+from langchain.messages import ToolMessage
+from langchain.tools.tool_node import ToolCallRequest
+from langgraph.types import Command
 from loguru import logger
 
 
@@ -73,10 +76,6 @@ class LogModelMessageMiddleware(AgentMiddleware):
 
         Logs model responses without modifying them.
         """
-        # Log tool results from request messages (before model call)
-        if self.log_tool_results:
-            self._log_tool_results_from_messages(request.messages)
-
         # Let the model run normally
         response = handler(request)
 
@@ -94,22 +93,17 @@ class LogModelMessageMiddleware(AgentMiddleware):
         Intercept model call to log thinking/reasoning messages.
 
         This method:
-        1. Logs tool results from previous turn (if any)
-        2. Allows the model to run normally
-        3. Extracts and logs thinking/reasoning content
-        4. Returns the original response unmodified
+        1. Allows the model to run normally
+        2. Extracts and logs thinking/reasoning content
+        3. Returns the original response unmodified
 
         Args:
             request: The model request
-            handler: The next handler in the middleware chain
+            handler: The next handler in the chain
 
         Returns:
-            ModelCallResult with original response (unmodified)
+            The unmodified model response
         """
-        # Log tool results from request messages (before model call)
-        if self.log_tool_results:
-            self._log_tool_results_from_messages(request.messages)
-
         # Let the model run normally
         response = await handler(request)
 
@@ -118,29 +112,48 @@ class LogModelMessageMiddleware(AgentMiddleware):
 
         return response
 
-    def _log_tool_results_from_messages(self, messages: list) -> None:
+    def wrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], ToolMessage | Command],
+    ) -> ToolMessage | Command:
         """
-        Extract and log tool results from ToolMessages in conversation.
+        Intercept tool calls to log them in real-time.
+
+        This method logs tool execution as it happens, not from message history.
 
         Args:
-            messages: List of conversation messages
+            request: Tool call request
+            handler: Next handler in chain
+
+        Returns:
+            Tool result
         """
-        if not messages:
-            return
+        tool_name = request.tool_call.get("name", "unknown_tool")
+        tool_args = request.tool_call.get("args", {})
 
-        # Look for ToolMessages (tool results)
-        for msg in messages:
-            msg_type = type(msg).__name__
-            if msg_type == "ToolMessage":
-                # Extract tool name and result
-                tool_name = getattr(msg, "name", "unknown_tool")
+        # Skip excluded tools
+        if tool_name in self.exclude_tools:
+            return handler(request)
 
-                # Skip excluded tools
-                if tool_name in self.exclude_tools:
-                    continue
+        # Log tool call with arguments
+        if self.log_tool_calls:
+            logger.info(f"🔧 Tool Call: {tool_name}")
+            if tool_args:
+                for key, value in tool_args.items():
+                    # Truncate long values
+                    val_str = str(value)
+                    if len(val_str) > 100:
+                        val_str = val_str[:100] + "..."
+                    logger.info(f"     └─ {key}: {val_str}")
 
-                content = getattr(msg, "content", "")
+        try:
+            # Execute tool
+            result = handler(request)
 
+            # Log result
+            if self.log_tool_results and hasattr(result, "text"):
+                content = result.text
                 if content:
                     # Truncate if needed
                     if self.truncate_tool_results > 0:
@@ -148,6 +161,66 @@ class LogModelMessageMiddleware(AgentMiddleware):
                             content = content[: self.truncate_tool_results] + "..."
 
                     logger.info(f"🔨 Tool Result [{tool_name}]:\n{content}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"❌ Tool Error [{tool_name}]: {e}")
+            raise
+
+    async def awrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Command]],
+    ) -> ToolMessage | Command:
+        """
+        Async version of wrap_tool_call.
+
+        Args:
+            request: Tool call request
+            handler: Async handler
+
+        Returns:
+            Tool result
+        """
+        tool_name = request.tool_call.get("name", "unknown_tool")
+        tool_args = request.tool_call.get("args", {})
+
+        # Skip excluded tools
+        if tool_name in self.exclude_tools:
+            return await handler(request)
+
+        # Log tool call with arguments
+        if self.log_tool_calls:
+            logger.info(f"🔧 Tool Call: {tool_name}")
+            if tool_args:
+                for key, value in tool_args.items():
+                    # Truncate long values
+                    val_str = str(value)
+                    if len(val_str) > 100:
+                        val_str = val_str[:100] + "..."
+                    logger.info(f"     └─ {key}: {val_str}")
+
+        try:
+            # Execute tool
+            result = await handler(request)
+
+            # Log result
+            if self.log_tool_results and hasattr(result, "text"):
+                content = result.text
+                if content:
+                    # Truncate if needed
+                    if self.truncate_tool_results > 0:
+                        if len(content) > self.truncate_tool_results:
+                            content = content[: self.truncate_tool_results] + "..."
+
+                    logger.info(f"🔨 Tool Result [{tool_name}]:\n{content}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"❌ Tool Error [{tool_name}]: {e}")
+            raise
 
     def _log_response(self, response: ModelResponse) -> None:
         """
@@ -168,11 +241,6 @@ class LogModelMessageMiddleware(AgentMiddleware):
 
         # Extract content
         if not hasattr(last_ai_message, "content") or not last_ai_message.content:
-            # Check for tool calls even without content
-            if self.log_tool_calls and hasattr(last_ai_message, "tool_calls"):
-                tool_calls = last_ai_message.tool_calls
-                if tool_calls:
-                    self._log_tool_calls(tool_calls)
             return
 
         content = last_ai_message.content
@@ -204,12 +272,6 @@ class LogModelMessageMiddleware(AgentMiddleware):
         elif isinstance(content, str) and self.log_text_response:
             if content.strip():
                 logger.info(f"📝 Model Response:\n{content}")
-
-        # Log tool calls if enabled
-        if self.log_tool_calls and hasattr(last_ai_message, "tool_calls"):
-            tool_calls = last_ai_message.tool_calls
-            if tool_calls:
-                self._log_tool_calls(tool_calls)
 
     def _log_tool_calls(self, tool_calls: list) -> None:
         """

@@ -60,6 +60,7 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         re_prompt_template: Optional[str] = None,
         final_confirmation_template: Optional[str] = None,
         max_reminders: int = 3,
+        max_retries_malformed: int = 3,
     ):
         """
         Initialize the stop check middleware.
@@ -68,10 +69,12 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
             tool_name (str): Name of the todo management tool for re-prompting
             re_prompt_template (Optional[str]): Custom re-prompt template override
             max_reminders (int): Maximum number of reminders before giving up
+            max_retries_malformed (int): Maximum number of retries for malformed calls
         """
         super().__init__()
         self.tool_name = tool_name
         self.max_reminders = max_reminders
+        self.max_retries_malformed = max_retries_malformed
         self.re_prompt_template = re_prompt_template or STOP_CHECK_CRITICAL_REMINDER
         self.final_confirmation_template = (
             final_confirmation_template or STOP_CHECK_FINAL_CONFIRMATION
@@ -90,12 +93,38 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         # 1. Let the model run and make its decision
         response = handler(request)
 
-        # 2. Check if model is attempting to stop
-        logger.debug(f"Model response: {response}")
-        is_stopping = self._is_agent_stopping(response)
-        logger.debug(f"Is agent stopping? {is_stopping}")
+        # 2. Check if model call is malformed
+        if self._is_malformed_call(response):
+            logger.warning(
+                "Detected MALFORMED_FUNCTION_CALL from model. "
+                "Attempting auto-recovery..."
+            )
 
-        # 3. If agent is stopping, check if todos are complete
+            for retry in range(self.max_retries_malformed):
+                # Add error message to ask model to fix the error
+                error_msg = (
+                    "<system_critical_reminder> Your last function call was "
+                    "malformed (invalid JSON or schema). "
+                    "Please analyze the tool schema carefully and try calling "
+                    "the function again with valid arguments. "
+                    "</system_critical_reminder>"
+                )
+                request.messages.append(SystemMessage(content=error_msg))
+
+                # Call model again
+                response = handler(request)
+
+                # If no more error, exit retry loop
+                if not self._is_malformed_call(response):
+                    logger.info("Recovered from MALFORMED_FUNCTION_CALL successfully.")
+                    break
+
+        # 3. Check if model is attempting to stop
+        # logger.debug(f"Model response: {response}")
+        is_stopping = self._is_agent_stopping(response)
+        # logger.debug(f"Is agent stopping? {is_stopping}")
+
+        # 4. If agent is stopping, check if todos are complete
         if is_stopping:
             todos = request.state.get("todos", [])
             if not isinstance(todos, list):
@@ -103,11 +132,12 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
 
             incomplete_tasks = self._get_incomplete_tasks(todos)
 
+            # 5. If there are incomplete tasks, force continuation
             if isinstance(incomplete_tasks, dict) and (
                 len(incomplete_tasks.get("in_progress", [])) > 0
                 or len(incomplete_tasks.get("pending", [])) > 0
             ):
-                logger.info(
+                logger.warning(
                     "Agent attempted to stop with "
                     f"{len(incomplete_tasks.get('pending', []))} pending and "
                     f"{len(incomplete_tasks.get('in_progress', []))} in-progress "
@@ -160,7 +190,7 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
             else:
                 # All tasks completed - inject final confirmation
                 if len(todos) > 0:
-                    logger.info(
+                    logger.warning(
                         "Agent completed all tasks but stopped without confirmation. "
                         "Injecting final confirmation prompt."
                     )
@@ -173,21 +203,38 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                                     original_query = msg.content
                                 break
 
-                    logger.debug(f"Found original user query: {original_query}")
+                    # logger.debug(f"Found original user query: {original_query}")
 
-                    final_confirmation_reminder = (
-                        self.final_confirmation_template.replace(
-                            "{{all_tasks_count}}", str(len(todos))
+                    # Try multiple reminders in the same stopping attempt
+                    final_response = response
+                    for attempt in range(self.max_reminders):
+                        final_confirmation_reminder = (
+                            self.final_confirmation_template.replace(
+                                "{{all_tasks_count}}", str(len(todos))
+                            ).replace("[User's original request]", original_query)
                         )
-                    )
-                    request.messages.append(
-                        SystemMessage(content=final_confirmation_reminder)
+                        request.messages.append(
+                            SystemMessage(content=final_confirmation_reminder)
+                        )
+
+                        # Force the model to re-think with the final confirmation
+                        # reminder
+                        final_response = handler(request)
+
+                        # Check if agent is still stopping after reminder
+                        still_stopping = self._is_agent_stopping(final_response)
+
+                        if not still_stopping:
+                            # Agent is working again, return the good response
+                            return final_response
+
+                    logger.warning(
+                        "Agent is still stopping without confirmation after "
+                        f"{self.max_reminders} final confirmation reminders. "
+                        "Returning original response."
                     )
 
-                    # Force the model to re-think with the final confirmation reminder
-                    final_response = handler(request)
-                    return final_response
-
+        # 6. Either agent didn't stop, or todos are complete - return original response
         return response
 
     async def awrap_model_call(
@@ -200,9 +247,13 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
 
         This method:
         1. Allows the model to run and make its decision
-        2. Checks if the model is attempting to stop prematurely
-        3. If stopping is premature, injects a critical reminder and forces re-thinking
-        4. Returns either the original or modified response
+        2. Checks if the model call is malformed
+        3. If the model call is malformed, injects a critical reminder and
+           forces re-thinking
+        4. Checks if the model is attempting to stop prematurely
+        5. If stopping is premature, injects a critical reminder and forces
+           re-thinking
+        6. Returns either the original or modified response
 
         Args:
             request: The model request containing state and messages
@@ -214,22 +265,57 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         # 1. Let the model run and make its decision
         response = await handler(request)
 
-        # 2. Check if model is attempting to stop (empty AI response without tool calls)
-        is_stopping = self._is_agent_stopping(response)
+        # 2. Check if the model performed a malformed function call
+        if self._is_malformed_call(response):
+            logger.warning(
+                "Detected MALFORMED_FUNCTION_CALL from model. "
+                "Attempting auto-recovery..."
+            )
 
-        # 3. If agent is stopping, check if todos are complete
+            for retry in range(self.max_retries_malformed):
+                # Add error message to ask model to fix the error
+                error_msg = (
+                    "<system_critical_reminder> Your last function call was "
+                    "malformed (invalid JSON or schema). "
+                    "Please analyze the tool schema carefully and try calling "
+                    "the function again with valid arguments. "
+                    "</system_critical_reminder>"
+                )
+                request.messages.append(SystemMessage(content=error_msg))
+
+                # Call model again
+                response = await handler(request)
+
+                # If no more error, exit retry loop
+                if not self._is_malformed_call(response):
+                    logger.info("Recovered from MALFORMED_FUNCTION_CALL successfully.")
+                    break
+
+            # If still error after retry, raise error or let it fall through
+            # to the next logic (will fail)
+            if self._is_malformed_call(response):
+                logger.error(
+                    "Failed to recover from MALFORMED_FUNCTION_CALL after retries."
+                )
+
+        # 3. Check if model is attempting to stop (empty AI response without tool calls)
+        # logger.debug(f"Model response: {response}")
+        is_stopping = self._is_agent_stopping(response)
+        # logger.debug(f"Is agent stopping? {is_stopping}")
+
+        # 4. If agent is stopping, check if todos are complete
         if is_stopping:
             todos = request.state.get("todos", [])
             if not isinstance(todos, list):
                 raise TypeError("Todos in agent state must be a list.")
             incomplete_tasks = self._get_incomplete_tasks(todos)
 
-            # 4. If there are incomplete tasks, force continuation
+            # 5. If there are incomplete tasks, force continuation
             if isinstance(incomplete_tasks, dict) and (
                 len(incomplete_tasks.get("in_progress", [])) > 0
                 or len(incomplete_tasks.get("pending", [])) > 0
             ):
-                logger.info(
+                logger.warning(
                     f"Agent attempted to stop with "
                     f"{len(incomplete_tasks.get('pending', []))} pending and "
                     f"{len(incomplete_tasks.get('in_progress', []))} in-progress "
@@ -282,7 +368,7 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
             else:
                 # All tasks completed - inject final confirmation
                 if len(todos) > 0:
-                    logger.info(
+                    logger.warning(
                         "Agent completed all tasks but stopped without confirmation. "
                         "Injecting final confirmation prompt."
                     )
@@ -295,7 +381,7 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                                     original_query = msg.content
                                 break
 
-                    logger.debug(f"Found original user query: {original_query}")
+                    # logger.debug(f"Found original user query: {original_query}")
 
                     # Try multiple reminders in the same stopping attempt
                     final_response = response
@@ -303,7 +389,7 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                         final_confirmation_reminder = (
                             self.final_confirmation_template.replace(
                                 "{{all_tasks_count}}", str(len(todos))
-                            )
+                            ).replace("[User's original request]", original_query)
                         )
                         request.messages.append(
                             SystemMessage(content=final_confirmation_reminder)
@@ -320,8 +406,49 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                             # Agent is working again, return the good response
                             return final_response
 
-        # 5. Either agent didn't stop, or todos are complete - return original response
+                    logger.warning(
+                        "Agent is still stopping without confirmation after "
+                        f"{self.max_reminders} final confirmation reminders. "
+                        "Returning original response."
+                    )
+
+        # 6. Either agent didn't stop, or todos are complete - return original response
         return response
+
+    def _is_malformed_call(self, response: ModelResponse) -> bool:
+        """
+        Determine if the response indicates that the model
+        performed a malformed function call.
+
+        Args:
+            response: The model response to check
+
+        Returns:
+            bool: True if the response indicates a malformed
+                function call, False otherwise
+        """
+        # Get the last AIMessage from the response
+        if not hasattr(response, "result"):
+            return False
+
+        result = response.result  # type: ignore
+        if not result or len(result) == 0:
+            return False
+
+        last_ai_message = result[-1]
+        if not last_ai_message:
+            # No message found, cannot determine stopping
+            logger.warning("No message found in response")
+            return False
+
+        if (
+            last_ai_message.response_metadata
+            and last_ai_message.response_metadata.get("finish_reason")
+            == "MALFORMED_FUNCTION_CALL"
+        ):
+            return True
+
+        return False
 
     def _is_agent_stopping(self, response: ModelResponse) -> bool:
         """
@@ -334,13 +461,17 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
             bool: True if agent is stopping, False otherwise
         """
         # Get the last AIMessage from the response
-        last_ai_message = None
-        if hasattr(response, "result"):
-            result = response.result  # type: ignore
-            last_ai_message = result[-1]
+        if not hasattr(response, "result"):
+            return False
 
+        result = response.result  # type: ignore
+        if not result or len(result) == 0:
+            return False
+
+        last_ai_message = result[-1]
         if not last_ai_message:
             # No message found, cannot determine stopping
+            logger.warning("No message found in response")
             return False
 
         if last_ai_message.content is not None and (

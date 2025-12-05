@@ -34,11 +34,11 @@ You have completed all {{all_tasks_count}} tasks in your todo list, which is exc
 However, you stopped without confirming whether you have fully addressed the user's original request.
 
 Please review:
-1. Have you truly solved the user's problem: "[original user query]"
+1. Have you truly solved the user's problem: "[User's original request]"
 2. Is there anything else the user might need to know?
 3. Are there any follow-up actions or recommendations you should provide?
 
-If you have fully addressed the user's request, provide a concise summary of what was accomplished.
+If you have fully addressed the user's request, provide the final output in the format requested by the user (e.g., JSON, structured output) or a concise summary of what was accomplished.
 If there's more to add, please continue with any additional helpful information.
 
 This is a final quality check to ensure complete user satisfaction.

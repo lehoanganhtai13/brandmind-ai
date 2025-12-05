@@ -13,6 +13,7 @@ document-processing = [
 ]
 knowledge-graph = [
     "langchain-text-splitters>=1.0.0",
+    "tenacity>=9.1.2",
 ]
 
 [build-system]

@@ -618,6 +618,7 @@ document-processing = [
 ]
 knowledge-graph = [
     { name = "langchain-text-splitters" },
+    { name = "tenacity" },
 ]
 
 [package.metadata]
@@ -626,6 +627,7 @@ requires-dist = [
     { name = "langchain-text-splitters", marker = "extra == 'knowledge-graph'", specifier = ">=1.0.0" },
     { name = "llama-cloud-services", marker = "extra == 'document-processing'", specifier = ">=0.6.79" },
     { name = "shared", editable = "src/shared" },
+    { name = "tenacity", marker = "extra == 'knowledge-graph'", specifier = ">=9.1.2" },
 ]
 provides-extras = ["document-processing", "knowledge-graph"]
 
