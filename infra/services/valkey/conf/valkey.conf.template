@@ -1,0 +1,65 @@
+# Valkey Configuration File
+# Reference: https://github.com/valkey-io/valkey/blob/unstable/valkey.conf
+# Documentation: https://valkey.io/topics/quickstart/
+# Last updated: 2024-12 for Valkey 8.x compatibility
+
+# ------------------- General Configuration -------------------
+
+# Bind to all interfaces within the Docker container
+# In Docker, this allows connections from other containers in the same network
+# Security is maintained through protected-mode and ACL authentication
+bind 0.0.0.0 ::1
+
+# Turn on the protected mode
+protected-mode yes
+
+# Add ACL rules for the user and password
+# These values are substituted from environment variables at container startup
+user default off
+user ${VALKEY_USERNAME} on >${VALKEY_PASSWORD} ~* +@all
+
+# Set the maximum memory limit
+maxmemory 4gb
+
+# Memory eviction policy when maxmemory is reached
+# allkeys-lru: evict least recently used keys (good for cache)
+# noeviction: return errors when memory limit is reached (good for database)
+# volatile-lru: evict least recently used keys with TTL set
+maxmemory-policy allkeys-lru
+
+# ------------------- RDB Snapshotting (Periodic Saving) -------------------
+
+# Save the dataset if at least 1 key is changed in 900 seconds (15 minutes)
+save 900 1
+
+# Save if 10 keys changed in 300 seconds (5 minutes)
+save 300 10
+
+# Save if 10000 keys changed in 60 seconds (1 minute)
+save 60 10000
+
+# Path to save the dump.rdb file
+dir /var/lib/valkey
+
+# Filename of the RDB dump file
+dbfilename dump.rdb
+
+# ------------------- AOF (Append-Only File) -------------------
+
+# Enable AOF to log every write operation
+appendonly yes
+
+# Name of the AOF file
+appendfilename "appendonly.aof"
+
+# Sync data to disk every second (recommended for a good balance between performance and durability)
+appendfsync everysec
+
+# Optionally rewrite AOF log to avoid growing too large
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+
+# ------------------- Optimizing Performance and Durability -------------------
+
+# To minimize AOF log size, use `no-appendfsync-on-rewrite` to avoid syncing during AOF rewriting.
+no-appendfsync-on-rewrite yes

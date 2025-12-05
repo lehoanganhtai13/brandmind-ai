@@ -1,0 +1,29 @@
+# Reference: https://docs.falkordb.com/
+# Docker Hub: https://hub.docker.com/r/falkordb/falkordb
+# GitHub: https://github.com/FalkorDB/FalkorDB
+
+services:
+  falkordb:
+    hostname: falkordb
+    container_name: falkordb-container
+    image: falkordb/falkordb:v4.14.8
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+      - "3000:3000"
+    environment:
+      - FALKORDB_USERNAME=${FALKORDB_USERNAME:-brandmind}
+      - FALKORDB_PASSWORD=${FALKORDB_PASSWORD:-password}
+    volumes:
+      - falkordb-data:/data
+      - ./conf/falkordb.conf.template:/usr/local/etc/falkordb/falkordb.conf.template:ro
+      - ./docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  falkordb-data:

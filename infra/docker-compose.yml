@@ -34,6 +34,34 @@ services:
     networks:
       - brandmind-network
 
+  # FalkorDB - Graph database for GraphRAG and knowledge graphs
+  falkordb:
+    hostname: falkordb
+    container_name: falkordb-container
+    image: falkordb/falkordb:v4.14.8
+    restart: unless-stopped
+    ports:
+      - "${FALKORDB_PORT:-6380}:6379"
+      - "${FALKORDB_BROWSER_PORT:-3000}:3000"
+    environment:
+      - FALKORDB_USERNAME=${FALKORDB_USERNAME:-brandmind}
+      - FALKORDB_PASSWORD=${FALKORDB_PASSWORD:-password}
+    volumes:
+      - falkordb-data:/data
+      - ./services/falkordb/conf/falkordb.conf.template:/usr/local/etc/falkordb/falkordb.conf.template:ro
+      - ./services/falkordb/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - brandmind-network
+
+volumes:
+  falkordb-data:
+
 networks:
   brandmind-network:
     driver: bridge

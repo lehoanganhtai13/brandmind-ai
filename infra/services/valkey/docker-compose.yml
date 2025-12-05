@@ -1,0 +1,28 @@
+# Reference: https://valkey.io/topics/installation/
+# Docker Hub: https://hub.docker.com/r/valkey/valkey
+# GitHub: https://github.com/valkey-io/valkey
+
+services:
+  valkey:
+    hostname: valkey
+    container_name: valkey-container
+    image: valkey/valkey:9.0.0
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    environment:
+      - VALKEY_USERNAME=${VALKEY_USERNAME:-brandmind}
+      - VALKEY_PASSWORD=${VALKEY_PASSWORD:-password}
+    volumes:
+      - valkey-data:/var/lib/valkey
+      - ./conf/valkey.conf.template:/usr/local/etc/valkey/valkey.conf.template:ro
+      - ./docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  valkey-data:
