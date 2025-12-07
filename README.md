@@ -20,8 +20,10 @@ BrandMind AI is not just another automation tool. It's a **cognitive augmentatio
 ## ✨ Key Features
 
 - **Automated Document Parsing**: Ingests and understands PDF documents, extracting key information and summaries.
-- **Intelligent Web Crawling**: Crawls websites to gather relevant brand and market data using a dedicated service ([`Crawl4AI`](https://github.com/unclecode/crawl4ai)).
+- **Intelligent Web Crawling**: Crawls websites to gather relevant brand and market data using [`Crawl4AI`](https://github.com/unclecode/crawl4ai).
 - **Advanced Search**: Utilizes a private, aggregated search engine ([`SearXNG`](https://github.com/searxng/searxng)) to find the most relevant information.
+- **Vector Search**: Powered by [`Milvus`](https://milvus.io/) for semantic similarity search and RAG applications.
+- **Knowledge Graphs**: Uses [`FalkorDB`](https://www.falkordb.com/) for storing and querying complex relationships with Cypher.
 - **AI-Powered Analytics**: Employs Large Language Models (LLMs) for content summarization, analysis, and trend identification.
 - **Modular & Extensible**: Built with a clean, service-oriented architecture for easy extension and maintenance.
 
@@ -44,12 +46,44 @@ cd brandmind-ai
 
 ### 3. Start Infrastructure Services
 
-The project relies on external services for crawling and searching. Start them using Docker Compose:
+The project uses several self-hosted services for data processing, search, and storage. Start them using Docker Compose:
 
 ```bash
 make services-up
 ```
-*This will start [`SearXNG`](https://github.com/searxng/searxng) and [`Crawl4AI`](https://github.com/unclecode/crawl4ai) in the background. You can check their status with `make services-status`.*
+
+This will start the following services:
+
+#### Search & Crawling
+- **[SearXNG](https://github.com/searxng/searxng)** (port 8080): Privacy-focused metasearch engine aggregating results from multiple sources
+- **[Crawl4AI](https://github.com/unclecode/crawl4ai)** (port 11235): Advanced web scraping service for extracting structured data
+
+#### Databases
+- **[FalkorDB](https://www.falkordb.com/)**: Graph database for knowledge graphs and GraphRAG
+  - Server (port 6380): Graph database with Cypher query language
+  - Browser UI (port 3000): Web interface for managing graphs
+- **[Milvus](https://milvus.io/)**: Vector database for AI/ML applications
+  - Server (ports 19530, 9091): Vector search engine
+  - Attu UI (port 3001): Web interface for managing collections
+  - MinIO (ports 9000-9001): Object storage backend
+  - etcd (internal): Metadata storage
+
+**Check service status:**
+```bash
+make services-status
+```
+
+**View logs:**
+```bash
+make services-logs
+```
+
+**Stop services:**
+```bash
+make services-down
+```
+
+> **Note**: Each service has detailed documentation in `infra/services/<service-name>/README.md` including configuration, authentication, and usage examples.
 
 ### 4. Install Dependencies
 
@@ -108,6 +142,13 @@ brandmind-ai/
 │   └── services/        # Service-specific implementations (not used yet)
 ├── tests/               # Test suites (unit, integration, e2e)
 ├── infra/               # Infrastructure services (Docker Compose)
+│   ├── docker-compose.yml  # Main orchestration file
+│   └── services/           # Individual service configurations
+│       ├── searxng/        # Privacy-focused search engine
+│       ├── crawl4ai/       # Web scraping service
+│       ├── valkey/         # Key-value cache
+│       ├── falkordb/       # Graph database
+│       └── milvus/         # Vector database
 ├── scripts/             # Utility scripts for development and CI/CD
 ├── tasks/               # Detailed task and feature documentation
 ├── pyproject.toml       # Project metadata and dependencies (PEP 621)
