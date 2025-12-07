@@ -28,3 +28,11 @@ class SearchMilvusVectorsError(Exception):
     def __init__(self, message):
         self.message = message
         super().__init__(self.message)
+
+
+class MilvusConnectionError(Exception):
+    """Exception raised for errors in connecting to Milvus."""
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)

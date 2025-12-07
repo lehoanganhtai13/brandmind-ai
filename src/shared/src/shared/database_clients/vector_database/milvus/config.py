@@ -12,10 +12,16 @@ class MilvusConfig(VectorDBConfig):
         host: str = "localhost",
         port: str = "19530",
         run_async: bool = False,
+        user: str = "",
+        password: str = "",
         **kwargs,
     ):
         super().__init__(VectorDBBackend.MILVUS, **kwargs)
         self.host = host
         self.port = port
         self.run_async = run_async
-        self.uri = f"http://{host}:{port}"
+        self.uri = (
+            f"http://{user}:{password}@{host}:{port}"
+            if user and password
+            else f"http://{host}:{port}"
+        )

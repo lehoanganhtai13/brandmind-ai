@@ -28,6 +28,7 @@ from shared.database_clients.vector_database.milvus.exceptions import (
     CreateMilvusCollectionError,
     GetMilvusItemsError,
     InsertMilvusVectorsError,
+    MilvusConnectionError,
     SearchMilvusVectorsError,
 )
 from shared.database_clients.vector_database.milvus.utils import (
@@ -54,10 +55,16 @@ class MilvusVectorDatabase(BaseVectorDatabase):
     def _initialize_client(self, **kwargs) -> None:
         """Initialize the Milvus client."""
         config: MilvusConfig = cast(MilvusConfig, self.config)
-        self.client = MilvusClient(uri=config.uri)
-        self.async_client = (
-            AsyncMilvusClient(uri=config.uri) if config.run_async else None
-        )
+
+        # Initialize synchronous and asynchronous clients
+        try:
+            self.client = MilvusClient(uri=config.uri)
+            self.async_client = (
+                AsyncMilvusClient(uri=config.uri) if config.run_async else None
+            )
+        except Exception as e:
+            raise MilvusConnectionError(f"Failed to connect to Milvus: {e}") from e
+
         self.reranker = RRFRanker()
         self.run_async = config.run_async
         self.uri = config.uri
@@ -693,9 +700,14 @@ class MilvusVectorDatabase(BaseVectorDatabase):
 
         if not connections.has_connection(alias="default"):
             # If no connection exists, create a new one
-            connections.connect(
-                uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
-            )
+            try:
+                connections.connect(
+                    uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
+                )
+            except Exception as e:
+                raise MilvusConnectionError(
+                    f"Failed to connect to Milvus: {str(e)}"
+                ) from e
 
         # Construct the collection
         self.collection = Collection(collection_name)
@@ -813,9 +825,14 @@ class MilvusVectorDatabase(BaseVectorDatabase):
 
         if not connections.has_connection(alias="default"):
             # If no connection exists, create a new one
-            connections.connect(
-                uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
-            )
+            try:
+                connections.connect(
+                    uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
+                )
+            except Exception as e:
+                raise MilvusConnectionError(
+                    f"Failed to connect to Milvus: {str(e)}"
+                ) from e
 
         # Construct the collection
         self.collection = Collection(collection_name)
@@ -892,9 +909,14 @@ class MilvusVectorDatabase(BaseVectorDatabase):
 
         if not connections.has_connection(alias="default"):
             # If no connection exists, create a new one
-            connections.connect(
-                uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
-            )
+            try:
+                connections.connect(
+                    uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
+                )
+            except Exception as e:
+                raise MilvusConnectionError(
+                    f"Failed to connect to Milvus: {str(e)}"
+                ) from e
 
         # Construct the collection
         self.collection = Collection(collection_name)
@@ -989,9 +1011,14 @@ class MilvusVectorDatabase(BaseVectorDatabase):
 
         if not connections.has_connection(alias="default"):
             # If no connection exists, create a new one
-            connections.connect(
-                uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
-            )
+            try:
+                connections.connect(
+                    uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
+                )
+            except Exception as e:
+                raise MilvusConnectionError(
+                    f"Failed to connect to Milvus: {str(e)}"
+                ) from e
 
         # Construct the collection
         self.collection = Collection(collection_name)
