@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from shared.database_clients.base_class import EmbeddingData, VectorDBConfig
+from shared.database_clients.vector_database.base_class import (
+    EmbeddingData,
+    VectorDBConfig,
+)
 
 
 class BaseVectorDatabase(ABC):

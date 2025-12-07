@@ -16,16 +16,21 @@ from pymilvus import (
 )
 from pymilvus.milvus_client import IndexParams
 
-from shared.database_clients.base_class import EmbeddingData, EmbeddingType
-from shared.database_clients.base_vector_database import BaseVectorDatabase
-from shared.database_clients.milvus.config import MilvusConfig
-from shared.database_clients.milvus.exceptions import (
+from shared.database_clients.vector_database.base_class import (
+    EmbeddingData,
+    EmbeddingType,
+)
+from shared.database_clients.vector_database.base_vector_database import (
+    BaseVectorDatabase,
+)
+from shared.database_clients.vector_database.milvus.config import MilvusConfig
+from shared.database_clients.vector_database.milvus.exceptions import (
     CreateMilvusCollectionError,
     GetMilvusItemsError,
     InsertMilvusVectorsError,
     SearchMilvusVectorsError,
 )
-from shared.database_clients.milvus.utils import (
+from shared.database_clients.vector_database.milvus.utils import (
     IndexParam,
     IndexType,
     MetricType,

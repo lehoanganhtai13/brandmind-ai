@@ -1,4 +1,7 @@
-from shared.database_clients.base_class import VectorDBBackend, VectorDBConfig
+from shared.database_clients.vector_database.base_class import (
+    VectorDBBackend,
+    VectorDBConfig,
+)
 
 
 class MilvusConfig(VectorDBConfig):
