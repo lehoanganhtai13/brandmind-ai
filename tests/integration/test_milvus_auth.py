@@ -12,7 +12,6 @@ Tests cover:
 import os
 import sys
 from datetime import datetime
-from typing import List
 
 import pytest
 
@@ -24,10 +23,6 @@ from shared.database_clients.vector_database.base_class import EmbeddingType
 from shared.database_clients.vector_database.milvus import (
     MilvusConfig,
     MilvusVectorDatabase,
-)
-from shared.database_clients.vector_database.milvus.exceptions import (
-    CreateMilvusCollectionError,
-    InsertMilvusVectorsError,
 )
 from shared.database_clients.vector_database.milvus.utils import (
     DataType,
