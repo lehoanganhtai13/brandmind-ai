@@ -5,6 +5,7 @@ requires-python = ">=3.12"
 dependencies = [
     "crawl4ai>=0.7.6",
     "deepagents>=0.2.7",
+    "falkordb>=1.2.2",
     "google-genai>=1.39.1",
     "langchain>=1.0.3",
     "langchain-google-genai>=3.0.1",
