@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class IndexValueType(Enum):
@@ -43,6 +43,7 @@ class MetricType(Enum):
     IP = "IP"
     COSINE = "COSINE"
     HAMMING = "HAMMING"
+    BM25 = "BM25"
 
 
 class IndexType(Enum):
@@ -111,3 +112,12 @@ class SchemaField(BaseModel):
     dimension: Optional[int] = None
     max_capacity: Optional[int] = None
     index_config: Optional[IndexConfig] = None
+
+    @model_validator(mode="after")
+    def validate_dense_vector_index_config(self) -> "SchemaField":
+        """Validate that DENSE_VECTOR fields have index_config."""
+        if self.field_type == DataType.DENSE_VECTOR and self.index_config is None:
+            raise ValueError(
+                f"index_config is required for DENSE_VECTOR field '{self.field_name}'"
+            )
+        return self

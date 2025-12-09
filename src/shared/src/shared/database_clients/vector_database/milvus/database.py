@@ -10,6 +10,8 @@ from pymilvus import (
     CollectionSchema,
     DataType,
     FieldSchema,
+    Function,
+    FunctionType,
     MilvusClient,
     RRFRanker,
     connections,
@@ -75,6 +77,7 @@ class MilvusVectorDatabase(BaseVectorDatabase):
         auto_id: bool = False,
         enable_dynamic_field: bool = False,
         json_index_params: Optional[Dict[str, List[IndexParam]]] = None,
+        bm25_function_config: Optional[Dict[str, str]] = None,
     ) -> tuple[CollectionSchema, IndexParams]:
         """
         Create schema and index parameters for a collection.
@@ -88,6 +91,10 @@ class MilvusVectorDatabase(BaseVectorDatabase):
             json_index_params (Dict[str, List[IndexParam]]): Index parameters of JSON
                 type for the collection. Key is the field name and value is a list of
                 IndexParam objects.
+            bm25_function_config (Dict[str, str]): BM25 function configuration mapping
+                sparse field names to their corresponding text field names.
+                Example: {"content_sparse": "content"} creates a BM25 function that
+                converts text from "content" field to sparse vector in "content_sparse".
 
         Returns:
             tuple[CollectionSchema, IndexParams]: Schema and index parameters for the
@@ -116,15 +123,21 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                     description=field.field_description or "",
                     is_primary=field.is_primary,
                 )
-                index_params.add_index(
-                    field_name=field.field_name,
-                    index_type=IndexType.STL_SORT.value,
-                )
+                # Add index only if explicitly requested
+                if field.index_config and field.index_config.index:
+                    index_params.add_index(
+                        field_name=field.field_name,
+                        index_type=IndexType.STL_SORT.value,
+                    )
             elif field.field_type.value == "dense_vector":
                 if not field.index_config:
                     raise ValueError(
                         f"Index config is required for dense_vector field "
                         f"{field.field_name}"
+                    )
+                if not field.index_config.index:
+                    raise ValueError(
+                        f"Index is required for dense_vector field {field.field_name}"
                     )
                 if not field.index_config.index_type:
                     raise ValueError(
@@ -167,16 +180,29 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                     },
                 )
             elif field.field_type.value == "sparse_vector":
+                if not (field.index_config and field.index_config.index):
+                    raise ValueError(
+                        f"Index is required for sparse_vector field {field.field_name}"
+                    )
+
                 schema_field = FieldSchema(
                     name=field.field_name,
                     dtype=data_type_mapping[field.field_type.value],
                     description=field.field_description or "",
                     is_primary=field.is_primary,
                 )
+
+                # Determine metric type based on whether this field has BM25 function
+                if bm25_function_config and field.field_name in bm25_function_config:
+                    metric = MetricType.BM25.value
+                else:
+                    metric = MetricType.IP.value
+
                 index_params.add_index(
                     field_name=field.field_name,
                     index_type=IndexType.SPARSE_INVERTED_INDEX.value,
-                    metric_type=MetricType.IP.value,
+                    metric_type=metric,
+                    params={"inverted_index_algo": "DAAT_MAXSCORE"},
                 )
             elif field.field_type.value == "string":
                 analyzer_params = {
@@ -193,9 +219,11 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                     enable_match=True,
                     is_primary=field.is_primary,
                 )
-                index_params.add_index(
-                    field_name=field.field_name, index_type=IndexType.INVERTED.value
-                )
+                # Add index only if explicitly requested
+                if field.index_config and field.index_config.index:
+                    index_params.add_index(
+                        field_name=field.field_name, index_type=IndexType.INVERTED.value
+                    )
             elif field.field_type.value == "array":
                 if not field.element_type:
                     raise ValueError(
@@ -212,9 +240,12 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                     is_primary=field.is_primary,
                     nullable=True,
                 )
-                index_params.add_index(
-                    field_name=field.field_name, index_type=IndexType.AUTOINDEX.value
-                )
+                # Add index only if explicitly requested
+                if field.index_config and field.index_config.index:
+                    index_params.add_index(
+                        field_name=field.field_name,
+                        index_type=IndexType.AUTOINDEX.value,
+                    )
             elif field.field_type.value == "bool":
                 schema_field = FieldSchema(
                     name=field.field_name,
@@ -222,9 +253,12 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                     description=field.field_description or "",
                     is_primary=field.is_primary,
                 )
-                index_params.add_index(
-                    field_name=field.field_name, index_type=IndexType.AUTOINDEX.value
-                )
+                # Add index only if explicitly requested
+                if field.index_config and field.index_config.index:
+                    index_params.add_index(
+                        field_name=field.field_name,
+                        index_type=IndexType.AUTOINDEX.value,
+                    )
             elif field.field_type.value == "json":
                 schema_field = FieldSchema(
                     name=field.field_name,
@@ -255,11 +289,13 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                     dim=field.dimension,
                     is_primary=field.is_primary,
                 )
-                index_params.add_index(
-                    field_name=field.field_name,
-                    index_type=IndexType.BIN_FLAT.value,
-                    metric_type=MetricType.HAMMING.value,
-                )
+                # Add index only if explicitly requested
+                if field.index_config and field.index_config.index:
+                    index_params.add_index(
+                        field_name=field.field_name,
+                        index_type=IndexType.BIN_FLAT.value,
+                        metric_type=MetricType.HAMMING.value,
+                    )
             else:
                 raise ValueError(
                     (
@@ -271,8 +307,24 @@ class MilvusVectorDatabase(BaseVectorDatabase):
 
             fields.append(schema_field)
 
+        # Create BM25 functions for sparse fields
+        functions = []
+        if bm25_function_config:
+            for sparse_field_name, text_field_name in bm25_function_config.items():
+                functions.append(
+                    Function(
+                        name=f"bm25_{sparse_field_name}",
+                        function_type=FunctionType.BM25,
+                        input_field_names=[text_field_name],
+                        output_field_names=[sparse_field_name],
+                    )
+                )
+
         schema = CollectionSchema(
-            fields=fields, auto_id=auto_id, enable_dynamic_field=enable_dynamic_field
+            fields=fields,
+            auto_id=auto_id,
+            enable_dynamic_field=enable_dynamic_field,
+            functions=functions if functions else None,
         )
 
         return schema, index_params
@@ -284,6 +336,7 @@ class MilvusVectorDatabase(BaseVectorDatabase):
         auto_id: bool = False,
         enable_dynamic_field: bool = False,
         json_index_params: Optional[Dict[str, List[IndexParam]]] = None,
+        bm25_function_config: Optional[Dict[str, str]] = None,
         **kwargs,
     ):
         """
@@ -297,6 +350,8 @@ class MilvusVectorDatabase(BaseVectorDatabase):
             json_index_params (Dict[str, List[IndexParam]]): Index parameters of JSON
                 type for the collection. Key is the field name and value is a list of
                 IndexParam objects.
+            bm25_function_config (Dict[str, str]): BM25 function configuration mapping
+                sparse field names to text field names for full-text search.
         """
         # Check if collection exists
         if self.has_collection(collection_name):
@@ -309,6 +364,7 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                 auto_id=auto_id,
                 enable_dynamic_field=enable_dynamic_field,
                 json_index_params=json_index_params,
+                bm25_function_config=bm25_function_config,
             )
         except Exception as e:
             raise CreateMilvusCollectionError(
@@ -329,6 +385,7 @@ class MilvusVectorDatabase(BaseVectorDatabase):
         auto_id: bool = False,
         enable_dynamic_field: bool = False,
         json_index_params: Optional[Dict[str, List[IndexParam]]] = None,
+        bm25_function_config: Optional[Dict[str, str]] = None,
         **kwargs,
     ):
         """
@@ -344,6 +401,8 @@ class MilvusVectorDatabase(BaseVectorDatabase):
             json_index_params (Dict[str, List[IndexParam]]): Index parameters of JSON
                 type for the collection. Key is the field name and value is a list of
                 IndexParam objects.
+            bm25_function_config (Dict[str, str]): BM25 function configuration mapping
+                sparse field names to text field names for full-text search.
         """
         # Check if collection exists
         if await self.async_has_collection(collection_name):
@@ -356,6 +415,7 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                 auto_id=auto_id,
                 enable_dynamic_field=enable_dynamic_field,
                 json_index_params=json_index_params,
+                bm25_function_config=bm25_function_config,
             )
         except Exception as e:
             raise CreateMilvusCollectionError(
@@ -608,10 +668,21 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                 raise TypeError("Invalid embedding data type. Expected EmbeddingData.")
 
             embedding_type = embedding.embedding_type
-            param = {}
+            param: dict = {}
+            data: list = []
+
+            # Determine data and params based on embedding type
             if embedding_type == EmbeddingType.SPARSE:
-                param = {"metric_type": MetricType.IP.value, "params": {}}
+                # For BM25 full-text search with raw text query
+                if embedding.query:
+                    data = [embedding.query]
+                    param = {"drop_ratio_search": 0.2}
+                # For manual sparse vector search
+                else:
+                    data = [embedding.embeddings]
+                    param = {"metric_type": MetricType.IP.value, "params": {}}
             elif embedding_type == EmbeddingType.DENSE:
+                data = [embedding.embeddings]
                 param = {
                     "metric_type": metric_type.value,
                     "params": (
@@ -621,13 +692,19 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                     ),
                 }
             elif embedding_type == EmbeddingType.BINARY:
+                data = [embedding.embeddings]
                 param = {
                     "metric_type": MetricType.HAMMING.value,
                     "params": {"nprobe": 64},
                 }
+            else:
+                raise ValueError(f"Unsupported embedding type: {embedding_type}")
+
+            if not data or not param:
+                continue
 
             search_params = {
-                "data": [embedding.embeddings],
+                "data": data,
                 "anns_field": embedding.field_name,
                 "param": param,
                 "limit": (top_k * 2),

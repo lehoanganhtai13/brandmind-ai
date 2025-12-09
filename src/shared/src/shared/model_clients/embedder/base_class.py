@@ -5,6 +5,7 @@ class EmbedderBackend(Enum):
     """Enum for different embedder backends."""
 
     OPENAI = "openai"
+    GEMINI = "gemini"
     LOCAL = "local"
 
 
