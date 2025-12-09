@@ -30,8 +30,11 @@ jobs:
       - name: Install dependencies
         run: make install-all
 
-      - name: Run type checking, linting, and security scan
+      - name: Run type checking, linting
         run: make typecheck
+
+      - name: Run secrets scan
+        run: make secrets-scan
 
       - name: Run unit tests
         run: make test-unit
