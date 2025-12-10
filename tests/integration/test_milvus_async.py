@@ -166,8 +166,7 @@ async def test_async_hybrid_search(milvus_async_client):
         field_name="dense_vector",
     )
     
-    # Search using async - NOTE: This uses sync method internally
-    # because async_hybrid_search_vectors has issues
+    # Search using async
     try:
         results = await milvus_async_client.async_hybrid_search_vectors(
             collection_name=TEST_COLLECTION_NAME,
@@ -178,13 +177,20 @@ async def test_async_hybrid_search(milvus_async_client):
             index_type=IndexType.HNSW,
         )
         
-        print(f"✓ Hybrid search completed successfully (using sync method)")
+        print(f"✓ Hybrid search completed successfully")
         print(f"  Found {len(results)} results")
         
         if len(results) > 0:
             for i, result in enumerate(results, 1):
                 print(f"  [{i}] ID: {result.get('id')}, Text: {result.get('text')}, "
                       f"Score: {result.get('_score', 0):.4f}")
+                
+                # Verify flattened structure
+                assert "id" in result, "Result should contain 'id' at top level"
+                assert "text" in result, "Result should contain 'text' at top level"
+                assert "_score" in result, "Result should contain '_score' at top level"
+                assert "entity" not in result, "Result should not contain 'entity' field (should be flattened)"
+                
             assert len(results) <= 2
         else:
             print(f"  ⚠ No results found - data may not be indexed yet")

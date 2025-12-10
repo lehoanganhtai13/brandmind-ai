@@ -1031,7 +1031,27 @@ class MilvusVectorDatabase(BaseVectorDatabase):
             if not results:
                 return []
 
-            return results[0]
+            # Flatten the structure by moving entity fields to top level
+            flattened_results = []
+            for result in results[0]:
+                flattened_result = {}
+
+                # Copy non-entity fields (like distance, id, etc.)
+                for key, value in result.items():
+                    if key != "entity":
+                        if key == "distance":
+                            flattened_result["_score"] = value
+                        else:
+                            flattened_result[key] = value
+
+                # Move entity fields to top level
+                if "entity" in result:
+                    for entity_key, entity_value in result["entity"].items():
+                        flattened_result[entity_key] = entity_value
+
+                flattened_results.append(flattened_result)
+
+            return flattened_results
         except Exception as e:
             logger.error(traceback.format_exc())
             raise SearchMilvusVectorsError(f"Error in hybrid search: {str(e)}")
