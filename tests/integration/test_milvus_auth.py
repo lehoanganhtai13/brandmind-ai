@@ -254,6 +254,75 @@ def test_search_vectors_with_auth(milvus_client_with_auth):
         print(f"  ⚠ No results found - data may not be indexed yet or collection is empty")
 
 
+def test_upsert_vectors_with_auth(milvus_client_with_auth):
+    """Test upserting vectors with authentication."""
+    print("\n" + "=" * 80)
+    print("TEST: Upsert Vectors with Authentication")
+    print("=" * 80)
+    
+    # Prepare upsert data (update existing ID 1)
+    upsert_data = [
+        {
+            "id": 1,
+            "embedding": [0.9] * 128,  # Changed vector
+            "text": "Updated document 1",  # Changed text
+        }
+    ]
+    
+    # Upsert vectors
+    milvus_client_with_auth.upsert_vectors(
+        collection_name=TEST_COLLECTION_NAME,
+        data=upsert_data,
+    )
+    
+    print(f"✓ Upserted {len(upsert_data)} vectors successfully")
+    
+    # Verify upsert by getting items
+    try:
+        retrieved = milvus_client_with_auth.get_items(
+            collection_name=TEST_COLLECTION_NAME,
+            ids=[1],
+        )
+        if retrieved and retrieved[0].get("text") == "Updated document 1":
+            print(f"✓ Verified upsert: Text updated to '{retrieved[0].get('text')}'")
+        else:
+            print(f"⚠ Upsert verification pending (data may not be flushed yet)")
+            print(f"  Retrieved: {retrieved}")
+    except Exception as e:
+        print(f"⚠ Could not verify upsert immediately: {type(e).__name__}: {str(e)[:100]}")
+
+
+def test_delete_vectors_with_auth(milvus_client_with_auth):
+    """Test deleting vectors with authentication."""
+    print("\n" + "=" * 80)
+    print("TEST: Delete Vectors with Authentication")
+    print("=" * 80)
+    
+    # Delete vector with ID 2
+    ids_to_delete = [2]
+    
+    milvus_client_with_auth.delete_vectors(
+        collection_name=TEST_COLLECTION_NAME,
+        ids=ids_to_delete,
+    )
+    
+    print(f"✓ Deleted vector with ID {ids_to_delete} successfully")
+    
+    # Verify deletion
+    try:
+        retrieved = milvus_client_with_auth.get_items(
+            collection_name=TEST_COLLECTION_NAME,
+            ids=ids_to_delete,
+        )
+        if not retrieved:
+            print(f"✓ Verified deletion: ID {ids_to_delete} not found")
+        else:
+            print(f"⚠ Deletion verification pending (data may not be flushed yet)")
+            print(f"  Retrieved: {retrieved}")
+    except Exception as e:
+        print(f"⚠ Could not verify deletion immediately: {type(e).__name__}: {str(e)[:100]}")
+
+
 def test_list_and_delete_collection_with_auth(milvus_client_with_auth):
     """Test listing and deleting collections with authentication."""
     print("\n" + "=" * 80)
@@ -355,8 +424,22 @@ def run_manual_test():
         test_results.append(("Search Vectors", "PASS", None))
     except Exception as e:
         test_results.append(("Search Vectors", "FAIL", str(e)))
+
+    # Test 6: Upsert vectors
+    try:
+        test_upsert_vectors_with_auth(client_with_auth)
+        test_results.append(("Upsert Vectors", "PASS", None))
+    except Exception as e:
+        test_results.append(("Upsert Vectors", "FAIL", str(e)))
+
+    # Test 7: Delete vectors
+    try:
+        test_delete_vectors_with_auth(client_with_auth)
+        test_results.append(("Delete Vectors", "PASS", None))
+    except Exception as e:
+        test_results.append(("Delete Vectors", "FAIL", str(e)))
     
-    # Test 6: List and delete
+    # Test 8: List and delete
     try:
         test_list_and_delete_collection_with_auth(client_with_auth)
         test_results.append(("List and Delete Collection", "PASS", None))

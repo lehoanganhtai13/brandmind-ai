@@ -55,6 +55,16 @@ class BaseVectorDatabase(ABC):
         pass
 
     @abstractmethod
+    def upsert_vectors(self, data: List[Dict], **kwargs) -> None:
+        """Upsert vectors into the collection."""
+        pass
+
+    @abstractmethod
+    def delete_vectors(self, ids: List[Any], **kwargs) -> None:
+        """Delete vectors from the collection by their IDs."""
+        pass
+
+    @abstractmethod
     def get_items(self, ids: List[str], **kwargs) -> List[Dict]:
         """Get items from the collection by their IDs."""
         pass
@@ -127,6 +137,16 @@ class BaseVectorDatabase(ABC):
     @abstractmethod
     async def async_insert_vectors(self, data: List[Dict], **kwargs) -> None:
         """Asynchronously insert vectors into the collection."""
+        pass
+
+    @abstractmethod
+    async def async_upsert_vectors(self, data: List[Dict], **kwargs) -> None:
+        """Asynchronously upsert vectors into the collection."""
+        pass
+
+    @abstractmethod
+    async def async_delete_vectors(self, ids: List[Any], **kwargs) -> None:
+        """Asynchronously delete vectors from the collection by their IDs."""
         pass
 
     @abstractmethod

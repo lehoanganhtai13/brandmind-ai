@@ -26,6 +26,7 @@ from shared.database_clients.vector_database.base_vector_database import (
 from shared.database_clients.vector_database.milvus.config import MilvusConfig
 from shared.database_clients.vector_database.milvus.exceptions import (
     CreateMilvusCollectionError,
+    DeleteMilvusVectorsError,
     GetMilvusItemsError,
     InsertMilvusVectorsError,
     MilvusConnectionError,
@@ -593,6 +594,127 @@ class MilvusVectorDatabase(BaseVectorDatabase):
             await self.async_client.insert(collection_name=collection_name, data=data)  # type: ignore[union-attr]
         except Exception as e:
             raise InsertMilvusVectorsError(f"Error inserting vectors: {str(e)}")
+
+    def upsert_vectors(
+        self,
+        data: List[Dict],
+        collection_name: Optional[str] = None,
+        partial_update: bool = False,
+        **kwargs,
+    ) -> None:
+        """
+        Upsert vectors into the collection.
+
+        Args:
+            collection_name (str): Name of the collection.
+            data (List[Dict]): List of dictionaries containing the data to upsert.
+            partial_update (bool): Whether to perform a partial update.
+        """
+        if not collection_name:
+            raise ValueError("Collection name must be provided for upserting vectors.")
+
+        try:
+            self.client.upsert(
+                collection_name=collection_name,
+                data=data,
+                partial_update=partial_update,
+                **kwargs,
+            )  # type: ignore[union-attr]
+        except Exception as e:
+            raise InsertMilvusVectorsError(f"Error upserting vectors: {str(e)}")
+
+    async def async_upsert_vectors(
+        self,
+        data: List[Dict],
+        collection_name: Optional[str] = None,
+        partial_update: bool = False,
+        **kwargs,
+    ) -> None:
+        """
+        Asynchronously upsert vectors into the collection.
+
+        Args:
+            collection_name (str): Name of the collection.
+            data (List[Dict]): List of dictionaries containing the data to upsert.
+            partial_update (bool): Whether to perform a partial update.
+
+        Raises:
+            InsertMilvusVectorsError: If there is an error during upsertion.
+        """
+        if not collection_name:
+            raise ValueError("Collection name must be provided for upserting vectors.")
+
+        if not self.async_client:
+            raise MilvusConnectionError("Asynchronous client is not initialized.")
+
+        try:
+            await self.async_client.upsert(
+                collection_name=collection_name,
+                data=data,
+                partial_update=partial_update,
+                **kwargs,
+            )  # type: ignore[union-attr]
+        except Exception as e:
+            raise InsertMilvusVectorsError(f"Error upserting vectors: {str(e)}")
+
+    def delete_vectors(
+        self,
+        ids: Optional[List[str]] = None,
+        filter: Optional[str] = None,
+        collection_name: Optional[str] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Delete vectors from the collection by IDs or filter expression.
+
+        Args:
+            collection_name (str): Name of the collection.
+            ids (Optional[List[str]]): List of IDs to delete.
+            filter (Optional[str]): Filter expression to identify vectors to delete.
+        """
+        if not collection_name:
+            raise ValueError("Collection name must be provided for deleting vectors.")
+
+        if not ids and not filter:
+            raise ValueError("Either ids or filter must be provided.")
+
+        try:
+            self.client.delete(
+                collection_name=collection_name, ids=ids, filter=filter, **kwargs
+            )  # type: ignore[union-attr]
+        except Exception as e:
+            raise DeleteMilvusVectorsError(f"Error deleting vectors: {str(e)}")
+
+    async def async_delete_vectors(
+        self,
+        ids: Optional[List[str]] = None,
+        filter: Optional[str] = None,
+        collection_name: Optional[str] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Asynchronously delete vectors from the collection.
+
+        Args:
+            collection_name (str): Name of the collection.
+            ids (Optional[List[str]]): List of IDs to delete.
+            filter (Optional[str]): Filter expression to identify vectors to delete.
+        """
+        if not collection_name:
+            raise ValueError("Collection name must be provided for deleting vectors.")
+
+        if not ids and not filter:
+            raise ValueError("Either ids or filter must be provided.")
+
+        if not self.async_client:
+            raise MilvusConnectionError("Asynchronous client is not initialized.")
+
+        try:
+            await self.async_client.delete(
+                collection_name=collection_name, ids=ids, filter=filter, **kwargs
+            )  # type: ignore[union-attr]
+        except Exception as e:
+            raise DeleteMilvusVectorsError(f"Error deleting vectors: {str(e)}")
 
     def get_items(
         self, ids: List[str], collection_name: Optional[str] = None, **kwargs

@@ -22,6 +22,14 @@ class GetMilvusItemsError(Exception):
         super().__init__(self.message)
 
 
+class DeleteMilvusVectorsError(Exception):
+    """Exception raised for errors in deleting vectors in Milvus collection."""
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
 class SearchMilvusVectorsError(Exception):
     """Exception raised for errors in searching vectors in Milvus collection."""
 

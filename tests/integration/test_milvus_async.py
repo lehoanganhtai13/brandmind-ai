@@ -194,6 +194,49 @@ async def test_async_hybrid_search(milvus_async_client):
 
 
 @pytest.mark.asyncio
+async def test_async_upsert_vectors(milvus_async_client):
+    """Test upserting vectors with async."""
+    print("\n" + "=" * 80)
+    print("TEST: Async Upsert Vectors")
+    print("=" * 80)
+    
+    # Prepare upsert data (update existing ID "entity_1")
+    upsert_data = [
+        {
+            "id": "entity_1",
+            "dense_vector": [0.9] * 128,  # Changed vector
+            "text": "Updated entity 1",  # Changed text
+        }
+    ]
+    
+    # Upsert vectors using async
+    await milvus_async_client.async_upsert_vectors(
+        collection_name=TEST_COLLECTION_NAME,
+        data=upsert_data,
+    )
+    
+    print(f"✓ Upserted {len(upsert_data)} vectors async successfully")
+
+
+@pytest.mark.asyncio
+async def test_async_delete_vectors(milvus_async_client):
+    """Test deleting vectors with async."""
+    print("\n" + "=" * 80)
+    print("TEST: Async Delete Vectors")
+    print("=" * 80)
+    
+    # Delete vector with ID "entity_2"
+    ids_to_delete = ["entity_2"]
+    
+    await milvus_async_client.async_delete_vectors(
+        collection_name=TEST_COLLECTION_NAME,
+        ids=ids_to_delete,
+    )
+    
+    print(f"✓ Deleted vector with ID {ids_to_delete} async successfully")
+
+
+@pytest.mark.asyncio
 async def test_async_list_and_delete_collection(milvus_async_client):
     """Test listing and deleting collections with async."""
     print("\n" + "=" * 80)
@@ -266,8 +309,24 @@ async def run_manual_async_test():
     except Exception as e:
         test_results.append(("Async Hybrid Search", "FAIL", str(e)))
         print(f"❌ Error: {e}")
+
+    # Test 4: Async upsert vectors
+    try:
+        await test_async_upsert_vectors(client)
+        test_results.append(("Async Upsert Vectors", "PASS", None))
+    except Exception as e:
+        test_results.append(("Async Upsert Vectors", "FAIL", str(e)))
+        print(f"❌ Error: {e}")
+
+    # Test 5: Async delete vectors
+    try:
+        await test_async_delete_vectors(client)
+        test_results.append(("Async Delete Vectors", "PASS", None))
+    except Exception as e:
+        test_results.append(("Async Delete Vectors", "FAIL", str(e)))
+        print(f"❌ Error: {e}")
     
-    # Test 4: Async list and delete
+    # Test 6: Async list and delete
     try:
         await test_async_list_and_delete_collection(client)
         test_results.append(("Async List and Delete", "PASS", None))
