@@ -6,7 +6,6 @@ from loguru import logger
 from pymilvus import (
     AnnSearchRequest,
     AsyncMilvusClient,
-    Collection,
     CollectionSchema,
     DataType,
     FieldSchema,
@@ -14,7 +13,6 @@ from pymilvus import (
     FunctionType,
     MilvusClient,
     RRFRanker,
-    connections,
 )
 from pymilvus.milvus_client import IndexParams
 
@@ -775,20 +773,6 @@ class MilvusVectorDatabase(BaseVectorDatabase):
         self.check_index_type(index_type)
         self.check_metric_type(metric_type)
 
-        if not connections.has_connection(alias="default"):
-            # If no connection exists, create a new one
-            try:
-                connections.connect(
-                    uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
-                )
-            except Exception as e:
-                raise MilvusConnectionError(
-                    f"Failed to connect to Milvus: {str(e)}"
-                ) from e
-
-        # Construct the collection
-        self.collection = Collection(collection_name)
-
         try:
             search_requests = self.build_hybrid_search_requests(
                 embedding_data=embedding_data,
@@ -900,20 +884,6 @@ class MilvusVectorDatabase(BaseVectorDatabase):
         self.check_index_type(index_type)
         self.check_metric_type(metric_type)
 
-        if not connections.has_connection(alias="default"):
-            # If no connection exists, create a new one
-            try:
-                connections.connect(
-                    uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
-                )
-            except Exception as e:
-                raise MilvusConnectionError(
-                    f"Failed to connect to Milvus: {str(e)}"
-                ) from e
-
-        # Construct the collection
-        self.collection = Collection(collection_name)
-
         try:
             search_requests = self.build_hybrid_search_requests(
                 embedding_data=embedding_data,
@@ -983,20 +953,6 @@ class MilvusVectorDatabase(BaseVectorDatabase):
 
         self.check_index_type(index_type)
         self.check_metric_type(metric_type)
-
-        if not connections.has_connection(alias="default"):
-            # If no connection exists, create a new one
-            try:
-                connections.connect(
-                    uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
-                )
-            except Exception as e:
-                raise MilvusConnectionError(
-                    f"Failed to connect to Milvus: {str(e)}"
-                ) from e
-
-        # Construct the collection
-        self.collection = Collection(collection_name)
 
         try:
             results = self.client.search(  # type: ignore[union-attr]
@@ -1085,20 +1041,6 @@ class MilvusVectorDatabase(BaseVectorDatabase):
 
         self.check_index_type(index_type)
         self.check_metric_type(metric_type)
-
-        if not connections.has_connection(alias="default"):
-            # If no connection exists, create a new one
-            try:
-                connections.connect(
-                    uri=cast(MilvusConfig, self.config).uri, _async=self.run_async
-                )
-            except Exception as e:
-                raise MilvusConnectionError(
-                    f"Failed to connect to Milvus: {str(e)}"
-                ) from e
-
-        # Construct the collection
-        self.collection = Collection(collection_name)
 
         try:
             results = await self.async_client.search(  # type: ignore[union-attr]

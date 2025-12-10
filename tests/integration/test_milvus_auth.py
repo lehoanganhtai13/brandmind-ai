@@ -138,6 +138,7 @@ def test_create_collection_with_auth(milvus_client_with_auth):
             dimension=128,
             field_description="Dense vector embedding",
             index_config=IndexConfig(
+                index=True,
                 index_type=IndexType.HNSW,
                 metric_type=MetricType.COSINE,
             ),
