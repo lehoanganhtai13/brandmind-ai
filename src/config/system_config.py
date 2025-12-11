@@ -35,5 +35,15 @@ class Settings:
         # Parsing service settings
         self.LLAMA_PARSE_API_KEY = os.getenv("LLAMA_PARSE_API_KEY", "")
 
+        # Database settings
+        self.MILVUS_HOST = os.getenv("MILVUS_HOST", "localhost")
+        self.MILVUS_PORT = int(os.getenv("MILVUS_PORT", 19530))
+        self.MILVUS_ROOT_PASSWORD = os.getenv("MILVUS_ROOT_PASSWORD", "")
+
+        self.FALKORDB_HOST = os.getenv("FALKORDB_HOST", "localhost")
+        self.FALKORDB_PORT = int(os.getenv("FALKORDB_PORT", 6380))
+        self.FALKORDB_USERNAME = os.getenv("FALKORDB_USERNAME", "")
+        self.FALKORDB_PASSWORD = os.getenv("FALKORDB_PASSWORD", "")
+
 
 SETTINGS = Settings()

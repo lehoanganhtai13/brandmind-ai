@@ -87,16 +87,16 @@ class FalkorDBClient(BaseGraphDatabase):
         """Merge (upsert) a node using MERGE with ON CREATE/ON MATCH."""
         match_str = build_properties_string(match_properties)
 
-        on_match_set = ""
+        set_clause = ""
         if update_properties:
             set_parts = [f"n.{k} = ${k}" for k in update_properties.keys()]
-            on_match_set = f"ON MATCH SET {', '.join(set_parts)}"
+            set_clause = f"SET {', '.join(set_parts)}"
 
         query = f"""
         MERGE (n:{label} {match_str})
         ON CREATE SET n.created_at = timestamp()
-        {on_match_set}
-        SET n.updated_at = timestamp()
+        ON MATCH SET n.updated_at = timestamp()
+        {set_clause}
         RETURN id(n) as node_id
         """
 

@@ -618,7 +618,6 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                 collection_name=collection_name,
                 data=data,
                 partial_update=partial_update,
-                **kwargs,
             )  # type: ignore[union-attr]
         except Exception as e:
             raise InsertMilvusVectorsError(f"Error upserting vectors: {str(e)}")
@@ -652,7 +651,6 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                 collection_name=collection_name,
                 data=data,
                 partial_update=partial_update,
-                **kwargs,
             )  # type: ignore[union-attr]
         except Exception as e:
             raise InsertMilvusVectorsError(f"Error upserting vectors: {str(e)}")
@@ -1040,6 +1038,7 @@ class MilvusVectorDatabase(BaseVectorDatabase):
                 for key, value in result.items():
                     if key != "entity":
                         if key == "distance":
+                            # RRF ranker returns normalized score, not raw distance
                             flattened_result["_score"] = value
                         else:
                             flattened_result[key] = value
