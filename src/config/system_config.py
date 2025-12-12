@@ -18,7 +18,7 @@ class Settings:
         if not os.path.exists(env_file):
             logger.warning(f"Environment file not found: {env_file}")
         else:
-            status = load_dotenv(env_file)
+            status = load_dotenv(env_file, override=False)
             if not status:
                 logger.warning(f"Failed to load environment variables from {env_file}")
 
@@ -44,6 +44,18 @@ class Settings:
         self.FALKORDB_PORT = int(os.getenv("FALKORDB_PORT", 6380))
         self.FALKORDB_USERNAME = os.getenv("FALKORDB_USERNAME", "")
         self.FALKORDB_PASSWORD = os.getenv("FALKORDB_PASSWORD", "")
+        self.FALKORDB_GRAPH_NAME = os.getenv("FALKORDB_GRAPH_NAME", "knowledge_graph")
+
+        # Vector Database Collection Names
+        self.COLLECTION_DOCUMENT_CHUNKS = os.getenv(
+            "COLLECTION_DOCUMENT_CHUNKS", "DocumentChunks"
+        )
+        self.COLLECTION_ENTITY_DESCRIPTIONS = os.getenv(
+            "COLLECTION_ENTITY_DESCRIPTIONS", "EntityDescriptions"
+        )
+        self.COLLECTION_RELATION_DESCRIPTIONS = os.getenv(
+            "COLLECTION_RELATION_DESCRIPTIONS", "RelationDescriptions"
+        )
 
 
 SETTINGS = Settings()

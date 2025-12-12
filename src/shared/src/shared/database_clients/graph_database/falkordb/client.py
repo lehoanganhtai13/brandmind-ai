@@ -17,6 +17,7 @@ from shared.database_clients.graph_database.exceptions import (
 from shared.database_clients.graph_database.falkordb.config import FalkorDBConfig
 from shared.database_clients.graph_database.falkordb.utils import (
     build_properties_string,
+    sanitize_label,
     sanitize_relation_type,
 )
 
@@ -65,6 +66,7 @@ class FalkorDBClient(BaseGraphDatabase):
 
     def create_node(self, label: str, properties: Dict[str, Any]) -> str:
         """Create a new node with given label and properties."""
+        label = sanitize_label(label)
         props_str = build_properties_string(properties)
         query = f"""
         CREATE (n:{label} {props_str})
@@ -85,6 +87,7 @@ class FalkorDBClient(BaseGraphDatabase):
         update_properties: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Merge (upsert) a node using MERGE with ON CREATE/ON MATCH."""
+        label = sanitize_label(label)
         match_str = build_properties_string(match_properties)
 
         set_clause = ""
@@ -112,6 +115,7 @@ class FalkorDBClient(BaseGraphDatabase):
 
     def get_node(self, label: str, match_properties: Dict[str, Any]) -> Optional[Dict]:
         """Get a single node matching the criteria."""
+        label = sanitize_label(label)
         match_str = build_properties_string(match_properties)
         query = f"""
         MATCH (n:{label} {match_str})
@@ -134,6 +138,7 @@ class FalkorDBClient(BaseGraphDatabase):
 
     def get_nodes_by_label(self, label: str, limit: int = 100) -> List[Dict]:
         """Get all nodes with a given label."""
+        label = sanitize_label(label)
         query = f"""
         MATCH (n:{label})
         RETURN n, id(n) as node_id
@@ -163,6 +168,7 @@ class FalkorDBClient(BaseGraphDatabase):
         update_properties: Dict[str, Any],
     ) -> bool:
         """Update properties of an existing node."""
+        label = sanitize_label(label)
         match_str = build_properties_string(match_properties)
         set_parts = [f"n.{k} = $upd_{k}" for k in update_properties.keys()]
         set_clause = ", ".join(set_parts)
@@ -186,6 +192,7 @@ class FalkorDBClient(BaseGraphDatabase):
         self, label: str, match_properties: Dict[str, Any], detach: bool = True
     ) -> bool:
         """Delete a node. Use detach=True to delete edges too."""
+        label = sanitize_label(label)
         match_str = build_properties_string(match_properties)
         delete_cmd = "DETACH DELETE n" if detach else "DELETE n"
 
@@ -211,6 +218,8 @@ class FalkorDBClient(BaseGraphDatabase):
         properties: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Create a relationship between two nodes."""
+        source_label = sanitize_label(source_label)
+        target_label = sanitize_label(target_label)
         rel_type = sanitize_relation_type(relation_type)
 
         # Build property strings with prefixed params
@@ -253,6 +262,8 @@ class FalkorDBClient(BaseGraphDatabase):
         properties: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Merge (upsert) a relationship."""
+        source_label = sanitize_label(source_label)
+        target_label = sanitize_label(target_label)
         rel_type = sanitize_relation_type(relation_type)
 
         source_props = ", ".join([f"{k}: $s_{k}" for k in source_match.keys()])
@@ -292,6 +303,7 @@ class FalkorDBClient(BaseGraphDatabase):
         direction: RelationDirection = RelationDirection.BOTH,
     ) -> List[Dict]:
         """Get neighboring nodes connected by relationships."""
+        label = sanitize_label(label)
         match_str = build_properties_string(match_properties)
 
         rel_filter = (
@@ -336,6 +348,7 @@ class FalkorDBClient(BaseGraphDatabase):
         direction: RelationDirection = RelationDirection.BOTH,
     ) -> List[Dict]:
         """Get all relationships of a node with connected nodes."""
+        label = sanitize_label(label)
         match_str = build_properties_string(match_properties)
 
         if direction == RelationDirection.OUTGOING:
@@ -376,6 +389,7 @@ class FalkorDBClient(BaseGraphDatabase):
         self, label: str, match_key: str, nodes_data: List[Dict[str, Any]]
     ) -> int:
         """Merge multiple nodes using UNWIND."""
+        label = sanitize_label(label)
         if not nodes_data:
             return 0
 
@@ -398,6 +412,7 @@ class FalkorDBClient(BaseGraphDatabase):
 
     def create_index(self, label: str, property_name: str) -> bool:
         """Create an index on a property."""
+        label = sanitize_label(label)
         query = f"CREATE INDEX FOR (n:{label}) ON (n.{property_name})"
         try:
             self.graph.query(query)

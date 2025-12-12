@@ -420,7 +420,7 @@
 
   # BM25 Function Configuration (to be added to Milvus module)
   # This defines the transformation: content (VARCHAR) → content_sparse (SPARSE)
-  BM25_FUNCTION_CONFIG = {
+  DOCUMENT_CHUNKS_BM25_CONFIG = {
       "name": "document_bm25",
       "type": "BM25",  # Function type
       "input_field": "content",   # VARCHAR field

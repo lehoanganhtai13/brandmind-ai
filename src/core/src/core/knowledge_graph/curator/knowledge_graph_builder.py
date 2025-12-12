@@ -1,10 +1,6 @@
-"""
-Main Knowledge Graph Builder orchestration with entity resolution.
+"""Knowledge Graph Builder with Entity Resolution."""
 
-This module coordinates the entire knowledge graph building process, including
-batch embedding optimization, entity resolution, and dual storage management.
-"""
-
+import asyncio
 import json
 from pathlib import Path
 from typing import Dict, Optional, Tuple
@@ -31,6 +27,8 @@ async def build_knowledge_graph(
     graph_db: BaseGraphDatabase,
     vector_db: BaseVectorDatabase,
     embedder: BaseEmbedder,
+    entity_collection_name: str = "EntityDescriptions",
+    relation_collection_name: str = "RelationDescriptions",
     progress_path: Optional[Path] = None,
 ) -> Dict:
     """
@@ -46,6 +44,10 @@ async def build_knowledge_graph(
         graph_db: Graph database client (FalkorDB)
         vector_db: Vector database client (Milvus)
         embedder: Embedder client (Gemini in SEMANTIC mode)
+        entity_collection_name: Name of entity descriptions collection
+            (default: "EntityDescriptions")
+        relation_collection_name: Name of relation descriptions collection
+            (default: "RelationDescriptions")
         progress_path: Path to save progress checkpoint
 
     Returns:
@@ -62,43 +64,97 @@ async def build_knowledge_graph(
             progress = json.load(f)
             processed_chunks = set(progress.get("processed_chunks", []))
 
-    storage_mgr = StorageManager(graph_db, vector_db, embedder)
+    storage_mgr = StorageManager(
+        graph_db=graph_db,
+        vector_db=vector_db,
+        embedder=embedder,
+        entity_collection_name=entity_collection_name,
+        relation_collection_name=relation_collection_name,
+    )
     stats = {"entities_created": 0, "entities_merged": 0, "relations_created": 0}
 
     # Process chunks sequentially
-    for chunk_data in data["chunks"]:
+    for chunk_data in data["extractions"]:
         chunk_id = chunk_data["chunk_id"]
         if chunk_id in processed_chunks:
             continue
 
+        # Extract entities and relations from nested structure
+        extraction = chunk_data["extraction"]
+        entities = extraction["entities"]
+        relationships = extraction["relationships"]
+
+        # Filter invalid entities (empty names)
+        valid_entities = [e for e in entities if e.get("name") and e["name"].strip()]
+        if len(valid_entities) < len(entities):
+            logger.warning(
+                f"Skipped {len(entities) - len(valid_entities)} entities with "
+                f"empty names in chunk {chunk_id}"
+            )
+        entities = valid_entities
+
         # Collect all names and descriptions for batch processing
-        entity_names = [e["name"] for e in chunk_data["entities"]]
-        entity_descs = [e["description"] for e in chunk_data["entities"]]
-        relation_descs = [r.get("description", "") for r in chunk_data["relations"]]
+        entity_names = [e["name"] for e in entities]
+
+        # Sanitize descriptions - Embedder fails on empty strings
+        entity_descs = [
+            e["description"] if e.get("description", "").strip() else "No description"
+            for e in entities
+        ]
+        relation_descs = [
+            (
+                r.get("description", "")
+                if r.get("description", "").strip()
+                else "No description"
+            )
+            for r in relationships
+        ]
 
         # Batch embed
-        name_embeddings = await embedder.aget_text_embeddings(entity_names)
-        desc_embeddings = await embedder.aget_text_embeddings(entity_descs)
+        # Ensure names are not empty (already filtered, but extra safety check for API)
+        # Note: name_embeddings alignment matches 'entities' list
+        if not entity_names:
+            name_embeddings = []
+            desc_embeddings = []
+        else:
+            name_embeddings = await embedder.aget_text_embeddings(entity_names)
+            desc_embeddings = await embedder.aget_text_embeddings(entity_descs)
+
         rel_embeddings = (
             await embedder.aget_text_embeddings(relation_descs)
-            if any(relation_descs)
+            if relationships  # Always embed if there are relations (sanitized)
             else []
         )
 
         # Entity mapping: name -> (entity_id, entity_type)
         entity_map: Dict[str, Tuple[str, str]] = {}
 
-        # 1. Process entities with pre-computed embeddings
-        for i, entity in enumerate(chunk_data["entities"]):
+        # 1. Process entities in parallel (safe within same chunk - no duplicates)
+        async def process_entity(i: int, entity: Dict) -> Dict:
+            """Process single entity: search, resolve, create/merge."""
             # Search with pre-computed name embedding
             similar = await find_similar_entity(
                 entity_name=entity["name"],
                 entity_type=entity["type"],
                 name_embedding=name_embeddings[i],
                 vector_db=vector_db,
+                collection_name=entity_collection_name,
             )
 
             if similar:
+                # Check for exact name match (optimization to skip LLM call)
+                if similar["name"] == entity["name"]:
+                    # Exact match - auto-merge without LLM decision
+                    logger.info(
+                        f"Exact name match found: '{entity['name']}' - auto-merging"
+                    )
+                    return {
+                        "action": "merged",
+                        "name": entity["name"],
+                        "entity_id": similar["graph_id"],
+                        "entity_type": entity["type"],
+                    }
+
                 # LLM decision (creates own GoogleAIClientLLM instance)
                 decision = await decide_entity_merge(
                     existing_entity=similar, new_entity=entity
@@ -125,9 +181,12 @@ async def build_knowledge_graph(
                         source_chunk_id=chunk_id,
                     )
 
-                    entity_map[entity["name"]] = (similar["id"], similar["type"])
-                    stats["entities_merged"] += 1
-                    continue
+                    return {
+                        "action": "merged",
+                        "name": entity["name"],
+                        "entity_id": similar["id"],
+                        "entity_type": similar["type"],
+                    }
 
             # Create new entity with pre-computed embeddings
             result = await storage_mgr.create_entity(
@@ -138,11 +197,29 @@ async def build_knowledge_graph(
                 desc_embedding=desc_embeddings[i],
                 source_chunk_id=chunk_id,
             )
-            entity_map[entity["name"]] = (result["entity_id"], entity["type"])
-            stats["entities_created"] += 1
+            return {
+                "action": "created",
+                "name": entity["name"],
+                "entity_id": result["entity_id"],
+                "entity_type": entity["type"],
+            }
 
-        # 2. Process relations with pre-computed embeddings
-        for i, relation in enumerate(chunk_data["relations"]):
+        # Process all entities in parallel
+        entity_results = await asyncio.gather(
+            *[process_entity(i, entity) for i, entity in enumerate(entities)]
+        )
+
+        # Build entity map and update stats
+        for result in entity_results:
+            entity_map[result["name"]] = (result["entity_id"], result["entity_type"])
+            if result["action"] == "created":
+                stats["entities_created"] += 1
+            elif result["action"] == "merged":
+                stats["entities_merged"] += 1
+
+        # 2. Process relations in parallel (safe - just lookup + insert)
+        async def process_relation(i: int, relation: Dict) -> bool:
+            """Process single relation: lookup entities and create relation."""
             source_data = entity_map.get(relation["source"])
             target_data = entity_map.get(relation["target"])
 
@@ -155,14 +232,23 @@ async def build_knowledge_graph(
                     source_entity_type=source_type,
                     target_entity_id=target_id,
                     target_entity_type=target_type,
-                    relation_type=relation["type"],
+                    relation_type=relation["relation_type"],
                     description=relation.get("description", ""),
                     desc_embedding=(
                         rel_embeddings[i] if i < len(rel_embeddings) else []
                     ),
                     source_chunk_id=chunk_id,
                 )
-                stats["relations_created"] += 1
+                return True  # Created
+            return False  # Skipped (missing entities)
+
+        # Process all relations in parallel
+        relation_results = await asyncio.gather(
+            *[process_relation(i, relation) for i, relation in enumerate(relationships)]
+        )
+
+        # Update stats
+        stats["relations_created"] += sum(relation_results)
 
         # Save progress
         processed_chunks.add(chunk_id)
@@ -172,7 +258,7 @@ async def build_knowledge_graph(
 
         logger.info(
             f"Processed chunk {chunk_id}: +{len(entity_map)} entities, "
-            f"+{len(chunk_data['relations'])} relations"
+            f"+{len(relationships)} relations"
         )
 
     return stats

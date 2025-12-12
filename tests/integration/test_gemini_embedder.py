@@ -59,3 +59,19 @@ async def test_gemini_embedder_normalization():
     import numpy as np
     norm = np.linalg.norm(emb)
     assert abs(norm - 1.0) < 1e-5
+
+@pytest.mark.asyncio
+async def test_gemini_embedder_large_batch():
+    """Test Gemini embedder with more than 100 items (batch limit)."""
+    config = GeminiEmbedderConfig(mode=EmbeddingMode.SEMANTIC)
+    embedder = GeminiEmbedder(config)
+    
+    # Create 105 items
+    texts = [f"This is sentence number {i}" for i in range(105)]
+    
+    # This should fail without chunking, pass with chunking
+    embs = await embedder.aget_text_embeddings(texts)
+    
+    assert len(embs) == 105
+    assert len(embs[0]) == 1536
+    assert len(embs[-1]) == 1536

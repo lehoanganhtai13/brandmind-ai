@@ -21,7 +21,7 @@ from shared.model_clients.embedder.base_embedder import BaseEmbedder
 # BM25 Function Configuration
 # Maps sparse_field_name -> text_field_name
 # Each sparse field can have its own BM25 function
-BM25_FUNCTION_CONFIG = {
+DOCUMENT_CHUNKS_BM25_CONFIG = {
     "content_sparse": "content",  # content (VARCHAR) -> content_sparse (SPARSE)
 }
 
@@ -139,7 +139,7 @@ async def build_document_library(
         logger.info(f"Resuming from {len(processed_ids)} processed chunks")
 
     # Filter unprocessed chunks
-    chunks_to_process = [c for c in chunks if c["id"] not in processed_ids]
+    chunks_to_process = [c for c in chunks if c["chunk_id"] not in processed_ids]
     logger.info(f"Processing {len(chunks_to_process)} remaining chunks")
 
     # Create collection if needed
@@ -151,7 +151,7 @@ async def build_document_library(
         await vector_db.async_create_collection(
             collection_name=collection_name,
             collection_structure=DOCUMENT_CHUNKS_SCHEMA,
-            bm25_function_config=BM25_FUNCTION_CONFIG,
+            bm25_function_config=DOCUMENT_CHUNKS_BM25_CONFIG,
         )
 
     # Process in batches
@@ -176,7 +176,7 @@ async def build_document_library(
                 metadata = chunk.get("metadata", {})
                 upsert_data.append(
                     {
-                        "id": chunk["id"],
+                        "id": chunk["chunk_id"],
                         "content_embedding": emb,  # emb is List[float] now
                         "source": metadata.get("source", ""),
                         "original_document": metadata.get("original_document", ""),
@@ -197,7 +197,7 @@ async def build_document_library(
 
             # Update progress
             for chunk in batch:
-                processed_ids.add(chunk["id"])
+                processed_ids.add(chunk["chunk_id"])
 
             if progress_path:
                 with open(progress_path, "w") as f:

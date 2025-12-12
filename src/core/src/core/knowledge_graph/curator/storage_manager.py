@@ -11,6 +11,7 @@ from typing import Dict, List
 from shared.database_clients.graph_database.base_graph_database import (
     BaseGraphDatabase,
 )
+from shared.database_clients.graph_database.falkordb.utils import sanitize_label
 from shared.database_clients.vector_database.base_vector_database import (
     BaseVectorDatabase,
 )
@@ -30,11 +31,15 @@ class StorageManager:
         self,
         graph_db: BaseGraphDatabase,
         vector_db: BaseVectorDatabase,
-        embedder: BaseEmbedder,  # Need for re-embedding merged descriptions
+        embedder: BaseEmbedder,
+        entity_collection_name: str = "EntityDescriptions",
+        relation_collection_name: str = "RelationDescriptions",
     ):
         self.graph_db = graph_db
         self.vector_db = vector_db
         self.embedder = embedder
+        self.entity_collection_name = entity_collection_name
+        self.relation_collection_name = relation_collection_name
 
     async def create_entity(
         self,
@@ -44,7 +49,6 @@ class StorageManager:
         name_embedding: List[float],  # Pre-computed
         desc_embedding: List[float],  # Pre-computed
         source_chunk_id: str,
-        collection_name: str = "EntityDescriptions",
     ) -> Dict:
         """
         Create new entity in both Graph DB and Vector DB.
@@ -89,7 +93,7 @@ class StorageManager:
                 "name_embedding": name_embedding,
             }
             await self.vector_db.async_insert_vectors(
-                data=[vector_data], collection_name=collection_name
+                data=[vector_data], collection_name=self.entity_collection_name
             )
 
             return {"entity_id": entity_id, "graph_id": graph_id}
@@ -115,7 +119,6 @@ class StorageManager:
         name: str,
         description: str,
         source_chunk_id: str,
-        collection_name: str = "EntityDescriptions",
     ) -> None:
         """
         Update existing entity in both Graph DB and Vector DB.
@@ -142,8 +145,9 @@ class StorageManager:
 
         # 2. Append to source_chunks array using Cypher
         # Use proper Cypher list concatenation
+        label = sanitize_label(entity_type)
         query = f"""
-        MATCH (n:{entity_type} {{id: $entity_id}})
+        MATCH (n:{label} {{id: $entity_id}})
         SET n.source_chunks = CASE
             WHEN n.source_chunks IS NULL THEN [$new_chunk]
             ELSE n.source_chunks + [$new_chunk]
@@ -166,7 +170,9 @@ class StorageManager:
             "name_embedding": name_emb,
         }
         await self.vector_db.async_upsert_vectors(
-            data=[vector_data], collection_name=collection_name, partial_update=True
+            data=[vector_data],
+            collection_name=self.entity_collection_name,
+            partial_update=True,
         )
 
     async def create_relation(
@@ -179,7 +185,6 @@ class StorageManager:
         description: str,
         desc_embedding: List[float],  # Pre-computed
         source_chunk_id: str,
-        collection_name: str = "RelationDescriptions",
     ) -> Dict:
         """
         Create relation edge in Graph DB with description in Vector DB.
@@ -227,7 +232,7 @@ class StorageManager:
             "description_embedding": desc_embedding,
         }
         await self.vector_db.async_insert_vectors(
-            data=[vector_data], collection_name=collection_name
+            data=[vector_data], collection_name=self.relation_collection_name
         )
 
         return {"relation_id": relation_id}

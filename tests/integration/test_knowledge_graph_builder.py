@@ -137,28 +137,34 @@ async def test_entity_resolution_duplicates(
 
     # Create sample triples with known duplicates
     sample_data = {
-        "chunks": [
+        "extractions": [
             {
                 "chunk_id": "chunk_1",
-                "entities": [
-                    {
-                        "name": "Market Segmentation",
-                        "type": "MarketingConcept",
-                        "description": "Dividing market into distinct groups.",
-                    }
-                ],
-                "relations": [],
+                "source_hierarchy": "Test > Marketing",
+                "extraction": {
+                    "entities": [
+                        {
+                            "name": "Market Segmentation",
+                            "type": "MarketingConcept",
+                            "description": "Dividing market into distinct groups.",
+                        }
+                    ],
+                    "relationships": [],
+                },
             },
             {
                 "chunk_id": "chunk_2",
-                "entities": [
-                    {
-                        "name": "Segmentation",
-                        "type": "MarketingConcept",
-                        "description": "Process of dividing a market into segments.",
-                    }
-                ],
-                "relations": [],
+                "source_hierarchy": "Test > Marketing",
+                "extraction": {
+                    "entities": [
+                        {
+                            "name": "Segmentation",
+                            "type": "MarketingConcept",
+                            "description": "Process of dividing a market into segments.",
+                        }
+                    ],
+                    "relationships": [],
+                },
             },
         ]
     }
@@ -212,30 +218,35 @@ async def test_entity_resolution_different(milvus_client, falkor_client, embedde
     )
 
     # Create sample with different entities
+
     sample_data = {
-        "chunks": [
+        "extractions": [
             {
                 "chunk_id": "chunk_1",
-                "entities": [
-                    {
-                        "name": "Product Differentiation",
-                        "type": "MarketingStrategy",
-                        "description": "Strategy to distinguish product from competitors.",
-                    }
-                ],
-                "relations": [],
+                "extraction": {
+                    "entities": [
+                        {
+                            "name": "Product Differentiation",
+                            "type": "MarketingStrategy",
+                            "description": "Strategy to distinguish product from competitors.",
+                        }
+                    ],
+                    "relationships": []
+                },
             },
             {
                 "chunk_id": "chunk_2",
-                "entities": [
-                    {
-                        "name": "Market Differentiation",
-                        "type": "MarketingStrategy",
-                        "description": "Differentiating in the marketplace.",
-                    }
-                ],
-                "relations": [],
-            },
+                "extraction": {
+                    "entities": [
+                        {
+                            "name": "Market Differentiation",
+                            "type": "MarketingStrategy",
+                            "description": "Differentiating in the marketplace.",
+                        }
+                    ],
+                    "relationships": []
+                },
+            }
         ]
     }
 
@@ -292,29 +303,31 @@ async def test_dual_storage_consistency(milvus_client, falkor_client, embedder):
 
     # Create simple graph
     sample_data = {
-        "chunks": [
+        "extractions": [
             {
                 "chunk_id": "chunk_1",
-                "entities": [
-                    {
-                        "name": "SEO",
-                        "type": "Technique",
-                        "description": "Search Engine Optimization",
-                    },
-                    {
-                        "name": "Website Traffic",
-                        "type": "Metric",
-                        "description": "Number of visitors to website",
-                    },
-                ],
-                "relations": [
-                    {
-                        "source": "SEO",
-                        "target": "Website Traffic",
-                        "type": "increases",
-                        "description": "SEO techniques increase website traffic",
-                    }
-                ],
+                "extraction": {
+                    "entities": [
+                        {
+                            "name": "SEO",
+                            "type": "Technique",
+                            "description": "Search Engine Optimization",
+                        },
+                        {
+                            "name": "Website Traffic",
+                            "type": "Metric",
+                            "description": "Number of visitors to website",
+                        },
+                    ],
+                    "relationships": [
+                        {
+                            "source": "SEO",
+                            "target": "Website Traffic",
+                            "relation_type": "increases",
+                            "description": "SEO techniques increase website traffic",
+                        }
+                    ],
+                },
             }
         ]
     }

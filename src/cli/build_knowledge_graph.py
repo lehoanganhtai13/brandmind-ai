@@ -7,6 +7,183 @@ from pathlib import Path
 from loguru import logger
 
 
+async def run_document_library(folder_path: Path, resume: bool = False) -> None:
+    """
+    Run Stream A: Document Library indexing.
+
+    Processes chunks.json to embed document chunks and store them in Milvus
+    DocumentChunks collection. Uses Gemini embedder in RETRIEVAL mode for
+    optimized document search.
+
+    Args:
+        folder_path: Path to folder containing chunks.json
+        resume: Whether to resume from previous checkpoint
+    """
+    from config.system_config import SETTINGS
+    from core.knowledge_graph.curator.collection_init import ensure_collection_exists
+    from core.knowledge_graph.curator.document_library import (
+        DOCUMENT_CHUNKS_BM25_CONFIG,
+        DOCUMENT_CHUNKS_SCHEMA,
+        build_document_library,
+    )
+    from shared.database_clients.vector_database.milvus.config import MilvusConfig
+    from shared.database_clients.vector_database.milvus.database import (
+        MilvusVectorDatabase,
+    )
+    from shared.model_clients.embedder.gemini import GeminiEmbedder
+    from shared.model_clients.embedder.gemini.config import (
+        EmbeddingMode,
+        GeminiEmbedderConfig,
+    )
+
+    chunks_file = folder_path / "chunks.json"
+    if not chunks_file.exists():
+        logger.error("chunks.json not found. Run Stage 2 (chunking) first.")
+        return
+
+    # Initialize clients
+    milvus = MilvusVectorDatabase(
+        config=MilvusConfig(
+            host=SETTINGS.MILVUS_HOST,
+            port=SETTINGS.MILVUS_PORT,
+            user="root",
+            password=SETTINGS.MILVUS_ROOT_PASSWORD,
+            run_async=True,
+        )
+    )
+
+    embedder = GeminiEmbedder(
+        config=GeminiEmbedderConfig(
+            api_key=SETTINGS.GEMINI_API_KEY,
+            model="gemini-embedding-001",
+            task_type=EmbeddingMode.RETRIEVAL,
+            output_dimensionality=SETTINGS.EMBEDDING_DIM,
+        )
+    )
+
+    # Get collection name from SETTINGS
+    collection_name = SETTINGS.COLLECTION_DOCUMENT_CHUNKS
+
+    # Ensure collection exists
+    await ensure_collection_exists(
+        milvus, collection_name, DOCUMENT_CHUNKS_SCHEMA, DOCUMENT_CHUNKS_BM25_CONFIG
+    )
+
+    # Run builder
+    progress_path = folder_path / "document_library_progress.json"
+    stats = await build_document_library(
+        chunks_path=chunks_file,
+        vector_db=milvus,
+        embedder=embedder,
+        collection_name=collection_name,
+        progress_path=progress_path,
+    )
+
+    logger.success(f"✅ Document Library: Indexed {stats['upserted']} chunks")
+
+
+async def run_knowledge_graph(folder_path: Path, resume: bool = False) -> None:
+    """
+    Run Stream B: Knowledge Graph indexing.
+
+    Processes triples.json to build knowledge graph with entity resolution,
+    storing entities/relations in FalkorDB and their descriptions in Milvus.
+    Uses Gemini embedder in SEMANTIC mode for entity matching.
+
+    Args:
+        folder_path: Path to folder containing triples.json
+        resume: Whether to resume from previous checkpoint
+    """
+    from config.system_config import SETTINGS
+    from core.knowledge_graph.curator.collection_init import ensure_collection_exists
+    from core.knowledge_graph.curator.collection_schemas import (
+        ENTITY_BM25_CONFIG,
+        ENTITY_DESCRIPTIONS_SCHEMA,
+        RELATION_BM25_CONFIG,
+        RELATION_DESCRIPTIONS_SCHEMA,
+    )
+    from core.knowledge_graph.curator.knowledge_graph_builder import (
+        build_knowledge_graph,
+    )
+    from shared.database_clients.graph_database.falkordb import (
+        FalkorDBClient,
+        FalkorDBConfig,
+    )
+    from shared.database_clients.vector_database.milvus.config import MilvusConfig
+    from shared.database_clients.vector_database.milvus.database import (
+        MilvusVectorDatabase,
+    )
+    from shared.model_clients.embedder.gemini import GeminiEmbedder
+    from shared.model_clients.embedder.gemini.config import (
+        EmbeddingMode,
+        GeminiEmbedderConfig,
+    )
+
+    triples_file = folder_path / "triples.json"
+    if not triples_file.exists():
+        logger.error("triples.json not found. Run Stage 3 (extraction) first.")
+        return
+
+    # Initialize clients
+    milvus = MilvusVectorDatabase(
+        config=MilvusConfig(
+            host=SETTINGS.MILVUS_HOST,
+            port=SETTINGS.MILVUS_PORT,
+            user="root",
+            password=SETTINGS.MILVUS_ROOT_PASSWORD,
+            run_async=True,
+        )
+    )
+
+    falkor = FalkorDBClient(
+        config=FalkorDBConfig(
+            host=SETTINGS.FALKORDB_HOST,
+            port=SETTINGS.FALKORDB_PORT,
+            username=SETTINGS.FALKORDB_USERNAME,
+            password=SETTINGS.FALKORDB_PASSWORD,
+            graph_name=SETTINGS.FALKORDB_GRAPH_NAME,
+        )
+    )
+
+    embedder = GeminiEmbedder(
+        config=GeminiEmbedderConfig(
+            api_key=SETTINGS.GEMINI_API_KEY,
+            model="gemini-embedding-001",
+            task_type=EmbeddingMode.SEMANTIC,
+            output_dimensionality=SETTINGS.EMBEDDING_DIM,
+        )
+    )
+
+    # Get collection names from SETTINGS
+    entity_collection = SETTINGS.COLLECTION_ENTITY_DESCRIPTIONS
+    relation_collection = SETTINGS.COLLECTION_RELATION_DESCRIPTIONS
+
+    # Ensure collections exist
+    await ensure_collection_exists(
+        milvus, entity_collection, ENTITY_DESCRIPTIONS_SCHEMA, ENTITY_BM25_CONFIG
+    )
+    await ensure_collection_exists(
+        milvus, relation_collection, RELATION_DESCRIPTIONS_SCHEMA, RELATION_BM25_CONFIG
+    )
+
+    # Run builder
+    progress_path = folder_path / "kg_build_progress.json"
+    stats = await build_knowledge_graph(
+        triples_path=triples_file,
+        graph_db=falkor,
+        vector_db=milvus,
+        embedder=embedder,
+        entity_collection_name=entity_collection,
+        relation_collection_name=relation_collection,
+        progress_path=progress_path,
+    )
+
+    logger.success(
+        f"✅ Knowledge Graph: {stats['entities_created']} entities, "
+        f"{stats['entities_merged']} merged, {stats['relations_created']} relations"
+    )
+
+
 async def async_main() -> None:
     """Main CLI entry point for knowledge graph building."""
     parser = argparse.ArgumentParser(
@@ -21,9 +198,16 @@ async def async_main() -> None:
     parser.add_argument(
         "--stage",
         type=str,
-        choices=["mapping", "chunking", "extraction", "validate", "all"],
+        choices=["mapping", "chunking", "extraction", "validate", "indexing", "all"],
         default="all",
         help="Which stage to run (default: all)",
+    )
+    parser.add_argument(
+        "--stream",
+        type=str,
+        choices=["document-library", "knowledge-graph", "all"],
+        default="all",
+        help="Which indexing stream to run (Stage 5 only)",
     )
     parser.add_argument(
         "--resume",
@@ -224,6 +408,60 @@ async def async_main() -> None:
                     logger.warning(f"   ⚠️  {warning}")
             else:
                 logger.success("✅ Files are consistent with each other")
+
+    # Stage 5: Indexing
+    if args.stage in ["indexing", "all"]:
+        logger.info("=" * 80)
+        logger.info("STAGE 5: INDEXING (Document Library + Knowledge Graph)")
+        logger.info("=" * 80)
+
+        # Validate prerequisites
+        chunks_file = folder_path / "chunks.json"
+        triples_file = folder_path / "triples.json"
+
+        if not chunks_file.exists() and not triples_file.exists():
+            logger.error(
+                "Neither chunks.json nor triples.json found. "
+                "Run Stage 2 (chunking) and/or Stage 3 (extraction) first."
+            )
+            return
+
+        # Run selected streams based on --stream argument
+        stream = args.stream
+
+        # Stream A: Document Library
+        if stream in ["document-library", "all"]:
+            if chunks_file.exists():
+                logger.info("-" * 40)
+                logger.info("Stream A: Document Library Builder")
+                logger.info("-" * 40)
+                try:
+                    await run_document_library(folder_path, resume=args.resume)
+                except Exception:
+                    logger.exception("Stream A failed")
+                    if stream == "document-library":
+                        raise
+            else:
+                logger.warning("Skipping Stream A: chunks.json not found")
+
+        # Stream B: Knowledge Graph
+        if stream in ["knowledge-graph", "all"]:
+            if triples_file.exists():
+                logger.info("-" * 40)
+                logger.info("Stream B: Knowledge Graph Builder")
+                logger.info("-" * 40)
+                try:
+                    await run_knowledge_graph(folder_path, resume=args.resume)
+                except Exception:
+                    logger.exception("Stream B failed")
+                    if stream == "knowledge-graph":
+                        raise
+            else:
+                logger.warning("Skipping Stream B: triples.json not found")
+
+        logger.info("=" * 80)
+        logger.info("✅ Stage 5 Indexing complete!")
+        logger.info("=" * 80)
 
     logger.info("=" * 80)
     logger.info("✅ Processing complete!")

@@ -44,3 +44,30 @@ def sanitize_relation_type(relation_type: str) -> str:
 
     # Step 4: Strip leading/trailing underscores and convert to uppercase
     return s.strip("_").upper()
+
+
+def sanitize_label(label: str) -> str:
+    """
+    Sanitize and normalize label for use in Cypher query.
+
+    Converts to PascalCase by explicitly capitalizing each word and removing spaces.
+    Only allows alphanumeric characters and underscores.
+
+    Examples:
+        ```
+        >>> sanitize_label("Person")
+        "Person"
+        >>> sanitize_label("Company Type")
+        "CompanyType"
+        >>> sanitize_label("marketing strategy")
+        "MarketingStrategy"
+        >>> sanitize_label("legacy - system")
+        "LegacySystem"
+        ```
+    """
+    if not label:
+        return "Unknown"
+
+    # Replace anything not alphanumeric with space, then split, capitalize, and join
+    clean_str = re.sub(r"[^a-zA-Z0-9]", " ", label)
+    return "".join(word.capitalize() for word in clean_str.split())

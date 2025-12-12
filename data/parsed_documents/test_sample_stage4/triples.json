@@ -1,0 +1,59 @@
+{
+  "total_chunks": 2,
+  "total_entities": 4,
+  "total_relations": 2,
+  "extractions": [
+    {
+      "chunk_id": "test-chunk-001",
+      "source_hierarchy": "Test > Marketing Concepts",
+      "extraction": {
+        "entities": [
+          {
+            "name": "Marketing Strategy",
+            "type": "MarketingConcept",
+            "description": "A plan for creating customer value and building profitable relationships"
+          },
+          {
+            "name": "Customer Value",
+            "type": "MarketingConcept",
+            "description": "The benefits customers gain from products"
+          }
+        ],
+        "relationships": [
+          {
+            "source": "Marketing Strategy",
+            "target": "Customer Value",
+            "relation_type": "creates",
+            "description": "Marketing strategy creates customer value"
+          }
+        ]
+      }
+    },
+    {
+      "chunk_id": "test-chunk-002",
+      "source_hierarchy": "Test > Marketing Strategy",
+      "extraction": {
+        "entities": [
+          {
+            "name": "Product Differentiation",
+            "type": "MarketingStrategy",
+            "description": "A strategy to stand out in competitive markets"
+          },
+          {
+            "name": "Market Segmentation",
+            "type": "MarketingStrategy",
+            "description": "Dividing a market into distinct buyer groups"
+          }
+        ],
+        "relationships": [
+          {
+            "source": "Market Segmentation",
+            "target": "Product Differentiation",
+            "relation_type": "enables",
+            "description": "Segmentation enables better differentiation"
+          }
+        ]
+      }
+    }
+  ]
+}

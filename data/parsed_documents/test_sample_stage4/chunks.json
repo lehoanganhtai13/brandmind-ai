@@ -1,0 +1,30 @@
+{
+  "chunks": [
+    {
+      "id": "test-chunk-001",
+      "content": "Marketing strategy involves creating customer value and building profitable customer relationships. Companies must design a customer value-driven marketing strategy that guides the marketing mix decisions. The marketing concept holds that achieving organizational goals depends on knowing the needs and wants of target markets.",
+      "metadata": {
+        "source": "Part 1: Defining Marketing > Chapter 1: Marketing Concepts",
+        "original_document": "Marketing Principles Test Sample",
+        "author": "Test Author",
+        "pages": ["page_test_1.md"],
+        "section_summary": "Introduction to marketing strategy",
+        "word_count": 60
+      }
+    },
+    {
+      "id": "test-chunk-002",
+      "content": "Product differentiation helps companies stand out in competitive markets. Market segmentation involves dividing a market into distinct groups of buyers with different needs and characteristics.",
+      "metadata": {
+        "source": "Part 1: Defining Marketing > Chapter 1: Marketing Concepts", 
+        "original_document": "Marketing Principles Test Sample",
+        "author": "Test Author",
+        "pages": ["page_test_2.md"],
+        "section_summary": "Product differentiation",
+        "word_count": 30
+      }
+    }
+  ],
+  "total_chunks": 2,
+  "avg_chunk_size": 45
+}

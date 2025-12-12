@@ -85,25 +85,35 @@ class GeminiEmbedder(BaseEmbedder):
     def get_text_embeddings(
         self, texts: List[str], **kwargs: Any
     ) -> List[DenseEmbedding]:
-        """Batch embedding for multiple texts."""
-        result = self.client.models.embed_content(
-            model=self._config.model_name,
-            contents=texts,  # type: ignore[arg-type]
-            config=types.EmbedContentConfig(
-                task_type=self._get_task_type_for_text(),
-                output_dimensionality=self._config.output_dimensionality,
-            ),
-        )
-        if result.embeddings is None:
-            raise ValueError("No embeddings returned from Gemini API")
+        """
+        Batch embedding for multiple texts.
 
-        embeddings = []
-        for emb in result.embeddings:
-            if emb.values is None:
-                raise ValueError("Embedding values are None")
-            embeddings.append(self._normalize_embedding(list(emb.values)))
+        Handles chunking to respect Gemini's limit of 100 texts per request.
+        """
+        BATCH_SIZE = 100
+        all_embeddings: List[DenseEmbedding] = []
 
-        return embeddings
+        for i in range(0, len(texts), BATCH_SIZE):
+            batch_texts = texts[i : i + BATCH_SIZE]
+
+            result = self.client.models.embed_content(
+                model=self._config.model_name,
+                contents=batch_texts,  # type: ignore[arg-type]
+                config=types.EmbedContentConfig(
+                    task_type=self._get_task_type_for_text(),
+                    output_dimensionality=self._config.output_dimensionality,
+                ),
+            )
+
+            if result.embeddings is None:
+                raise ValueError("No embeddings returned from Gemini API")
+
+            for emb in result.embeddings:
+                if emb.values is None:
+                    raise ValueError("Embedding values are None")
+                all_embeddings.append(self._normalize_embedding(list(emb.values)))
+
+        return all_embeddings
 
     def get_query_embedding(self, query: str, **kwargs: Any) -> DenseEmbedding:
         """Get embedding for search query."""

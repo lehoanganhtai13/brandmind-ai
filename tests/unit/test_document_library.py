@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from core.knowledge_graph.curator.document_library import build_document_library, DOCUMENT_CHUNKS_SCHEMA, BM25_FUNCTION_CONFIG
+from core.knowledge_graph.curator.document_library import build_document_library, DOCUMENT_CHUNKS_SCHEMA, DOCUMENT_CHUNKS_BM25_CONFIG
 from shared.database_clients.vector_database.base_vector_database import BaseVectorDatabase
 from shared.model_clients.embedder.base_embedder import BaseEmbedder
 
@@ -56,7 +56,7 @@ async def test_build_document_library_creation(mock_vector_db, mock_embedder, ch
     mock_vector_db.async_create_collection.assert_called_with(
         collection_name="TestCollection",
         collection_structure=DOCUMENT_CHUNKS_SCHEMA,
-        bm25_function_config=BM25_FUNCTION_CONFIG
+        bm25_function_config=DOCUMENT_CHUNKS_BM25_CONFIG
     )
 
 @pytest.mark.asyncio
