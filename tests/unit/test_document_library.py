@@ -30,8 +30,8 @@ def chunks_file(tmp_path):
     file_path = tmp_path / "chunks.json"
     data = {
         "chunks": [
-            {"id": "1", "content": "Chunk 1", "metadata": {"source": "doc1"}},
-            {"id": "2", "content": "Chunk 2", "metadata": {"source": "doc1"}},
+            {"chunk_id": "1", "content": "Chunk 1", "metadata": {"source": "doc1"}},
+            {"chunk_id": "2", "content": "Chunk 2", "metadata": {"source": "doc1"}},
         ]
     }
     with open(file_path, "w") as f:
