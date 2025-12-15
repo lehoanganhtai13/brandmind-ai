@@ -313,7 +313,7 @@ class LocalSearcher:
                                 all_nodes[neighbor_id] = neighbor_node
                                 next_frontier.append(neighbor_node)
 
-                            # Store edge WITH properties
+                            # Store edge WITH properties including description
                             source_chunks = (
                                 rel_props.get("source_chunks") if rel_props else None
                             )
@@ -321,6 +321,11 @@ class LocalSearcher:
                                 source_id=node.id,
                                 target_id=neighbor_id,
                                 relation_type=rel_type or "RELATED_TO",
+                                description=(
+                                    rel_props.get("description", "")
+                                    if rel_props
+                                    else ""
+                                ),
                                 vector_db_ref_id=(
                                     rel_props.get("vector_db_ref_id")
                                     if rel_props

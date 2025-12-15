@@ -74,6 +74,9 @@ class GraphEdge(BaseModel):
     source_id: str = Field(..., description="Source node ID")
     target_id: str = Field(..., description="Target node ID")
     relation_type: str = Field(..., description="Relation type (e.g., RELATES_TO)")
+    description: str = Field(
+        default="", description="Relation description text from Graph DB"
+    )
     vector_db_ref_id: Optional[str] = Field(
         default=None, description="Reference ID in RelationDescriptions collection"
     )
