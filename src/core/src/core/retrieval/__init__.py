@@ -7,6 +7,25 @@ This module provides search tools for the agent to query:
 """
 
 from core.retrieval.document_retriever import DocumentRetriever
-from core.retrieval.models import DocumentChunkResult
+from core.retrieval.models import (
+    DocumentChunkResult,
+    GlobalRelation,
+    GraphEdge,
+    GraphNode,
+    SeedNode,
+    SourceMetadata,
+    SubgraphData,
+    VerbalizedFact,
+)
 
-__all__ = ["DocumentChunkResult", "DocumentRetriever"]
+__all__ = [
+    "DocumentChunkResult",
+    "DocumentRetriever",
+    "SeedNode",
+    "GraphNode",
+    "GraphEdge",
+    "SubgraphData",
+    "GlobalRelation",
+    "SourceMetadata",
+    "VerbalizedFact",
+]

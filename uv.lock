@@ -343,7 +343,7 @@ source = { editable = "." }
 
 [package.dev-dependencies]
 chatbot = [
-    { name = "core" },
+    { name = "core", extra = ["retrieval"] },
     { name = "shared" },
 ]
 dev = [
@@ -368,7 +368,7 @@ indexer = [
 
 [package.metadata.requires-dev]
 chatbot = [
-    { name = "core", editable = "src/core" },
+    { name = "core", extras = ["retrieval"], editable = "src/core" },
     { name = "shared", editable = "src/shared" },
 ]
 dev = [
@@ -619,16 +619,20 @@ knowledge-graph = [
     { name = "langchain-text-splitters" },
     { name = "tenacity" },
 ]
+retrieval = [
+    { name = "networkx" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'document-processing'", specifier = ">=4.14.2" },
     { name = "langchain-text-splitters", marker = "extra == 'knowledge-graph'", specifier = ">=1.0.0" },
     { name = "llama-cloud-services", marker = "extra == 'document-processing'", specifier = ">=0.6.79" },
+    { name = "networkx", marker = "extra == 'retrieval'", specifier = ">=3.6" },
     { name = "shared", editable = "src/shared" },
     { name = "tenacity", marker = "extra == 'knowledge-graph'", specifier = ">=9.1.2" },
 ]
-provides-extras = ["document-processing", "knowledge-graph"]
+provides-extras = ["document-processing", "knowledge-graph", "retrieval"]
 
 [[package]]
 name = "crawl4ai"

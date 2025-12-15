@@ -20,7 +20,10 @@ sources = ["src"]
 members = ["src/shared", "src/core"]
 
 [dependency-groups]
-chatbot = ["shared", "core"]
+chatbot = [
+    "shared",
+    "core[retrieval]",
+]
 indexer = [
     "shared",
     "core[document_processing]",

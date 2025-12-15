@@ -505,15 +505,24 @@ class SubgraphData(BaseModel):
 
 class GlobalRelation(BaseModel):
     """
-    Relation found via RelationDescriptions search.
+    Relation found via RelationDescriptions search with enriched entity data.
     
-    Result from global semantic search on relation descriptions.
+    Contains complete source and target entity information (not just IDs)
+    to enable meaningful verbalization and context assembly. Also includes
+    source_chunk for provenance tracking back to original documents.
     """
     id: str = Field(..., description="Relation UUID in Vector DB")
-    source_entity_id: str = Field(..., description="Source entity UUID")
-    target_entity_id: str = Field(..., description="Target entity UUID")
+    source_entity: GraphNode = Field(
+        ..., description="Source entity with full metadata"
+    )
+    target_entity: GraphNode = Field(
+        ..., description="Target entity with full metadata"
+    )
     relation_type: str = Field(..., description="Relation type")
     description: str = Field(..., description="Relation description text")
+    source_chunk: Optional[str] = Field(
+        default=None, description="Source chunk ID for provenance tracking"
+    )
     score: float = Field(default=0.0, description="Search relevance score")
 
 
@@ -695,22 +704,49 @@ class EdgeScorer:
             collection_name=self.collection_name,
         )
         
-        # Calculate cosine similarity
-        scores = {}
-        query_np = np.array(query_embedding)
-        query_norm = np.linalg.norm(query_np)
+        if not results:
+            return {}
+        
+        # Prepare data for vectorized computation
+        query_np = np.array(query_embedding, dtype=np.float32)
+        
+        valid_ids = []
+        embeddings_list = []
         
         for result in results:
             rel_id = result.get("id")
             rel_embedding = result.get("description_embedding")
             
             if rel_id and rel_embedding:
-                rel_np = np.array(rel_embedding)
-                rel_norm = np.linalg.norm(rel_np)
-                
-                if query_norm > 0 and rel_norm > 0:
-                    similarity = float(np.dot(query_np, rel_np) / (query_norm * rel_norm))
-                    scores[rel_id] = similarity
+                valid_ids.append(rel_id)
+                embeddings_list.append(rel_embedding)
+        
+        if not embeddings_list:
+            return {}
+        
+        # Vectorized cosine similarity computation
+        # Shape: (n_relations, embedding_dim)
+        rel_matrix = np.array(embeddings_list, dtype=np.float32)
+        
+        # Compute norms
+        query_norm = np.linalg.norm(query_np)
+        rel_norms = np.linalg.norm(rel_matrix, axis=1)
+        
+        # Avoid division by zero
+        if query_norm == 0:
+            return {rel_id: 0.0 for rel_id in valid_ids}
+        
+        # Vectorized dot product: (n_relations,)
+        dot_products = np.dot(rel_matrix, query_np)
+        
+        # Vectorized cosine similarity
+        similarities = dot_products / (rel_norms * query_norm)
+        
+        # Handle any NaN or inf values
+        similarities = np.nan_to_num(similarities, nan=0.0, posinf=0.0, neginf=0.0)
+        
+        # Build result dictionary
+        scores = {rel_id: float(sim) for rel_id, sim in zip(valid_ids, similarities)}
         
         return scores
 ```
@@ -722,14 +758,17 @@ This is the **core algorithm** - using proper PPR on a local sub-graph with sema
 ```python
 # src/core/src/core/retrieval/local_search.py
 
+import asyncio
 import networkx as nx
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
 from loguru import logger
 
 from shared.database_clients.graph_database.base_graph_database import BaseGraphDatabase
 from shared.database_clients.graph_database.base_class import RelationDirection
 from shared.database_clients.vector_database.base_vector_database import BaseVectorDatabase
+from shared.database_clients.vector_database.base_class import EmbeddingData, EmbeddingType
+from shared.database_clients.vector_database.milvus.utils import MetricType, IndexType
 from shared.model_clients.embedder.base_embedder import BaseEmbedder
 from core.retrieval.edge_scorer import EdgeScorer
 from core.retrieval.models import GraphNode, GraphEdge, SeedNode, SubgraphData
@@ -761,22 +800,11 @@ class SemanticPath(BaseModel):
 
 class LocalSearcher:
     """
-    Local semantic search using Personalized PageRank with Dijkstra traceback.
+    Local semantic search for entity-linked graph traversal.
     
-    This searcher implements a multi-step algorithm:
-    1. Extract K-hop sub-graph around seed nodes using async_get_neighbors
-    2. Build a NetworkX DiGraph with semantic similarity as edge weights
-    3. Run nx.pagerank() with personalization on seed nodes to find important destinations
-    4. Use Dijkstra with inverted weights to trace optimal paths back to seeds
-    
-    This approach:
-    - Detects "convergence hubs" where multiple weak paths meet (vs greedy pruning)
-    - Avoids false negatives from early pruning in multi-hop queries
-    - Provides coherent paths for LLM context (not just isolated nodes)
-    
-    Example:
-        >>> searcher = LocalSearcher(graph_db, vector_db, embedder)
-        >>> paths = await searcher.search(seed_nodes, query, max_hops=2, top_k=5)
+    Discovers related concepts by finding entity matches from queries,
+    then exploring their graph neighborhood to identify semantically
+    important destinations. Provides coherent paths for LLM context.
     """
     
     DAMPING_FACTOR = 0.85  # Standard PPR damping
@@ -793,40 +821,50 @@ class LocalSearcher:
         
         Args:
             graph_db: Graph database client for sub-graph extraction
-            vector_db: Vector database client for edge scoring
+            vector_db: Vector database client for entity and edge scoring
             embedder: Embedder client for query embedding
         """
         self.graph_db = graph_db
+        self.vector_db = vector_db
         self.edge_scorer = EdgeScorer(vector_db)
         self.embedder = embedder
     
     async def search(
         self,
-        seed_nodes: List[SeedNode],
+        local_queries: List[str],
         query: str,
+        max_seeds: int = 10,
         max_hops: int = 2,
         top_k_destinations: int = 5,
         max_neighbors_per_node: int = 50
     ) -> List[SemanticPath]:
         """
-        Execute local semantic search with PPR ranking.
+        Execute local semantic search from entity-focused queries.
         
         Args:
-            seed_nodes: List of SeedNode objects with graph_id, type, name
-            query: User query for semantic weighting
-            max_hops: Depth of sub-graph extraction (default: 2)
-            top_k_destinations: Number of top PPR nodes to trace paths to
-            max_neighbors_per_node: Limit neighbors to prevent super-node explosion
+            local_queries: Entity-focused sub-queries for seed node finding
+            query: Original user query for semantic weighting
+            max_seeds: Maximum number of seed entities to start from
+            max_hops: Depth of graph exploration
+            top_k_destinations: Number of destination paths to return
+            max_neighbors_per_node: Limit to prevent super-node explosion
         
         Returns:
-            List of SemanticPath objects containing complete paths with context
+            List of SemanticPath objects with complete path information
         """
+        if not local_queries:
+            return []
+        
+        # Find seed nodes from local queries
+        seed_nodes = await self._find_seed_nodes(local_queries, max_seeds)
+        
         if not seed_nodes:
+            logger.info("No seed nodes found for local search")
             return []
         
         logger.info(f"Starting local search with {len(seed_nodes)} seed nodes")
         
-        # Step 1: Extract K-hop sub-graph
+        # Extract K-hop sub-graph
         subgraph_data = await self._extract_subgraph(
             seed_nodes, max_hops, max_neighbors_per_node
         )
@@ -862,6 +900,68 @@ class LocalSearcher:
         
         return paths
     
+    async def _find_seed_nodes(
+        self,
+        local_queries: List[str],
+        max_seeds: int
+    ) -> List[SeedNode]:
+        """
+        Find seed entities from local queries via EntityDescriptions search.
+        """
+        async def search_entities(lq: str) -> List[Dict]:
+            query_embedding = await self.embedder.aget_query_embedding(lq)
+            
+            embedding_data = [
+                EmbeddingData(
+                    embedding_type=EmbeddingType.DENSE,
+                    embeddings=query_embedding,
+                    field_name="name_embedding",
+                ),
+                EmbeddingData(
+                    embedding_type=EmbeddingType.SPARSE,
+                    query=lq,
+                    field_name="name_sparse",
+                ),
+            ]
+            
+            results = await self.vector_db.async_hybrid_search_vectors(
+                embedding_data=embedding_data,
+                output_fields=[
+                    "id", "graph_id", "entity_name", "entity_type", "description"
+                ],
+                top_k=3,
+                collection_name="EntityDescriptions",
+                metric_type=MetricType.COSINE,
+                index_type=IndexType.HNSW,
+            )
+            return results
+        
+        results_per_query = await asyncio.gather(
+            *[search_entities(q) for q in local_queries]
+        )
+        
+        all_seeds = []
+        for results in results_per_query:
+            all_seeds.extend(results)
+        
+        seen = set()
+        unique: List[SeedNode] = []
+        for s in all_seeds:
+            if s["id"] not in seen:
+                seen.add(s["id"])
+                unique.append(
+                    SeedNode(
+                        id=s.get("id", ""),
+                        graph_id=s.get("graph_id", ""),
+                        name=s.get("entity_name", ""),
+                        type=s.get("entity_type", ""),
+                        description=s.get("description", ""),
+                        score=s.get("_score", 0.0),
+                    )
+                )
+        
+        return unique[:max_seeds]
+    
     async def _extract_subgraph(
         self,
         seed_nodes: List[SeedNode],
@@ -869,19 +969,21 @@ class LocalSearcher:
         max_neighbors: int
     ) -> SubgraphData:
         """
-        Extract K-hop neighborhood sub-graph using async_get_neighbors.
-        
-        Uses BFS expansion from seed nodes, calling the graph database's
-        get_neighbors method at each level.
-        
-        Returns:
-            SubgraphData with nodes and edges for PPR computation
+        Extract K-hop neighborhood sub-graph from seed nodes.
+          
+          Args:
+              seed_nodes: Starting entities for traversal
+              max_hops: Maximum depth of traversal
+              max_neighbors: Limit neighbors per node
+          
+          Returns:
+            SubgraphData with nodes and edges
         """
         all_nodes: Dict[str, GraphNode] = {}
         all_edges: List[GraphEdge] = []
         visited_ids: set = set()
         
-        # Initialize with seed nodes (convert SeedNode to GraphNode)
+        # Initialize with seed nodes
         frontier: List[GraphNode] = []
         for seed in seed_nodes:
             node = GraphNode(
@@ -949,7 +1051,16 @@ class LocalSearcher:
         query_embedding: List[float],
         edges: List[GraphEdge]
     ) -> Dict[str, float]:
-        """Batch score all edges by semantic similarity."""
+        """
+        Batch score all edges by semantic similarity.
+        
+        Args:
+            query_embedding: Embedded query vector
+            edges: All edges in the sub-graph
+        
+        Returns:
+            Dictionary mapping vector_db_ref_id to similarity score
+        """
         ref_ids = [e.vector_db_ref_id for e in edges if e.vector_db_ref_id]
         ref_ids = list(set(ref_ids))  # Deduplicate
         
@@ -963,7 +1074,16 @@ class LocalSearcher:
         subgraph_data: SubgraphData,
         edge_scores: Dict[str, float]
     ) -> nx.DiGraph:
-        """Build NetworkX DiGraph with semantic weights."""
+        """
+        Build NetworkX DiGraph with semantic weights.
+        
+        Args:
+            subgraph_data: Extracted sub-graph with nodes and edges
+            edge_scores: Semantic similarity scores for edges
+        
+        Returns:
+            NetworkX DiGraph with weighted edges for PPR and Dijkstra
+        """
         G = nx.DiGraph()
         
         # Add nodes with metadata (from GraphNode models)
@@ -990,7 +1110,16 @@ class LocalSearcher:
         return G
     
     def _run_ppr(self, G: nx.DiGraph, seed_ids: List[str]) -> Dict[str, float]:
-        """Run Personalized PageRank with seed personalization."""
+        """
+        Run Personalized PageRank with seed personalization.
+        
+        Args:
+            G: NetworkX DiGraph with semantic weights
+            seed_ids: Node IDs of seed entities
+        
+        Returns:
+            Dictionary mapping node_id to PPR score
+        """
         personalization = {node: 0.0 for node in G.nodes()}
         valid_seeds = [s for s in seed_ids if s in G]
         
@@ -1019,7 +1148,17 @@ class LocalSearcher:
         seed_ids: List[str],
         top_k: int
     ) -> List[tuple]:
-        """Get top-K PPR nodes excluding seeds."""
+        """
+        Get top-K PPR nodes excluding seeds.
+        
+        Args:
+            ppr_scores: PPR scores for all nodes
+            seed_ids: Seed node IDs to exclude
+            top_k: Number of destinations to return
+        
+        Returns:
+            List of (node_id, score) tuples sorted by score descending
+        """
         seed_set = set(seed_ids)
         destinations = [
             (node_id, score)
@@ -1040,8 +1179,15 @@ class LocalSearcher:
         """
         Trace semantic paths from seeds to destinations using Dijkstra.
         
-        Uses inverted weights: High similarity = Low distance,
-        ensuring the most semantically coherent path is found.
+        Args:
+            G: NetworkX DiGraph with dijkstra_weight edges
+            seed_ids: List of seed node IDs
+            top_destinations: List of (dest_id, ppr_score) tuples
+            subgraph_data: Original sub-graph data for node metadata
+            edge_scores: Edge semantic scores for path scoring
+        
+        Returns:
+            List of SemanticPath objects with complete path information
         """
         paths = []
         
@@ -1085,7 +1231,21 @@ class LocalSearcher:
         subgraph_data: SubgraphData,
         edge_scores: Dict[str, float]
     ) -> Optional[SemanticPath]:
-        """Build SemanticPath object from path node list."""
+        """
+        Build SemanticPath object from path node list.
+        
+        Args:
+            G: NetworkX DiGraph with edge metadata
+            path_nodes: List of node IDs in path order
+            seed_id: Starting seed node ID
+            dest_id: Destination node ID
+            ppr_score: PPR score of destination
+            subgraph_data: Sub-graph data for node metadata lookup
+            edge_scores: Edge semantic scores
+        
+        Returns:
+            SemanticPath object with complete path information
+        """
         # Get nodes from SubgraphData (default to minimal GraphNode if not found)
         nodes_data = subgraph_data.nodes
         source_node = nodes_data.get(seed_id) or GraphNode(id=seed_id, type="Unknown")
@@ -1133,36 +1293,31 @@ class LocalSearcher:
 ```python
 # src/core/src/core/retrieval/global_search.py
 
-from typing import List
+from typing import List, Dict, Optional
+from loguru import logger
+import asyncio
 from shared.database_clients.vector_database.base_vector_database import BaseVectorDatabase
 from shared.database_clients.vector_database.base_class import EmbeddingData, EmbeddingType
 from shared.database_clients.vector_database.milvus.utils import MetricType, IndexType
+from shared.database_clients.graph_database.base_graph_database import BaseGraphDatabase
 from shared.model_clients.embedder.base_embedder import BaseEmbedder
-from core.retrieval.models import GlobalRelation
+from core.retrieval.models import GlobalRelation, GraphNode
 
 
 class GlobalSearcher:
     """
     Global semantic search via relation descriptions.
     
-    Searches the RelationDescriptions collection in Milvus to find
-    relationships that are semantically similar to the query, regardless
-    of graph structure. This complements local search by finding
-    relevant concepts that may not be directly connected to seed nodes.
-    
-    Features:
-        - Hybrid search (dense + BM25) on relation descriptions
-        - Deduplication of results across multiple sub-queries
-        - Extraction of connected entity IDs for context
-    
-    Example:
-        >>> searcher = GlobalSearcher(vector_db, embedder)
-        >>> relations = await searcher.search(["pricing strategy", "value proposition"])
+    Searches the RelationDescriptions collection to find relationships
+    that are semantically similar to the query, regardless of graph
+    structure. Complements local search by finding relevant concepts
+    that may not be directly connected to seed nodes.
     """
     
     def __init__(
         self,
         vector_db: BaseVectorDatabase,
+        graph_db: BaseGraphDatabase,
         embedder: BaseEmbedder,
         collection_name: str = "RelationDescriptions"
     ):
@@ -1171,10 +1326,12 @@ class GlobalSearcher:
         
         Args:
             vector_db: Vector database client for hybrid search
+            graph_db: Graph database client for entity enrichment
             embedder: Embedder client for query embedding
-            collection_name: Collection containing relation description embeddings
+            collection_name: Collection containing relation embeddings
         """
         self.vector_db = vector_db
+        self.graph_db = graph_db
         self.embedder = embedder
         self.collection_name = collection_name
     
@@ -1191,11 +1348,13 @@ class GlobalSearcher:
             top_k_per_query: Number of results per query
         
         Returns:
-            List of unique GlobalRelation objects with entity connections
+            List of unique GlobalRelation objects with enriched entity data
         """
-        all_results = []
+        if not queries:
+            return []
         
-        for query in queries:
+        # Search all queries in parallel
+        async def search_single_query(query: str) -> List[Dict]:
             query_embedding = await self.embedder.aget_query_embedding(query)
             
             embedding_data = [
@@ -1222,7 +1381,16 @@ class GlobalSearcher:
                 metric_type=MetricType.COSINE,
                 index_type=IndexType.HNSW,
             )
-            
+            return results
+        
+        # Execute all queries in parallel
+        results_per_query = await asyncio.gather(
+            *[search_single_query(q) for q in queries]
+        )
+        
+        # Flatten results
+        all_results = []
+        for results in results_per_query:
             all_results.extend(results)
         
         # Deduplicate by relation ID
@@ -1231,18 +1399,148 @@ class GlobalSearcher:
         for r in all_results:
             if r["id"] not in seen_ids:
                 seen_ids.add(r["id"])
-                unique_results.append(
-                    GlobalRelation(
-                        id=r.get("id", ""),
-                        source_entity_id=r.get("source_entity_id", ""),
-                        target_entity_id=r.get("target_entity_id", ""),
-                        relation_type=r.get("relation_type", ""),
-                        description=r.get("description", ""),
-                        score=r.get("_score", 0.0),
-                    )
-                )
+                unique_results.append(r)
         
-        return unique_results
+        # Enrich with entity data and source_chunk from GraphDB
+        enriched_relations = await self._enrich_relations(unique_results)
+        
+        return enriched_relations
+    
+    async def _enrich_relations(
+        self,
+        raw_results: List[Dict]
+    ) -> List[GlobalRelation]:
+        """
+        Enrich relation results with entity metadata from graph database.
+        
+        Fetches source and target entity nodes from GraphDB to get
+        complete entity information (name, type, properties). Also
+        retrieves source_chunk from the relationship edge properties.
+        
+        Args:
+            raw_results: Raw search results from vector database
+        
+        Returns:
+            List of GlobalRelation objects with full entity data
+        """
+        # Collect unique entity IDs to fetch
+        entity_ids = set()
+        for r in raw_results:
+            entity_ids.add(r.get("source_entity_id", ""))
+            entity_ids.add(r.get("target_entity_id", ""))
+        entity_ids.discard("")  # Remove empty strings
+        
+        # Batch fetch entity data from VectorDB EntityDescriptions
+        entity_cache: Dict[str, GraphNode] = {}
+        for entity_id in entity_ids:
+            try:
+                node_data = await self._fetch_entity_by_id(entity_id)
+                if node_data:
+                    entity_cache[entity_id] = node_data
+            except Exception as e:
+                logger.warning(f"Failed to fetch entity {entity_id}: {e}")
+        
+        # Build enriched GlobalRelation objects
+        enriched = []
+        for r in raw_results:
+            source_id = r.get("source_entity_id", "")
+            target_id = r.get("target_entity_id", "")
+            
+            # Get entity data from cache or create minimal node
+            source_entity = entity_cache.get(source_id) or GraphNode(
+                id=source_id, type="Unknown", name=source_id
+            )
+            target_entity = entity_cache.get(target_id) or GraphNode(
+                id=target_id, type="Unknown", name=target_id
+            )
+            
+            # Fetch source_chunk from graph edge properties
+            source_chunk = await self._get_relation_source_chunk(
+                source_id, target_id, r.get("relation_type", "")
+            )
+            
+            enriched.append(
+                GlobalRelation(
+                    id=r.get("id", ""),
+                    source_entity=source_entity,
+                    target_entity=target_entity,
+                    relation_type=r.get("relation_type", ""),
+                    description=r.get("description", ""),
+                    source_chunk=source_chunk,
+                    score=r.get("_score", 0.0),
+                )
+            )
+        
+        return enriched
+    
+    async def _fetch_entity_by_id(self, entity_id: str) -> Optional[GraphNode]:
+        """
+        Fetch entity node from EntityDescriptions collection by ID.
+        
+        Args:
+            entity_id: Entity UUID
+        
+        Returns:
+            GraphNode with entity metadata, or None if not found
+        """
+        try:
+            entity_data = await self.vector_db.async_get_items(
+                ids=[entity_id],
+                collection_name="EntityDescriptions",
+            )
+            
+            if entity_data:
+                entity = entity_data[0]
+                return GraphNode(
+                    id=entity_id,
+                    type=entity.get("entity_type", "Unknown"),
+                    name=entity.get("entity_name", ""),
+                    properties={
+                        "description": entity.get("description", ""),
+                    },
+                )
+        except Exception as e:
+            logger.debug(f"Could not fetch entity from VectorDB: {e}")
+        
+        return None
+    
+    async def _get_relation_source_chunk(
+        self,
+        source_id: str,
+        target_id: str,
+        relation_type: str
+    ) -> Optional[str]:
+        """
+        Get source_chunk from relationship edge in graph database.
+        
+        Args:
+            source_id: Source entity ID
+            target_id: Target entity ID
+            relation_type: Type of relationship
+        
+        Returns:
+            Source chunk ID if found, None otherwise
+        """
+        try:
+            query = f"""
+                MATCH (s)-[r:{relation_type}]->(t)
+                WHERE s.id = $source_id AND t.id = $target_id
+                RETURN r.source_chunk
+                LIMIT 1
+            """
+            result = await self.graph_db.async_execute_query(
+                query, {"source_id": source_id, "target_id": target_id}
+            )
+            
+            # FalkorDB returns result with result_set attribute
+            # result_set is List[List] where each row is a list of column values
+            if result and hasattr(result, "result_set") and result.result_set:
+                source_chunk = result.result_set[0][0]
+                return source_chunk if source_chunk else None
+        except Exception as e:
+            logger.debug(f"Could not fetch source_chunk: {e}")
+        
+        return None
 ```
 
 ---
