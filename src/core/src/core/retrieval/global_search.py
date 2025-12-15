@@ -16,6 +16,9 @@ from core.retrieval.models import GlobalRelation, GraphNode
 from shared.database_clients.graph_database.base_graph_database import (
     BaseGraphDatabase,
 )
+from shared.database_clients.graph_database.falkordb.utils import (
+    sanitize_relation_type,
+)
 from shared.database_clients.vector_database.base_class import (
     EmbeddingData,
     EmbeddingType,
@@ -249,9 +252,13 @@ class GlobalSearcher:
             Source chunk ID if found, None otherwise
         """
         try:
+            # Sanitize relation type to match how it was inserted
+            # (e.g., "must gain" -> "MUST_GAIN")
+            sanitized_rel_type = sanitize_relation_type(relation_type)
+
             # Query the edge properties from GraphDB
             query = f"""
-                MATCH (s)-[r:{relation_type}]->(t)
+                MATCH (s)-[r:{sanitized_rel_type}]->(t)
                 WHERE s.id = $source_id AND t.id = $target_id
                 RETURN r.source_chunk
                 LIMIT 1

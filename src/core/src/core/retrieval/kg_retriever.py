@@ -405,7 +405,8 @@ class KGRetriever:
             if f.source_metadata:
                 for src in f.source_metadata:
                     output.append(
-                        f"  * 📚 Source: {src.source} | Document: {src.original_document}"
+                        f"  * 📚 Source: {src.source} | "
+                        f"Document: {src.original_document}"
                     )
 
         return "\n".join(output)

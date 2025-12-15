@@ -41,6 +41,8 @@ dev = [
  "types-requests>=2.32.4.20250913",
  "types-tqdm>=4.67.0.20250809",
  "detect-secrets>=1.5.0",
+ "jupyter>=1.1.1",
+ "notebook>=7.5.0",
 ]
 
 [tool.uv.sources]
