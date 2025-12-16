@@ -2,10 +2,17 @@
 Baseline Comparison: Deep Agent vs RAG Basic
 
 Compare Deep Agent (using KG + Doc tools) vs RAG Basic (hybrid search + LLM).
+
+Usage:
+    python baseline_comparison.py [basic|extended]
+    
+    basic    - Run 12 questions (default)
+    extended - Run 35 questions
 """
 
 import asyncio
 import json
+import sys
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -14,11 +21,34 @@ from config.system_config import SETTINGS
 from shared.agent_tools.retrieval import search_document_library, search_knowledge_graph
 from shared.model_clients.llm.google import GoogleAIClientLLM, GoogleAIClientLLMConfig
 
-# Load test questions from external file
-from test_questions import TEST_QUESTIONS
+# Load test questions from external files
+from test_questions import TEST_QUESTIONS as BASIC_QUESTIONS
+from test_questions_extended import EXTENDED_TEST_QUESTIONS
+
+# Determine which question set to use
+QUESTION_SET = "basic"  # default
+if len(sys.argv) > 1:
+    if sys.argv[1] in ["extended", "ext", "35"]:
+        QUESTION_SET = "extended"
+    elif sys.argv[1] in ["basic", "12"]:
+        QUESTION_SET = "basic"
+    else:
+        print(f"Unknown question set: {sys.argv[1]}")
+        print("Usage: python baseline_comparison.py [basic|extended]")
+        sys.exit(1)
+
+# Set the active questions
+if QUESTION_SET == "extended":
+    TEST_QUESTIONS = EXTENDED_TEST_QUESTIONS
+    RESULT_FILENAME = "baseline_comparison_extended_results.json"
+    print("📋 Using EXTENDED question set (35 questions)")
+else:
+    TEST_QUESTIONS = BASIC_QUESTIONS
+    RESULT_FILENAME = "baseline_comparison_basic_results.json"
+    print("📋 Using BASIC question set (12 questions)")
 
 
-# Deep Agent Setup (WITHOUT langchain - direct tool calls)
+# Deep Agent Setup - Proper agentic approach
 DEEP_AGENT_INSTRUCTION = """# ROLE & OBJECTIVE
 You are **The Deep Marketing Analyst**, a specialized AI consultant for marketing strategy and theory.
 Your mission is to answer user inquiries by synthesizing verified information from two internal databases: a **Knowledge Graph** (Cognitive Map) and a **Document Library** (Evidence Archive).
@@ -72,56 +102,120 @@ Construct your final answer by weaving together the **Logic** (from KG) and the 
     * *KG Query:* Abstract & Relational (e.g., "Drivers of Customer Loyalty").
     * *Doc Query:* Specific & Lexical (e.g., "Customer Loyalty program case studies").
 3.  **Be Transparent:** If you cannot find information in either tool, admit it. Do not hallucinate marketing theories.
-
-# TOOL CALLING FORMAT
-When you need to call tools, use this format:
-```
-TOOL_CALL: search_knowledge_graph
-QUERY: <your conceptual query>
-```
-
-Or:
-```
-TOOL_CALL: search_document_library
-QUERY: <your specific query>
-TOP_K: 10
-FILTER_BY_CHAPTER: <chapter name if needed>
-```
-
-After receiving tool results, synthesize them into your final answer.
 """
 
 
-async def deep_agent_answer(question: str) -> str:
-    """Deep Agent: Multi-step reasoning with KG and Doc tools."""
-    llm = GoogleAIClientLLM(
-        config=GoogleAIClientLLMConfig(
-            model="gemini-2.5-flash-lite",
-            api_key=SETTINGS.GEMINI_API_KEY,
-            system_instruction=DEEP_AGENT_INSTRUCTION,
-            temperature=0.1,
-            thinking_budget=2000,
-            max_tokens=5000,
-        )
+def create_deep_agent():
+    """Create Deep Agent with langchain agent that can autonomously use tools."""
+    from langchain.agents import create_agent
+    from langchain.agents.middleware import (
+        ClearToolUsesEdit,
+        ContextEditingMiddleware,
+        SummarizationMiddleware,
+        ToolRetryMiddleware,
+    )
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
+    from deepagents.middleware.patch_tool_calls import PatchToolCallsMiddleware
+    from shared.agent_middlewares import (
+        EnsureTasksFinishedMiddleware,
+        LogModelMessageMiddleware,
+    )
+    from shared.agent_tools import TodoWriteMiddleware
+
+    # 1. Initialize Gemini model
+    model = ChatGoogleGenerativeAI(
+        google_api_key=SETTINGS.GEMINI_API_KEY,
+        model="gemini-2.5-flash-lite",
+        temperature=0.1,
+        thinking_budget=2000,
+        max_output_tokens=5000,
+        include_thoughts=True,
+    )
+    model_context_window = 1048576  # 1M tokens
+
+    # 2. Setup Middlewares (same as Cartographer, excluding filesystem)
+    todo_middleware = TodoWriteMiddleware()
+    patch_middleware = PatchToolCallsMiddleware()
+    retry_middleware = ToolRetryMiddleware()
+    stop_check_middleware = EnsureTasksFinishedMiddleware()
+    log_message_middleware = LogModelMessageMiddleware(
+        log_thinking=True,  # Disable for cleaner output
+        log_text_response=False,
+        log_tool_calls=True,
+        log_tool_results=True,
+        truncate_thinking=1000,
+        truncate_tool_results=1000,
+        exclude_tools=[],
+    )
+    context_edit_middleware = ContextEditingMiddleware(
+        edits=[
+            ClearToolUsesEdit(
+                trigger=100000,  # Clear after 100k tokens
+                keep=5,  # Keep last 5 tool results
+            )
+        ]
+    )
+    msg_summary_middleware = SummarizationMiddleware(
+        model=model,
+        trigger=(
+            "tokens",
+            int(model_context_window * 0.6),  # Summarize at 60% context
+        ),
+        keep=("messages", 20),  # Keep last 20 messages
     )
 
-    # Step 1: Search Knowledge Graph (mandatory)
-    kg_result = await search_knowledge_graph(query=question, max_results=10)
+    # 3. Create agent with KG and Doc tools + all middlewares
+    agent = create_agent(
+        model=model,
+        tools=[search_knowledge_graph, search_document_library],
+        system_prompt=DEEP_AGENT_INSTRUCTION,
+        middleware=[
+            context_edit_middleware,
+            msg_summary_middleware,
+            todo_middleware,
+            patch_middleware,
+            log_message_middleware,
+            retry_middleware,
+            stop_check_middleware,
+        ],
+    )
 
-    # Step 2: Build context with KG results
-    context = f"""# Knowledge Graph Results
+    return agent
 
-{kg_result}
 
----
-
-Now answer the user's question based on the above knowledge graph information.
-If the KG results are sufficient, provide your answer directly.
-If you need more details, explain what additional information would be helpful."""
-
-    # Step 3: Get LLM response
-    response = await llm.acomplete(f"{context}\n\n# User Question: {question}")
-    return response.text
+async def deep_agent_answer(question: str) -> str:
+    """Deep Agent: Agentic reasoning with autonomous tool use."""
+    from langchain_core.messages import HumanMessage
+    
+    agent = create_deep_agent()
+    
+    # Agent expects {"messages": [HumanMessage(...)]} format
+    result = await agent.ainvoke(
+        {"messages": [HumanMessage(content=question)]},
+        {"recursion_limit": 100},  # Limit recursion for safety
+    )
+    
+    # Extract final response from messages
+    if "messages" in result and result["messages"]:
+        # Get last AI message
+        for msg in reversed(result["messages"]):
+            if hasattr(msg, "content") and msg.content:
+                # Handle both string and list content
+                if isinstance(msg.content, list):
+                    # Extract text parts
+                    text_parts = []
+                    for part in msg.content:
+                        if isinstance(part, dict) and part.get("type") == "text":
+                            text_parts.append(part.get("text", ""))
+                        elif isinstance(part, str):
+                            text_parts.append(part)
+                    if text_parts:
+                        return "\n".join(text_parts)
+                else:
+                    return str(msg.content)
+    
+    return "No response generated"
 
 
 # RAG Basic Setup
@@ -363,8 +457,11 @@ def analyze_results(results):
         print(f"  Deep Agent: {'✓' if deep['is_correct'] else '✗'} | {deep['reasoning']}")
         print(f"  RAG Basic:  {'✓' if rag['is_correct'] else '✗'} | {rag['reasoning']}")
 
-    # Save results to JSON
-    output_path = Path("baseline_comparison_results.json")
+    # Save results to JSON in result directory
+    result_dir = Path(__file__).parent / "result"
+    result_dir.mkdir(exist_ok=True)  # Create directory if it doesn't exist
+    
+    output_path = result_dir / RESULT_FILENAME
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
     print(f"\n✓ Results saved to {output_path}")
