@@ -14,7 +14,7 @@ Examples:
 
 import argparse
 import asyncio
-from typing import Optional
+from typing import Callable, Optional
 
 from loguru import logger
 from rich.console import Console
@@ -24,12 +24,21 @@ from rich.panel import Panel
 console = Console()
 
 
-def create_qa_agent():
+def create_qa_agent(
+    callback: Optional[Callable] = None,
+    on_tool_start: Optional[Callable[[str], object]] = None,
+    on_tool_end: Optional[Callable[[object], None]] = None,
+):
     """
     Create Q&A Agent with langchain agent for autonomous tool use.
 
     The agent uses Knowledge Graph and Document Library tools with research-first
     philosophy for evidence-based marketing knowledge retrieval.
+
+    Args:
+        callback: Optional callback for agent events (thinking, tool_call, tool_result)
+        on_tool_start: Optional hook called when tool starts (returns token)
+        on_tool_end: Optional hook called when tool ends (takes token)
 
     Returns:
         Configured langchain agent with middlewares and tools
@@ -73,10 +82,15 @@ def create_qa_agent():
     retry_middleware = ToolRetryMiddleware()
     stop_check_middleware = EnsureTasksFinishedMiddleware()
     log_message_middleware = LogModelMessageMiddleware(
-        log_thinking=True,
+        callback=callback,  # Inject callback for event streaming
+        on_tool_start=on_tool_start,  # Inject hook for context tracking
+        on_tool_end=on_tool_end,  # Inject hook for context cleanup
+        log_thinking=(
+            True if not callback else False
+        ),  # Fallback to loguru if no callback
         log_text_response=False,
-        log_tool_calls=True,
-        log_tool_results=True,
+        log_tool_calls=True if not callback else False,
+        log_tool_results=True if not callback else False,
         truncate_thinking=1000,
         truncate_tool_results=1000,
         exclude_tools=[],
@@ -163,13 +177,17 @@ async def run_ask_mode(question: str, verbose: bool = False) -> None:
     """
     Run Q&A Agent mode to answer marketing questions.
 
-    Uses langchain agent with autonomous tool selection for research-first
-    marketing knowledge retrieval.
+    Uses Rich Live display with agent renderer for Claude Code-style output.
+    Tool logs are automatically routed based on contextvars.
 
     Args:
         question: Marketing question to answer
         verbose: Show detailed agent processing (not implemented yet)
     """
+    from cli.agent_renderer import AgentOutputRenderer
+    from cli.log_capture import SmartLogCapture
+    from cli.tool_context import reset_current_tool, set_current_tool
+
     console.print(
         Panel(
             f"[bold cyan]{question}[/bold cyan]",
@@ -178,25 +196,64 @@ async def run_ask_mode(question: str, verbose: bool = False) -> None:
         )
     )
 
-    with console.status("[bold green]Thinking...", spinner="dots"):
-        try:
-            answer = await qa_agent_answer(question)
+    # Create renderer
+    renderer = AgentOutputRenderer(console)
 
-            # Render answer as markdown
-            console.print()
-            console.print(
-                Panel(
-                    Markdown(answer),
-                    title="📝 Answer",
-                    border_style="green",
-                    padding=(1, 2),
+    # Create smart log capture with routing callbacks
+    log_capture = SmartLogCapture(
+        on_tool_log=renderer.add_tool_log,
+        on_other_log=renderer.add_other_log,
+    )
+
+    try:
+        # Start log capture FIRST - to catch early logs (FalkorDB init, etc.)
+        with log_capture:
+            # Then start renderer
+            with renderer:
+                # Create agent with:
+                # - callback: for middleware events (thinking, tool_call, tool_result)
+                # - on_tool_start/end: for context tracking (logs routing)
+                agent = create_qa_agent(
+                    callback=renderer.handle_event,
+                    on_tool_start=set_current_tool,  # Inject hook
+                    on_tool_end=reset_current_tool,  # Inject hook
                 )
+                result = await agent.ainvoke(
+                    {"messages": [{"role": "user", "content": question}]}
+                )
+                # Extract answer from result
+                answer = ""  # Default empty answer
+                if result and "messages" in result:
+                    for msg in reversed(result["messages"]):
+                        if hasattr(msg, "content") and msg.content:
+                            # Get text content from message
+                            content = msg.content
+                            if isinstance(content, list):
+                                for part in content:
+                                    if (
+                                        isinstance(part, dict)
+                                        and part.get("type") == "text"
+                                    ):
+                                        answer = part.get("text", "")
+                                        break
+                            elif isinstance(content, str):
+                                answer = content
+                            if answer:
+                                break
+
+        # Show final answer (after both renderer and log capture stop)
+        console.print()
+        console.print(
+            Panel(
+                Markdown(answer),
+                title="📝 Answer",
+                border_style="green",
+                padding=(1, 2),
             )
-        except Exception as e:
-            console.print(
-                Panel(f"[red]{e}[/red]", title="❌ Error", border_style="red")
-            )
-            logger.exception("Q&A Agent failed")
+        )
+    except Exception as e:
+        console.print(Panel(f"[red]{e}[/red]", title="❌ Error", border_style="red"))
+        logger.exception("Q&A Agent failed")
 
 
 async def run_kg_search_mode(query: str, max_results: int = 10) -> None:

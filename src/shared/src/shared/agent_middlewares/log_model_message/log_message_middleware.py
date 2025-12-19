@@ -6,6 +6,7 @@ to help debug and understand agent decision-making processes.
 """
 
 from collections.abc import Awaitable, Callable
+from typing import Optional
 
 from langchain.agents.middleware.types import (
     AgentMiddleware,
@@ -17,6 +18,20 @@ from langchain.messages import ToolMessage
 from langchain.tools.tool_node import ToolCallRequest
 from langgraph.types import Command
 from loguru import logger
+
+# Import callback types
+from shared.agent_middlewares.callback_types import (
+    AgentCallback,
+    ThinkingEvent,
+    ToolCallEvent,
+    ToolResultEvent,
+    TodoUpdateEvent,
+    ModelLoadingEvent,
+)
+
+# Type aliases for hooks
+ToolStartHook = Callable[[str], object]  # (tool_name) -> token
+ToolEndHook = Callable[[object], None]  # (token) -> None
 
 
 class LogModelMessageMiddleware(AgentMiddleware):
@@ -37,6 +52,9 @@ class LogModelMessageMiddleware(AgentMiddleware):
     def __init__(
         self,
         *,
+        callback: Optional[AgentCallback] = None,
+        on_tool_start: Optional[ToolStartHook] = None,
+        on_tool_end: Optional[ToolEndHook] = None,
         log_thinking: bool = True,
         log_text_response: bool = True,
         log_tool_calls: bool = True,
@@ -49,15 +67,24 @@ class LogModelMessageMiddleware(AgentMiddleware):
         Initialize the logging middleware.
 
         Args:
-            log_thinking: Whether to log thinking blocks
-            log_text_response: Whether to log text responses
-            log_tool_calls: Whether to log tool call summaries
-            log_tool_results: Whether to log tool results
+            callback: Optional callback for agent events
+                (thinking, tool_call, tool_result)
+            on_tool_start: Optional hook called when tool starts
+                (returns token)
+            on_tool_end: Optional hook called when tool ends
+                (takes token)
+            log_thinking: Whether to log thinking blocks to loguru
+            log_text_response: Whether to log text responses to loguru
+            log_tool_calls: Whether to log tool call summaries to loguru
+            log_tool_results: Whether to log tool results to loguru
             truncate_thinking: Max characters for thinking (0 = no limit)
             truncate_tool_results: Max characters for tool results
             exclude_tools: List of tool names to exclude from result logging
         """
         super().__init__()
+        self.callback = callback
+        self.on_tool_start = on_tool_start
+        self.on_tool_end = on_tool_end
         self.log_thinking = log_thinking
         self.log_text_response = log_text_response
         self.log_tool_calls = log_tool_calls
@@ -104,13 +131,22 @@ class LogModelMessageMiddleware(AgentMiddleware):
         Returns:
             The unmodified model response
         """
-        # Let the model run normally
-        response = await handler(request)
+        # Emit loading start
+        if self.callback:
+            self.callback(ModelLoadingEvent(loading=True))
 
-        # Log the response
-        self._log_response(response)
+        try:
+            # Let the model run normally
+            response = await handler(request)
 
-        return response
+            # Log the response (emits ThinkingEvent)
+            self._log_response(response)
+
+            return response
+        finally:
+            # Emit loading end
+            if self.callback:
+                self.callback(ModelLoadingEvent(loading=False))
 
     def wrap_tool_call(
         self,
@@ -176,6 +212,9 @@ class LogModelMessageMiddleware(AgentMiddleware):
         """
         Async version of wrap_tool_call.
 
+        Emits ToolCallEvent and ToolResultEvent if callback is set,
+        otherwise falls back to loguru logging.
+
         Args:
             request: Tool call request
             handler: Async handler
@@ -190,8 +229,22 @@ class LogModelMessageMiddleware(AgentMiddleware):
         if tool_name in self.exclude_tools:
             return await handler(request)
 
-        # Log tool call with arguments
-        if self.log_tool_calls:
+        # Emit tool_call event via callback
+        if self.callback:
+            # If this is write_todos, also emit TodoUpdateEvent
+            if tool_name == "write_todos":
+                todos = tool_args.get("todos", [])
+                if isinstance(todos, list):
+                    self.callback(TodoUpdateEvent(todos=todos))
+
+            self.callback(
+                ToolCallEvent(
+                    tool_name=tool_name,
+                    arguments=tool_args,
+                )
+            )
+        # Fallback to loguru logging
+        elif self.log_tool_calls:
             logger.info(f"🔧 Tool Call: {tool_name}")
             if tool_args:
                 for key, value in tool_args.items():
@@ -201,12 +254,25 @@ class LogModelMessageMiddleware(AgentMiddleware):
                         val_str = val_str[:100] + "..."
                     logger.info(f"     └─ {key}: {val_str}")
 
+        # Call on_tool_start hook if provided (for context tracking)
+        token = None
+        if self.on_tool_start:
+            token = self.on_tool_start(tool_name)
+
         try:
-            # Execute tool
+            # Execute tool - all nested calls can use context
             result = await handler(request)
 
-            # Log result
-            if self.log_tool_results and hasattr(result, "text"):
+            # Emit tool_result event (Pydantic model)
+            if self.callback and hasattr(result, "text"):
+                self.callback(
+                    ToolResultEvent(
+                        tool_name=tool_name,
+                        result=result.text or "",
+                    )
+                )
+            # Fallback to loguru logging
+            elif self.log_tool_results and hasattr(result, "text"):
                 content = result.text
                 if content:
                     # Truncate if needed
@@ -221,10 +287,16 @@ class LogModelMessageMiddleware(AgentMiddleware):
         except Exception as e:
             logger.error(f"❌ Tool Error [{tool_name}]: {e}")
             raise
+        finally:
+            # Call on_tool_end hook if provided
+            if self.on_tool_end and token is not None:
+                self.on_tool_end(token)
 
     def _log_response(self, response: ModelResponse) -> None:
         """
         Extract and log thinking/reasoning from model response.
+
+        Emits ThinkingEvent if callback is set, otherwise falls back to loguru.
 
         Args:
             response: The model response to log
@@ -250,17 +322,23 @@ class LogModelMessageMiddleware(AgentMiddleware):
             for part in content:
                 if isinstance(part, dict):
                     # Log thinking blocks
-                    if part.get("type") == "thinking" and self.log_thinking:
+                    if part.get("type") == "thinking":
                         thinking = part.get("thinking", "")
                         if thinking:
                             # Truncate if needed
+                            truncated_thinking = thinking
                             if self.truncate_thinking > 0:
                                 if len(thinking) > self.truncate_thinking:
-                                    thinking = (
+                                    truncated_thinking = (
                                         thinking[: self.truncate_thinking] + "..."
                                     )
 
-                            logger.info(f"💭 Model Thinking:\n{thinking}")
+                            # Emit event via callback (Pydantic model)
+                            if self.callback:
+                                self.callback(ThinkingEvent(content=truncated_thinking))
+                            # Fallback to loguru
+                            elif self.log_thinking:
+                                logger.info(f"💭 Model Thinking:\n{truncated_thinking}")
 
                     # Log text responses
                     elif part.get("type") == "text" and self.log_text_response:
