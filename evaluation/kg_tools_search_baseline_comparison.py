@@ -41,11 +41,11 @@ if len(sys.argv) > 1:
 if QUESTION_SET == "extended":
     TEST_QUESTIONS = EXTENDED_TEST_QUESTIONS
     RESULT_FILENAME = "baseline_comparison_extended_results.json"
-    print("📋 Using EXTENDED question set (35 questions)")
+    print(f"📋 Using EXTENDED question set ({len(EXTENDED_TEST_QUESTIONS)} questions)")
 else:
     TEST_QUESTIONS = BASIC_QUESTIONS
     RESULT_FILENAME = "baseline_comparison_basic_results.json"
-    print("📋 Using BASIC question set (12 questions)")
+    print(f"📋 Using BASIC question set ({len(BASIC_QUESTIONS)} questions)")
 
 
 # Deep Agent Setup - Proper agentic approach
@@ -129,7 +129,7 @@ def create_deep_agent():
         model="gemini-2.5-flash-lite",
         temperature=0.1,
         thinking_budget=2000,
-        max_output_tokens=5000,
+        max_output_tokens=8000,
         include_thoughts=True,
     )
     model_context_window = 1048576  # 1M tokens
@@ -236,16 +236,155 @@ Answer the user's question using ONLY the information provided in the "Retrieved
 Provide a direct, well-structured answer. Do not add meta-commentary about the retrieval process.
 """
 
+# Re-ranking Setup for RAG Basic
+RERANK_SYSTEM_INSTRUCTION = """# ROLE & OBJECTIVE
+You are **The Context Curator**, an expert information analyst.
+Your goal is to select the most valuable pieces of information from a list of candidates to answer a User Query.
+You must balance **High Relevance** with **Information Diversity**.
 
-async def rag_basic_answer(question: str) -> str:
-    """RAG Basic: Direct search + LLM response."""
+# COGNITIVE WORKFLOW
+
+## Step 1: Relevance Filter (The Signal Check)
+Analyze the User Query. For each Candidate, ask: "Does this help answer the query?"
+* **High Score:** Direct answers, causal explanations, strategic insights, or key definitions.
+* **Low Score:** Irrelevant facts, trivial details, or off-topic associations.
+
+## Step 2: Diversity & De-duplication (The MMR Logic)
+Look at your top candidates. Are any of them saying the exact same thing?
+* **Rule:** Do not clutter the result with repetitive information.
+* **Action:** If multiple candidates contain the same core information, keep ONLY the one that is **most detailed** or **most context-rich**. Downgrade or discard the duplicates.
+* **Goal:** The final list should cover different angles of the answer rather than variations of the same point.
+
+# OUTPUT FORMAT
+Your response will be automatically structured as JSON with this schema:
+- `top_ranked_indices`: Array of selected candidate indices (0-indexed), ordered by value (highest to lowest)
+
+# CONSTRAINT
+* Select up to the requested number of items. If fewer items are relevant, return fewer.
+"""
+
+RERANK_TASK_PROMPT = """
+Please analyze and rank the following candidates based on the User Query.
+
+**USER QUERY:**
+"{query}"
+
+**CANDIDATES:**
+{candidates_list}
+
+**INSTRUCTION:**
+Rank the top {top_k} candidates. Prioritize unique insights. If candidates are redundant, keep only the best one.
+Return only the indices of selected candidates in order of relevance.
+"""
+
+
+class RerankResult(BaseModel):
+    """Structured re-ranking result."""
+    top_ranked_indices: list[int] = Field(..., description="Indices of top-ranked candidates in order")
+
+
+async def rerank_chunks(query: str, chunks_text: str, top_k: int = 5) -> str:
+    """Re-rank retrieved chunks using LLM.
+    
+    Args:
+        query: The user's question
+        chunks_text: Raw text from search_document_library (contains numbered chunks)
+        top_k: Number of top chunks to keep after re-ranking
+        
+    Returns:
+        Re-ranked and filtered context string
+    """
+    # Parse chunks from the text (format: [1] content... [2] content...)
+    import re
+    
+    # Split by chunk markers like [1], [2], etc.
+    chunk_pattern = r'\[(\d+)\]'
+    parts = re.split(chunk_pattern, chunks_text)
+    
+    # Build list of (index, content) pairs
+    chunks = []
+    for i in range(1, len(parts), 2):
+        if i + 1 < len(parts):
+            chunk_idx = int(parts[i])
+            chunk_content = parts[i + 1].strip()
+            if chunk_content:
+                chunks.append((chunk_idx, chunk_content))
+    
+    # If we couldn't parse chunks or have very few, return original
+    if len(chunks) <= top_k:
+        return chunks_text
+    
+    # Format candidates for re-ranking
+    candidates_list = "\n\n".join([
+        f"[{i}] {content[:500]}..." if len(content) > 500 else f"[{i}] {content}"
+        for i, (_, content) in enumerate(chunks)
+    ])
+    
+    # Build re-ranking prompt
+    prompt = RERANK_TASK_PROMPT.format(
+        query=query,
+        candidates_list=candidates_list,
+        top_k=top_k
+    )
+    
+    # Use Gemini-2.5-Flash-Lite for re-ranking
+    reranker = GoogleAIClientLLM(
+        config=GoogleAIClientLLMConfig(
+            model="gemini-2.5-flash-lite",
+            api_key=SETTINGS.GEMINI_API_KEY,
+            system_instruction=RERANK_SYSTEM_INSTRUCTION,
+            temperature=0.1,  # Low temperature for consistent ranking
+            max_tokens=500,
+            response_mime_type="application/json",
+            response_schema=RerankResult,
+        )
+    )
+    
+    try:
+        response = await reranker.acomplete(prompt)
+        result = json.loads(response.text)
+        rerank_result = RerankResult(**result)
+        
+        # Build re-ranked context from selected indices
+        selected_chunks = []
+        for idx in rerank_result.top_ranked_indices[:top_k]:
+            if 0 <= idx < len(chunks):
+                original_idx, content = chunks[idx]
+                selected_chunks.append(f"[{original_idx}] {content}")
+        
+        if selected_chunks:
+            return "\n\n".join(selected_chunks)
+        else:
+            return chunks_text  # Fallback to original if no valid indices
+            
+    except Exception as e:
+        # If re-ranking fails, return original context
+        print(f"[Rerank] Warning: Re-ranking failed ({e}), using original order")
+        return chunks_text
+
+
+async def rag_basic_answer(question: str, use_rerank: bool = True) -> str:
+    """RAG Basic: Direct search + LLM response with optional re-ranking.
+    
+    Args:
+        question: The user's question
+        use_rerank: Whether to apply LLM-based re-ranking (default: True)
+    """
     # Step 1: Retrieve context via hybrid search (fixed parameter)
     retrieved_context = await search_document_library(
         query=question,
-        top_k=10,  # Fixed: use top_k instead of max_results
+        top_k=10,  # Retrieve more initially for re-ranking
     )
+    
+    # Step 2: Re-rank chunks if enabled
+    if use_rerank:
+        retrieved_context = await rerank_chunks(
+            query=question,
+            chunks_text=retrieved_context,
+            top_k=5  # Keep top 5 after re-ranking
+        )
 
-    # Step 2: Build prompt with retrieved context
+    # Step 3: Build prompt with retrieved context
     prompt = f"""# RETRIEVED CONTEXT
 
 {retrieved_context}
@@ -261,7 +400,7 @@ async def rag_basic_answer(question: str) -> str:
 Answer the question based on the retrieved context above.
 """
 
-    # Step 3: Get LLM response
+    # Step 4: Get LLM response
     llm = GoogleAIClientLLM(
         config=GoogleAIClientLLMConfig(
             model="gemini-2.5-flash-lite",
@@ -269,7 +408,7 @@ Answer the question based on the retrieved context above.
             system_instruction=RAG_BASIC_INSTRUCTION,
             temperature=0.1,
             thinking_budget=2000,
-            max_tokens=5000,
+            max_tokens=8000,
         )
     )
 
