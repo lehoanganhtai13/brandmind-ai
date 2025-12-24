@@ -132,13 +132,6 @@ brandmind search-kg -q "customer value" -n 5
 brandmind search-docs -q "pricing strategy" --chapter "Chapter 10"
 ```
 
-**Interactive TUI Features:**
-- Slash commands: `/mode`, `/clear`, `/quit`, `/help`
-- Mode switching: `/mode ask`, `/mode search-kg`, `/mode search-docs`
-- Command history: Up/Down arrows
-- Cancel query: ESC key
-- Expand logs: Ctrl+O
-
 You are now ready to start development!
 
 ## 🛠️ Development Workflow
