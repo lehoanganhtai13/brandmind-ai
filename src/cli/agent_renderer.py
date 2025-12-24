@@ -16,11 +16,11 @@ from rich.tree import Tree
 
 from shared.agent_middlewares.callback_types import (
     BaseAgentEvent,
+    ModelLoadingEvent,
     ThinkingEvent,
     TodoUpdateEvent,
     ToolCallEvent,
     ToolResultEvent,
-    ModelLoadingEvent,
 )
 
 
@@ -79,14 +79,14 @@ class AgentOutputRenderer:
                 if ev["type"] == "thinking":
                     c1 = ev["content"]
                     c2 = event.content
-                    
-                    # Check if one is a prefix of the other (streaming versions)
-                    # Use length check to avoid matching short common phrases like "Okay"
-                    is_match = (c1.startswith(c2) or c2.startswith(c1))
-                    
+
+                    # Check if one is a prefix of the other (streaming)
+                    # Length check to avoid matching short phrases
+                    is_match = c1.startswith(c2) or c2.startswith(c1)
+
                     if len(c1) < 20 and len(c2) < 20:
                         # For very short content, require exact match
-                        is_match = (c1 == c2)
+                        is_match = c1 == c2
 
                     if is_match:
                         # It matches an existing block
@@ -102,10 +102,12 @@ class AgentOutputRenderer:
                             return
 
             # No match found -> Append as new thinking block
-            self._events.append({
-                "type": "thinking",
-                "content": event.content,
-            })
+            self._events.append(
+                {
+                    "type": "thinking",
+                    "content": event.content,
+                }
+            )
             self._refresh()
 
         elif isinstance(event, ToolCallEvent):
@@ -121,23 +123,27 @@ class AgentOutputRenderer:
                     if ev["args"] == event.arguments:
                         return
 
-            self._events.append({
-                "type": "tool",
-                "name": event.tool_name,
-                "args": event.arguments,
-                "result": None,
-                "done": False,
-                "logs": []
-            })
+            self._events.append(
+                {
+                    "type": "tool",
+                    "name": event.tool_name,
+                    "args": event.arguments,
+                    "result": None,
+                    "done": False,
+                    "logs": [],
+                }
+            )
             self._refresh()
         elif isinstance(event, ToolResultEvent):
             if event.tool_name == "write_todos":
                 return
             # Find and update matching tool in events list
             for ev in reversed(self._events):
-                if (ev["type"] == "tool" and 
-                    ev["name"] == event.tool_name and 
-                    not ev["done"]):
+                if (
+                    ev["type"] == "tool"
+                    and ev["name"] == event.tool_name
+                    and not ev["done"]
+                ):
                     ev["result"] = event.result
                     ev["done"] = True
                     break
@@ -155,22 +161,17 @@ class AgentOutputRenderer:
         # We search reversed to find the latest instance
         target_event = None
         for ev in reversed(self._events):
-            if (ev["type"] == "tool" and 
-                ev["name"] == tool_name and 
-                not ev["done"]):
+            if ev["type"] == "tool" and ev["name"] == tool_name and not ev["done"]:
                 target_event = ev
                 break
-        
+
         if target_event:
             if "logs" not in target_event:
                 target_event["logs"] = []
             target_event["logs"].append(message)
         else:
-            # Fallback: if no active tool found (or it's already done),
-            # maybe log to 'other' or just ignore to prevent confusion.
-            # Ideally we check if there is ANY tool with this name, even if done.
-            # But logging to a DONE tool is weird.
-            # Let's add to _other_logs with prefix for visibility
+            # Fallback: if no active tool found (or already done),
+            # add to other_logs with prefix for visibility
             self._other_logs.append(f"[{tool_name}] {message}")
 
         self._refresh()
@@ -189,24 +190,24 @@ class AgentOutputRenderer:
         """Build Rich renderable from current state in chronological order."""
         elements = []
 
-        # === Events in chronological order ===
+        # Events in chronological order
         for event in self._events:
             if event["type"] == "thinking":
                 # Thinking block with header
                 thinking_header = Text()
                 thinking_header.append("● Agent thinking", style="bold magenta")
                 elements.append(thinking_header)
-                
+
                 # Render as Markdown (truncate if too long)
                 content = event["content"][:800]
                 if len(event["content"]) > 800:
                     content += "..."
                 elements.append(Markdown(content))
                 elements.append(Text(""))  # Spacing
-                
+
             elif event["type"] == "tool":
                 tool_name = event["name"]
-                
+
                 # Build tree for tool call
                 if event["done"]:
                     header = f"[bold green]✓[/] [bold cyan]{tool_name}[/]"
@@ -230,13 +231,15 @@ class AgentOutputRenderer:
                     for log in event_logs[-5:]:
                         logs_branch.add(f"[dim]{log}[/]")
                     if len(event_logs) > 5:
-                        logs_branch.add(f"[dim italic]... +{len(event_logs)-5} more[/]")
+                        logs_branch.add(
+                            f"[dim italic]... +{len(event_logs) - 5} more[/]"
+                        )
 
                 # Add result preview if done
                 if event["done"] and event["result"]:
                     result_preview = event["result"][:150]
                     if len(event["result"]) > 150:
-                        result_preview += f"... (+{len(event['result'])-150} chars)"
+                        result_preview += f"... (+{len(event['result']) - 150} chars)"
                     tree.add(f"[green]Result:[/] {result_preview}")
 
                 elements.append(tree)
@@ -248,29 +251,23 @@ class AgentOutputRenderer:
                 other_text.append(f"   {log}\n", style="dim")
             if len(self._other_logs) > 3:
                 other_text.append(
-                    f"   ... +{len(self._other_logs)-3} more\n",
-                    style="dim italic"
+                    f"   ... +{len(self._other_logs) - 3} more\n", style="dim italic"
                 )
             elements.append(other_text)
 
         # Spinner while waiting for first event OR when model is loading
-        # NOTE: Placed BEFORE Todos to keep Todos as a fixed footer
         if not elements or self._is_loading:
             if self._is_loading and elements:
                 elements.append(Text(""))  # Spacing
-            
+
             spinner_text = "[bold green]Thinking...[/bold green]"
-            elements.append(Spinner(
-                "dots",
-                text=spinner_text,
-                style="bold green"
-            ))
+            elements.append(Spinner("dots", text=spinner_text, style="bold green"))
 
         # === Todo list at bottom (Footer) ===
         if self._todos:
             # Add separator before todos
             elements.append(Text("\n" + "─" * 40 + "\n", style="dim"))
-            
+
             todo_text = Text("📋 Todos\n", style="bold")
             for todo in self._todos:
                 status = todo.get("status", "pending")

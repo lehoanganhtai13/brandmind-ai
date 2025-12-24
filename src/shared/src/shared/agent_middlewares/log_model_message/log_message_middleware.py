@@ -22,11 +22,11 @@ from loguru import logger
 # Import callback types
 from shared.agent_middlewares.callback_types import (
     AgentCallback,
+    ModelLoadingEvent,
     ThinkingEvent,
+    TodoUpdateEvent,
     ToolCallEvent,
     ToolResultEvent,
-    TodoUpdateEvent,
-    ModelLoadingEvent,
 )
 
 # Type aliases for hooks

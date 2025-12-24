@@ -6,6 +6,10 @@
   <img src="https://img.shields.io/badge/status-in%20development-blue.svg" alt="Status">
 </p>
 
+<p align="center">
+  <img src="media/cli_screenshot.png" alt="BrandMind AI TUI" width="800">
+</p>
+
 **BrandMind AI** is an intelligent mentor designed to guide junior marketers through the complex process of brand strategy development, bridging the gap between academic theory and real-world practice.
 
 ## 🚀 About The Project
@@ -44,7 +48,24 @@ git clone https://github.com/lehoanganhtai13/brandmind-ai.git
 cd brandmind-ai
 ```
 
-### 3. Start Infrastructure Services
+### 3. Configure Environment Variables
+
+Copy the template environment file and fill in your API keys:
+
+```bash
+cp environments/.template.env .env
+```
+
+Edit `.env` and add your API keys:
+
+| Variable | Description | Get it from |
+|----------|-------------|-------------|
+| `GEMINI_API_KEY` | Google Gemini LLM & Embedding API | [Google AI Studio](https://aistudio.google.com/) |
+| `LLAMA_PARSE_API_KEY` | LlamaParse PDF→Markdown parser | [LlamaIndex](https://www.llamaindex.ai/llamaparse) |
+
+> **Note**: Database credentials (Milvus, FalkorDB, MinIO) have sensible defaults in the template. Adjust them for production deployments.
+
+### 4. Start Infrastructure Services
 
 The project uses several self-hosted services for data processing, search, and storage. Start them using Docker Compose:
 
@@ -85,13 +106,38 @@ make services-down
 
 > **Note**: Each service has detailed documentation in `infra/services/<service-name>/README.md` including configuration, authentication, and usage examples.
 
-### 4. Install Dependencies
+### 5. Install Dependencies
 
 Install all required Python packages for all services using `uv`:
 
 ```bash
 make install-all
 ```
+
+### 6. Running the CLI
+
+BrandMind AI provides a powerful CLI with multiple interaction modes:
+
+```bash
+# Launch interactive TUI (default)
+brandmind
+
+# One-shot Q&A mode with AI agent
+brandmind ask -q "What is Marketing Myopia?"
+
+# Direct Knowledge Graph search
+brandmind search-kg -q "customer value" -n 5
+
+# Direct Document Library search
+brandmind search-docs -q "pricing strategy" --chapter "Chapter 10"
+```
+
+**Interactive TUI Features:**
+- Slash commands: `/mode`, `/clear`, `/quit`, `/help`
+- Mode switching: `/mode ask`, `/mode search-kg`, `/mode search-docs`
+- Command history: Up/Down arrows
+- Cancel query: ESC key
+- Expand logs: Ctrl+O
 
 You are now ready to start development!
 
@@ -135,11 +181,11 @@ make test-watch
 brandmind-ai/
 ├── .github/workflows/   # CI/CD workflows (GitHub Actions)
 ├── src/
-│   ├── shared/          # Shared utilities, models, and clients
+│   ├── cli/             # Command-line interface and TUI application
+│   ├── shared/          # Shared utilities, models, and database clients
 │   ├── core/            # Core business logic and processing pipelines
 │   ├── config/          # System-wide configuration management
-│   ├── prompts/         # LLM prompts organized by feature
-│   └── services/        # Service-specific implementations (not used yet)
+│   └── prompts/         # LLM prompts organized by feature
 ├── tests/               # Test suites (unit, integration, e2e)
 ├── infra/               # Infrastructure services (Docker Compose)
 │   ├── docker-compose.yml  # Main orchestration file
@@ -149,8 +195,12 @@ brandmind-ai/
 │       ├── valkey/         # Key-value cache
 │       ├── falkordb/       # Graph database
 │       └── milvus/         # Vector database
+├── data/                # Data storage (PDFs, parsed documents, embeddings)
+├── docs/                # Technical documentation and research notes
+├── evaluation/          # Evaluation datasets and benchmarks
 ├── scripts/             # Utility scripts for development and CI/CD
 ├── tasks/               # Detailed task and feature documentation
+├── media/               # Media assets (screenshots, images)
 ├── pyproject.toml       # Project metadata and dependencies (PEP 621)
 └── Makefile             # Command runner for development tasks
 ```

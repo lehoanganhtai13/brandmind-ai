@@ -1,0 +1,250 @@
+/* ============================================
+   BrandMind TUI - Design System Stylesheet
+   
+   Gemini CLI-inspired dark theme with 
+   BrandMind AI brand colors.
+   Teal Mint primary, Coral Orange accent.
+   ============================================ */
+
+/* === CSS Variables (Design System Colors) === */
+/* BrandMind AI Brand Colors - from logo */
+
+$background: #0d1117;
+$surface: #161b22;
+$surface-hover: #21262d;
+$border: #30363d;
+$border-focus: #6DB3B3;
+$primary: #6DB3B3;
+$secondary: #8FCECE;
+$accent: #E8834A;
+$warning: #D69E5A;
+$error: #E85A5A;
+$text: #e6edf3;
+$text-secondary: #8b949e;
+$text-muted: #6e7681;
+
+/* === Global Screen === */
+
+Screen {
+    background: $background;
+    color: $text;
+}
+
+/* === Header Bar === */
+
+Header {
+    background: $surface;
+    color: $primary;
+    border-bottom: solid $border;
+    dock: top;
+    height: 1;
+}
+
+/* === Footer Bar === */
+
+Footer {
+    background: $surface;
+    color: $text-secondary;
+    border-top: solid $border;
+}
+
+/* === Main Body Scrollable Area === */
+
+#main-body {
+    height: 1fr;
+    padding: 1 2;
+    background: $background;
+}
+
+/* === Banner Widget === */
+
+BannerWidget {
+    text-align: center;
+    color: $primary;
+    margin: 1 0 2 0;
+    padding: 1;
+}
+
+/* === Input Bar at Bottom === */
+
+#input-bar {
+    dock: bottom;
+    width: 100%;
+    margin: 1 2 1 2;
+    border: round $border;
+    background: $surface;
+    padding: 0 1;
+    height: 3;
+}
+
+#input-bar:focus {
+    border: round $border-focus;
+}
+
+/* === Command Echo (User Input Display) === */
+
+.command-echo {
+    color: $text-secondary;
+    margin: 2 0 0 0;
+}
+
+.help-message {
+    margin: 1 0 2 0;
+}
+
+/* === Request Card (Main Container) === */
+
+RequestCard {
+    border: round $border;
+    background: $surface;
+    padding: 1;
+    margin: 1 0;
+}
+
+RequestCard:focus {
+    border: round $border-focus;
+}
+
+/* Card Elements */
+.query-header {
+    color: $primary;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.thinking-header {
+    color: $secondary;
+    text-style: bold;
+}
+
+.thinking-content {
+    color: $text-secondary;
+    margin-left: 2;
+}
+
+.tool-name {
+    color: $accent;
+    text-style: bold;
+}
+
+.tool-args {
+    color: $text-secondary;
+    margin-left: 2;
+}
+
+.tool-result {
+    color: $secondary;
+    margin-left: 2;
+}
+
+.tool-logs {
+    color: $text-muted;
+    text-style: italic;
+    margin-left: 2;
+}
+
+/* === Answer Panel (nested in card) === */
+
+.answer-panel {
+    border: round $secondary;
+    background: $surface;
+    padding: 1;
+    margin-top: 1;
+}
+
+.answer-header {
+    color: $primary;
+    text-style: bold;
+}
+
+.answer-content {
+    color: $text;
+}
+
+/* === Suggestion Popup (Slash Commands) === */
+
+SuggestionPopup {
+    background: $surface-hover;
+    color: $text;
+    padding: 0 1;
+    border: none;
+    layer: popup;
+}
+
+.suggestion-item {
+    color: $text;
+    padding: 0 1;
+}
+
+.suggestion-item:hover {
+    background: $border;
+}
+
+.suggestion-description {
+    color: $text-secondary;
+}
+
+/* === Collapsible Sections === */
+
+Collapsible {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+Collapsible > CollapsibleTitle {
+    color: $text-secondary;
+    text-style: italic;
+}
+
+/* === Status Indicators === */
+
+.status-success {
+    color: $secondary;
+}
+
+.status-warning {
+    color: $warning;
+}
+
+.status-error {
+    color: $error;
+}
+
+/* === Spinner (Thinking) === */
+
+LoadingIndicator {
+    color: $secondary;
+}
+
+/* === Keyboard Hint === */
+
+.hint {
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* === Todo Bar (docked between main-body and input) === */
+
+#todo-bar {
+    padding: 0 2;
+    background: $background;
+    color: $text;
+}
+
+/* === Hidden Class === */
+
+.hidden {
+    display: none;
+}
+
+/* === Status Bar (docked at very bottom showing mode) === */
+
+#status-bar {
+    width: 100%;
+    height: 1;
+    padding: 0 2;
+    background: $background;
+    color: $text-muted;
+    text-align: right;
+}

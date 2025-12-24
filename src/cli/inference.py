@@ -1,12 +1,16 @@
 """
 CLI for running inference on the Marketing Knowledge Base.
 
-This CLI provides three modes for querying the BrandMind AI knowledge system:
+This CLI provides interactive and non-interactive modes for querying BrandMind AI:
+
+Default (no args): Launch interactive TUI with rich UI
+Subcommands:
 - ask: Q&A using agentic reasoning with Knowledge Graph and Document Library
 - search-kg: Direct Knowledge Graph search for concepts and relationships
 - search-docs: Direct Document Library search with filtering options
 
 Examples:
+    brandmind     # Launch interactive TUI
     brandmind ask -q "What is Marketing Myopia?"
     brandmind search-kg -q "customer value" -n 5
     brandmind search-docs -q "pricing" --chapter "Chapter 10"
@@ -353,13 +357,17 @@ async def async_main() -> None:
     Parses command-line arguments and dispatches to appropriate mode handler.
     """
     parser = argparse.ArgumentParser(
-        description="Query the Marketing Knowledge Base.",
+        description=(
+            "BrandMind AI - Marketing Knowledge Assistant.\n\n"
+            "Run without arguments to launch interactive TUI."
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  brandmind ask -q "What is Marketing Myopia?"
-  brandmind search-kg -q "customer value" -n 10
-  brandmind search-docs -q "pricing strategy" --chapter "Chapter 10"
+  brandmind                                      # Launch interactive TUI (default)
+  brandmind ask -q "What is Marketing Myopia?"   # One-shot Q&A
+  brandmind search-kg -q "customer value" -n 10  # Search Knowledge Graph
+  brandmind search-docs -q "pricing" -c "Ch 10"  # Search Documents
         """,
     )
 
@@ -403,8 +411,8 @@ Examples:
     args = parser.parse_args()
 
     if args.mode is None:
-        parser.print_help()
-        return
+        # TUI will be handled in sync main() - just return
+        return None
 
     # Dispatch to handlers
     if args.mode == "ask":
@@ -416,9 +424,23 @@ Examples:
             args.query, args.book, args.chapter, args.author, args.top_k
         )
 
+    return args.mode
+
 
 def main() -> None:
     """Synchronous entry point for CLI."""
+    import sys
+
+    # Check if no args or help requested - launch TUI
+    # We need to check before asyncio.run() to avoid nested event loops
+    if len(sys.argv) == 1:
+        # No args - launch interactive TUI
+        from cli.tui.app import run_tui
+
+        run_tui()
+        return
+
+    # Otherwise run the async CLI
     asyncio.run(async_main())
 
 

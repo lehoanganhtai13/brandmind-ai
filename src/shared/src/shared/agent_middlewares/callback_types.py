@@ -64,7 +64,9 @@ class ModelLoadingEvent(BaseAgentEvent):
     """Event emitted when model is busy/loading."""
 
     type: Literal["model_loading"] = "model_loading"
-    loading: bool = Field(..., description="True if model started loading, False if finished")
+    loading: bool = Field(
+        ..., description="True if model started loading, False if finished"
+    )
 
 
 # Type alias for callback function

@@ -53,7 +53,7 @@ core = { workspace = true }
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-exclude = ["src/prompts", "tests"]
+exclude = ["src/prompts", "tests", "src/cli/tui/widgets/banner.py"]
 
 [tool.ruff.lint]
 # Enable rule sets to replace flake8 (E, F, W) and isort (I)
