@@ -3,8 +3,8 @@ FalkorDB Graph Backup - Export all nodes and edges to CSV files.
 
 Output:
     ./backups/falkordb/
-    ├── nodes.csv           # All nodes with id, labels, properties
-    ├── edges.csv           # All edges with id, type, from_id, to_id, properties
+    ├── nodes.csv           # All nodes with id (UUID from property), labels, properties
+    ├── edges.csv           # All edges with from_id, to_id (UUIDs from node properties)
     └── metadata.json       # Backup statistics and timestamp
 
 Usage:
@@ -42,6 +42,9 @@ def backup_graph(
 ) -> dict:
     """
     Export FalkorDB graph to 2 CSV files: nodes.csv and edges.csv.
+    
+    Uses the 'id' property (UUID) from nodes as the primary identifier,
+    NOT the internal FalkorDB node ID.
 
     Args:
         graph_name: Name of the graph to export.
@@ -71,19 +74,18 @@ def backup_graph(
     # Export all nodes to single file
     logger.info("Exporting nodes...")
     nodes_result = client.execute_query(
-        "MATCH (n) RETURN ID(n) as id, labels(n) as labels, properties(n) as props"
+        "MATCH (n) RETURN labels(n) as labels, properties(n) as props"
     )
 
     nodes = []
     for record in nodes_result.result_set:
-        node_id = record[0]
-        labels = record[1] or []
-        props = record[2] or {}
+        labels = record[0] or []
+        props = record[1] or {}
         
         node = {
-            "id": node_id,
+            "id": props.get("id", ""),  # UUID from property
             "labels": ",".join(labels) if labels else "",
-            **props
+            **{k: v for k, v in props.items() if k != "id"}  # Other props, exclude id (already added)
         }
         nodes.append(node)
 
@@ -96,12 +98,9 @@ def backup_graph(
     edges_result = client.execute_query(
         """
         MATCH (a)-[e]->(b)
-        RETURN ID(e) as id,
-               TYPE(e) as type,
-               ID(a) as from_id,
-               ID(b) as to_id,
-               properties(a).name as from_name,
-               properties(b).name as to_name,
+        RETURN TYPE(e) as type,
+               properties(a).id as from_id,
+               properties(b).id as to_id,
                properties(e) as props
         """
     )
@@ -109,13 +108,10 @@ def backup_graph(
     edges = []
     for record in edges_result.result_set:
         edge = {
-            "id": record[0],
-            "type": record[1],
-            "from_id": record[2],
-            "to_id": record[3],
-            "from_name": record[4],
-            "to_name": record[5],
-            **(record[6] or {})
+            "type": record[0],
+            "from_id": record[1],  # UUID from source node property
+            "to_id": record[2],    # UUID from target node property
+            **(record[3] or {})
         }
         edges.append(edge)
 

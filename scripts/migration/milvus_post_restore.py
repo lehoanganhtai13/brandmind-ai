@@ -119,10 +119,21 @@ def load_collection(client: MilvusClient, collection_name: str) -> bool:
 
 def main() -> None:
     """Main entry point."""
-    milvus_uri = os.getenv("MILVUS_URI", "http://localhost:19530")
+    # Milvus connection settings from environment
+    milvus_host = os.getenv("MILVUS_HOST", "localhost")
+    milvus_port = os.getenv("MILVUS_PORT", "19530")
+    milvus_password = os.getenv("MILVUS_ROOT_PASSWORD", "")
     
-    logger.info(f"Connecting to Milvus at {milvus_uri}...")
-    client = MilvusClient(uri=milvus_uri)
+    milvus_uri = f"http://{milvus_host}:{milvus_port}"
+    
+    logger.info(f"Connecting to Milvus at {milvus_uri} as user '{milvus_user}'...")
+
+    # Initialize Milvus client with authentication
+    client = MilvusClient(
+        uri=milvus_uri,
+        user="root",
+        password=milvus_password,
+    )
 
     collections = list(INDEX_CONFIGS.keys())
     logger.info(f"Processing collections: {collections}")

@@ -267,7 +267,10 @@ restore-vector: ## Restore Milvus from local backup (upload to MinIO + restore)
 		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
 		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}"
 	@echo "🔧 Recreating indexes and loading collections..."
-	@uv run --group migration python scripts/migration/milvus_post_restore.py
+	@MILVUS_HOST="$${MILVUS_HOST:-localhost}" \
+		MILVUS_PORT="$${MILVUS_PORT:-19530}" \
+		MILVUS_ROOT_PASSWORD="$${MILVUS_ROOT_PASSWORD:-Milvus_secret}" \
+		uv run python scripts/migration/milvus_post_restore.py
 	@echo "✅ Milvus restore complete"
 
 restore-all: restore-graph restore-vector ## Restore both FalkorDB and Milvus

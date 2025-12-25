@@ -3,8 +3,8 @@ FalkorDB Graph Restore - Import nodes and edges from CSV backup.
 
 Expected Input:
     ./backups/falkordb/
-    ├── nodes.csv           # All nodes with id, labels, properties
-    ├── edges.csv           # All edges with id, type, from_id, to_id, properties
+    ├── nodes.csv           # All nodes with id (UUID), labels, properties
+    ├── edges.csv           # All edges with type, from_id, to_id (UUIDs), properties
     └── metadata.json       # Backup statistics
 
 Usage:
@@ -32,6 +32,16 @@ from shared.database_clients.graph_database.falkordb import (
 )
 
 
+def sanitize_label(label: str) -> str:
+    """Sanitize label for Cypher query."""
+    return "".join(c for c in label if c.isalnum() or c == "_")
+
+
+def sanitize_relation_type(rel_type: str) -> str:
+    """Sanitize relationship type for Cypher query."""
+    return "".join(c for c in rel_type.upper() if c.isalnum() or c == "_")
+
+
 def restore_graph(
     backup_dir: Path,
     graph_name: str,
@@ -43,8 +53,8 @@ def restore_graph(
     """
     Restore FalkorDB graph from nodes.csv and edges.csv backup.
 
-    Uses MERGE operations to upsert nodes and relationships (idempotent).
-    Nodes are matched by their 'name' property as the unique identifier.
+    Uses the 'id' property (UUID) to match nodes when creating edges.
+    MERGE operations ensure idempotent restoration.
 
     Args:
         backup_dir: Directory containing CSV backup files.
@@ -71,7 +81,7 @@ def restore_graph(
     )
     client = FalkorDBClient(config)
 
-    stats = {"nodes_restored": 0, "edges_restored": 0}
+    stats = {"nodes_restored": 0, "edges_restored": 0, "edges_failed": 0}
 
     # Load backup metadata if available
     metadata_file = backup_dir / "metadata.json"
@@ -92,19 +102,18 @@ def restore_graph(
             # Remove NaN values
             props = {k: v for k, v in props.items() if pd.notna(v)}
             
-            # Get labels (may be comma-separated)
+            # Get labels
             labels_str = props.pop("labels", "Entity")
-            label = labels_str.split(",")[0] if labels_str else "Entity"
+            label = sanitize_label(labels_str.split(",")[0]) if labels_str else "Entity"
             
-            # Remove internal id (will use name as match key)
-            props.pop("id", None)
+            node_id = props.get("id")
+            if not node_id:
+                continue
             
-            # Use 'name' as the unique match key
-            if "name" in props:
-                match_props = {"name": props["name"]}
-                update_props = {k: v for k, v in props.items() if k != "name"}
-                client.merge_node(label, match_props, update_props)
-                stats["nodes_restored"] += 1
+            match_props = {"id": node_id}
+            update_props = {k: v for k, v in props.items() if k != "id"}
+            client.merge_node(label, match_props, update_props)
+            stats["nodes_restored"] += 1
 
         logger.info(f"  ✅ Restored {stats['nodes_restored']} nodes")
     else:
@@ -118,28 +127,55 @@ def restore_graph(
         
         for _, row in df.iterrows():
             edge_type = row.get("type")
-            from_name = row.get("from_name")
-            to_name = row.get("to_name")
+            from_id = row.get("from_id")
+            to_id = row.get("to_id")
             
             # Skip if missing required fields
-            if pd.isna(edge_type) or pd.isna(from_name) or pd.isna(to_name):
+            if pd.isna(edge_type) or pd.isna(from_id) or pd.isna(to_id):
                 continue
             
             # Edge properties (exclude internal fields)
-            excluded = {"id", "type", "from_id", "to_id", "from_name", "to_name"}
+            excluded = {"type", "from_id", "to_id"}
             props = {k: v for k, v in row.to_dict().items() if k not in excluded and pd.notna(v)}
             
-            client.merge_relationship(
-                source_label="Entity",  # Default label, actual label determined by MERGE
-                source_match={"name": str(from_name)},
-                target_label="Entity",
-                target_match={"name": str(to_name)},
-                relation_type=str(edge_type),
-                properties=props if props else None,
-            )
-            stats["edges_restored"] += 1
+            # Sanitize relationship type
+            rel_type = sanitize_relation_type(str(edge_type))
+            
+            # Build ON CREATE SET clause for properties
+            on_create_set = "ON CREATE SET r.created_at = timestamp()"
+            if props:
+                prop_sets = ", ".join([f"r.{k} = $r_{k}" for k in props.keys()])
+                on_create_set += f", {prop_sets}"
+            
+            query = f"""
+            MATCH (s {{id: $from_id}})
+            MATCH (t {{id: $to_id}})
+            MERGE (s)-[r:{rel_type}]->(t)
+            {on_create_set}
+            ON MATCH SET r.updated_at = timestamp()
+            RETURN r
+            """
+            
+            params = {
+                "from_id": str(from_id),
+                "to_id": str(to_id),
+            }
+            if props:
+                params.update({f"r_{k}": v for k, v in props.items()})
+            
+            try:
+                result = client.execute_query(query, params)
+                if result.result_set:
+                    stats["edges_restored"] += 1
+                else:
+                    stats["edges_failed"] += 1
+            except Exception as e:
+                logger.debug(f"Failed to create edge {from_id} -> {to_id}: {e}")
+                stats["edges_failed"] += 1
 
         logger.info(f"  ✅ Restored {stats['edges_restored']} edges")
+        if stats["edges_failed"] > 0:
+            logger.warning(f"  ⚠️ {stats['edges_failed']} edges failed (nodes may not exist)")
     else:
         logger.warning("edges.csv not found, skipping edge restore")
 
@@ -147,6 +183,8 @@ def restore_graph(
     logger.info("📊 Restore Summary:")
     logger.info(f"   Total nodes restored: {stats['nodes_restored']}")
     logger.info(f"   Total edges restored: {stats['edges_restored']}")
+    if stats["edges_failed"] > 0:
+        logger.info(f"   Total edges failed: {stats['edges_failed']}")
 
     return stats
 
