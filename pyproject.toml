@@ -30,6 +30,10 @@ indexer = [
     "core[document_processing]",
     "core[knowledge_graph]",
 ]
+migration = [
+    "minio>=7.2.20",
+    "shared",
+]
 dev = [
  "pytest>=7.0.0",
  "black>=23.0.0",

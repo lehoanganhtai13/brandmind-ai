@@ -1,0 +1,80 @@
+# Milvus Backup Configuration Template
+# See: https://github.com/zilliztech/milvus-backup
+#
+# This is a TEMPLATE file. Environment variables will be substituted at runtime.
+# Variables used: MILVUS_ROOT_PASSWORD, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+
+# Configures the system log output
+log:
+  level: info
+  console: true
+  file:
+    filename: "logs/backup.log"
+
+http:
+  simpleResponse: true
+
+# Milvus proxy address (internal docker network)
+milvus:
+  address: milvus-standalone
+  port: 19530
+  user: "root"
+  password: "${MILVUS_ROOT_PASSWORD}"
+  tlsMode: 0
+  caCertPath: ""
+  serverName: ""
+  mtlsCertPath: ""
+  mtlsKeyPath: ""
+  rpcChannelName: "by-dev-replicate-msg"
+  etcd:
+    endpoints: milvus-etcd:2379
+    rootPath: "by-dev"
+
+# MinIO storage configuration
+minio:
+  # Milvus storage configs - must match your Milvus instance
+  storageType: "minio"
+  address: milvus-minio
+  port: 9000
+  region: ""
+  accessKeyID: "${MINIO_ACCESS_KEY}"
+  secretAccessKey: "${MINIO_SECRET_KEY}"
+  token: ""
+  gcpCredentialJSON: ""
+  useSSL: false
+  useIAM: false
+  iamEndpoint: ""
+  bucketName: "a-bucket"
+  rootPath: "files"
+
+  # Backup storage configs - where backup data will be stored
+  backupStorageType: "minio"
+  backupAddress: milvus-minio
+  backupRegion: ""
+  backupPort: 9000
+  backupAccessKeyID: "${MINIO_ACCESS_KEY}"
+  backupSecretAccessKey: "${MINIO_SECRET_KEY}"
+  backupToken: ""
+  backupGcpCredentialJSON: ""
+  backupBucketName: "a-bucket"
+  backupRootPath: "backup"
+  backupUseSSL: false
+
+  # Set to true if backing up between different storage systems
+  crossStorage: "false"
+
+# Backup parallelism and behavior settings
+backup:
+  parallelism:
+    copydata: 128
+    backupCollection: 4
+    backupSegment: 1024
+    restoreCollection: 2
+    importJob: 768
+
+  keepTempFiles: false
+
+  # Pause GC during backup through Milvus HTTP API
+  gcPause:
+    enable: true
+    address: http://milvus-standalone:9091

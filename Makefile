@@ -1,5 +1,5 @@
-.PHONY: help install install-chatbot install-indexer install-dev install-all
-.PHONY: add-chatbot add-indexer add-shared add-core add-dev
+.PHONY: help install install-chatbot install-indexer install-dev install-migration install-all
+.PHONY: add-chatbot add-indexer add-shared add-core add-dev add-migration
 .PHONY: sync update clean test format lint check
 .PHONY: services-up services-down services-restart services-logs services-status
 
@@ -26,8 +26,11 @@ install-indexer: ## Install dependencies for indexer service
 install-dev: ## Install development dependencies only
 	uv sync --group dev
 
-install-all: ## Install all dependencies (chatbot + indexer + dev)
-	uv sync --group chatbot --group indexer --group dev
+install-migration: ## Install migration dependencies only
+	uv sync --group migration
+
+install-all: ## Install all dependencies (chatbot + indexer + dev + migration)
+	uv sync --group chatbot --group indexer --group dev --group migration
 
 ## Package Management
 add-chatbot: ## Add package to chatbot group. Usage: make add-chatbot PKG=langchain
@@ -49,6 +52,10 @@ add-core: ## Add package to core package. Usage: make add-core PKG=sqlalchemy
 add-dev: ## Add development dependency. Usage: make add-dev PKG=pytest-asyncio
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required. Usage: make add-dev PKG=package-name"; exit 1; fi
 	uv add --group dev $(PKG)
+
+add-migration: ## Add package to migration group. Usage: make add-migration PKG=langchain
+	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required. Usage: make add-migration PKG=package-name"; exit 1; fi
+	uv add --group migration $(PKG)
 
 add-core-optional: ## Add optional dependency to core. Usage: make add-core-optional GROUP=group_name PKG=package_name
 	@if [ -z "$(PKG)" ] || [ -z "$(GROUP)" ]; then echo "Error: PKG and GROUP are required."; exit 1; fi
@@ -73,6 +80,10 @@ remove-core: ## Remove package from core package. Usage: make remove-core PKG=pa
 remove-dev: ## Remove development dependency. Usage: make remove-dev PKG=package_name
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
 	uv remove --group dev $(PKG)
+
+remove-migration: ## Remove package from migration group. Usage: make remove-migration PKG=package_name
+	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
+	uv remove --group migration $(PKG)
 
 ## Maintenance
 sync: ## Sync dependencies with lock file
@@ -168,6 +179,9 @@ services-logs: ## Show logs from infrastructure services
 services-status: ## Show status of infrastructure services
 	cd infra && docker compose ps
 
+services-rebuild: ## Force rebuild all services without cache
+	cd infra && docker compose build --no-cache && docker compose up -d
+
 ## Processing
 .PHONY: parse-docs
 parse-docs: ## Parse documents via CLI. Usage: make parse-docs [FILE=doc.pdf]
@@ -183,3 +197,90 @@ lock: ## Update lock file without installing
 
 lock-upgrade: ## Upgrade all dependencies in lock file
 	uv lock --upgrade
+
+## Database Migration
+.PHONY: backup-graph backup-vector backup-all restore-graph restore-vector restore-all
+
+backup-graph: ## Backup FalkorDB graph to CSV files
+	@echo "📦 Backing up FalkorDB graph..."
+	@mkdir -p backups/falkordb
+	uv run python scripts/migration/falkordb_backup.py knowledge_graph \
+		--host localhost --port $${FALKORDB_PORT:-6380} \
+		--username "$${FALKORDB_USERNAME:-brandmind}" \
+		--password "$${FALKORDB_PASSWORD:-password}" \
+		--output ./backups/falkordb
+	@echo "✅ FalkorDB backup complete → ./backups/falkordb/"
+
+backup-vector: ## Backup Milvus collections and download to local
+	@echo "📦 Backing up Milvus collections..."
+	@mkdir -p backups/milvus
+	uv run --group migration python scripts/migration/milvus_backup.py backup \
+		--name brandmind_backup \
+		--collections "DocumentChunks,EntityDescriptions,RelationDescriptions" \
+		--output ./backups/milvus \
+		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
+		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
+		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}"
+	@echo "✅ Milvus backup complete → ./backups/milvus/"
+
+backup-download-vector: ## Download existing Milvus backup from MinIO
+	@echo "📥 Downloading Milvus backup from MinIO..."
+	@mkdir -p backups/milvus
+	uv run --group migration python scripts/migration/milvus_backup.py download \
+		--name brandmind_backup \
+		--output ./backups/milvus \
+		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
+		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
+		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}"
+	@echo "✅ Milvus backup downloaded → ./backups/milvus/"
+
+backup-all: backup-graph backup-vector ## Backup both FalkorDB and Milvus
+	@echo ""
+	@echo "✅ Full backup complete → ./backups/"
+	@echo "📦 Package for migration: make backup-package"
+
+backup-package: backup-all ## Backup all and create split zip package in backups/
+	@echo "📦 Creating backup package..."
+	@cd backups && zip -r backup.zip falkordb/ milvus/
+	@echo "📦 Splitting into 40MB parts for GitHub..."
+	@cd backups && split -b 40m backup.zip backup.zip.part.
+	@rm -f backups/backup.zip
+	@rm -rf backups/falkordb backups/milvus
+	@echo "✅ Package ready: backups/backup.zip.part.* (use 'make restore-package' to restore)"
+
+restore-graph: ## Restore FalkorDB graph from CSV backup
+	@echo "🔄 Restoring FalkorDB graph..."
+	@uv run python scripts/migration/falkordb_restore.py \
+		--backup-dir ./backups/falkordb \
+		--graph knowledge_graph \
+		--host localhost --port $${FALKORDB_PORT:-6380} \
+		--username "$${FALKORDB_USERNAME:-brandmind}" \
+		--password "$${FALKORDB_PASSWORD:-password}"
+	@echo "✅ FalkorDB restore complete"
+
+restore-vector: ## Restore Milvus from local backup (upload to MinIO + restore)
+	@echo "🔄 Restoring Milvus collections..."
+	@uv run --group migration python scripts/migration/milvus_restore.py restore \
+		--backup-dir ./backups/milvus/brandmind_backup \
+		--name brandmind_backup \
+		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
+		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
+		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}"
+	@echo "✅ Milvus restore complete"
+
+restore-all: restore-graph restore-vector ## Restore both FalkorDB and Milvus
+	@echo ""
+	@echo "✅ Full restore complete"
+
+restore-package: ## Merge split parts, extract, and restore all databases
+	@echo "📦 Merging backup parts..."
+	@test -f backups/backup.zip.part.aa || (echo "❌ backups/backup.zip.part.* not found" && exit 1)
+	@cd backups && cat backup.zip.part.* > backup.zip
+	@echo "📦 Extracting backup package..."
+	@cd backups && unzip -o backup.zip
+	@rm -f backups/backup.zip
+	@echo "🔄 Restoring databases..."
+	@$(MAKE) restore-graph
+	@$(MAKE) restore-vector
+	@echo ""
+	@echo "✅ Full migration restore complete"

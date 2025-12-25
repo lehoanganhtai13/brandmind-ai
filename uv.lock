@@ -431,6 +431,10 @@ indexer = [
     { name = "core", extra = ["document-processing", "knowledge-graph"] },
     { name = "shared" },
 ]
+migration = [
+    { name = "minio" },
+    { name = "shared" },
+]
 
 [package.metadata]
 
@@ -457,6 +461,10 @@ dev = [
 indexer = [
     { name = "core", extras = ["document-processing"], editable = "src/core" },
     { name = "core", extras = ["knowledge-graph"], editable = "src/core" },
+    { name = "shared", editable = "src/shared" },
+]
+migration = [
+    { name = "minio", specifier = ">=7.2.20" },
     { name = "shared", editable = "src/shared" },
 ]
 

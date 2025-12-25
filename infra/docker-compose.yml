@@ -145,6 +145,31 @@ services:
     networks:
       - brandmind-network
 
+  # Milvus Backup Service - Backup and restore for Milvus collections
+  milvus-backup:
+    build:
+      context: ./services/milvus-backup
+      dockerfile: Dockerfile
+    container_name: milvus-backup
+    ports:
+      - "${MILVUS_BACKUP_PORT:-8090}:8090"
+    volumes:
+      - ./configs/backup.yaml.template:/app/configs/backup.yaml.template:ro
+      - ../backups/milvus:/backup
+    environment:
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin_secret}
+      - MILVUS_ROOT_PASSWORD=${MILVUS_ROOT_PASSWORD:-Milvus_secret}
+    depends_on:
+      milvus:
+        condition: service_healthy
+      milvus-minio:
+        condition: service_started
+    networks:
+      - brandmind-network
+    restart: unless-stopped
+
+
 volumes:
   falkordb-data:
   milvus-etcd-data:
