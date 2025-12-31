@@ -11,7 +11,10 @@ from typing import Dict, List
 from shared.database_clients.graph_database.base_graph_database import (
     BaseGraphDatabase,
 )
-from shared.database_clients.graph_database.falkordb.utils import sanitize_label
+from shared.database_clients.graph_database.falkordb.utils import (
+    sanitize_label,
+    sanitize_relation_type,
+)
 from shared.database_clients.vector_database.base_vector_database import (
     BaseVectorDatabase,
 )
@@ -193,6 +196,9 @@ class StorageManager:
         as node labels. Stores relation description embedding in Vector DB for
         semantic search.
 
+        If the edge already exists (same source, target, relation type), reuses
+        the existing vector_db_ref_id to prevent orphan records in Vector DB.
+
         Args:
             source_entity_id: Source entity ID
             source_entity_type: Source entity type (Graph DB label)
@@ -206,9 +212,31 @@ class StorageManager:
         Returns:
             Dict with relation_id
         """
-        relation_id = str(uuid.uuid4())
+        # Sanitize labels for Cypher query
+        source_label = sanitize_label(source_entity_type)
+        target_label = sanitize_label(target_entity_type)
+        rel_type = sanitize_relation_type(relation_type)
 
-        # 1. Create edge in Graph DB (entity types as labels)
+        # Step 1: Check if relation already exists in Graph DB
+        # If exists, reuse its vector_db_ref_id to prevent orphan records
+        src_l, tgt_l, rel = source_label, target_label, rel_type
+        check_query = f"""
+        MATCH (s:{src_l} {{id: $source_id}})-[r:{rel}]->(t:{tgt_l} {{id: $target_id}})
+        RETURN r.vector_db_ref_id as ref_id
+        """
+        result = await self.graph_db.async_execute_query(
+            check_query,
+            {"source_id": source_entity_id, "target_id": target_entity_id},
+        )
+
+        if result.result_set and result.result_set[0][0]:
+            # Relation exists - reuse its vector_db_ref_id
+            relation_id = result.result_set[0][0]
+        else:
+            # Relation doesn't exist - generate new UUID
+            relation_id = str(uuid.uuid4())
+
+        # Step 2: Create/update edge in Graph DB (entity types as labels)
         await self.graph_db.async_merge_relationship(
             source_label=source_entity_type,
             source_match={"id": source_entity_id},
@@ -222,7 +250,7 @@ class StorageManager:
             },
         )
 
-        # 2. Insert to Vector DB with pre-computed embedding
+        # Step 3: Upsert to Vector DB with pre-computed embedding
         vector_data = {
             "id": relation_id,
             "source_entity_id": source_entity_id,
@@ -231,7 +259,7 @@ class StorageManager:
             "description": description,
             "description_embedding": desc_embedding,
         }
-        await self.vector_db.async_insert_vectors(
+        await self.vector_db.async_upsert_vectors(
             data=[vector_data], collection_name=self.relation_collection_name
         )
 

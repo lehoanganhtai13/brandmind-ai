@@ -248,14 +248,15 @@ backup-package: backup-all ## Backup all and create split zip package in backups
 	@rm -rf backups/falkordb backups/milvus
 	@echo "✅ Package ready: backups/backup.zip.part.* (use 'make restore-package' to restore)"
 
-restore-graph: ## Restore FalkorDB graph from CSV backup
+restore-graph: ## Restore FalkorDB graph from CSV backup (use OVERWRITE=true to clear first)
 	@echo "🔄 Restoring FalkorDB graph..."
 	@uv run python scripts/migration/falkordb_restore.py \
 		--backup-dir ./backups/falkordb \
 		--graph knowledge_graph \
 		--host localhost --port $${FALKORDB_PORT:-6380} \
 		--username "$${FALKORDB_USERNAME:-brandmind}" \
-		--password "$${FALKORDB_PASSWORD:-password}"
+		--password "$${FALKORDB_PASSWORD:-password}" \
+		$(if $(filter true,$(OVERWRITE)),--overwrite,)
 	@echo "✅ FalkorDB restore complete"
 
 restore-vector: ## Restore Milvus from local backup (upload to MinIO + restore)
@@ -276,6 +277,38 @@ restore-vector: ## Restore Milvus from local backup (upload to MinIO + restore)
 restore-all: restore-graph restore-vector ## Restore both FalkorDB and Milvus
 	@echo ""
 	@echo "✅ Full restore complete"
+
+restore-clean-vector: ## Clean restore Milvus (DROP existing + restore from backup)
+	@echo "🔄 Clean restoring Milvus collections..."
+	@uv run --group migration python scripts/migration/milvus_restore.py restore \
+		--backup-dir ./backups/milvus/brandmind_backup \
+		--name brandmind_backup \
+		--drop-existing \
+		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
+		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
+		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}" \
+		--milvus-host "$${MILVUS_HOST:-localhost}" \
+		--milvus-port "$${MILVUS_PORT:-19530}" \
+		--milvus-password "$${MILVUS_ROOT_PASSWORD:-Milvus_secret}"
+	@echo "🔧 Recreating indexes and loading collections..."
+	@MILVUS_HOST="$${MILVUS_HOST:-localhost}" \
+		MILVUS_PORT="$${MILVUS_PORT:-19530}" \
+		MILVUS_ROOT_PASSWORD="$${MILVUS_ROOT_PASSWORD:-Milvus_secret}" \
+		uv run python scripts/migration/milvus_post_restore.py
+	@echo "✅ Milvus clean restore complete"
+
+restore-clean-package: ## Extract backup and clean restore (DELETE existing data first)
+	@echo "📦 Merging backup parts..."
+	@test -f backups/backup.zip.part.aa || (echo "❌ backups/backup.zip.part.* not found" && exit 1)
+	@cd backups && cat backup.zip.part.* > backup.zip
+	@echo "📦 Extracting backup package..."
+	@cd backups && unzip -o backup.zip
+	@rm -f backups/backup.zip
+	@echo "🔄 Clean restoring databases (DELETE existing + CREATE from backup)..."
+	@$(MAKE) restore-graph OVERWRITE=true
+	@$(MAKE) restore-clean-vector
+	@echo ""
+	@echo "✅ Clean restore complete - exact snapshot restored"
 
 restore-package: ## Merge split parts, extract, and restore all databases
 	@echo "📦 Merging backup parts..."

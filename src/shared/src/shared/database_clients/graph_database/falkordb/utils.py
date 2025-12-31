@@ -50,13 +50,16 @@ def sanitize_label(label: str) -> str:
     """
     Sanitize and normalize label for use in Cypher query.
 
-    Converts to PascalCase by explicitly capitalizing each word and removing spaces.
+    If label is already a valid identifier (alphanumeric only), preserve its casing.
+    Otherwise, converts to PascalCase by capitalizing each word.
     Only allows alphanumeric characters and underscores.
 
     Examples:
         ```
         >>> sanitize_label("Person")
         "Person"
+        >>> sanitize_label("BusinessProcess")
+        "BusinessProcess"
         >>> sanitize_label("Company Type")
         "CompanyType"
         >>> sanitize_label("marketing strategy")
@@ -68,6 +71,10 @@ def sanitize_label(label: str) -> str:
     if not label:
         return "Unknown"
 
-    # Replace anything not alphanumeric with space, then split, capitalize, and join
+    # If label is already valid (only alphanumeric), preserve original casing
+    if re.match(r"^[a-zA-Z0-9]+$", label):
+        return label
+
+    # Otherwise, clean and convert to PascalCase
     clean_str = re.sub(r"[^a-zA-Z0-9]", " ", label)
     return "".join(word.capitalize() for word in clean_str.split())

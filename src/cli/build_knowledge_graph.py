@@ -198,7 +198,15 @@ async def async_main() -> None:
     parser.add_argument(
         "--stage",
         type=str,
-        choices=["mapping", "chunking", "extraction", "validate", "indexing", "all"],
+        choices=[
+            "mapping",
+            "chunking",
+            "extraction",
+            "validate",
+            "indexing",
+            "post-process",
+            "all",
+        ],
         default="all",
         help="Which stage to run (default: all)",
     )
@@ -218,6 +226,11 @@ async def async_main() -> None:
         "--retry-failed",
         action="store_true",
         help="Retry only previously failed chunks (Stage 3 only)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="For post-process stage: only report issues without fixing",
     )
 
     args = parser.parse_args()
@@ -462,6 +475,78 @@ async def async_main() -> None:
         logger.info("=" * 80)
         logger.info("✅ Stage 5 Indexing complete!")
         logger.info("=" * 80)
+
+    # Stage 6: Post-Processing (optional cleanup)
+    if args.stage == "post-process":
+        logger.info("=" * 80)
+        logger.info("STAGE 6: POST-PROCESSING (Data Cleanup)")
+        logger.info("=" * 80)
+
+        from config.system_config import SETTINGS
+        from core.knowledge_graph.curator.post_processing import run_post_processing
+        from shared.database_clients.graph_database.falkordb import (
+            FalkorDBClient,
+            FalkorDBConfig,
+        )
+        from shared.database_clients.vector_database.milvus.config import MilvusConfig
+        from shared.database_clients.vector_database.milvus.database import (
+            MilvusVectorDatabase,
+        )
+
+        # Initialize clients
+        milvus = MilvusVectorDatabase(
+            config=MilvusConfig(
+                host=SETTINGS.MILVUS_HOST,
+                port=SETTINGS.MILVUS_PORT,
+                user="root",
+                password=SETTINGS.MILVUS_ROOT_PASSWORD,
+                run_async=True,
+            )
+        )
+
+        falkor = FalkorDBClient(
+            config=FalkorDBConfig(
+                host=SETTINGS.FALKORDB_HOST,
+                port=SETTINGS.FALKORDB_PORT,
+                username=SETTINGS.FALKORDB_USERNAME,
+                password=SETTINGS.FALKORDB_PASSWORD,
+                graph_name=SETTINGS.FALKORDB_GRAPH_NAME,
+            )
+        )
+
+        # Initialize embedder for description re-embedding
+        from shared.model_clients.embedder.gemini import GeminiEmbedder
+        from shared.model_clients.embedder.gemini.config import (
+            EmbeddingMode,
+            GeminiEmbedderConfig,
+        )
+
+        embedder = GeminiEmbedder(
+            config=GeminiEmbedderConfig(
+                api_key=SETTINGS.GEMINI_API_KEY,
+                model="gemini-embedding-001",
+                task_type=EmbeddingMode.SEMANTIC,
+                output_dimensionality=SETTINGS.EMBEDDING_DIM,
+            )
+        )
+
+        # Run post-processing
+        stats = await run_post_processing(
+            graph_db=falkor,
+            vector_db=milvus,
+            embedder=embedder,
+            entity_collection_name=SETTINGS.COLLECTION_ENTITY_DESCRIPTIONS,
+            relation_collection_name=SETTINGS.COLLECTION_RELATION_DESCRIPTIONS,
+            dry_run=args.dry_run,
+        )
+
+        if args.dry_run:
+            logger.info("✅ Post-processing dry run complete (no changes made)")
+            logger.info(
+                "   Re-run with --stage post-process (without --dry-run) to apply fixes"
+            )
+        else:
+            logger.info("✅ Post-processing complete!")
 
     logger.info("=" * 80)
     logger.info("✅ Processing complete!")

@@ -32,6 +32,12 @@ except ImportError:
     logger.error("minio package not installed. Run: uv sync --group migration")
     sys.exit(1)
 
+try:
+    from pymilvus import connections, utility
+    PYMILVUS_AVAILABLE = True
+except ImportError:
+    PYMILVUS_AVAILABLE = False
+
 
 def get_minio_client(
     endpoint: str = "localhost:9000",
@@ -102,6 +108,51 @@ def upload_backup(
     logger.info(f"✅ Uploaded {uploaded} files to {bucket_name}/{backup_prefix}/{backup_name}/")
     
     return uploaded
+
+
+def drop_collections(
+    milvus_password: str,
+    milvus_host: str = "localhost",
+    milvus_port: int = 19530,
+    collections: list[str] | None = None,
+) -> int:
+    """
+    Drop existing Milvus collections before restore.
+    
+    Args:
+        milvus_password: Milvus password.
+        milvus_host: Milvus server host.
+        milvus_port: Milvus server port.
+        collections: List of collection names to drop. If None, drops all.
+    
+    Returns:
+        Number of collections dropped.
+    """
+    if not PYMILVUS_AVAILABLE:
+        logger.error("pymilvus not installed. Cannot drop collections.")
+        return 0
+    
+    logger.info("Connecting to Milvus to drop existing collections...")
+    connections.connect(
+        host=milvus_host,
+        port=milvus_port,
+        user="root",
+        password=milvus_password,
+    )
+    
+    if collections is None:
+        collections = utility.list_collections()
+    
+    dropped = 0
+    for coll in collections:
+        if utility.has_collection(coll):
+            utility.drop_collection(coll)
+            logger.info(f"  Dropped: {coll}")
+            dropped += 1
+    
+    connections.disconnect("default")
+    logger.info(f"✅ Dropped {dropped} collections")
+    return dropped
 
 
 def trigger_restore(
@@ -203,6 +254,14 @@ def main() -> None:
     restore_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY", "minioadmin"))
     restore_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_KEY", "minioadmin_secret"))
     restore_parser.add_argument("--bucket", default="a-bucket")
+    restore_parser.add_argument(
+        "--drop-existing",
+        action="store_true",
+        help="Drop existing collections before restore (required for clean restore)",
+    )
+    restore_parser.add_argument("--milvus-host", default=os.getenv("MILVUS_HOST", "localhost"))
+    restore_parser.add_argument("--milvus-port", type=int, default=int(os.getenv("MILVUS_PORT", "19530")))
+    restore_parser.add_argument("--milvus-password", default=os.getenv("MILVUS_ROOT_PASSWORD", "Milvus_secret"))
     
     # Trigger command (just call restore API, assume backup already in MinIO)
     trigger_parser = subparsers.add_parser("trigger", help="Trigger restore (backup must be in MinIO)")
@@ -242,6 +301,14 @@ def main() -> None:
             
     elif args.command == "restore":
         try:
+            # Drop existing collections if requested
+            if args.drop_existing:
+                drop_collections(
+                    milvus_host=args.milvus_host,
+                    milvus_port=args.milvus_port,
+                    milvus_password=args.milvus_password,
+                )
+            
             # Upload backup to MinIO
             upload_backup(
                 backup_dir=args.backup_dir,

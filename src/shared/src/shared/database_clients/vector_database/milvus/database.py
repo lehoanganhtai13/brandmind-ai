@@ -759,6 +759,80 @@ class MilvusVectorDatabase(BaseVectorDatabase):
         except Exception as e:
             raise GetMilvusItemsError(f"Error getting items: {str(e)}")
 
+    def get_all_items(
+        self,
+        collection_name: Optional[str] = None,
+        output_fields: Optional[List[str]] = None,
+        batch_size: int = 1000,
+        **kwargs,
+    ) -> List[Dict]:
+        """
+        Get all items from collection using query_iterator.
+
+        Uses iterator pattern to handle large datasets efficiently,
+        avoiding the 16384 limit of regular queries.
+
+        Args:
+            collection_name: Name of the collection.
+            output_fields: List of fields to include in results.
+            batch_size: Number of items per batch (default: 1000).
+
+        Returns:
+            List of all items in the collection.
+        """
+        if not collection_name:
+            raise ValueError("Collection name must be provided.")
+
+        try:
+            results: List[Dict] = []
+            iterator = self.client.query_iterator(
+                collection_name=collection_name,
+                batch_size=batch_size,
+                limit=-1,  # No limit - get all items
+                filter="",  # Empty filter to get all
+                output_fields=output_fields,
+            )
+
+            while True:
+                batch = iterator.next()
+                if not batch:
+                    iterator.close()
+                    break
+                results.extend(batch)
+
+            return results
+        except Exception as e:
+            raise GetMilvusItemsError(f"Error getting all items: {str(e)}")
+
+    async def async_get_all_items(
+        self,
+        collection_name: Optional[str] = None,
+        output_fields: Optional[List[str]] = None,
+        batch_size: int = 1000,
+        **kwargs,
+    ) -> List[Dict]:
+        """
+        Asynchronously get all items from collection.
+
+        Wraps sync query_iterator in thread since AsyncMilvusClient
+        doesn't support query_iterator yet.
+
+        Args:
+            collection_name: Name of the collection.
+            output_fields: List of fields to include in results.
+            batch_size: Number of items per batch (default: 1000).
+
+        Returns:
+            List of all items in the collection.
+        """
+        return await asyncio.to_thread(
+            self.get_all_items,
+            collection_name=collection_name,
+            output_fields=output_fields,
+            batch_size=batch_size,
+            **kwargs,
+        )
+
     def build_hybrid_search_requests(
         self,
         embedding_data: List[EmbeddingData],

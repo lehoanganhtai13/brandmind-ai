@@ -70,6 +70,11 @@ class BaseVectorDatabase(ABC):
         pass
 
     @abstractmethod
+    def get_all_items(self, **kwargs) -> List[Dict]:
+        """Get all items from the collection."""
+        pass
+
+    @abstractmethod
     def search_dense_vectors(
         self,
         query_embeddings: List[List[float]],
@@ -152,6 +157,11 @@ class BaseVectorDatabase(ABC):
     @abstractmethod
     async def async_get_items(self, ids: List[str], **kwargs) -> List[Dict]:
         """Asynchronously get items from the collection by their IDs."""
+        pass
+
+    @abstractmethod
+    async def async_get_all_items(self, **kwargs) -> List[Dict]:
+        """Asynchronously get all items from the collection."""
         pass
 
     @abstractmethod

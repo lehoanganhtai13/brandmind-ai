@@ -114,7 +114,53 @@ Install all required Python packages for all services using `uv`:
 make install-all
 ```
 
-### 6. Running the CLI
+### 6. Restore Databases (Optional)
+
+If you have pre-built database backups, restore them to skip the knowledge graph building process:
+
+```bash
+# Restore from backup package (includes both FalkorDB and Milvus)
+make restore-package
+
+# Or clean restore (clear existing data first)
+make restore-clean-package
+```
+
+Individual database restore:
+```bash
+# Restore FalkorDB graph only
+make restore-graph
+
+# Restore with overwrite (clear existing graph first)
+make restore-graph OVERWRITE=true
+
+# Restore Milvus collections only
+make restore-vector
+```
+
+### 7. Build Knowledge Graph (Optional)
+
+If you want to build the knowledge graph from your own documents:
+
+```bash
+# Step 1: Parse PDF documents to markdown
+uv run parse-docs --folder ./data/your_folder
+
+# Step 2: Build knowledge graph (runs all stages)
+# Note: --folder expects the folder NAME in data/parsed_documents/, not full path
+# Example: Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123
+uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage all
+
+# Or run individual stages:
+uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage chunking
+uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage extraction
+uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage indexing
+uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage post-process
+```
+
+> **Note**: Building the full knowledge graph requires significant time and API calls. Use `--resume` flag to continue from a checkpoint if interrupted.
+
+### 8. Running the CLI
 
 BrandMind AI provides a powerful CLI with multiple interaction modes:
 
@@ -191,7 +237,9 @@ brandmind-ai/
 ├── data/                # Data storage (PDFs, parsed documents, embeddings)
 ├── docs/                # Technical documentation and research notes
 ├── evaluation/          # Evaluation datasets and benchmarks
-├── scripts/             # Utility scripts for development and CI/CD
+├── scripts/
+│   └── migration/       # Database backup/restore scripts
+├── backups/             # Database backup files (git-ignored)
 ├── tasks/               # Detailed task and feature documentation
 ├── media/               # Media assets (screenshots, images)
 ├── pyproject.toml       # Project metadata and dependencies (PEP 621)

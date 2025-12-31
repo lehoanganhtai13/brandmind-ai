@@ -84,7 +84,7 @@ def backup_graph(
         
         node = {
             "id": props.get("id", ""),  # UUID from property
-            "labels": ",".join(labels) if labels else "",
+            "label": labels[0] if labels else "",  # Each entity has exactly 1 label
             **{k: v for k, v in props.items() if k != "id"}  # Other props, exclude id (already added)
         }
         nodes.append(node)
@@ -100,7 +100,9 @@ def backup_graph(
         MATCH (a)-[e]->(b)
         RETURN TYPE(e) as type,
                properties(a).id as from_id,
+               labels(a)[0] as from_label,
                properties(b).id as to_id,
+               labels(b)[0] as to_label,
                properties(e) as props
         """
     )
@@ -109,9 +111,11 @@ def backup_graph(
     for record in edges_result.result_set:
         edge = {
             "type": record[0],
-            "from_id": record[1],  # UUID from source node property
-            "to_id": record[2],    # UUID from target node property
-            **(record[3] or {})
+            "from_id": record[1],       # UUID from source node property
+            "from_label": record[2],    # Source node label
+            "to_id": record[3],         # UUID from target node property
+            "to_label": record[4],      # Target node label
+            **(record[5] or {})         # Edge properties
         }
         edges.append(edge)
 

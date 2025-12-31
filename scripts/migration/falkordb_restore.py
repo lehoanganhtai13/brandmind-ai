@@ -30,16 +30,10 @@ from shared.database_clients.graph_database.falkordb import (
     FalkorDBClient,
     FalkorDBConfig,
 )
-
-
-def sanitize_label(label: str) -> str:
-    """Sanitize label for Cypher query."""
-    return "".join(c for c in label if c.isalnum() or c == "_")
-
-
-def sanitize_relation_type(rel_type: str) -> str:
-    """Sanitize relationship type for Cypher query."""
-    return "".join(c for c in rel_type.upper() if c.isalnum() or c == "_")
+from shared.database_clients.graph_database.falkordb.utils import (
+    sanitize_label,
+    sanitize_relation_type,
+)
 
 
 def restore_graph(
@@ -49,12 +43,13 @@ def restore_graph(
     port: int = 6379,
     username: str | None = None,
     password: str | None = None,
+    overwrite: bool = False,
 ) -> dict:
     """
     Restore FalkorDB graph from nodes.csv and edges.csv backup.
 
     Uses the 'id' property (UUID) to match nodes when creating edges.
-    MERGE operations ensure idempotent restoration.
+    Supports label-based edge matching for accurate restoration.
 
     Args:
         backup_dir: Directory containing CSV backup files.
@@ -63,6 +58,7 @@ def restore_graph(
         port: FalkorDB port number.
         username: Optional username for authentication.
         password: Optional password for authentication.
+        overwrite: If True, clear existing graph before restore.
 
     Returns:
         Restore statistics showing counts of restored nodes and edges.
@@ -80,6 +76,15 @@ def restore_graph(
         graph_name=graph_name,
     )
     client = FalkorDBClient(config)
+
+    # Clear existing graph if overwrite mode
+    if overwrite:
+        logger.info("🗑️ Overwrite mode: Clearing existing graph...")
+        try:
+            client.execute_query("MATCH (n) DETACH DELETE n")
+            logger.info("  ✅ Existing data cleared")
+        except Exception as e:
+            logger.warning(f"  ⚠️ Failed to clear graph: {e}")
 
     stats = {"nodes_restored": 0, "edges_restored": 0, "edges_failed": 0}
 
@@ -102,9 +107,9 @@ def restore_graph(
             # Remove NaN values
             props = {k: v for k, v in props.items() if pd.notna(v)}
             
-            # Get labels
-            labels_str = props.pop("labels", "Entity")
-            label = sanitize_label(labels_str.split(",")[0]) if labels_str else "Entity"
+            # Get label (each entity has exactly 1 label)
+            label = props.pop("label", "Entity")
+            label = sanitize_label(label) if label else "Entity"
             
             node_id = props.get("id")
             if not node_id:
@@ -124,45 +129,66 @@ def restore_graph(
     if edges_file.exists():
         logger.info("Restoring edges from edges.csv...")
         df = pd.read_csv(edges_file)
-        
+
+        # Check if new format with labels
+        has_labels = "from_label" in df.columns and "to_label" in df.columns
+        if has_labels:
+            logger.info("  📋 Detected new format with labels - using label matching")
+        else:
+            logger.info("  ⚠️ Old format without labels - matching by ID only")
+
         for _, row in df.iterrows():
             edge_type = row.get("type")
             from_id = row.get("from_id")
             to_id = row.get("to_id")
-            
+
             # Skip if missing required fields
             if pd.isna(edge_type) or pd.isna(from_id) or pd.isna(to_id):
                 continue
-            
-            # Edge properties (exclude internal fields)
-            excluded = {"type", "from_id", "to_id"}
-            props = {k: v for k, v in row.to_dict().items() if k not in excluded and pd.notna(v)}
-            
+
+            # Edge properties (exclude internal fields and label fields)
+            excluded = {"type", "from_id", "to_id", "from_label", "to_label"}
+            props = {
+                k: v for k, v in row.to_dict().items() if k not in excluded and pd.notna(v)
+            }
+
             # Sanitize relationship type
             rel_type = sanitize_relation_type(str(edge_type))
-            
-            # Build ON CREATE SET clause for properties
-            on_create_set = "ON CREATE SET r.created_at = timestamp()"
+
+            # Build SET clause for properties
+            set_clause = "SET r.restored_at = timestamp()"
             if props:
                 prop_sets = ", ".join([f"r.{k} = $r_{k}" for k in props.keys()])
-                on_create_set += f", {prop_sets}"
-            
-            query = f"""
-            MATCH (s {{id: $from_id}})
-            MATCH (t {{id: $to_id}})
-            MERGE (s)-[r:{rel_type}]->(t)
-            {on_create_set}
-            ON MATCH SET r.updated_at = timestamp()
-            RETURN r
-            """
-            
+                set_clause += f", {prop_sets}"
+
+            # Use labels if available for accurate matching
+            if has_labels and pd.notna(row.get("from_label")) and pd.notna(row.get("to_label")):
+                from_label = sanitize_label(str(row.get("from_label")))
+                to_label = sanitize_label(str(row.get("to_label")))
+                query = f"""
+                MATCH (s:{from_label} {{id: $from_id}})
+                MATCH (t:{to_label} {{id: $to_id}})
+                MERGE (s)-[r:{rel_type}]->(t)
+                {set_clause}
+                RETURN r
+                """
+            else:
+                # Old format fallback - match by ID only
+                query = f"""
+                MATCH (s {{id: $from_id}})
+                MATCH (t {{id: $to_id}})
+                MERGE (s)-[r:{rel_type}]->(t)
+                {set_clause}
+                RETURN r
+                """
+
             params = {
                 "from_id": str(from_id),
                 "to_id": str(to_id),
             }
             if props:
                 params.update({f"r_{k}": v for k, v in props.items()})
-            
+
             try:
                 result = client.execute_query(query, params)
                 if result.result_set:
@@ -205,6 +231,11 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=6380, help="FalkorDB port (default: 6380)")
     parser.add_argument("--username", default=None, help="FalkorDB username (optional)")
     parser.add_argument("--password", default=None, help="FalkorDB password (optional)")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Clear existing graph before restore (like clean restore)",
+    )
 
     args = parser.parse_args()
 
@@ -216,6 +247,7 @@ def main() -> None:
             port=args.port,
             username=args.username,
             password=args.password,
+            overwrite=args.overwrite,
         )
         logger.info("✅ Restore completed successfully!")
     except Exception as e:

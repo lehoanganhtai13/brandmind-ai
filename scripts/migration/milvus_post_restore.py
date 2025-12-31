@@ -17,50 +17,110 @@ from pymilvus import MilvusClient
 
 # Index configurations for each collection
 # Format: {collection_name: {field_name: {index_type, metric_type, params}}}
+# Derived from collection_schemas.py and document_library.py
+# - String fields: INVERTED index
+# - Array fields: AUTOINDEX
+# - Dense vectors: HNSW with COSINE
+# - Sparse vectors: SPARSE_INVERTED_INDEX with BM25
 INDEX_CONFIGS = {
     "DocumentChunks": {
+        # Dense vector
         "content_embedding": {
             "index_type": "HNSW",
             "metric_type": "COSINE",
             "params": {"M": 16, "efConstruction": 500},
         },
+        # Sparse vector (BM25)
         "content_sparse": {
             "index_type": "SPARSE_INVERTED_INDEX",
             "metric_type": "BM25",
+            "params": {"inverted_index_algo": "DAAT_MAXSCORE"},
+        },
+        # String fields - INVERTED index
+        "source": {
+            "index_type": "INVERTED",
+            "metric_type": None,
+            "params": {},
+        },
+        "original_document": {
+            "index_type": "INVERTED",
+            "metric_type": None,
+            "params": {},
+        },
+        "author": {
+            "index_type": "INVERTED",
+            "metric_type": None,
+            "params": {},
+        },
+        # Array field - AUTOINDEX
+        "pages": {
+            "index_type": "AUTOINDEX",
+            "metric_type": None,
             "params": {},
         },
     },
     "EntityDescriptions": {
+        # Dense vectors
         "description_embedding": {
             "index_type": "HNSW",
             "metric_type": "COSINE",
             "params": {"M": 16, "efConstruction": 500},
-        },
-        "description_sparse": {
-            "index_type": "SPARSE_INVERTED_INDEX",
-            "metric_type": "BM25",
-            "params": {},
         },
         "name_embedding": {
             "index_type": "HNSW",
             "metric_type": "COSINE",
             "params": {"M": 16, "efConstruction": 500},
         },
+        # Sparse vectors (BM25)
+        "description_sparse": {
+            "index_type": "SPARSE_INVERTED_INDEX",
+            "metric_type": "BM25",
+            "params": {"inverted_index_algo": "DAAT_MAXSCORE"},
+        },
         "name_sparse": {
             "index_type": "SPARSE_INVERTED_INDEX",
             "metric_type": "BM25",
+            "params": {"inverted_index_algo": "DAAT_MAXSCORE"},
+        },
+        # String fields - INVERTED index
+        "name": {
+            "index_type": "INVERTED",
+            "metric_type": None,
+            "params": {},
+        },
+        "type": {
+            "index_type": "INVERTED",
+            "metric_type": None,
             "params": {},
         },
     },
     "RelationDescriptions": {
+        # Dense vector
         "description_embedding": {
             "index_type": "HNSW",
             "metric_type": "COSINE",
             "params": {"M": 16, "efConstruction": 500},
         },
+        # Sparse vector (BM25)
         "description_sparse": {
             "index_type": "SPARSE_INVERTED_INDEX",
             "metric_type": "BM25",
+            "params": {"inverted_index_algo": "DAAT_MAXSCORE"},
+        },
+        # String fields - INVERTED index
+        "source_entity_id": {
+            "index_type": "INVERTED",
+            "metric_type": None,
+            "params": {},
+        },
+        "target_entity_id": {
+            "index_type": "INVERTED",
+            "metric_type": None,
+            "params": {},
+        },
+        "relation_type": {
+            "index_type": "INVERTED",
+            "metric_type": None,
             "params": {},
         },
     },
@@ -81,12 +141,18 @@ def create_indexes(client: MilvusClient, collection_name: str) -> int:
             logger.info(f"Creating index on {collection_name}.{field_name}...")
 
             index_params = client.prepare_index_params()
-            index_params.add_index(
-                field_name=field_name,
-                index_type=config["index_type"],
-                metric_type=config["metric_type"],
-                params=config["params"],
-            )
+            
+            # Build index params dict - metric_type only for vector fields
+            index_kwargs = {
+                "field_name": field_name,
+                "index_type": config["index_type"],
+            }
+            if config.get("metric_type"):
+                index_kwargs["metric_type"] = config["metric_type"]
+            if config.get("params"):
+                index_kwargs["params"] = config["params"]
+            
+            index_params.add_index(**index_kwargs)
 
             client.create_index(
                 collection_name=collection_name,
@@ -126,7 +192,7 @@ def main() -> None:
     
     milvus_uri = f"http://{milvus_host}:{milvus_port}"
     
-    logger.info(f"Connecting to Milvus at {milvus_uri} as user '{milvus_user}'...")
+    logger.info(f"Connecting to Milvus at {milvus_uri} as user 'root'...")
 
     # Initialize Milvus client with authentication
     client = MilvusClient(
