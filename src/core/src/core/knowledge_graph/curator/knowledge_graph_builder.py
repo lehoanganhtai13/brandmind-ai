@@ -151,7 +151,7 @@ async def build_knowledge_graph(
                     return {
                         "action": "merged",
                         "name": entity["name"],
-                        "entity_id": similar["graph_id"],
+                        "entity_id": similar["id"],
                         "entity_type": entity["type"],
                     }
 
