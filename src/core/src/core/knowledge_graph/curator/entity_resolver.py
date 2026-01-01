@@ -251,7 +251,7 @@ async def merge_descriptions(
                 system_instruction=DESCRIPTION_SYNTHESIS_INSTRUCTION,
                 temperature=0.1,
                 thinking_budget=1000,
-                max_tokens=2000,
+                max_tokens=3000,
                 response_mime_type="application/json",
                 response_schema=DescriptionSynthesisResponse,
             )
