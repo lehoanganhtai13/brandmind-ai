@@ -114,48 +114,66 @@ Install all required Python packages for all services using `uv`:
 make install-all
 ```
 
-### 6. Restore Databases (Optional)
+### 6. Restore Databases (Recommended)
 
-If you have pre-built database backups, restore them to skip the knowledge graph building process:
+The repository includes pre-built knowledge graph backups in `backups/`. Restore them to get started immediately without building from scratch:
 
 ```bash
-# Restore from backup package (includes both FalkorDB and Milvus)
+# Restore from backup package
 make restore-package
-
-# Or clean restore (clear existing data first)
-make restore-clean-package
 ```
 
-Individual database restore:
-```bash
-# Restore FalkorDB graph only
-make restore-graph
-
-# Restore with overwrite (clear existing graph first)
-make restore-graph OVERWRITE=true
-
-# Restore Milvus collections only
-make restore-vector
-```
+This will restore the complete knowledge graph built from marketing textbooks, ready for querying.
 
 ### 7. Build Knowledge Graph (Optional)
 
 If you want to build the knowledge graph from your own documents:
 
-```bash
-# Step 1: Parse PDF documents to markdown
-uv run parse-docs --folder ./data/your_folder
+#### Step 1: Prepare your documents
 
-# Step 2: Build knowledge graph (runs all stages)
-# Note: --folder expects the folder NAME in data/parsed_documents/, not full path
-# Example: Kotler_and_Armstrong_Principles_of_Marketing_20251123_193123
-uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage all
+1. Place your PDF files in `data/raw_documents/`
+2. Create/update `data/raw_documents/document_metadata.json`:
+   ```json
+   [
+     {
+      "document_name": "your_document.pdf",
+      "document_title": "Your Document Title",
+      "author": "Your Document Author"
+     }
+   ]
+   ```
+
+#### Step 2: Parse PDF documents to markdown
+
+```bash
+# Process all documents listed in document_metadata.json
+parse-docs
+
+# Or process a specific file (must exist in metadata)
+parse-docs --file "your_document.pdf"
+
+# Optional skip flags:
+# --skip-table-merge, --skip-text-merge, --skip-table-summarization, --skip-content-cleanup
+
+# Re-apply content cleanup to existing parsed folder (without re-parsing PDF)
+parse-docs --cleanup-folder YOUR_PARSED_FOLDER_NAME
+```
+
+Output will be saved to `data/parsed_documents/<DocumentName_Timestamp>/page_*.md`
+
+#### Step 3: Build knowledge graph
+
+```bash
+# Run all stages (folder name from Step 2 output)
+build-kg --folder YOUR_PARSED_FOLDER_NAME --stage all
 
 # Or run individual stages:
-uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage chunking
-uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage extraction
-uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage indexing
-uv run build-kg --folder YOUR_PARSED_FOLDER_NAME --stage post-process
+build-kg --folder YOUR_PARSED_FOLDER_NAME --stage mapping
+build-kg --folder YOUR_PARSED_FOLDER_NAME --stage chunking
+build-kg --folder YOUR_PARSED_FOLDER_NAME --stage extraction
+build-kg --folder YOUR_PARSED_FOLDER_NAME --stage validation
+build-kg --folder YOUR_PARSED_FOLDER_NAME --stage indexing
+build-kg --folder YOUR_PARSED_FOLDER_NAME --stage post-process
 ```
 
 > **Note**: Building the full knowledge graph requires significant time and API calls. Use `--resume` flag to continue from a checkpoint if interrupted.
