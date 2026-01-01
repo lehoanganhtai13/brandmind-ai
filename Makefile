@@ -307,6 +307,7 @@ restore-clean-package: ## Extract backup and clean restore (DELETE existing data
 	@echo "🔄 Clean restoring databases (DELETE existing + CREATE from backup)..."
 	@$(MAKE) restore-graph OVERWRITE=true
 	@$(MAKE) restore-clean-vector
+	@rm -rf backups/falkordb backups/milvus
 	@echo ""
 	@echo "✅ Clean restore complete - exact snapshot restored"
 
@@ -320,5 +321,6 @@ restore-package: ## Merge split parts, extract, and restore all databases
 	@echo "🔄 Restoring databases..."
 	@$(MAKE) restore-graph
 	@$(MAKE) restore-vector
+	@rm -rf backups/falkordb backups/milvus
 	@echo ""
 	@echo "✅ Full migration restore complete"
