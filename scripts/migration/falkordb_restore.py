@@ -89,6 +89,7 @@ def restore_graph(
     stats = {"nodes_restored": 0, "edges_restored": 0, "edges_failed": 0}
 
     # Load backup metadata if available
+    metadata = {}
     metadata_file = backup_dir / "metadata.json"
     if metadata_file.exists():
         metadata = json.loads(metadata_file.read_text())
@@ -214,12 +215,63 @@ def restore_graph(
     else:
         logger.warning("edges.csv not found, skipping edge restore")
 
+    # === Verification Step ===
+    logger.info("")
+    logger.info("� Verifying restore...")
+    
+    # Get actual counts from Graph DB
+    try:
+        node_result = client.execute_query("MATCH (n) RETURN count(n) as cnt")
+        db_node_count = node_result.result_set[0][0] if node_result.result_set else 0
+        
+        edge_result = client.execute_query("MATCH ()-[r]->() RETURN count(r) as cnt")
+        db_edge_count = edge_result.result_set[0][0] if edge_result.result_set else 0
+    except Exception as e:
+        logger.warning(f"  ⚠️ Could not verify counts: {e}")
+        db_node_count = None
+        db_edge_count = None
+    
+    # Compare with backup metadata
+    expected_nodes = metadata.get("total_nodes") if metadata_file.exists() else None
+    expected_edges = metadata.get("total_edges") if metadata_file.exists() else None
+    
+    # Verification results
+    stats["verified"] = True
+    verification_issues = []
+    
+    if expected_nodes and db_node_count is not None:
+        if db_node_count != expected_nodes:
+            verification_issues.append(f"Node count mismatch: DB={db_node_count}, expected={expected_nodes}")
+            stats["verified"] = False
+    
+    if expected_edges and db_edge_count is not None:
+        if db_edge_count != expected_edges:
+            verification_issues.append(f"Edge count mismatch: DB={db_edge_count}, expected={expected_edges}")
+            stats["verified"] = False
+    
+    # Check for edge failures
+    if stats["edges_failed"] > 0:
+        verification_issues.append(f"{stats['edges_failed']} edges failed to restore")
+        stats["verified"] = False
+
     logger.info("")
     logger.info("📊 Restore Summary:")
-    logger.info(f"   Total nodes restored: {stats['nodes_restored']}")
-    logger.info(f"   Total edges restored: {stats['edges_restored']}")
+    logger.info(f"   Nodes: {stats['nodes_restored']} restored" + 
+                (f", {db_node_count} in DB" if db_node_count else ""))
+    logger.info(f"   Edges: {stats['edges_restored']} restored" +
+                (f", {db_edge_count} in DB" if db_edge_count else ""))
     if stats["edges_failed"] > 0:
-        logger.info(f"   Total edges failed: {stats['edges_failed']}")
+        logger.info(f"   Edges failed: {stats['edges_failed']}")
+    
+    # Verification status
+    if stats["verified"]:
+        logger.info("")
+        logger.info("✅ VERIFICATION PASSED - Restore matches backup!")
+    else:
+        logger.warning("")
+        logger.warning("⚠️ VERIFICATION ISSUES:")
+        for issue in verification_issues:
+            logger.warning(f"   - {issue}")
 
     return stats
 
