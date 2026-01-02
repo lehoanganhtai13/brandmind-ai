@@ -157,11 +157,11 @@ def restore_graph(
             # Sanitize relationship type
             rel_type = sanitize_relation_type(str(edge_type))
 
-            # Build SET clause for properties (excluding vector_db_ref_id which is in MERGE)
-            set_clause = "SET r.restored_at = timestamp()"
+            # Build SET clause for other properties (description, created_at, etc.)
+            set_clause = ""
             if props:
                 prop_sets = ", ".join([f"r.{k} = $r_{k}" for k in props.keys()])
-                set_clause += f", {prop_sets}"
+                set_clause = f"SET {prop_sets}"
 
             # Use vector_db_ref_id as unique identifier for MERGE to support parallel edges
             # This ensures edges with different vector_db_ref_ids are created as separate edges
@@ -217,7 +217,7 @@ def restore_graph(
 
     # === Verification Step ===
     logger.info("")
-    logger.info("� Verifying restore...")
+    logger.info("🔍 Verifying restore...")
     
     # Get actual counts from Graph DB
     try:
@@ -232,19 +232,19 @@ def restore_graph(
         db_edge_count = None
     
     # Compare with backup metadata
-    expected_nodes = metadata.get("total_nodes") if metadata_file.exists() else None
-    expected_edges = metadata.get("total_edges") if metadata_file.exists() else None
+    expected_nodes = metadata.get("total_nodes") if metadata else None
+    expected_edges = metadata.get("total_edges") if metadata else None
     
     # Verification results
     stats["verified"] = True
     verification_issues = []
     
-    if expected_nodes and db_node_count is not None:
+    if expected_nodes is not None and db_node_count is not None:
         if db_node_count != expected_nodes:
             verification_issues.append(f"Node count mismatch: DB={db_node_count}, expected={expected_nodes}")
             stats["verified"] = False
     
-    if expected_edges and db_edge_count is not None:
+    if expected_edges is not None and db_edge_count is not None:
         if db_edge_count != expected_edges:
             verification_issues.append(f"Edge count mismatch: DB={db_edge_count}, expected={expected_edges}")
             stats["verified"] = False
@@ -257,9 +257,9 @@ def restore_graph(
     logger.info("")
     logger.info("📊 Restore Summary:")
     logger.info(f"   Nodes: {stats['nodes_restored']} restored" + 
-                (f", {db_node_count} in DB" if db_node_count else ""))
+                (f", {db_node_count} in DB" if db_node_count is not None else ""))
     logger.info(f"   Edges: {stats['edges_restored']} restored" +
-                (f", {db_edge_count} in DB" if db_edge_count else ""))
+                (f", {db_edge_count} in DB" if db_edge_count is not None else ""))
     if stats["edges_failed"] > 0:
         logger.info(f"   Edges failed: {stats['edges_failed']}")
     
