@@ -401,7 +401,7 @@ async def run_post_processing(
     all_stats = {}
 
     # 1. Clean up duplicate entities
-    logger.info("\n[1/2] Cleaning duplicate entities (label casing issues)...")
+    logger.info("[1/2] Cleaning duplicate entities (label casing issues)...")
     entity_stats = await cleanup_duplicate_entities(
         graph_db=graph_db,
         vector_db=vector_db,
@@ -412,7 +412,7 @@ async def run_post_processing(
     all_stats["entities"] = entity_stats
 
     # 2. Clean up orphan relations
-    logger.info("\n[2/2] Cleaning orphan relations...")
+    logger.info("[2/2] Cleaning orphan relations...")
     relation_stats = await cleanup_duplicate_relations(
         graph_db=graph_db,
         vector_db=vector_db,
@@ -422,7 +422,7 @@ async def run_post_processing(
     all_stats["relations"] = relation_stats
 
     # Summary
-    logger.info("\n" + "=" * 60)
+    logger.info("=" * 60)
     logger.info("POST-PROCESSING SUMMARY")
     logger.info("=" * 60)
     logger.info(f"Duplicate entity IDs found: {entity_stats['duplicates_found']}")

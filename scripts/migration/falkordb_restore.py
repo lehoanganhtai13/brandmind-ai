@@ -141,13 +141,14 @@ def restore_graph(
             edge_type = row.get("type")
             from_id = row.get("from_id")
             to_id = row.get("to_id")
+            vector_db_ref_id = row.get("vector_db_ref_id")
 
             # Skip if missing required fields
             if pd.isna(edge_type) or pd.isna(from_id) or pd.isna(to_id):
                 continue
 
             # Edge properties (exclude internal fields and label fields)
-            excluded = {"type", "from_id", "to_id", "from_label", "to_label"}
+            excluded = {"type", "from_id", "to_id", "from_label", "to_label", "vector_db_ref_id"}
             props = {
                 k: v for k, v in row.to_dict().items() if k not in excluded and pd.notna(v)
             }
@@ -155,11 +156,17 @@ def restore_graph(
             # Sanitize relationship type
             rel_type = sanitize_relation_type(str(edge_type))
 
-            # Build SET clause for properties
+            # Build SET clause for properties (excluding vector_db_ref_id which is in MERGE)
             set_clause = "SET r.restored_at = timestamp()"
             if props:
                 prop_sets = ", ".join([f"r.{k} = $r_{k}" for k in props.keys()])
                 set_clause += f", {prop_sets}"
+
+            # Use vector_db_ref_id as unique identifier for MERGE to support parallel edges
+            # This ensures edges with different vector_db_ref_ids are created as separate edges
+            merge_props = ""
+            if pd.notna(vector_db_ref_id):
+                merge_props = " {vector_db_ref_id: $ref_id}"
 
             # Use labels if available for accurate matching
             if has_labels and pd.notna(row.get("from_label")) and pd.notna(row.get("to_label")):
@@ -168,7 +175,7 @@ def restore_graph(
                 query = f"""
                 MATCH (s:{from_label} {{id: $from_id}})
                 MATCH (t:{to_label} {{id: $to_id}})
-                MERGE (s)-[r:{rel_type}]->(t)
+                MERGE (s)-[r:{rel_type}{merge_props}]->(t)
                 {set_clause}
                 RETURN r
                 """
@@ -177,7 +184,7 @@ def restore_graph(
                 query = f"""
                 MATCH (s {{id: $from_id}})
                 MATCH (t {{id: $to_id}})
-                MERGE (s)-[r:{rel_type}]->(t)
+                MERGE (s)-[r:{rel_type}{merge_props}]->(t)
                 {set_clause}
                 RETURN r
                 """
@@ -186,6 +193,8 @@ def restore_graph(
                 "from_id": str(from_id),
                 "to_id": str(to_id),
             }
+            if pd.notna(vector_db_ref_id):
+                params["ref_id"] = str(vector_db_ref_id)
             if props:
                 params.update({f"r_{k}": v for k, v in props.items()})
 
