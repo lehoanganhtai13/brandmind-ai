@@ -343,13 +343,86 @@ class InputBar(Input):
             self._navigate_history(1)
 
     async def on_key(self, event) -> None:
-        """Handle tab key for completion."""
+        """Handle special keys including tab and macOS editing shortcuts."""
+        # Tab completion for popup
         if self._popup and event.key == "tab":
             selected = self._popup.get_selected_command()
             if selected:
                 await self._complete_command(selected)
             event.prevent_default()
             event.stop()
+            return
+
+        # macOS-style Cmd+Backspace: Delete from cursor to start of line
+        if event.key == "ctrl+u":  # Terminal standard for "kill line to start"
+            self._delete_to_start()
+            event.prevent_default()
+            event.stop()
+            return
+
+        # macOS-style Opt+Backspace: Delete word to the left
+        # In terminals, Opt+Backspace often sends "ctrl+w" or special escape sequence
+        if event.key == "ctrl+w":  # Standard Unix "kill word"
+            self._delete_word_left()
+            event.prevent_default()
+            event.stop()
+            return
+
+        # Alt/Opt+Delete: Delete word to the right
+        if event.key == "ctrl+delete" or event.key == "alt+delete":
+            self._delete_word_right()
+            event.prevent_default()
+            event.stop()
+            return
+
+    def _delete_to_start(self) -> None:
+        """Delete text from cursor position to start of line."""
+        cursor = self.cursor_position
+        if cursor > 0:
+            self.value = self.value[cursor:]
+            self.cursor_position = 0
+
+    def _delete_word_left(self) -> None:
+        """Delete word to the left of cursor (Opt+Backspace behavior)."""
+        text = self.value
+        cursor = self.cursor_position
+
+        if cursor == 0:
+            return
+
+        # Find start of previous word
+        pos = cursor - 1
+        # Skip trailing spaces
+        while pos > 0 and text[pos - 1] == " ":
+            pos -= 1
+        # Skip word characters
+        while pos > 0 and text[pos - 1] != " ":
+            pos -= 1
+
+        # Delete from pos to cursor
+        self.value = text[:pos] + text[cursor:]
+        self.cursor_position = pos
+
+    def _delete_word_right(self) -> None:
+        """Delete word to the right of cursor (Opt+Delete behavior)."""
+        text = self.value
+        cursor = self.cursor_position
+
+        if cursor >= len(text):
+            return
+
+        # Find end of current/next word
+        pos = cursor
+        # Skip leading spaces
+        while pos < len(text) and text[pos] == " ":
+            pos += 1
+        # Skip word characters
+        while pos < len(text) and text[pos] != " ":
+            pos += 1
+
+        # Delete from cursor to pos
+        self.value = text[:cursor] + text[pos:]
+        # cursor_position stays the same
 
     async def _complete_command(self, command: str) -> None:
         """Complete input with selected command.

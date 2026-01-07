@@ -8,9 +8,11 @@ and collapsible request cards.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
+import pyperclip
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import ScrollableContainer
@@ -42,8 +44,9 @@ class BrandMindApp(App[None]):
 
     BINDINGS: ClassVar[list[Binding]] = [
         Binding("ctrl+o", "toggle_expand", "Expand/Collapse", show=True),
-        Binding("ctrl+c", "quit", "Quit", show=True),
+        Binding("ctrl+q", "quit", "Quit", show=True),
         Binding("ctrl+l", "clear", "Clear", show=True),
+        Binding("ctrl+y", "copy_answer", "Copy Answer", show=True),
         Binding("escape", "cancel_query", "Cancel", show=False, priority=True),
     ]
 
@@ -60,6 +63,7 @@ class BrandMindApp(App[None]):
         self._all_renderers: list["TUIRenderer"] = []
         self._cancel_requested: bool = False
         self._current_future = None
+        self._last_answer: str = ""
 
     def compose(self) -> ComposeResult:
         """Compose app layout."""
@@ -167,10 +171,16 @@ class BrandMindApp(App[None]):
 
 [dim]Ctrl+O[/]   Expand/collapse logs
 [dim]Ctrl+L[/]   Clear screen
-[dim]Ctrl+C[/]   Quit
-[dim]↑↓[/]       Navigate suggestions
+[dim]Ctrl+Y[/]   Copy last answer to clipboard
+[dim]Ctrl+Q[/]   Quit
+[dim]↑↓[/]       Navigate suggestions / history
 [dim]Tab[/]      Complete suggestion (add to input)
 [dim]Enter[/]    Submit complete command or show subcommands
+
+[bold #6DB3B3]Input Editing:[/]
+
+[dim]Ctrl+U[/]   Delete to start of line
+[dim]Ctrl+W[/]   Delete word left
 """
         # No ID - allow multiple help messages in history
         help_widget = Static(help_text, classes="help-message")
@@ -326,7 +336,9 @@ class BrandMindApp(App[None]):
 
                 # Set final answer (only if not cancelled)
                 if not self._cancel_requested:
-                    renderer.set_answer(answer if answer else "No response generated")
+                    final_answer = answer if answer else "No response generated"
+                    self._last_answer = final_answer
+                    renderer.set_answer(final_answer)
 
             elif mode == "search-kg":
                 # Direct KG search without agent
@@ -339,6 +351,7 @@ class BrandMindApp(App[None]):
                 result = await search_knowledge_graph(query=query, max_results=10)
 
                 if not self._cancel_requested:
+                    self._last_answer = result
                     renderer.set_answer(result)
 
             elif mode == "search-docs":
@@ -352,6 +365,7 @@ class BrandMindApp(App[None]):
                 result = await search_document_library(query=query, top_k=10)
 
                 if not self._cancel_requested:
+                    self._last_answer = result
                     renderer.set_answer(result)
 
             else:
@@ -404,6 +418,20 @@ class BrandMindApp(App[None]):
         # Update ALL renderers so Ctrl+O expands everything
         for renderer in self._all_renderers:
             renderer.set_expanded(self._is_expanded)
+
+    def action_copy_answer(self) -> None:
+        """Copy the last answer to clipboard (Ctrl+Y)."""
+        if not self._last_answer:
+            self.notify("No answer to copy", severity="warning")
+            return
+
+        try:
+            # Strip Rich markup for plain text
+            plain_text = re.sub(r"\[.*?\]", "", self._last_answer)
+            pyperclip.copy(plain_text)
+            self.notify("Answer copied to clipboard!", severity="information")
+        except Exception as e:
+            self.notify(f"Failed to copy: {e}", severity="error")
 
     def action_clear(self) -> None:
         """Clear conversation history."""

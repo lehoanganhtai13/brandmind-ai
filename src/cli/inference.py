@@ -429,7 +429,11 @@ Examples:
 
 def main() -> None:
     """Synchronous entry point for CLI."""
+    import os
     import sys
+    
+    # Suppress verbose gRPC logs (must be set before gRPC is imported)
+    os.environ.setdefault("GRPC_VERBOSITY", "ERROR")
 
     # Check if no args or help requested - launch TUI
     # We need to check before asyncio.run() to avoid nested event loops
