@@ -125,6 +125,10 @@ make restore-package
 
 This will restore the complete knowledge graph built from marketing textbooks, ready for querying.
 
+<p align="center">
+  <img src="media/knowledge_graph_screenshot.png" alt="BrandMind AI Knowledge Graph" width="800">
+</p>
+
 ### 7. Build Knowledge Graph (Optional)
 
 If you want to build the knowledge graph from your own documents:
