@@ -50,20 +50,38 @@ cd brandmind-ai
 
 ### 3. Configure Environment Variables
 
-Copy the template environment file and fill in your API keys:
+Run the interactive setup wizard to configure your environment:
 
 ```bash
-cp environments/.template.env .env
+make setup-env
 ```
 
-Edit `.env` and add your API keys:
+This will prompt you for each configuration value. Only `GEMINI_API_KEY` is required - all other values have sensible defaults for local development.
 
-| Variable | Description | Get it from |
-|----------|-------------|-------------|
-| `GEMINI_API_KEY` | Google Gemini LLM & Embedding API | [Google AI Studio](https://aistudio.google.com/) |
-| `LLAMA_PARSE_API_KEY` | LlamaParse PDF→Markdown parser | [LlamaIndex](https://www.llamaindex.ai/llamaparse) |
+| Variable | Required | Description | Get it from |
+|----------|----------|-------------|-------------|
+| `GEMINI_API_KEY` | ✅ Yes | Google Gemini LLM & Embedding API | [Google AI Studio](https://aistudio.google.com/) |
+| `LLAMA_PARSE_API_KEY` | ❌ Optional | LlamaParse PDF→Markdown parser (only needed for document parsing) | [LlamaIndex](https://www.llamaindex.ai/llamaparse) |
 
-> **Note**: Database credentials (Milvus, FalkorDB, MinIO) have sensible defaults in the template. Adjust them for production deployments.
+After setup, load the environment variables:
+
+```bash
+source environments/.env.export
+```
+
+<details>
+<summary>📝 Manual Setup (Alternative)</summary>
+
+If you prefer manual configuration:
+
+```bash
+cp environments/.template.env environments/.env
+# Edit environments/.env and add your GEMINI_API_KEY
+```
+
+</details>
+
+> **Note**: Database credentials (Milvus, FalkorDB, MinIO) have sensible defaults that work with the local Docker services. Adjust them for production deployments.
 
 ### 4. Start Infrastructure Services
 

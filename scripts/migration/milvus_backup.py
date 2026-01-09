@@ -230,8 +230,8 @@ def main() -> None:
         help="Output directory",
     )
     backup_parser.add_argument("--minio-endpoint", default="localhost:9000")
-    backup_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY", "minioadmin"))
-    backup_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_KEY", "minioadmin_secret"))
+    backup_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY_ID", "minioadmin"))
+    backup_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_ACCESS_KEY", "minioadmin_secret"))
     backup_parser.add_argument("--bucket", default="a-bucket")
     
     # Download command
@@ -248,8 +248,8 @@ def main() -> None:
         help="Output directory",
     )
     download_parser.add_argument("--minio-endpoint", default="localhost:9000")
-    download_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY", "minioadmin"))
-    download_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_KEY", "minioadmin_secret"))
+    download_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY_ID", "minioadmin"))
+    download_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_ACCESS_KEY", "minioadmin_secret"))
     download_parser.add_argument("--bucket", default="a-bucket")
     
     args = parser.parse_args()

@@ -1,6 +1,6 @@
 .PHONY: help install install-chatbot install-indexer install-dev install-migration install-all
 .PHONY: add-chatbot add-indexer add-shared add-core add-dev add-migration
-.PHONY: sync update clean test format lint check
+.PHONY: sync update clean test format lint check setup-env
 .PHONY: services-up services-down services-restart services-logs services-status
 
 # Default target
@@ -31,6 +31,10 @@ install-migration: ## Install migration dependencies only
 
 install-all: ## Install all dependencies (chatbot + indexer + dev + migration)
 	uv sync --group chatbot --group indexer --group dev --group migration
+
+## Environment Setup
+setup-env: ## Interactive environment setup - creates environments/.env with your configuration
+	@./scripts/setup_env.sh
 
 ## Package Management
 add-chatbot: ## Add package to chatbot group. Usage: make add-chatbot PKG=langchain
@@ -219,8 +223,8 @@ backup-vector: ## Backup Milvus collections and download to local
 		--collections "DocumentChunks,EntityDescriptions,RelationDescriptions" \
 		--output ./backups/milvus \
 		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
-		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
-		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}"
+		--minio-access-key "$${MINIO_ACCESS_KEY_ID:-minioadmin}" \
+		--minio-secret-key "$${MINIO_SECRET_ACCESS_KEY:-minioadmin_secret}"
 	@echo "✅ Milvus backup complete → ./backups/milvus/"
 
 backup-download-vector: ## Download existing Milvus backup from MinIO
@@ -230,8 +234,8 @@ backup-download-vector: ## Download existing Milvus backup from MinIO
 		--name brandmind_backup \
 		--output ./backups/milvus \
 		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
-		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
-		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}"
+		--minio-access-key "$${MINIO_ACCESS_KEY_ID:-minioadmin}" \
+		--minio-secret-key "$${MINIO_SECRET_ACCESS_KEY:-minioadmin_secret}"
 	@echo "✅ Milvus backup downloaded → ./backups/milvus/"
 
 backup-all: backup-graph backup-vector ## Backup both FalkorDB and Milvus
@@ -265,8 +269,8 @@ restore-vector: ## Restore Milvus from local backup (upload to MinIO + restore)
 		--backup-dir ./backups/milvus/brandmind_backup \
 		--name brandmind_backup \
 		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
-		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
-		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}"
+		--minio-access-key "$${MINIO_ACCESS_KEY_ID:-minioadmin}" \
+		--minio-secret-key "$${MINIO_SECRET_ACCESS_KEY:-minioadmin_secret}"
 	@echo "🔧 Recreating indexes and loading collections..."
 	@MILVUS_HOST="$${MILVUS_HOST:-localhost}" \
 		MILVUS_PORT="$${MILVUS_PORT:-19530}" \
@@ -285,8 +289,8 @@ restore-clean-vector: ## Clean restore Milvus (DROP existing + restore from back
 		--name brandmind_backup \
 		--drop-existing \
 		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
-		--minio-access-key "$${MINIO_ACCESS_KEY:-minioadmin}" \
-		--minio-secret-key "$${MINIO_SECRET_KEY:-minioadmin_secret}" \
+		--minio-access-key "$${MINIO_ACCESS_KEY_ID:-minioadmin}" \
+		--minio-secret-key "$${MINIO_SECRET_ACCESS_KEY:-minioadmin_secret}" \
 		--milvus-host "$${MILVUS_HOST:-localhost}" \
 		--milvus-port "$${MILVUS_PORT:-19530}" \
 		--milvus-password "$${MILVUS_ROOT_PASSWORD:-Milvus_secret}"

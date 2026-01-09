@@ -223,8 +223,8 @@ def main() -> None:
         help="Backup name in MinIO (default: brandmind_backup)",
     )
     upload_parser.add_argument("--minio-endpoint", default="localhost:9000")
-    upload_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY", "minioadmin"))
-    upload_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_KEY", "minioadmin_secret"))
+    upload_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY_ID", "minioadmin"))
+    upload_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_ACCESS_KEY", "minioadmin_secret"))
     upload_parser.add_argument("--bucket", default="a-bucket")
     
     # Restore command
@@ -251,8 +251,8 @@ def main() -> None:
         help="Suffix to add to restored collection names",
     )
     restore_parser.add_argument("--minio-endpoint", default="localhost:9000")
-    restore_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY", "minioadmin"))
-    restore_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_KEY", "minioadmin_secret"))
+    restore_parser.add_argument("--minio-access-key", default=os.getenv("MINIO_ACCESS_KEY_ID", "minioadmin"))
+    restore_parser.add_argument("--minio-secret-key", default=os.getenv("MINIO_SECRET_ACCESS_KEY", "minioadmin_secret"))
     restore_parser.add_argument("--bucket", default="a-bucket")
     restore_parser.add_argument(
         "--drop-existing",

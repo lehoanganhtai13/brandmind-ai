@@ -2,7 +2,7 @@
 # See: https://github.com/zilliztech/milvus-backup
 #
 # This is a TEMPLATE file. Environment variables will be substituted at runtime.
-# Variables used: MILVUS_ROOT_PASSWORD, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+# Variables used: MILVUS_ROOT_PASSWORD, MINIO_ACCESS_KEY_ID, MINIO_SECRET_ACCESS_KEY
 
 # Configures the system log output
 log:
@@ -37,8 +37,8 @@ minio:
   address: milvus-minio
   port: 9000
   region: ""
-  accessKeyID: "${MINIO_ACCESS_KEY}"
-  secretAccessKey: "${MINIO_SECRET_KEY}"
+  accessKeyID: "${MINIO_ACCESS_KEY_ID}"
+  secretAccessKey: "${MINIO_SECRET_ACCESS_KEY}"
   token: ""
   gcpCredentialJSON: ""
   useSSL: false
@@ -52,8 +52,8 @@ minio:
   backupAddress: milvus-minio
   backupRegion: ""
   backupPort: 9000
-  backupAccessKeyID: "${MINIO_ACCESS_KEY}"
-  backupSecretAccessKey: "${MINIO_SECRET_KEY}"
+  backupAccessKeyID: "${MINIO_ACCESS_KEY_ID}"
+  backupSecretAccessKey: "${MINIO_SECRET_ACCESS_KEY}"
   backupToken: ""
   backupGcpCredentialJSON: ""
   backupBucketName: "a-bucket"

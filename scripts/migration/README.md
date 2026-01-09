@@ -70,6 +70,6 @@ backups/
 | `FALKORDB_USERNAME` | brandmind | FalkorDB username |
 | `FALKORDB_PASSWORD` | password | FalkorDB password |
 | `MINIO_PORT` | 9000 | MinIO port |
-| `MINIO_ACCESS_KEY` | minioadmin | MinIO access key |
-| `MINIO_SECRET_KEY` | minioadmin_secret | MinIO secret key |
+| `MINIO_ACCESS_KEY_ID` | minioadmin | MinIO access key |
+| `MINIO_SECRET_ACCESS_KEY` | minioadmin_secret | MinIO secret key |
 | `MILVUS_BACKUP_PORT` | 8090 | Milvus backup API port |
