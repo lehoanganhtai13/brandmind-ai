@@ -218,3 +218,6 @@ agent_workspace/
 # PDF files - ignore all except test files
 data/raw_documents/*.pdf
 !data/raw_documents/*_test.pdf
+
+# Agent config
+.agent
