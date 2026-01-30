@@ -35,6 +35,10 @@ class Settings:
         # Parsing service settings
         self.LLAMA_PARSE_API_KEY = os.getenv("LLAMA_PARSE_API_KEY", "")
 
+        # Search service settings
+        self.PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY", "")
+        self.TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+
         # Database settings
         self.MILVUS_HOST = os.getenv("MILVUS_HOST", "localhost")
         self.MILVUS_PORT = int(os.getenv("MILVUS_PORT", 19530))

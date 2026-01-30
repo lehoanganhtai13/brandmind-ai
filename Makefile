@@ -168,8 +168,18 @@ ipython: ## Start IPython shell
 	uv run ipython
 
 ## Docker Services
-services-up: ## Start infrastructure services (SearXNG + Crawl4AI)
-	cd infra && docker compose up -d --build
+# Use SKIP_SEARXNG=true to exclude SearXNG (for users with external API providers)
+# Example: make services-up SKIP_SEARXNG=true
+DOCKER_SERVICES := $(if $(filter true,$(SKIP_SEARXNG)),crawl4ai falkordb milvus-etcd milvus-minio milvus milvus-attu milvus-backup,)
+
+services-up: ## Start infrastructure services. Use SKIP_SEARXNG=true to exclude SearXNG
+	@if [ "$(SKIP_SEARXNG)" = "true" ]; then \
+		echo "Starting services WITHOUT SearXNG..."; \
+		cd infra && docker compose up -d --build $(DOCKER_SERVICES); \
+	else \
+		echo "Starting ALL services (including SearXNG)..."; \
+		cd infra && docker compose up -d --build; \
+	fi
 
 services-down: ## Stop infrastructure services
 	cd infra && docker compose down

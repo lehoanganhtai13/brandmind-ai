@@ -60,7 +60,9 @@ This will prompt you for each configuration value. Only `GEMINI_API_KEY` is requ
 | Variable | Required | Description | Get it from |
 |----------|----------|-------------|-------------|
 | `GEMINI_API_KEY` | ✅ Yes | Google Gemini LLM & Embedding API | [Google AI Studio](https://aistudio.google.com/) |
-| `LLAMA_PARSE_API_KEY` | ❌ Optional | LlamaParse PDF→Markdown parser (only needed for document parsing) | [LlamaIndex](https://www.llamaindex.ai/llamaparse) |
+| `LLAMA_PARSE_API_KEY` | ❌ Optional | LlamaParse PDF→Markdown parser | [LlamaIndex](https://www.llamaindex.ai/llamaparse) |
+| `PERPLEXITY_API_KEY` | ❌ Optional | Perplexity AI search provider | [Perplexity](https://www.perplexity.ai/) |
+| `TAVILY_API_KEY` | ❌ Optional | Tavily web search provider | [Tavily](https://tavily.com/) |
 
 After setup, load the environment variables:
 
@@ -105,6 +107,19 @@ This will start the following services:
   - Attu UI (port 3001): Web interface for managing collections
   - MinIO (ports 9000-9001): Object storage backend
   - etcd (internal): Metadata storage
+
+#### Search Providers
+
+Web search supports multiple providers with automatic fallback:
+
+| Provider | API Key | Notes |
+|----------|---------|-------|
+| **SearXNG** | Not required | Self-hosted, included by default |
+| **Perplexity** | `PERPLEXITY_API_KEY` | AI-powered search |
+| **Tavily** | `TAVILY_API_KEY` | Web search API |
+| **Bing** | Not required | Fallback option |
+
+> **Tip**: Run `make setup-env` to configure API keys. Use `make services-up SKIP_SEARXNG=true` if you only want to use external providers.
 
 **Check service status:**
 ```bash

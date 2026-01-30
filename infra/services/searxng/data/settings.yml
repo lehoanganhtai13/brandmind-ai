@@ -342,12 +342,7 @@ engines:
   - name: google
     engine: google
     shortcut: go
-    timeout: 15.0                # Tăng timeout riêng cho Google (default 10s hơi gắt)
-    params:
-      hl: vi                     # Giao diện tiếng Việt
-      gl: VN                     # Geo Vietnam
-      lr: lang_vi                # Ưu tiên nội dung tiếng Việt
-      safe: off                  # Match với search.safe_search: 0
+    timeout: 15.0
 
   - name: duckduckgo
     engine: duckduckgo
@@ -360,17 +355,13 @@ engines:
     paging: true
     categories: [general, web]
     brave_category: search
-    # brave_spellcheck: true
+    brave_spellcheck: false
+    timeout: 20.0
 
   - name: bing
     engine: bing
     shortcut: bi
     disabled: false
-    language: vi
-    params:
-      mkt: vi-VN
-      setlang: vi
-      cc: VN
 
   - name: startpage
     engine: startpage

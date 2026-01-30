@@ -50,6 +50,8 @@ get_description() {
     case "$1" in
         GEMINI_API_KEY) echo "Google Gemini API key for LLM (get from https://aistudio.google.com)" ;;
         LLAMA_PARSE_API_KEY) echo "LlamaParse API key for PDF parsing (optional, get from https://cloud.llamaindex.ai)" ;;
+        PERPLEXITY_API_KEY) echo "Perplexity API key for AI search (optional, get from https://perplexity.ai)" ;;
+        TAVILY_API_KEY) echo "Tavily API key for web search (optional, get from https://tavily.com)" ;;
         EMBEDDING_DIM) echo "Embedding dimension" ;;
         MINIO_ACCESS_KEY_ID) echo "MinIO access key" ;;
         MINIO_SECRET_ACCESS_KEY) echo "MinIO secret key" ;;
@@ -82,6 +84,8 @@ is_required() {
 is_optional() {
     case "$1" in
         LLAMA_PARSE_API_KEY) return 0 ;;
+        PERPLEXITY_API_KEY) return 0 ;;
+        TAVILY_API_KEY) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -126,6 +130,9 @@ for i in "${!VAR_NAMES[@]}"; do
     case "$var_name" in
         GEMINI_API_KEY|LLAMA_PARSE_API_KEY)
             section="🔑 API Keys"
+            ;;
+        PERPLEXITY_API_KEY|TAVILY_API_KEY)
+            section="🔍 Search API Keys"
             ;;
         EMBEDDING_DIM)
             section="📊 Embedding Configuration"
@@ -215,6 +222,10 @@ echo -e "${CYAN}═════════════════════�
         case "$var_name" in
             GEMINI_API_KEY)
                 echo "# API Keys"
+                ;;
+            PERPLEXITY_API_KEY)
+                echo ""
+                echo "# Search API Keys"
                 ;;
             EMBEDDING_DIM)
                 echo ""

@@ -431,7 +431,7 @@ def main() -> None:
     """Synchronous entry point for CLI."""
     import os
     import sys
-    
+
     # Suppress verbose gRPC logs (must be set before gRPC is imported)
     os.environ.setdefault("GRPC_VERBOSITY", "ERROR")
 
