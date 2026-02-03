@@ -231,28 +231,60 @@ The Knowledge Graph is a critical component that provides **domain expertise** t
 ```
 Stage 1: Document Mapping (The Cartographer)
          PDF → Markdown → Structure Map (chapters, sections, line numbers)
-     
+   
 Stage 2: Chunking
          Structure Map → Semantic Chunks (respecting section boundaries)
-     
+   
 Stage 3: Entity/Relation Extraction
          Chunks → Entities + Relationships → FalkorDB Graph
-     
+   
 Stage 4: Indexing
          Entities/Relations → Milvus Vector Embeddings
-     
+   
 Stage 5: Retrieval (The Retriever)
          Query → PPR + Dijkstra → Relevant Knowledge Paths
 ```
 
-### 3.3 Data Sources (Planned)
+### 3.3 Data Sources
 
-| Document                                 | Status     | Purpose                     |
-| ---------------------------------------- | ---------- | --------------------------- |
-| Principles of Marketing 17th Ed (Kotler) | ✅ Indexed | Core marketing fundamentals |
-| TBD: Brand Strategy Book                 | 🔄 Planned | Deep branding knowledge     |
-| TBD: Visual Identity Guide               | 🔄 Planned | Design principles           |
-| TBD: Case Studies Collection             | 🔄 Planned | Real-world examples         |
+**Selection Criteria:**
+
+- Fill knowledge gaps not covered by Marketing Skills
+- Ensure full coverage across all 5 branding phases
+- Prioritize actionable frameworks over theoretical knowledge
+- Balance classic foundations with modern practices
+
+| # | Document                                        | Author               | Status      | Phase Coverage | Purpose                                                      |
+| - | ----------------------------------------------- | -------------------- | ----------- | -------------- | ------------------------------------------------------------ |
+| 1 | **Principles of Marketing** (17th Ed)     | Philip Kotler        | ✅ Indexed  | P1, P3         | Core marketing fundamentals, STP, marketing mix              |
+| 2 | **Strategic Brand Management**            | Kevin Lane Keller    | 🔄 To Index | P1, P2, P5     | CBBE Pyramid, Brand Value Chain, brand equity measurement    |
+| 3 | **Designing Brand Identity**              | Alina Wheeler        | 🔄 To Index | P4, P5         | Visual identity 5-phase process, templates, brand guidelines |
+| 4 | **Positioning: The Battle for Your Mind** | Al Ries & Jack Trout | 🔄 To Index | P2             | Mental positioning, laddering, differentiation techniques    |
+
+**Why these 4 books?**
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    KNOWLEDGE COVERAGE MATRIX                             │
+├──────────────────────────────────────────────────────────────────────────┤
+│                          Kotler  Keller  Wheeler  Ries   Skills          │
+│ Phase 1: Discovery         ✅      ✅       ⚪      ⚪     ✅ (ICP)       │
+│ Phase 2: Positioning       ⚪      ✅       ⚪      ✅     ✅ (Dunford)   │
+│ Phase 3: Messaging         ✅      ⚪       ⚪      ⚪     ✅ (hierarchy) │
+│ Phase 4: Visual Identity   ⚪      ⚪       ✅      ⚪     ❌ (gap)       │
+│ Phase 5: Implementation    ⚪      ✅       ✅      ⚪     ⚪             │
+│ Brand Metrics/Measurement  ⚪      ✅       ⚪      ⚪     ⚪             │
+└──────────────────────────────────────────────────────────────────────────┘
+
+Key: ✅ = Strong coverage, ⚪ = Partial/None, ❌ = Gap that needed filling
+```
+
+**Book Synergy:**
+
+- **Kotler** = Marketing foundation (already indexed)
+- **Keller** = Brand management depth + measurement framework (supplements Kotler)
+- **Wheeler** = Visual identity process (fills biggest gap - Phase 4)
+- **Ries** = Positioning psychology (complements Keller's strategic view)
 
 ### 3.4 Current KG Stats
 
