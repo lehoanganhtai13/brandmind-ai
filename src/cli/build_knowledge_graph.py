@@ -202,7 +202,7 @@ async def async_main() -> None:
             "mapping",
             "chunking",
             "extraction",
-            "validate",
+            "validation",
             "indexing",
             "post-process",
             "all",
@@ -347,7 +347,7 @@ async def async_main() -> None:
         )
 
     # Stage 4: Validation
-    if args.stage in ["validate", "all"]:
+    if args.stage in ["validation", "all"]:
         logger.info("=" * 80)
         logger.info("STAGE 4: VALIDATION")
         logger.info("=" * 80)

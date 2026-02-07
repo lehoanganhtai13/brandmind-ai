@@ -40,6 +40,12 @@ If you decide to **MERGE**, you must select the best `canonical_name`.
 * *Example:* Between "Google" and "Google Inc.", prefer "Google Inc." (if accurate) or "Google" (if referring to the brand universally).
 * *Logic:* The canonical name will be the single representative label in the graph.
 
+## Step 4: Name Format Normalization
+After selecting the canonical name, ensure it follows the standard naming format:
+* **Format:** Use natural language with spaces (Title Case).
+* **Normalize:** If the selected name is in PascalCase without spaces (e.g., `BrandEquity`), convert to spaced format (e.g., `Brand Equity`).
+* *Note:* Proper nouns, acronyms, and names that naturally have no spaces (e.g., `iPhone`, `AI`, `Google`) should remain as-is.
+
 # DECISION GUIDELINES
 * **DECISION: MERGE**
     * When names are identical or obvious synonyms/acronyms.

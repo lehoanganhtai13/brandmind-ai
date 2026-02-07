@@ -182,11 +182,11 @@ async def decide_entity_merge(
         # Create LLM with instruction as system_instruction
         llm = GoogleAIClientLLM(
             config=GoogleAIClientLLMConfig(
-                model="gemini-2.5-flash-lite",
+                model="gemini-3-flash-preview",
                 api_key=SETTINGS.GEMINI_API_KEY,
                 system_instruction=ENTITY_MERGE_DECISION_INSTRUCTION,
-                temperature=0.1,
-                thinking_budget=2000,
+                temperature=1.0,
+                thinking_level="low",
                 max_tokens=2000,
                 response_mime_type="application/json",
                 response_schema=EntityMergeDecision,
@@ -246,11 +246,11 @@ async def merge_descriptions(
         # Create LLM with instruction as system_instruction
         llm = GoogleAIClientLLM(
             config=GoogleAIClientLLMConfig(
-                model="gemini-2.5-flash-lite",
+                model="gemini-3-flash-preview",
                 api_key=SETTINGS.GEMINI_API_KEY,
                 system_instruction=DESCRIPTION_SYNTHESIS_INSTRUCTION,
-                temperature=0.1,
-                thinking_budget=1000,
+                temperature=1.0,
+                thinking_level="low",
                 max_tokens=3000,
                 response_mime_type="application/json",
                 response_schema=DescriptionSynthesisResponse,

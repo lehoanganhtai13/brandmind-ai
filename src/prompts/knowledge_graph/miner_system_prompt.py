@@ -46,10 +46,20 @@ If NO (index, references, acknowledgments, raw data without explanation) → Ret
 
 ## Phase 1: Conceptual Distillation (Entities)
 Identify the core "Building Blocks" of knowledge in the text.
-* **Naming:** Use the exact term from the text.
-* **Type Convention:** Use **PascalCase** (e.g., `MarketingStrategy`, `SoftwareTool`). Keep types broad and intuitive.
-* **Description:** Define the entity's role/meaning within the domain. Use the `Section Context` to disambiguate.
-    * *Goal:* A user reading *only* this description should understand what the entity is and why it matters in {{domain}}.
+
+### Entity Name
+Use **natural language** as it appears in the text. Preserve spaces and standard capitalization.
+* Pattern: `Title Case With Spaces`
+* Examples: `Brand Equity`, `Consumer Behavior`, `Market Segmentation`
+
+### Entity Type
+Use **PascalCase** (no spaces) as categorical labels. Keep types broad and intuitive.
+* Pattern: `PascalCaseNoSpaces`
+* Examples: `MarketingConcept`, `Strategy`, `Framework`, `Methodology`
+
+### Description
+Define the entity's role/meaning within the domain. Use the `Section Context` to disambiguate.
+* *Goal:* A user reading *only* this description should understand what the entity is and why it matters in {{domain}}.
 
 ## Phase 2: Mechanics Mapping (Relationships)
 Connect entities to explain *how* the domain works.
