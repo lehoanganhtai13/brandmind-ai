@@ -124,6 +124,7 @@ class GoogleAIClientLLM(BaseLLM):
         *,
         system_instruction: Optional[str] = None,
         thinking_budget: Optional[int] = None,
+        thinking_level: Optional[str] = None,
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
         max_tokens: Optional[int] = None,
@@ -139,7 +140,8 @@ class GoogleAIClientLLM(BaseLLM):
 
         Args:
             system_instruction (str, optional): Override default system instruction.
-            thinking_budget (int, optional): Override default thinking budget.
+            thinking_budget (int, optional): Override default thinking budget (2.5 models).
+            thinking_level (str, optional): Override default thinking level (Gemini 3 models).
             temperature (float, optional): Override default temperature.
             top_p (float, optional): Override default top_p.
             max_tokens (int, optional): Override default max tokens.
@@ -160,13 +162,29 @@ class GoogleAIClientLLM(BaseLLM):
             "http_options": types.HttpOptions(timeout=60_000),  # 60 seconds timeout
         }
 
-        # Configure thinking budget if specified (0 disables thinking on Flash models)
+        # Configure thinking based on model version
+        # Gemini 3 uses thinking_level (str), Gemini 2.5 uses thinking_budget (int)
+        is_gemini_3 = "gemini-3" in self.config.model
+        
+        thinking_level_to_use = (
+            thinking_level
+            if thinking_level is not None
+            else self.config.thinking_level
+        )
         thinking_budget_to_use = (
             thinking_budget
             if thinking_budget is not None
             else self.config.thinking_budget
         )
-        if thinking_budget_to_use is not None:
+        
+        if is_gemini_3 and thinking_level_to_use is not None:
+            # Gemini 3: use thinking_level (low, medium, high, minimal)
+            config_kwargs["thinking_config"] = types.ThinkingConfig(
+                thinking_level=thinking_level_to_use,
+                include_thoughts=False,
+            )
+        elif not is_gemini_3 and thinking_budget_to_use is not None:
+            # Gemini 2.5: use thinking_budget (integer)
             config_kwargs["thinking_config"] = types.ThinkingConfig(
                 thinking_budget=thinking_budget_to_use,
                 include_thoughts=False,

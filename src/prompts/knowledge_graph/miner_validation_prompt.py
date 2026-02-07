@@ -38,6 +38,16 @@ Scan the `Chunk Content` for major bold terms, definitions, or italicized concep
 * **Action:** Check if these core concepts exist in the `Extracted Graph`.
 * **Flag:** If a key definition is missing, mark as **MISSING_CONCEPT**.
 
+## Step 4: Format Compliance Check
+Verify naming conventions follow the correct patterns.
+* **Entity Types:** Must be **PascalCase** - each word starts with uppercase, no spaces or underscores.
+    * Pattern: First letter uppercase, then for each new word within the name, that word's first letter must also be uppercase.
+    * Common error: All lowercase after first letter (e.g., "Marketingmix" instead of "MarketingMix")
+* **Relation Types:** Must be **lowerCamelCase** - starts with lowercase verb, subsequent words capitalized.
+    * Pattern: First letter lowercase, then for each new word, capitalize its first letter.
+    * Common error: First letter uppercase or using underscores.
+* **Flag:** If format is wrong, mark as **FORMAT_ERROR** with the correct format suggestion.
+
 # OUTPUT FORMAT (JSON)
 
 Output a single valid JSON object containing your assessment.

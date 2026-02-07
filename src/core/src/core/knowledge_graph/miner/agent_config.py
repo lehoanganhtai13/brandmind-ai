@@ -22,11 +22,11 @@ from shared.agent_middlewares import (
     EnsureTasksFinishedMiddleware,
     LogModelMessageMiddleware,
 )
-from shared.agent_tools.knowledge_graph import validate_triples
+from shared.agent_tools.knowledge_graph import finalize_output, validate_triples
 
 
 def create_miner_agent(
-    model_name: str = "gemini-2.5-flash",
+    model_name: str = "gemini-3-flash-preview",
 ) -> tuple[object, ChatGoogleGenerativeAI]:
     """Create a Deep Agent configured for knowledge extraction.
 
@@ -38,7 +38,7 @@ def create_miner_agent(
     - Gemini 2.5 Flash with thinking mode by default
 
     Args:
-        model_name: Model to use (default: gemini-2.5-flash)
+        model_name: Model to use (default: gemini-3-flash-preview)
 
     Returns:
         Tuple of (configured agent, model instance)
@@ -49,8 +49,8 @@ def create_miner_agent(
     model = ChatGoogleGenerativeAI(
         google_api_key=SETTINGS.GEMINI_API_KEY,
         model=model_name,
-        temperature=0.1,
-        thinking_budget=2000,  # Lower budget for extraction task
+        temperature=1.0,  # Gemini 3 default - recommended by Google
+        thinking_level="medium",  # Gemini 3 uses thinking_level (medium for extraction)
         max_output_tokens=30000,
         include_thoughts=True,  # Enable reasoning output
     )
@@ -87,7 +87,7 @@ def create_miner_agent(
     logger.info("✓ Middlewares configured")
 
     # 3. Collect tools
-    tools = [validate_triples]
+    tools = [validate_triples, finalize_output]
     logger.info(f"✓ Custom tools: {[t.__name__ for t in tools]}")
 
     # 4. Format system prompt with domain

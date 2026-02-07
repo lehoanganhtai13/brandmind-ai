@@ -31,7 +31,7 @@ from shared.agent_tools import TodoWriteMiddleware, line_search
 
 def create_cartographer_agent(
     document_folder: str,
-    model_name: str = "gemini-2.5-pro",
+    model_name: str = "gemini-3-flash-preview",
 ) -> tuple[object, ChatGoogleGenerativeAI]:
     """Create a Deep Agent configured for document structure mapping.
 
@@ -57,8 +57,8 @@ def create_cartographer_agent(
     model = ChatGoogleGenerativeAI(
         google_api_key=SETTINGS.GEMINI_API_KEY,
         model=model_name,
-        temperature=0.1,
-        thinking_budget=4000,
+        temperature=1.0,  # Gemini 3 default - recommended by Google
+        thinking_level="high",  # Gemini 3 uses thinking_level
         max_output_tokens=50000,
         include_thoughts=True,  # Enable reasoning output
     )

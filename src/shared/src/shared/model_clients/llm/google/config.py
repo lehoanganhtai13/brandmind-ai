@@ -24,8 +24,8 @@ class GoogleAIClientLLMConfig(LLMConfig):
     Attributes:
         model (str):
             The ID of the Gemini model to use for completions
-            (e.g., "gemini-2.5-flash-preview", "gemini-2.5-pro-preview").
-            Defaults to "gemini-2.5-flash-preview".
+            (e.g., "gemini-3-flash-preview", "gemini-2.5-flash-lite").
+            Defaults to "gemini-3-flash-preview".
         api_key (str, optional):
             The Google AI API key for authentication. It's recommended to set this via
             the `GOOGLE_API_KEY` environment variable. Defaults to None.
@@ -57,9 +57,14 @@ class GoogleAIClientLLMConfig(LLMConfig):
             A default system-level instruction for the model, applied to all requests.
             This serves as persistent context for the conversation. Defaults to None.
         thinking_budget (int, optional):
-            Controls the model's reasoning process. Set to 0 to disable thinking
-            (Flash models only). Higher values allow more thorough reasoning.
-            Defaults to None (uses model default).
+            Controls the model's reasoning process for Gemini 2.5 models.
+            Set to 0 to disable thinking (Flash models only). Higher values
+            allow more thorough reasoning. Defaults to None (uses model default).
+            NOTE: Use thinking_level for Gemini 3 models instead.
+        thinking_level (str, optional):
+            Controls the model's reasoning process for Gemini 3 models.
+            Values: "minimal" (Flash only), "low", "medium", "high" (default).
+            Defaults to None (uses model default "high").
         response_mime_type (str, optional):
             The MIME type for the response, such as `"application/json"` or
             `"text/plain"` or `"text/x.enum"`.
@@ -78,7 +83,7 @@ class GoogleAIClientLLMConfig(LLMConfig):
 
     def __init__(
         self,
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-3-flash-preview",
         api_key: Optional[str] = None,
         temperature: float = 0.1,
         top_p: float = 0.95,
@@ -87,6 +92,7 @@ class GoogleAIClientLLMConfig(LLMConfig):
         tools: Optional[Callable[..., Any]] = None,
         system_instruction: Optional[str] = None,
         thinking_budget: Optional[int] = None,
+        thinking_level: Optional[str] = None,
         response_mime_type: Optional[str] = None,
         response_schema: Optional[SchemaLike] = None,
         **kwargs,
@@ -101,6 +107,7 @@ class GoogleAIClientLLMConfig(LLMConfig):
         self.use_grounding = use_grounding
         self.system_instruction = system_instruction
         self.thinking_budget = thinking_budget
+        self.thinking_level = thinking_level
         self.response_mime_type = response_mime_type
         self.response_schema = response_schema
         self.tools = tools
@@ -110,13 +117,34 @@ class GoogleAIClientLLMConfig(LLMConfig):
 
     def _validate_config(self) -> None:
         """
-        Validates that grounding and structured output are not used together.
+        Validates configuration constraints.
 
         Raises:
-            ValueError: If both grounding and structured output are enabled.
+            ValueError: If invalid combinations are detected.
         """
+        # Check thinking parameter mutual exclusion
+        if self.thinking_budget is not None and self.thinking_level is not None:
+            raise ValueError(
+                "Cannot use both thinking_budget and thinking_level. Choose one:\n"
+                "- thinking_budget (int): For Gemini 2.5 models\n"
+                "- thinking_level (str): For Gemini 3 models ('low', 'medium', 'high', 'minimal')"
+            )
+        
+        # Check model-parameter mismatch
+        is_gemini_3 = "gemini-3" in self.model
+        if is_gemini_3 and self.thinking_budget is not None:
+            raise ValueError(
+                f"thinking_budget is not supported for Gemini 3 models ({self.model}). "
+                "Use thinking_level instead ('low', 'medium', 'high', or 'minimal' for Flash)."
+            )
+        if not is_gemini_3 and self.thinking_level is not None:
+            raise ValueError(
+                f"thinking_level is not supported for Gemini 2.5 models ({self.model}). "
+                "Use thinking_budget instead (integer value, 0 to disable)."
+            )
+        
+        # Check grounding/tools vs structured output
         if self.use_grounding or self.tools:
-            # Check if structured output is being used
             has_structured_mime_type = (
                 self.response_mime_type is not None
                 and self.response_mime_type != "text/plain"

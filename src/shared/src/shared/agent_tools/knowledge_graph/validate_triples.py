@@ -46,9 +46,9 @@ def validate_triples(
         # Initialize LLM client with thinking budget for validation
         llm = GoogleAIClientLLM(
             config=GoogleAIClientLLMConfig(
-                model="gemini-2.5-flash",
+                model="gemini-3-flash-preview",
                 api_key=SETTINGS.GEMINI_API_KEY,
-                thinking_budget=2000,  # Allow thinking for validation
+                thinking_level="low",  # Validation is simple task, use low
                 max_tokens=30000,
                 response_mime_type="application/json",
                 response_schema=ValidationResult,
@@ -70,7 +70,7 @@ def validate_triples(
         MAX_ATTEMPTS = 3
         for attempt in range(MAX_ATTEMPTS):
             try:
-                result = llm.complete(prompt, temperature=0.1).text
+                result = llm.complete(prompt, temperature=1.0).text  # Gemini 3 default
 
                 # Parse JSON response (handle markdown code blocks)
                 if result.startswith("```json"):

@@ -51,8 +51,8 @@ class BatchProcessor:
         MAX_CONCURRENT: Maximum number of concurrent extraction agents (Semaphore limit)
     """
 
-    BATCH_SIZE = 5  # Process 5 chunks at a time
-    MAX_CONCURRENT = 5  # Max concurrent agents (controlled by Semaphore)
+    BATCH_SIZE = 20  # Process 20 chunks at a time
+    MAX_CONCURRENT = 20  # Max concurrent agents (controlled by Semaphore)
 
     def __init__(self, document_folder: str):
         """Initialize batch processor.

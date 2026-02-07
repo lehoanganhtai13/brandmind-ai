@@ -251,40 +251,50 @@ Stage 5: Retrieval (The Retriever)
 
 - Fill knowledge gaps not covered by Marketing Skills
 - Ensure full coverage across all 5 branding phases
-- Prioritize actionable frameworks over theoretical knowledge
-- Balance classic foundations with modern practices
+- Prioritize timeless, parseable books (text-heavy, minimal visuals)
+- Balance classic foundations with evidence-based modern practices
+- Cover both conceptual knowledge (WHY) and tactical rules (HOW to apply)
 
-| # | Document                                        | Author               | Status      | Phase Coverage | Purpose                                                      |
-| - | ----------------------------------------------- | -------------------- | ----------- | -------------- | ------------------------------------------------------------ |
-| 1 | **Principles of Marketing** (17th Ed)     | Philip Kotler        | ✅ Indexed  | P1, P3         | Core marketing fundamentals, STP, marketing mix              |
-| 2 | **Strategic Brand Management**            | Kevin Lane Keller    | 🔄 To Index | P1, P2, P5     | CBBE Pyramid, Brand Value Chain, brand equity measurement    |
-| 3 | **Designing Brand Identity**              | Alina Wheeler        | 🔄 To Index | P4, P5         | Visual identity 5-phase process, templates, brand guidelines |
-| 4 | **Positioning: The Battle for Your Mind** | Al Ries & Jack Trout | 🔄 To Index | P2             | Mental positioning, laddering, differentiation techniques    |
+| # | Document                                             | Author               | Status      | Phase Coverage | Purpose                                                   |
+| - | ---------------------------------------------------- | -------------------- | ----------- | -------------- | --------------------------------------------------------- |
+| 1 | **Principles of Marketing** (17th Ed)          | Philip Kotler        | ✅ Indexed  | P1, P3         | Core marketing fundamentals, STP, marketing mix           |
+| 2 | **Strategic Brand Management**                 | Kevin Lane Keller    | 🔄 To Index | P1, P2, P5     | CBBE Pyramid, Brand Value Chain, brand equity measurement |
+| 3 | **Positioning: The Battle for Your Mind**      | Al Ries & Jack Trout | 🔄 To Index | P2             | Mental positioning, laddering, differentiation techniques |
+| 4 | **How Brands Grow**                            | Byron Sharp          | 🔄 To Index | P2, P4, P5     | Evidence-based growth laws, Distinctive Brand Assets      |
+| 5 | **Influence: Psychology of Persuasion** (2021) | Robert B. Cialdini   | 🔄 To Index | P3             | 7 principles of persuasion for messaging psychology       |
 
-**Why these 4 books?**
+**Why these 5 books?**
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                    KNOWLEDGE COVERAGE MATRIX                             │
 ├──────────────────────────────────────────────────────────────────────────┤
-│                          Kotler  Keller  Wheeler  Ries   Skills          │
-│ Phase 1: Discovery         ✅      ✅       ⚪      ⚪     ✅ (ICP)       │
-│ Phase 2: Positioning       ⚪      ✅       ⚪      ✅     ✅ (Dunford)   │
-│ Phase 3: Messaging         ✅      ⚪       ⚪      ⚪     ✅ (hierarchy) │
-│ Phase 4: Visual Identity   ⚪      ⚪       ✅      ⚪     ❌ (gap)       │
-│ Phase 5: Implementation    ⚪      ✅       ✅      ⚪     ⚪             │
-│ Brand Metrics/Measurement  ⚪      ✅       ⚪      ⚪     ⚪             │
+│                          Kotler  Keller  Ries   Sharp  Cialdini  Skills  │
+│ Phase 1: Discovery         ✅      ✅      ⚪      ⚪      ⚪      ✅(ICP) │
+│ Phase 2: Positioning       ⚪      ✅      ✅      ✅      ⚪      ✅      │
+│ Phase 3: Messaging         ✅      ⚪      ⚪      ⚪      ✅✅     ✅     │
+│ Phase 4: Visual Identity   ⚪      ⚪      ⚪      ✅*     ⚪      Web    │
+│ Phase 5: Implementation    ⚪      ✅      ⚪      ✅      ⚪      ⚪      │
+│ Brand Metrics/Measurement  ⚪      ✅✅    ⚪      ✅      ⚪      ⚪      │
 └──────────────────────────────────────────────────────────────────────────┘
 
-Key: ✅ = Strong coverage, ⚪ = Partial/None, ❌ = Gap that needed filling
+* Sharp covers visual via "Distinctive Brand Assets" - scientific approach
+Key: ✅ = Strong coverage, ⚪ = Partial/None, ✅✅ = Primary source
 ```
 
 **Book Synergy:**
 
-- **Kotler** = Marketing foundation (already indexed)
-- **Keller** = Brand management depth + measurement framework (supplements Kotler)
-- **Wheeler** = Visual identity process (fills biggest gap - Phase 4)
-- **Ries** = Positioning psychology (complements Keller's strategic view)
+- **Kotler** = Marketing foundation (STP, marketing mix, research basics)
+- **Keller** = Brand equity depth + measurement framework (CBBE Pyramid)
+- **Ries** = Mental positioning psychology (category-first, laddering)
+- **Sharp** = Evidence-based growth + Distinctive Assets (replaces Wheeler's visual HOW with scientific WHY)
+- **Cialdini** = Persuasion principles → messaging tactics (fills Phase 3 gap)
+
+**Why Sharp instead of Wheeler?**
+
+- Wheeler is visual-heavy (poor parseability for KG)
+- Sharp's Distinctive Assets covers WHAT makes visuals work (memorability, distinctiveness)
+- Visual HOW (specs, templates) better handled by Skills + AI image tools
 
 ### 3.4 Current KG Stats
 
