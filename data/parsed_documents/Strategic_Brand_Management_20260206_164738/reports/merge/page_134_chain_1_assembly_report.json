@@ -1,0 +1,48 @@
+{
+  "chain_id": "page_134_chain_1",
+  "page_number": 134,
+  "fragment_count": 3,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 134,
+      "start_pos": 287,
+      "end_pos": 580,
+      "html_size": 293,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_134.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 134,
+      "start_pos": 582,
+      "end_pos": 1238,
+      "html_size": 656,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_134.md"
+    },
+    {
+      "fragment_index": 3,
+      "page_number": 134,
+      "start_pos": 1240,
+      "end_pos": 1479,
+      "html_size": 239,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_134.md"
+    }
+  ],
+  "is_cross_page": false,
+  "page_range": "134",
+  "merge_decision": {
+    "chain_id": "page_134_chain_1",
+    "status": "NO_MERGE",
+    "analysis": {
+      "fragments_received": 3,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No collapsed column errors were found or fixed."
+      },
+      "reasoning": "The provided table fragments represent distinct models (Brand Value Chain, Brand Resonance, Brand Positioning) and do not appear to be parts of a single, continuous table. They have different headers and column structures, indicating they should not be merged. Therefore, no merge is performed."
+    },
+    "final_merged_html": null,
+    "processing_time": 3.6141371726989746
+  },
+  "timestamp": "2026-02-06T16:56:11.256635"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_81_table_15",
+  "page_number": 81,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th>Psychographic</th>\n  <th>Demographic</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Values, opinions, and attitudes</td>\n<td>SIC code</td>\n</tr>\n<tr>\n  <td>Activities and lifestyle</td>\n<td>Number of employees</td>\n</tr>\n<tr>\n  <td></td>\n<td>Number of production workers</td>\n</tr>\n<tr>\n  <td></td>\n<td>Annual sales volume</td>\n</tr>\n<tr>\n  <td></td>\n<td>Number of establishments</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines two primary categories for market segmentation: Psychographic and Demographic. The Psychographic category encompasses internal characteristics of consumers, specifically their values, opinions, and attitudes, as well as their observable activities and lifestyle choices. In contrast, the Demographic category focuses on quantifiable, external attributes of businesses or organizations. These include their Standard Industrial Classification (SIC) code, which denotes their industry, the total number of employees, and a breakdown of production workers. Further demographic indicators include the annual sales volume and the total number of establishments associated with the business. This structure suggests a comparative approach to segmentation, where psychographic factors are contrasted with demographic data to provide a more comprehensive understanding of a target market.",
+  "processing_time": 1.268348217010498,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.265618"
+}

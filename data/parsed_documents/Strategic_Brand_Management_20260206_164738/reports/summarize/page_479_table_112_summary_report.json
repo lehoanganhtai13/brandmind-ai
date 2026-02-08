@@ -1,0 +1,10 @@
+{
+  "table_id": "page_479_table_112",
+  "page_number": 479,
+  "original_table_html": "<table>\n  <tbody>\n    <tr>\n      <td colspan=\"3\" style=\"text-align:center;\">Consumer response to PAST marketing activity</td>\n    </tr>\n<tr>\n      <td colspan=\"3\" style=\"text-align:center;\">Brand knowledge</td>\n    </tr>\n<tr>\n      <td colspan=\"3\" style=\"text-align:center;\">Consumer response to CURRENT marketing activity</td>\n    </tr>\n<tr>\n      <td colspan=\"3\" style=\"text-align:center;\">CHANGED Brand knowledge</td>\n    </tr>\n<tr>\n      <td colspan=\"3\" style=\"text-align:center;\">Consumer response to FUTURE marketing activity</td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This diagram illustrates a sequential model of consumer response to marketing activity, focusing on the evolution of brand knowledge. It begins with the consumer's response to PAST marketing activity, which shapes their existing Brand knowledge. This existing knowledge then influences their response to CURRENT marketing activity, leading to a CHANGED Brand knowledge. Finally, this updated brand knowledge forms the basis for the consumer's response to FUTURE marketing activity, implying a continuous feedback loop where marketing efforts progressively refine consumer understanding and perception of a brand over time. The structure is linear and process-oriented, demonstrating a cause-and-effect relationship between marketing actions and shifts in consumer brand knowledge.",
+  "processing_time": 1.2443180084228516,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.276716"
+}

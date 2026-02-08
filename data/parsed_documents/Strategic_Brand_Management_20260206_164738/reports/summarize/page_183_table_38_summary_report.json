@@ -1,0 +1,10 @@
+{
+  "table_id": "page_183_table_38",
+  "page_number": 183,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th></th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><em>SENSORY</em></td>\n<td>\nThis brand makes a strong impression on my visual sense or other senses.<br>\nI find this brand interesting in a sensory way.<br>\nThis brand does not appeal to my senses.\n</td>\n</tr>\n<tr>\n<td><em>AFFECTIVE</em></td>\n<td>\nThis brand induces feelings and sentiments.<br>\nI do not have strong emotions for this brand.<br>\nThis brand is an emotional brand.\n</td>\n</tr>\n<tr>\n<td><em>BEHAVIORAL</em></td>\n<td>\nI engage in physical actions and behaviors when I use this brand.<br>\nThis brand results in bodily experiences.<br>\nThis brand is not action oriented.\n</td>\n</tr>\n<tr>\n<td><em>INTELLECTUAL</em></td>\n<td>\nI engage in a lot of thinking when I encounter this brand.<br>\nThis brand does not make me think.<br>\nThis brand stimulates my curiosity and problem solving.\n</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines four distinct dimensions of brand experience: Sensory, Affective, Behavioral, and Intellectual. The Sensory dimension focuses on a brand's ability to make a strong impression on visual or other senses, evoking interest through sensory appeal. The Affective dimension concerns the feelings and sentiments a brand induces, distinguishing between brands that elicit strong emotions and those that do not. The Behavioral dimension relates to physical actions and bodily experiences associated with using a brand, indicating whether a brand is action-oriented. Finally, the Intellectual dimension describes the extent to which a brand stimulates thinking, curiosity, and problem-solving, contrasting brands that engage the mind with those that do not. These dimensions collectively represent a framework for understanding the multifaceted nature of consumer-brand interactions.",
+  "processing_time": 1.2039637565612793,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.268852"
+}

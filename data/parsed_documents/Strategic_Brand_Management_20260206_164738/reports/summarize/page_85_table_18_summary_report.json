@@ -1,0 +1,10 @@
+{
+  "table_id": "page_85_table_18",
+  "page_number": 85,
+  "original_table_html": "<table>\n<thead>\n<tr><th colspan=\"2\">FIGURE 2-6</th></tr>\n<tr><th colspan=\"2\">Examples of Negatively Correlated Attributes and Benefits</th></tr>\n</thead>\n<tbody>\n<tr><td>Low price</td><td>vs. high quality</td></tr>\n<tr><td>Taste</td><td>vs. low calories</td></tr>\n<tr><td>Nutritious</td><td>vs. good tasting</td></tr>\n<tr><td>Efficacious</td><td>vs. mild</td></tr>\n<tr><td>Powerful</td><td>vs. safe</td></tr>\n<tr><td>Strong</td><td>vs. refined</td></tr>\n<tr><td>Ubiquitous</td><td>vs. exclusive</td></tr>\n<tr><td>Varied</td><td>vs. simple</td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "Figure 2-6 illustrates examples of negatively correlated attributes and their associated benefits, presenting a comparative structure where one desirable characteristic is often inversely related to another. This inverse relationship is demonstrated across various domains, including product features and personal attributes. For instance, a low price is typically contrasted with high quality, while desirable taste is often at odds with low calories. Similarly, nutritious food may not be as good tasting, and efficacious treatments might be less mild. Further examples highlight that powerful products can be less safe, strong attributes may lack refinement, ubiquitous availability contrasts with exclusivity, and varied options are often opposed by simplicity. This figure effectively maps out common trade-offs encountered when evaluating different options or characteristics.",
+  "processing_time": 1.5408308506011963,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.266055"
+}

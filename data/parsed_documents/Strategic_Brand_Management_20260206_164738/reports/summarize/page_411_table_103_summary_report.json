@@ -1,0 +1,10 @@
+{
+  "table_id": "page_411_table_103",
+  "page_number": 411,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Rank</th>\n<th>Company</th>\n<th>Rank</th>\n<th>Company</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>Google</td>\n<td>6</td>\n<td>Intel</td>\n</tr>\n<tr>\n<td>2</td>\n<td>Johnson & Johnson</td>\n<td>7</td>\n<td>Kraft Foods</td>\n</tr>\n<tr>\n<td>3</td>\n<td>3M</td>\n<td>8</td>\n<td>Amazon.com</td>\n</tr>\n<tr>\n<td>4</td>\n<td>Berkshire Hathaway</td>\n<td>9</td>\n<td>General Mills</td>\n</tr>\n<tr>\n<td>5</td>\n<td>Apple</td>\n<td>10</td>\n<td>Walt Disney Co.</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a ranked list of the top ten companies, divided into two columns for clarity. The first column details companies ranked 1 through 5: Google, Johnson & Johnson, 3M, Berkshire Hathaway, and Apple. The second column lists companies ranked 6 through 10: Intel, Kraft Foods, Amazon.com, General Mills, and Walt Disney Co. The structure is a simple comparative ranking, showcasing a discrete set of entities based on an unspecified metric, likely market value or influence, with a clear hierarchical ordering from highest to lowest rank.",
+  "processing_time": 1.4207086563110352,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.275919"
+}

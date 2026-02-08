@@ -1,0 +1,10 @@
+{
+  "table_id": "page_330_table_69",
+  "page_number": 330,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Shopping List 1</th>\n<th>Shopping List 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Pound and a half of hamburger</td>\n<td>Pound and a half of hamburger</td>\n</tr>\n<tr>\n<td>2 loaves Wonder bread</td>\n<td>2 loaves Wonder bread</td>\n</tr>\n<tr>\n<td>Bunch of carrots</td>\n<td>Bunch of carrots</td>\n</tr>\n<tr>\n<td>1 can Rumford’s Baking Powder</td>\n<td>1 can Rumford’s Baking Powder</td>\n</tr>\n<tr>\n<td>Maxwell House coffee (drip ground)</td>\n<td>Nescafé instant coffee</td>\n</tr>\n<tr>\n<td>2 cans Del Monte peaches</td>\n<td>2 cans Del Monte peaches</td>\n</tr>\n<tr>\n<td>5 lbs. potatoes</td>\n<td>5 lbs. potatoes</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of two distinct shopping lists, highlighting their similarities and differences. Both lists share a substantial number of identical items, including a pound and a half of hamburger, two loaves of Wonder bread, a bunch of carrots, one can of Rumford’s Baking Powder, two cans of Del Monte peaches, and five pounds of potatoes. The sole divergence between Shopping List 1 and Shopping List 2 lies in the type of coffee specified: Shopping List 1 calls for Maxwell House coffee (drip ground), while Shopping List 2 opts for Nescafé instant coffee. This structure effectively isolates a single point of variation within an otherwise consistent set of grocery requirements.",
+  "processing_time": 0.7768309116363525,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.272600"
+}

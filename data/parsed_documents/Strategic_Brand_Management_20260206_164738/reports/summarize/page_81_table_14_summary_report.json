@@ -1,0 +1,10 @@
+{
+  "table_id": "page_81_table_14",
+  "page_number": 81,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th>Demographic</th>\n  <th>Buying Condition</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Income</td>\n<td>Purchase location</td>\n</tr>\n<tr>\n  <td>Age</td>\n<td>Who buys</td>\n</tr>\n<tr>\n  <td>Sex</td>\n<td>Type of buy</td>\n</tr>\n<tr>\n  <td>Race</td>\n<td></td>\n</tr>\n<tr>\n  <td>Family</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines two primary categories for market segmentation: Demographic and Buying Condition. The Demographic category encompasses several key characteristics of consumers, including their Income, Age, Sex, Race, and Family structure. These are fundamental attributes used to define distinct consumer groups. The Buying Condition category, in contrast, focuses on the circumstances surrounding a purchase. This includes the Purchase location, Who buys the product, and the Type of buy. Together, these categories provide a framework for understanding and segmenting markets by both inherent consumer traits and the context of their purchasing behavior, suggesting a comparative approach to market analysis.",
+  "processing_time": 1.1725389957427979,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.265529"
+}

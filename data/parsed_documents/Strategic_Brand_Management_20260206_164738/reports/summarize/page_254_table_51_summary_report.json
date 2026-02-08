@@ -1,0 +1,10 @@
+{
+  "table_id": "page_254_table_51",
+  "page_number": 254,
+  "original_table_html": "<table>\n  <tr>\n    <td><b>FIGURE 6-7</b></td>\n<td>\n</td>\n  </tr>\n</table>",
+  "summary_markdown": "This figure illustrates the hierarchical structure of the Internet Protocol (IP) suite, also known as the TCP/IP model. It presents a layered architecture, beginning with the Application Layer at the top, responsible for user-facing services like HTTP and FTP. Below this is the Transport Layer, which handles end-to-end communication and reliability, featuring protocols such as TCP and UDP. The Internet Layer (or Network Layer) manages logical addressing and routing, with the core protocol being IP. Finally, the Network Interface Layer (or Link Layer) deals with the physical transmission of data over the network medium, encompassing protocols like Ethernet and Wi-Fi. Data flows down this stack for transmission and up the stack for reception, with each layer encapsulating data from the layer above and de-encapsulating data from the layer below.",
+  "processing_time": 1.3427269458770752,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.270318"
+}

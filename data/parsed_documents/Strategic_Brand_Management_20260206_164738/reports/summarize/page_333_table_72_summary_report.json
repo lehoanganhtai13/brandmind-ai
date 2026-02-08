@@ -1,0 +1,10 @@
+{
+  "table_id": "page_333_table_72",
+  "page_number": 333,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <td>= Originator construct</td>\n<td>= Connector construct</td>\n<td>= Destination construct</td>\n</tr>\n</thead>\n</table>",
+  "summary_markdown": "This table outlines a fundamental structural model for representing relationships between concepts. It defines three core construct types: an \"Originator construct\" which initiates or is the source of a relationship, a \"Destination construct\" which is the target or recipient of that relationship, and a \"Connector construct\" that explicitly defines and links the originator and destination. This structure implies a directed relationship, where information, influence, or causality flows from the originator, through the connector, to the destination. The overall organization is hierarchical or relational, emphasizing the directed nature of interactions and dependencies between distinct conceptual entities.",
+  "processing_time": 1.286963939666748,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.272934"
+}

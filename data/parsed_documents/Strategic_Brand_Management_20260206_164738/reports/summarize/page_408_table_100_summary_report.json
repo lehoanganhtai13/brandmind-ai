@@ -1,0 +1,10 @@
+{
+  "table_id": "page_408_table_100",
+  "page_number": 408,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th>Single Parent Brand</th>\n  <th>Sub-brand: Parent Primary</th>\n  <th>Sub-brand: Parent Secondary</th>\n  <th>New Brand</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>\n    * Parent brand equity highly relevant and differentiating<br>\n    * More opportunities for positive feedback for Parent brand<br>\n    * Little risk of negative feedback to Parent brand\n  </td>\n<td></td>\n<td>\n    * Parent brand equity less relevant and differentiating<br>\n    * Fewer opportunities for positive feedback for Parent brand<br>\n    * Greater risk of negative feedback to Parent brand\n  </td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a brand strategy framework, differentiating between single parent brands and new brands, with sub-brands categorized by their relationship to the parent. The core distinction lies in the relevance and differentiating power of the parent brand's equity, influencing opportunities for positive feedback and the risk of negative feedback. A single parent brand with highly relevant and differentiating equity offers more positive feedback opportunities and minimal risk of negative association. Conversely, a single parent brand where equity is less relevant and differentiating presents fewer positive feedback avenues and a higher risk of negative feedback. The structure implies a strategic choice based on the parent brand's strength and its potential impact on sub-brands or new brand introductions.",
+  "processing_time": 1.3233039379119873,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.275679"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_388_table_95",
+  "page_number": 388,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th></th>\n<th colspan=\"4\">Products</th>\n</tr>\n<tr>\n<th>Brands</th>\n<th>1</th>\n<th>2</th>\n<th>…</th>\n<th>N</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>A</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>B</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>…</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>M</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a comparative structure, mapping Brands (A, B, ..., M) against a set of Products (1, 2, ..., N). The core relationship illustrated is the presence or absence of each product within each brand's offerings, indicated by the cells at the intersection of a specific brand and a specific product. The ellipsis (...) in both the Brands and Products rows signifies that the table is a generalized representation, capable of accommodating an unspecified number of brands and products. This structure allows for a direct, brand-by-brand comparison of product portfolios, highlighting which brands offer which products and, by extension, identifying product overlaps and unique offerings across the brand landscape.",
+  "processing_time": 0.8409421443939209,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.275181"
+}

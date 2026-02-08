@@ -1,0 +1,10 @@
+{
+  "table_id": "page_410_table_101",
+  "page_number": 410,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"3\">FIGURE 11-8 Corporate Personality Traits</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td></td>\n<td>Creative</td>\n<td>Collaborative</td>\n</tr>\n<tr>\n<td>“Heart”</td>\n<td>Passionate</td>\n<td>Compassionate</td>\n</tr>\n<tr>\n<td></td>\n<td>Agile</td>\n<td>Disciplined</td>\n</tr>\n<tr>\n<td></td>\n<td>“Body”</td>\n<td>“Mind”</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "Figure 11-8 outlines \"Corporate Personality Traits\" structured around three core components: \"Heart,\" \"Body,\" and \"Mind.\" The \"Heart\" encompasses traits like Passionate and Compassionate, suggesting emotional and empathetic dimensions of a corporate personality. The \"Body\" is characterized by Agile and Disciplined, representing the operational and structural aspects. The \"Mind\" is associated with Creative and Collaborative, indicating the cognitive and interactive elements. This framework presents a comparative structure, juxtaposing specific traits under each of the three overarching corporate personality components, thereby offering a multi-faceted view of organizational character.",
+  "processing_time": 0.966151237487793,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.275759"
+}

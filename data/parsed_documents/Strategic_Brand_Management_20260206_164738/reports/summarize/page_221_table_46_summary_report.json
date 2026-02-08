@@ -1,0 +1,10 @@
+{
+  "table_id": "page_221_table_46",
+  "page_number": 221,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>1<br>Current<br>Brand<br>Knowledge</th>\n      <th>3<br>Communication</th>\n      <th>2<br>Desired<br>Brand<br>Knowledge</th>\n    </tr>\n  </thead>\n</table>",
+  "summary_markdown": "This table outlines a three-stage model related to brand knowledge, likely depicting a process or a comparative framework. It begins with \"Current Brand Knowledge,\" representing the existing understanding or perception of a brand. This is followed by \"Desired Brand Knowledge,\" indicating the target or aspirational state of understanding and perception for the brand. The third component, \"Communication,\" acts as the mechanism or bridge connecting the current state to the desired state. The numerical ordering (1, 2, 3) suggests a sequential flow, implying that communication efforts are employed to move from current brand knowledge to the desired brand knowledge. This structure highlights the role of communication in shaping and evolving brand perception towards a specific objective.",
+  "processing_time": 1.336885929107666,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.269625"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_109_table_20",
+  "page_number": 109,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"2\">Stages of Brand Development</th>\n  <th>Branding Objective at Each Stage</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>4. Relationships<br>What about you and me?</td>\n  <td rowspan=\"4\" style=\"text-align:center; vertical-align:middle;\">\n    \n\n<table>\n      <tr><td colspan=\"2\" style=\"text-align:center;\"><b>Resonance</b></td></tr>\n<tr>\n        <td><b>Judgments</b></td>\n<td><b>Feelings</b></td>\n      </tr>\n<tr>\n        <td>Performance</td>\n<td>Imagery</td>\n      </tr>\n<tr>\n        <td colspan=\"2\" style=\"text-align:center;\"><b>Salience</b></td>\n      </tr>\n    </table>",
+  "summary_markdown": "The provided table outlines the stages of brand development, illustrating a hierarchical structure leading to brand resonance. The foundational stage is Salience, establishing brand identity and awareness. Building upon this, consumers form Judgments about brand performance and Feelings associated with the brand. These Judgments and Feelings, in turn, contribute to the development of brand Relationships, characterized by the question \"What about you and me?\". The ultimate objective at this highest stage is Resonance, signifying a deep, loyal connection between the consumer and the brand. This progression moves from basic awareness to a profound, interactive relationship.",
+  "processing_time": 1.206773042678833,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.266210"
+}

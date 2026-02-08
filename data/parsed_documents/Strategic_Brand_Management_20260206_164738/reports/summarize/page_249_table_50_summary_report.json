@@ -1,0 +1,10 @@
+{
+  "table_id": "page_249_table_50",
+  "page_number": 249,
+  "original_table_html": "<table>\n  <tr>\n    <td colspan=\"2\" style=\"text-align:center;\">Communication Option A</td>\n    <td style=\"text-align:center;\">Communication Option B</td>\n  </tr>\n<tr>\n    <td colspan=\"3\" style=\"text-align:center;\">Audience</td>\n  </tr>\n<tr>\n    <td colspan=\"3\" style=\"text-align:center;\">Communication Option C</td>\n  </tr>\n</table>",
+  "summary_markdown": "This table outlines three distinct communication options (A, B, and C) that are all presented as serving a common \"Audience.\" Option A is presented as a singular choice, while Options B and C are also presented as individual alternatives. The structure suggests a comparative analysis of these communication strategies, all directed towards a unified recipient group. The overarching theme is the presentation of multiple communication pathways, implying a decision-making process where one of these options would be selected to engage the specified audience.",
+  "processing_time": 1.2557270526885986,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.270198"
+}

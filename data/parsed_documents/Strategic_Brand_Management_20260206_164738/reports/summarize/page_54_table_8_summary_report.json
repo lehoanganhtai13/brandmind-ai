@@ -1,0 +1,10 @@
+{
+  "table_id": "page_54_table_8",
+  "page_number": 54,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Brand</th>\n<th>Growth in Brand Strength 2007–2010</th>\n</tr>\n</thead>\n<tbody>\n<tr><td>Facebook</td><td>195%</td></tr>\n<tr><td>Skype</td><td>79%</td></tr>\n<tr><td>YouTube</td><td>78%</td></tr>\n<tr><td>Netflix</td><td>72%</td></tr>\n<tr><td>Samsung</td><td>66%</td></tr>\n<tr><td>Apple</td><td>51%</td></tr>\n<tr><td>iTunes</td><td>50%</td></tr>\n<tr><td>Amazon.com</td><td>44%</td></tr>\n<tr><td>Reese’s</td><td>42%</td></tr>\n<tr><td>National Guard</td><td>35%</td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of brand strength growth between 2007 and 2010, ranking ten distinct brands by their percentage increase. Facebook exhibited the most significant growth at 195%, followed by Skype with 79% and YouTube with 78%. Other brands showing substantial growth include Netflix (72%), Samsung (66%), and Apple (51%). Brands with more moderate growth rates were iTunes (50%), Amazon.com (44%), Reese’s (42%), and National Guard (35%). The structure is a simple ranking, highlighting the varying degrees of brand strength expansion across different industries and product categories within the specified timeframe.",
+  "processing_time": 1.3743491172790527,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.264433"
+}

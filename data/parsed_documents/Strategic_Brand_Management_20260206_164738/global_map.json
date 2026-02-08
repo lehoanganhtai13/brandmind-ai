@@ -1,0 +1,262 @@
+{
+  "structure": [
+    {
+      "title": "Front Matter",
+      "level": 1,
+      "start_page_id": "page_1.md",
+      "end_page_id": "page_19.md",
+      "start_line_index": 1,
+      "summary_context": "Initial pages of the document including title pages, copyright information, and Table of Contents. These pages establish the book's identity as the Fourth Edition of 'Strategic Brand Management' by Kevin Lane Keller.",
+      "children": []
+    },
+    {
+      "title": "Prologue: Branding Is Not Rocket Science",
+      "level": 1,
+      "start_page_id": "page_20.md",
+      "end_page_id": "page_21.md",
+      "start_line_index": 11,
+      "summary_context": "A personal narrative where the author compares branding to rocket science, concluding that while it is an art and a science, its success depends heavily on creative implementation and improving the odds through scientific guidance.",
+      "children": []
+    },
+    {
+      "title": "Preface",
+      "level": 1,
+      "start_page_id": "page_22.md",
+      "end_page_id": "page_26.md",
+      "start_line_index": 11,
+      "summary_context": "Introduces the concept of brand equity as the added value a product accrues from marketing. Outlines the book's purpose to provide concepts for creating, measuring, and sustaining brand equity for long-term profitability.",
+      "children": []
+    },
+    {
+      "title": "Acknowledgments",
+      "level": 1,
+      "start_page_id": "page_27.md",
+      "end_page_id": "page_28.md",
+      "start_line_index": 11,
+      "summary_context": "Recognition of the contributors, editors, research assistants, and industry partners who supported the development of the fourth edition, including the Pearson editorial team and academic colleagues.",
+      "children": []
+    },
+    {
+      "title": "About the Author",
+      "level": 1,
+      "start_page_id": "page_29.md",
+      "end_page_id": "page_29.md",
+      "start_line_index": 11,
+      "summary_context": "Professional biography of Kevin Lane Keller, highlighting his position at the Tuck School of Business, his research in consumer behavior and brand equity, and his extensive consulting work for top global brands.",
+      "children": []
+    },
+    {
+      "title": "PART I: Opening Perspectives",
+      "level": 1,
+      "start_page_id": "page_30.md",
+      "end_page_id": "page_67.md",
+      "start_line_index": 11,
+      "summary_context": "The foundation of the document, defining the scope of branding and its fundamental importance in modern marketing. It explores why brands matter to consumers and firms and the challenges faced in the current market environment.",
+      "children": [
+        {
+          "title": "Chapter 1: Brands and Brand Management",
+          "level": 2,
+          "start_page_id": "page_30.md",
+          "end_page_id": "page_67.md",
+          "start_line_index": 11,
+          "summary_context": "Defines brands as names, symbols, or designs that differentiate products. Discusses the functions of brands (risk reduction, identification) and the strategic brand management process. Highlights contemporary challenges like brand proliferation and media fragmentation.",
+          "children": []
+        }
+      ]
+    },
+    {
+      "title": "PART II: Developing a Brand Strategy",
+      "level": 1,
+      "start_page_id": "page_68.md",
+      "end_page_id": "page_141.md",
+      "start_line_index": 11,
+      "summary_context": "Focuses on the strategic frameworks for building brand knowledge and positioning. It introduces the Customer-Based Brand Equity model and the Brand Resonance Pyramid as tools for creating strong consumer connections.",
+      "children": [
+        {
+          "title": "Chapter 2: Customer-Based Brand Equity and Brand Positioning",
+          "level": 2,
+          "start_page_id": "page_68.md",
+          "end_page_id": "page_106.md",
+          "start_line_index": 11,
+          "summary_context": "Introduces the CBBE framework, emphasizing that brand equity resides in the minds of consumers. Details brand positioning strategies using Points-of-Parity (POPs) and Points-of-Difference (PODs), and the use of brand mantras.",
+          "children": []
+        },
+        {
+          "title": "Chapter 3: Brand Resonance and the Brand Value Chain",
+          "level": 2,
+          "start_page_id": "page_107.md",
+          "end_page_id": "page_141.md",
+          "start_line_index": 11,
+          "summary_context": "Explains the Brand Resonance Pyramid, from salience to resonance. Introduces the Brand Value Chain, a structured approach to assessing the sources and outcomes of brand equity and the value creation process.",
+          "children": []
+        }
+      ]
+    },
+    {
+      "title": "PART III: Designing and Implementing Brand Marketing Programs",
+      "level": 1,
+      "start_page_id": "page_142.md",
+      "end_page_id": "page_291.md",
+      "start_line_index": 11,
+      "summary_context": "Explores the tactical implementation of brand strategy through the selection of brand elements, the design of marketing programs (product, price, place), and the integration of marketing communications and secondary associations.",
+      "children": [
+        {
+          "title": "Chapter 4: Choosing Brand Elements to Build Brand Equity",
+          "level": 2,
+          "start_page_id": "page_142.md",
+          "end_page_id": "page_177.md",
+          "start_line_index": 11,
+          "summary_context": "Analyzes the various elements (names, logos, symbols, slogans, etc.) used to identify brands. Evaluates elements based on six criteria: memorability, meaningfulness, likability, transferability, adaptability, and protectability.",
+          "children": []
+        },
+        {
+          "title": "Chapter 5: Designing Marketing Programs to Build Brand Equity",
+          "level": 2,
+          "start_page_id": "page_178.md",
+          "end_page_id": "page_217.md",
+          "start_line_index": 11,
+          "summary_context": "Examines how marketing mix activities can build brand equity. Focuses on personalizing marketing, value pricing strategies, and channel designs. Highlights concepts like aftermarketing and relationship marketing.",
+          "children": []
+        },
+        {
+          "title": "Chapter 6: Integrating Marketing Communications to Build Brand Equity",
+          "level": 2,
+          "start_page_id": "page_218.md",
+          "end_page_id": "page_259.md",
+          "start_line_index": 11,
+          "summary_context": "Discusses the role of Integrated Marketing Communications (IMC) in the new media environment. Reviews options such as advertising, promotions, online/mobile marketing, and events, and provides criteria for evaluating IMC programs.",
+          "children": []
+        },
+        {
+          "title": "Chapter 7: Leveraging Secondary Brand Associations to Build Brand Equity",
+          "level": 2,
+          "start_page_id": "page_260.md",
+          "end_page_id": "page_291.md",
+          "start_line_index": 11,
+          "summary_context": "Describes how brands can 'borrow' equity by linking to other entities like companies, countries, celebrities, or events. Discusses co-branding, licensing, and ingredient branding strategies.",
+          "children": []
+        }
+      ]
+    },
+    {
+      "title": "PART IV: Measuring and Interpreting Brand Performance",
+      "level": 1,
+      "start_page_id": "page_292.md",
+      "end_page_id": "page_385.md",
+      "start_line_index": 11,
+      "summary_context": "Covers the frameworks for assessing brand health and financial value. It includes the design of measurement systems, qualitative and quantitative research techniques, and holistic valuation methods.",
+      "children": [
+        {
+          "title": "Chapter 8: Developing a Brand Equity Measurement and Management System",
+          "level": 2,
+          "start_page_id": "page_292.md",
+          "end_page_id": "page_324.md",
+          "start_line_index": 11,
+          "summary_context": "Focuses on the brand audit process and the development of tracking studies. Introduces the Brand Equity Management System, including the Brand Charter, Brand Equity Report, and organizational responsibilities.",
+          "children": []
+        },
+        {
+          "title": "Chapter 9: Measuring Sources of Brand Equity: Capturing Customer Mind-Set",
+          "level": 2,
+          "start_page_id": "page_325.md",
+          "end_page_id": "page_362.md",
+          "start_line_index": 11,
+          "summary_context": "Reviews qualitative (ZMET, projective techniques) and quantitative (recall, recognition, image maps) research methods to capture consumer perceptions and the strength of brand associations.",
+          "children": []
+        },
+        {
+          "title": "Chapter 10: Measuring Outcomes of Brand Equity: Capturing Market Performance",
+          "level": 2,
+          "start_page_id": "page_363.md",
+          "end_page_id": "page_385.md",
+          "start_line_index": 11,
+          "summary_context": "Examines brand-based and marketing-based comparative approaches and holistic methods (residual and valuation) for determining the financial value of brands and their impact on market performance.",
+          "children": []
+        }
+      ]
+    },
+    {
+      "title": "PART V: Growing and Sustaining Brand Equity",
+      "level": 1,
+      "start_page_id": "page_386.md",
+      "end_page_id": "page_547.md",
+      "start_line_index": 11,
+      "summary_context": "Addresses long-term brand management, including portfolio strategy, brand extensions, reinforcement, and revitalization. It also covers international branding and managing brands across geographic boundaries.",
+      "children": [
+        {
+          "title": "Chapter 11: Designing and Implementing Branding Architecture Strategies",
+          "level": 2,
+          "start_page_id": "page_386.md",
+          "end_page_id": "page_431.md",
+          "start_line_index": 11,
+          "summary_context": "Defines brand architecture and portfolios. Explains how to manage brand hierarchies (corporate, family, and individual brands) and the use of cause marketing as a strategic tool.",
+          "children": []
+        },
+        {
+          "title": "Chapter 12: Introducing and Naming New Products and Brand Extensions",
+          "level": 2,
+          "start_page_id": "page_432.md",
+          "end_page_id": "page_477.md",
+          "start_line_index": 11,
+          "summary_context": "Analyzes the pros and cons of brand extensions. Provides guidelines for leveraging a brand name to enter new categories and how to evaluate the success and feedback effects of extensions.",
+          "children": []
+        },
+        {
+          "title": "Chapter 13: Managing Brands Over Time",
+          "level": 2,
+          "start_page_id": "page_478.md",
+          "end_page_id": "page_509.md",
+          "start_line_index": 11,
+          "summary_context": "Strategies for maintaining brand consistency through reinforcement and revitalizing fading brands through repositioning or awareness expansion. Covers brand crisis management and portfolio adjustments.",
+          "children": []
+        },
+        {
+          "title": "Chapter 14: Managing Brands Over Geographic Boundaries and Market Segments",
+          "level": 2,
+          "start_page_id": "page_510.md",
+          "end_page_id": "page_547.md",
+          "start_line_index": 11,
+          "summary_context": "Explores the rationale for global branding. Discusses the trade-offs between standardization and customization and strategies for building brand equity in developing versus developed markets.",
+          "children": []
+        }
+      ]
+    },
+    {
+      "title": "PART VI: Closing Perspectives",
+      "level": 1,
+      "start_page_id": "page_548.md",
+      "end_page_id": "page_575.md",
+      "start_line_index": 11,
+      "summary_context": "Synthesis of the strategic brand management process. It provides final guidelines, evaluation tools, and identifies future priorities for marketers.",
+      "children": [
+        {
+          "title": "Chapter 15: Closing Observations",
+          "level": 2,
+          "start_page_id": "page_548.md",
+          "end_page_id": "page_575.md",
+          "start_line_index": 11,
+          "summary_context": "Summarizes the CBBE framework and tactical guidelines. Introduces the 'Brand Report Card' for evaluating brand strength and outlines six future imperatives for brand management.",
+          "children": []
+        }
+      ]
+    },
+    {
+      "title": "Epilogue",
+      "level": 1,
+      "start_page_id": "page_576.md",
+      "end_page_id": "page_577.md",
+      "start_line_index": 11,
+      "summary_context": "Brief concluding remarks from the author, emphasizing the importance of drawing lines and wishing success to the reader's branding endeavors.",
+      "children": []
+    },
+    {
+      "title": "Index",
+      "level": 1,
+      "start_page_id": "page_578.md",
+      "end_page_id": "page_591.md",
+      "start_line_index": 11,
+      "summary_context": "Comprehensive alphabetical listing of terms, concepts, companies, and individuals mentioned throughout the text, serving as a navigation tool for readers.",
+      "children": []
+    }
+  ]
+}

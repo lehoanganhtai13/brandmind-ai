@@ -1,0 +1,10 @@
+{
+  "table_id": "page_137_table_27",
+  "page_number": 137,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th></th>\n  <th>Segment 1</th>\n  <th>Segment 2</th>\n  <th colspan=\"4\" style=\"text-align:center;\">CUSTOMERS</th>\n  <th>Segment N</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Brand 1</td>\n  <td colspan=\"7\" style=\"background-color: #add8e6;\"></td>\n</tr>\n<tr>\n  <td>Brand 2</td>\n  <td colspan=\"7\" style=\"background-color: #add8e6;\"></td>\n</tr>\n<tr>\n  <td>Brand M</td>\n  <td colspan=\"7\" style=\"background-color: #add8e6;\"></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table illustrates a brand segmentation strategy, depicting the relationship between multiple brands and various customer segments. The structure is organized with brands listed vertically (Brand 1, Brand 2, ..., Brand M) and customer segments arrayed horizontally (Segment 1, Segment 2, ..., Segment N). A key feature is the overarching \"CUSTOMERS\" category spanning multiple segments, suggesting a broader grouping of these individual segments. The visual representation, indicated by the shaded cells, highlights that each brand (Brand 1, Brand 2, and Brand M) is associated with all customer segments from Segment 1 through Segment N. This implies a comprehensive market coverage approach where each brand targets the entire spectrum of identified customer segments.",
+  "processing_time": 1.1536858081817627,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.267095"
+}

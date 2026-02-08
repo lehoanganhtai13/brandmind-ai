@@ -1,0 +1,10 @@
+{
+  "table_id": "page_300_table_60",
+  "page_number": 300,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th></th>\n<th>Reality<br>(present)</th>\n<th>Objective<br>(future)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Customer</td>\n<td>Owned</td>\n<td>Valued</td>\n</tr>\n<tr>\n<td>Competition</td>\n<td>Claimed</td>\n<td>Desired</td>\n</tr>\n<tr>\n<td colspan=\"3\" style=\"text-align:center;\"><strong>Brand Equity</strong></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a comparative analysis of \"Reality\" versus \"Objective\" states, centered around the concept of \"Brand Equity.\" In the current \"Reality,\" customers are \"Owned,\" implying a transactional or captive relationship, while competition is \"Claimed,\" suggesting a focus on asserting market position. The \"Objective\" future state, however, envisions a shift towards customers being \"Valued,\" indicating a move towards customer-centricity and relationship building. Concurrently, competition is to be \"Desired,\" signifying a strategic aspiration to be the preferred choice in the market. This framework outlines a progression from a present, possession-based approach to a future, relationship-driven strategy aimed at enhancing Brand Equity.",
+  "processing_time": 1.3995389938354492,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.271645"
+}

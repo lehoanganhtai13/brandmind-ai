@@ -1,0 +1,10 @@
+{
+  "table_id": "page_95_table_19",
+  "page_number": 95,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th></th>\n<th>Emotional Modifier</th>\n<th>Descriptive Modifier</th>\n<th>Brand Function</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><b>Nike</b></td>\n<td>Authentic</td>\n<td>Athletic</td>\n<td>Performance</td>\n</tr>\n<tr>\n<td><b>Disney</b></td>\n<td>Fun</td>\n<td>Family</td>\n<td>Entertainment</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a comparative analysis of two brands, Nike and Disney, across three distinct categories: Emotional Modifier, Descriptive Modifier, and Brand Function. Nike is characterized by an \"Authentic\" emotional modifier, an \"Athletic\" descriptive modifier, and its primary brand function is \"Performance.\" In contrast, Disney is associated with a \"Fun\" emotional modifier, a \"Family\" descriptive modifier, and its core brand function is \"Entertainment.\" The structure highlights how different emotional and descriptive attributes contribute to the fundamental purpose and perceived identity of each brand.",
+  "processing_time": 0.9075679779052734,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.266135"
+}

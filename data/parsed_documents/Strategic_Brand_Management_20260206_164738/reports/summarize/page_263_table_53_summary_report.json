@@ -1,0 +1,10 @@
+{
+  "table_id": "page_263_table_53",
+  "page_number": 263,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"3\"></th>\n  <th>TRANSFER</th>\n  <th colspan=\"3\"></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Awareness</td>\n<td>Attributes</td>\n<td>Benefits</td>\n  <td rowspan=\"8\" style=\"text-align:center; vertical-align:middle;\"> </td>\n<td>Awareness</td>\n<td>Attributes</td>\n<td>Benefits</td>\n</tr>\n<tr>\n  <td>Images</td>\n<td>Thoughts</td>\n<td>Feelings</td>\n<td>Images</td>\n<td>Thoughts</td>\n<td>Feelings</td>\n</tr>\n<tr>\n  <td>Attitudes</td>\n<td>Experiences</td>\n<td></td>\n<td>Attitudes</td>\n<td>Experiences</td>\n<td></td>\n</tr>\n<tr>\n  <td colspan=\"3\" style=\"text-align:center;\">Brand</td>\n  <td colspan=\"3\" style=\"text-align:center;\">Other Entity</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table illustrates a comparative structure, contrasting elements related to \"Brand\" on the left with those of an \"Other Entity\" on the right, with \"TRANSFER\" as a central, unifying concept. Both sides are analyzed across three categories: Awareness, Attributes, and Benefits. Within Awareness, specific components include Images, Attitudes, and a general \"Brand\" or \"Other Entity\" designation. Attributes encompass Thoughts and Experiences. Benefits are represented by Feelings. The table suggests a parallel examination of how awareness, attributes, and benefits are perceived or constructed for a brand versus an alternative entity, with the concept of \"TRANSFER\" implying a potential movement or comparison of these elements between the two.",
+  "processing_time": 1.3369178771972656,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.270697"
+}

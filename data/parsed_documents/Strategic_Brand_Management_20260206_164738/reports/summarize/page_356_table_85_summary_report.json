@@ -1,0 +1,10 @@
+{
+  "table_id": "page_356_table_85",
+  "page_number": 356,
+  "original_table_html": "<table>\n<thead>\n<tr><th>100</th><th>Examples</th></tr>\n</thead>\n<tbody>\n<tr><td>80</td><td></td></tr>\n<tr><td>60</td><td></td></tr>\n<tr><td>40</td><td></td></tr>\n<tr><td>20</td><td></td></tr>\n<tr>\n<td>0<br>Esteem<br>Knowledge</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data visually represents a relationship between \"Esteem\" and \"Knowledge,\" with a numerical scale ranging from 0 to 100. The scale suggests a potential correlation or progression where increasing \"Knowledge\" might be associated with higher levels of \"Esteem.\" The absence of specific data points or labels within the main body of the table, beyond the axis labels, indicates that this is likely a conceptual diagram or a placeholder for further elaboration. The structure implies a direct relationship, possibly indicating that as one variable increases, the other is expected to follow suit, or that \"Knowledge\" is a foundational element upon which \"Esteem\" is built. The numerical axis serves as a quantitative framework for this conceptual link.",
+  "processing_time": 1.0139641761779785,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.274076"
+}

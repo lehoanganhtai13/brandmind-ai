@@ -1,0 +1,10 @@
+{
+  "table_id": "page_356_table_83",
+  "page_number": 356,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Energized Differentiation &gt; Relevance</th>\n<th>Energized Differentiation &lt; Relevance</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>\n\n<table>\n<thead>\n<tr><th>100</th><th>Examples</th></tr>\n</thead>\n<tbody>\n<tr><td>80</td><td></td></tr>\n<tr><td>60</td><td></td></tr>\n<tr><td>40</td><td></td></tr>\n<tr><td>20</td><td></td></tr>\n<tr>\n<td>0<br>Energized<br>Differentiation<br>Relevance</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data visually represents a comparative analysis of \"Energized Differentiation\" against \"Relevance,\" likely within a business or strategic context. The structure suggests a two-dimensional plot where \"Energized Differentiation\" is the primary axis, ranging from 0 to 100, and \"Relevance\" is a secondary, implied axis. The left side of the diagram, labeled \"Energized Differentiation > Relevance,\" indicates scenarios where the level of energized differentiation exceeds its relevance. Conversely, the right side, \"Energized Differentiation < Relevance,\" depicts situations where energized differentiation falls short of its relevance. The numerical scale (0, 20, 40, 60, 80, 100) along the \"Energized Differentiation Relevance\" axis serves as a quantitative measure, allowing for the plotting of specific points or regions that define the relationship between these two concepts. The presence of \"Examples\" as a header suggests that specific instances or case studies would be mapped onto this framework to illustrate the different states of energized differentiation relative to relevance.",
+  "processing_time": 1.6069538593292236,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.273925"
+}

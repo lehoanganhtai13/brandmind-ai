@@ -1,0 +1,10 @@
+{
+  "table_id": "page_346_table_77",
+  "page_number": 346,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"5\" style=\"text-align:center;\">Flavorful</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:center;\">Less Healthy</td>\n<td style=\"text-align:center;\">2</td>\n<td style=\"text-align:center;\">C</td>\n<td style=\"text-align:center;\">A</td>\n<td style=\"text-align:center;\">B 1</td>\n<td style=\"text-align:center;\">Healthy</td>\n</tr>\n<tr>\n<td colspan=\"6\" style=\"text-align:center;\">Less Flavorful</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a comparative analysis of food items based on two primary dimensions: healthiness and flavor. The overarching structure is a 2x2 matrix, though only one quadrant is explicitly populated with data. The dimension of \"Flavorful\" is presented at the top, with a sub-categorization of \"Less Healthy\" and \"Healthy\" along the vertical axis. Within the \"Flavorful\" category, the \"Less Healthy\" row contains data points represented by \"2\", \"C\", \"A\", and \"B 1\". The \"Healthy\" category within \"Flavorful\" is left blank. A separate category, \"Less Flavorful,\" is presented below the main matrix, indicating a contrasting set of food items that are not flavorful. This suggests a trade-off or spectrum where food can be categorized by its level of flavor and its health implications.",
+  "processing_time": 1.3516132831573486,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.273357"
+}

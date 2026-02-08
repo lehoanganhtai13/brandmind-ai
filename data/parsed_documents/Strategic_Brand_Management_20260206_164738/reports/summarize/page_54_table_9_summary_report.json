@@ -1,0 +1,10 @@
+{
+  "table_id": "page_54_table_9",
+  "page_number": 54,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Source</th>\n<th>Percentage</th>\n</tr>\n</thead>\n<tbody>\n<tr><td>Friends/peers</td><td>81%</td></tr>\n<tr><td>Fashion magazines</td><td>68%</td></tr>\n<tr><td>Ads</td><td>58%</td></tr>\n<tr><td>Company Web sites</td><td>44%</td></tr>\n<tr><td>Consumer Reviews</td><td>36%</td></tr>\n<tr><td>Celebrities</td><td>33%</td></tr>\n<tr><td>Parents/adults</td><td>25%</td></tr>\n<tr><td>Bloggers</td><td>14%</td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of various sources influencing consumer purchasing decisions, ranked by the percentage of respondents who cite them. Friends and peers emerge as the most influential source at 81%, followed closely by fashion magazines at 68% and advertisements at 58%. Company websites and consumer reviews hold moderate influence, at 44% and 36% respectively. Celebrities and parents/adults exert less influence, with 33% and 25% respectively. Bloggers represent the least influential source among those surveyed, at 14%. The structure is a simple ranking, highlighting the relative importance of different information channels in shaping consumer choices.",
+  "processing_time": 1.2747950553894043,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.264689"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_330_table_70",
+  "page_number": 330,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th></th>\n<th>List 1<br>(Maxwell House)</th>\n<th>List 2<br>(Nescafé)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Lazy</td>\n<td>4%</td>\n<td>48%</td>\n</tr>\n<tr>\n<td>Fails to plan household purchases and schedules well</td>\n<td>12%</td>\n<td>48%</td>\n</tr>\n<tr>\n<td>Thrifty</td>\n<td>16%</td>\n<td>4%</td>\n</tr>\n<tr>\n<td>Not a good wife</td>\n<td>0%</td>\n<td>16%</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of two coffee brands, Maxwell House and Nescafé, based on four distinct consumer perceptions. Maxwell House is perceived as \"Lazy\" by 4% of consumers and as \"Fails to plan household purchases and schedules well\" by 12%. Conversely, Nescafé is perceived as \"Lazy\" by a significantly higher 48% and also as \"Fails to plan household purchases and schedules well\" by 48%. In terms of positive attributes, Maxwell House is seen as \"Thrifty\" by 16% of consumers, whereas Nescafé is perceived as \"Thrifty\" by only 4%. A negative perception of \"Not a good wife\" is attributed to 16% of Nescafé consumers, while 0% of Maxwell House consumers hold this view. The structure is comparative, highlighting differing consumer perceptions across the two brands for each listed characteristic.",
+  "processing_time": 1.3039820194244385,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.272673"
+}

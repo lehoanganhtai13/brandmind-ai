@@ -1,0 +1,10 @@
+{
+  "table_id": "page_391_table_96",
+  "page_number": 391,
+  "original_table_html": "<table>\n  <tr>\n    <td colspan=\"3\" align=\"center\"><b>Current Brand Equity</b></td>\n  </tr>\n<tr>\n    <td>Environment</td>\n    <td rowspan=\"2\" align=\"center\"><b>Inherent Brand Potential</b></td>\n<td>Firm Behaviors</td>\n  </tr>\n<tr>\n    <td colspan=\"3\" align=\"center\"><b>BRAND VISION</b></td>\n  </tr>\n<tr>\n    <td colspan=\"3\" align=\"center\"><b>BRAND ACTUALIZATION</b></td>\n  </tr>\n<tr>\n    <td align=\"center\"><b>Brand Persistence</b></td>\n<td></td>\n    <td align=\"center\"><b>Brand Growth</b></td>\n  </tr>\n<tr>\n    <td colspan=\"3\" align=\"center\"><b>BRAND VALUATION</b></td>\n  </tr>\n<tr>\n    <td colspan=\"3\" align=\"center\"><b>Long-Term Brand Value</b></td>\n  </tr>\n</table>",
+  "summary_markdown": "This diagram illustrates a hierarchical model of brand equity development, progressing from foundational elements to ultimate value. At the base, \"Current Brand Equity\" is influenced by both the \"Environment\" and \"Firm Behaviors,\" which together shape the \"Inherent Brand Potential.\" This potential then informs the \"BRAND VISION,\" which is subsequently realized through \"BRAND ACTUALIZATION.\" The actualization phase encompasses \"Brand Persistence\" and \"Brand Growth,\" leading to \"BRAND VALUATION.\" The culmination of this process is \"Long-Term Brand Value.\" The structure depicts a sequential flow where external and internal factors contribute to potential, which is then translated into a strategic vision, operationalized through persistence and growth, and finally quantified as enduring value.",
+  "processing_time": 1.5218391418457031,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.275260"
+}

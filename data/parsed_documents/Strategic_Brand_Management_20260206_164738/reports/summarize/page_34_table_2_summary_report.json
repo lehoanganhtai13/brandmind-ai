@@ -1,0 +1,10 @@
+{
+  "table_id": "page_34_table_2",
+  "page_number": 34,
+  "original_table_html": "<table>\n<tbody>\n<tr><td>1. Apple</td></tr>\n<tr><td>2. Amazon</td></tr>\n<tr><td>3. Facebook</td></tr>\n<tr><td>4. General Electric</td></tr>\n<tr><td>5. Google</td></tr>\n<tr><td>6. Groupon</td></tr>\n<tr><td>7. Intel</td></tr>\n<tr><td>8. Microsoft</td></tr>\n<tr><td>9. Twitter</td></tr>\n<tr><td>10. Zynga</td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a ranked list of ten companies, numbered one through ten. The companies are: Apple, Amazon, Facebook, General Electric, Google, Groupon, Intel, Microsoft, Twitter, and Zynga. The structure is a simple enumeration, implying a comparative or ordered relationship, though the specific criteria for this ordering are not provided. The list appears to be a snapshot of prominent entities within a particular domain, likely business or technology, based on the names included.",
+  "processing_time": 1.1201019287109375,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.263117"
+}

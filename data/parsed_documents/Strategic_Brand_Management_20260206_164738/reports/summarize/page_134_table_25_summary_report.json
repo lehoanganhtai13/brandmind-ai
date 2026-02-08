@@ -1,0 +1,10 @@
+{
+  "table_id": "page_134_table_25",
+  "page_number": 134,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th colspan=\"2\" style=\"text-align:center;\">2. Brand Resonance Model</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td colspan=\"2\" style=\"text-align:center;\"><strong>Resonance</strong></td>\n    </tr>\n<tr>\n      <td style=\"text-align:center;\"><strong>Judgments</strong></td>\n      <td style=\"text-align:center;\"><strong>Feelings</strong></td>\n    </tr>\n<tr>\n      <td style=\"text-align:center;\"><strong>Performance</strong></td>\n      <td style=\"text-align:center;\"><strong>Imagery</strong></td>\n    </tr>\n<tr>\n      <td colspan=\"2\" style=\"text-align:center;\"><strong>Salience</strong></td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "The Brand Resonance Model, presented as a hierarchical structure, begins with **Salience** at its base, representing the awareness and availability of the brand. Building upon this foundation are two key dimensions: **Judgments**, which encompass perceptions of brand performance and quality, and **Feelings**, relating to the emotional responses evoked by the brand's imagery. At the apex of the model is **Resonance**, signifying the ultimate relationship between a brand and its customers, characterized by a deep psychological bond and a high degree of loyalty and attachment. This model illustrates a progression from basic brand awareness to a profound connection, with judgments and feelings acting as crucial intermediate stages in achieving resonance.",
+  "processing_time": 1.3330597877502441,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.266863"
+}

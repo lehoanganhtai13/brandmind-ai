@@ -1,0 +1,10 @@
+{
+  "table_id": "page_411_table_102",
+  "page_number": 411,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Rank</th>\n<th>Company</th>\n<th>Rank</th>\n<th>Company</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>Apple</td>\n<td>6</td>\n<td>Coca-Cola</td>\n</tr>\n<tr>\n<td>2</td>\n<td>Google</td>\n<td>7</td>\n<td>Amazon.com</td>\n</tr>\n<tr>\n<td>3</td>\n<td>Berkshire Hathaway</td>\n<td>8</td>\n<td>FedEx</td>\n</tr>\n<tr>\n<td>4</td>\n<td>Southwest Airlines</td>\n<td>9</td>\n<td>Microsoft</td>\n</tr>\n<tr>\n<td>5</td>\n<td>Procter & Gamble</td>\n<td>10</td>\n<td>McDonald’s</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a ranked list of ten prominent companies, structured in two columns for clarity. The ranking spans from 1 to 10, with the first column detailing ranks 1 through 5 and the second column covering ranks 6 through 10. Key companies identified include Apple at rank 1, followed by Google (2), Berkshire Hathaway (3), Southwest Airlines (4), and Procter & Gamble (5). The subsequent ranks feature Coca-Cola (6), Amazon.com (7), FedEx (8), Microsoft (9), and McDonald’s (10). This hierarchical structure clearly delineates the top ten companies based on an unspecified ranking criterion.",
+  "processing_time": 1.1706058979034424,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.275831"
+}

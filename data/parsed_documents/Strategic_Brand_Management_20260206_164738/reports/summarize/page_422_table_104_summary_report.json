@@ -1,0 +1,10 @@
+{
+  "table_id": "page_422_table_104",
+  "page_number": 422,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>DuPont Leveraged Equity</th>\n      <th>DuPont / Product Balanced Equity</th>\n      <th>Endorsement Brand</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>\n        DuPont™ Teflon®\n      </td>\n<td>\n        Teflon.\n      </td>\n<td>\n        Enhanced with DuPont® science Teflon® for nonstick coatings\n      </td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table illustrates a three-tiered branding strategy, moving from a leveraged equity model to a product-balanced equity model, and finally to an endorsement brand. At the highest level, DuPont™ Teflon® represents the leveraged equity, signifying the broad recognition and trust associated with the DuPont brand. This is then distilled into the product-balanced equity of \"Teflon,\" focusing the brand association directly onto the product itself. The endorsement brand level, \"Enhanced with DuPont® science Teflon® for nonstick coatings,\" further refines this by explicitly linking the product's performance attributes (nonstick coatings) to the scientific backing of DuPont, creating a specific value proposition for consumers. This structure demonstrates a progression from a broad corporate association to a specific product benefit, leveraging the parent brand's reputation to enhance the perceived quality and innovation of the sub-brand.",
+  "processing_time": 1.569978952407837,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.275992"
+}

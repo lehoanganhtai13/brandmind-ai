@@ -1,0 +1,10 @@
+{
+  "table_id": "page_81_table_13",
+  "page_number": 81,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th>Behavioral</th>\n  <th>Nature of Good</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>User status</td>\n<td>Kind</td>\n</tr>\n<tr>\n  <td>Usage rate</td>\n<td>Where used</td>\n</tr>\n<tr>\n  <td>Usage occasion</td>\n<td>Type of buy</td>\n</tr>\n<tr>\n  <td>Brand loyalty</td>\n<td></td>\n</tr>\n<tr>\n  <td>Benefits sought</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a two-dimensional framework for classifying goods, based on \"Behavioral\" characteristics and the \"Nature of Good.\" The behavioral dimensions include user status, usage rate, usage occasion, brand loyalty, and benefits sought. These factors describe how consumers interact with and perceive products. Correspondingly, the nature of good is categorized by its kind, where it is used, and the type of purchase involved. This structure suggests a comparative approach, where behavioral aspects are mapped against inherent product attributes to understand market segmentation and consumer behavior in relation to different types of goods.",
+  "processing_time": 0.7826881408691406,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.265278"
+}

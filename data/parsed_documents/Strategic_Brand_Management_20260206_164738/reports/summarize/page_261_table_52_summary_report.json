@@ -1,0 +1,10 @@
+{
+  "table_id": "page_261_table_52",
+  "page_number": 261,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <td></td>\n<td>Ingredients</td>\n<td>Company</td>\n<td></td>\n<td>Extensions</td>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Alliances</td>\n  <td colspan=\"3\" style=\"text-align:center;\">Other Brands</td>\n<td></td>\n</tr>\n<tr>\n  <td>Employees</td>\n<td>People</td>\n  <td rowspan=\"2\" style=\"text-align:center;\">Brand</td>\n<td>Places</td>\n<td>Country of origin</td>\n</tr>\n<tr>\n  <td>Endorsers</td>\n<td></td>\n<td></td>\n<td>Channels</td>\n</tr>\n<tr>\n  <td></td>\n<td></td>\n<td>Things</td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n  <td></td>\n<td>Events</td>\n<td>Causes</td>\n<td>Third-party endorsements</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines the components of brand equity, categorizing them into \"Ingredients\" and \"Extensions\" that contribute to a \"Company's\" overall brand. Under \"Ingredients,\" key elements include \"Alliances\" with \"Other Brands,\" \"Employees\" (representing \"People\"), \"Endorsers,\" and tangible \"Things.\" These are further detailed by specific examples like \"Events\" and \"Causes.\" The \"Extensions\" category encompasses elements that broaden the brand's reach and perception, such as \"Country of origin\" and distribution \"Channels.\" The structure highlights how internal and external factors, including relationships with other entities and the people involved, collectively build and extend a brand's value.",
+  "processing_time": 1.3450162410736084,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.270503"
+}

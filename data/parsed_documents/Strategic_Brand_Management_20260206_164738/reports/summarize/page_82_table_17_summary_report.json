@@ -1,0 +1,10 @@
+{
+  "table_id": "page_82_table_17",
+  "page_number": 82,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>95<br>72%</th>\n      <th>68<br>46%</th>\n      <th>31<br>58%</th>\n      <th>18<br>50%</th>\n      <th>9<br>56%</th>\n      <th>5</th>\n    </tr>\n<tr>\n      <td>Aware</td>\n<td>Ever Tried</td>\n<td>Recent Trial</td>\n<td>Occasional Use</td>\n<td>Regular Use</td>\n<td>Most Often Use</td>\n    </tr>\n  </thead>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of product usage across different stages, illustrating a decline in user engagement as usage frequency increases. The categories range from \"Aware\" to \"Most Often Use,\" with corresponding percentages indicating the proportion of users at each stage. A significant majority, 72%, are \"Aware\" of the product, while 46% have \"Ever Tried\" it. The percentage of users decreases substantially for \"Recent Trial\" (58%), \"Occasional Use\" (50%), and \"Regular Use\" (56%). The smallest user group, 5%, falls into the \"Most Often Use\" category, highlighting a steep drop-off in consistent engagement. This structure reveals a funnel-like progression where initial awareness and trial lead to progressively smaller segments of dedicated, frequent users.",
+  "processing_time": 1.5221812725067139,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.265877"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_164_table_35",
+  "page_number": 164,
+  "original_table_html": "<table>\n<thead>\n<tr><th colspan=\"2\">Answers</th></tr>\n</thead>\n<tbody>\n<tr><td>(1)</td><td>Bell Telephone</td></tr>\n<tr><td>(2)</td><td>Burger King</td></tr>\n<tr><td>(3)</td><td>Nike</td></tr>\n<tr><td>(4)</td><td>Federal Express</td></tr>\n<tr><td>(5)</td><td>Volkswagen</td></tr>\n<tr><td>(6)</td><td>American Express</td></tr>\n<tr><td>(7)</td><td>Chevrolet</td></tr>\n<tr><td>(8)</td><td>L’Oreal</td></tr>\n<tr><td>(9)</td><td>BMW</td></tr>\n<tr><td>(10)</td><td>Hallmark</td></tr>\n<tr><td>(11)</td><td>Forbes magazine</td></tr>\n<tr><td>(12)</td><td>Bayer aspirin</td></tr>\n<tr><td>(13)</td><td>Johnson’s Baby Shampoo</td></tr>\n<tr><td>(14)</td><td>M&M’s</td></tr>\n<tr><td>(15)</td><td>Avis</td></tr>\n<tr><td>(16)</td><td>Club Med</td></tr>\n<tr><td>(17)</td><td>Microsoft</td></tr>\n<tr><td>(18)</td><td>Yellow Pages</td></tr>\n<tr><td>(19)</td><td>Wheaties</td></tr>\n<tr><td>(20)</td><td>United Airlines</td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a list of 20 distinct entities, identified by numerical labels from (1) to (20). The entities are primarily well-known brand names and companies across various industries. These include telecommunications (Bell Telephone), fast food (Burger King), apparel and footwear (Nike), logistics (Federal Express), automotive (Volkswagen, Chevrolet, BMW), financial services (American Express), cosmetics (L’Oreal), automotive (BMW), greeting cards and gifts (Hallmark), publishing (Forbes magazine), pharmaceuticals (Bayer aspirin), personal care products (Johnson’s Baby Shampoo), confectionery (M&M’s), car rental (Avis), hospitality (Club Med), software (Microsoft), directory services (Yellow Pages), breakfast cereal (Wheaties), and air travel (United Airlines). The structure is a simple, unranked enumeration, suggesting a collection of examples rather than a hierarchical or comparative framework.",
+  "processing_time": 1.5714948177337646,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.268520"
+}

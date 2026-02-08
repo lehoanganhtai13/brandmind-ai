@@ -1,0 +1,10 @@
+{
+  "table_id": "page_81_table_16",
+  "page_number": 81,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th>Geographic</th>\n  <th></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>International</td>\n<td></td>\n</tr>\n<tr>\n  <td>Regional</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a hierarchical geographic structure, beginning with the broadest category, International, which encompasses all global operations. Nested beneath this is the Regional level, indicating a subdivision of international scope into more localized areas. The table implicitly suggests that activities or entities are organized first on a worldwide scale and then further delineated into distinct geographic regions for management, operational, or analytical purposes. This structure facilitates understanding the scope and scale of operations, moving from a global perspective down to specific territorial divisions.",
+  "processing_time": 1.58843994140625,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.265723"
+}

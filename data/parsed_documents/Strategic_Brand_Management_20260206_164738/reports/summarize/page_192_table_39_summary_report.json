@@ -1,0 +1,10 @@
+{
+  "table_id": "page_192_table_39",
+  "page_number": 192,
+  "original_table_html": "<table>\n<thead>\n<tr>\n  <th colspan=\"2\"></th>\n  <th>Quality</th>\n  <th></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td rowspan=\"7\" style=\"writing-mode: vertical-rl; text-orientation: mixed;\">Commodity</td>\n  <td rowspan=\"7\" style=\"writing-mode: vertical-rl; text-orientation: mixed;\">Specialty<br><b>Consumer Reports rating</b></td>\n<td>Excellent</td>\n<td>Howard Johnson's</td>\n<td>Schrafft’s</td>\n<td>Häagen-Dazs</td>\n</tr>\n<tr>\n  <td>Very good</td>\n<td>Sealtest</td>\n<td>Breyer’s</td>\n<td>Baskin-Robbins</td>\n</tr>\n<tr>\n  <td>Good</td>\n<td>Lady Lee</td>\n<td>Foremost Borden</td>\n<td>Lucerne Deluxe</td>\n</tr>\n<tr>\n  <td>Fair</td>\n<td>Generic</td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n  <td colspan=\"4\" style=\"text-align:center;\">\n    <b>Consumer price, cents per 4-ounce serving</b><br>\n    0    10    20    30    40    50¢\n  </td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a comparative analysis of ice cream brands, categorizing them by quality and consumer price. The primary classification is between \"Commodity\" and \"Specialty\" ice creams, with the latter further evaluated by a \"Consumer Reports rating.\" Within this framework, brands are assessed across four quality tiers: Excellent, Very good, Good, and Fair. For each quality tier, specific brands are listed, with some tiers showing multiple brands and others only one or none. A secondary axis displays the \"Consumer price, cents per 4-ounce serving,\" with a scale ranging from 0 to 50 cents, allowing for a direct comparison of the cost of different brands within their respective quality categories. The structure highlights how brands are positioned based on both perceived quality and economic value.",
+  "processing_time": 1.4660170078277588,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.268936"
+}

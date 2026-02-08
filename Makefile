@@ -213,59 +213,64 @@ lock-upgrade: ## Upgrade all dependencies in lock file
 	uv lock --upgrade
 
 ## Database Migration
+# Backup versioning: auto-generate timestamp for version folder
+BACKUP_TIMESTAMP := $(shell date +%Y%m%d_%H%M)
+# Restore versioning: use specified VERSION or auto-detect latest
+BACKUP_VERSION ?= $(shell ls -1d backups/*/ 2>/dev/null | grep -E '/[0-9]{8}_[0-9]{4}/$$' | sort -r | head -1 | xargs -I{} basename {})
+
 .PHONY: backup-graph backup-vector backup-all restore-graph restore-vector restore-all
 
-backup-graph: ## Backup FalkorDB graph to CSV files
-	@echo "📦 Backing up FalkorDB graph..."
-	@mkdir -p backups/falkordb
+backup-graph: ## Backup FalkorDB graph to CSV files (versioned)
+	@echo "📦 Backing up FalkorDB graph to backups/$(BACKUP_TIMESTAMP)/..."
+	@mkdir -p backups/$(BACKUP_TIMESTAMP)/falkordb
 	uv run python scripts/migration/falkordb_backup.py knowledge_graph \
 		--host localhost --port $${FALKORDB_PORT:-6380} \
 		--username "$${FALKORDB_USERNAME:-brandmind}" \
 		--password "$${FALKORDB_PASSWORD:-password}" \
-		--output ./backups/falkordb
-	@echo "✅ FalkorDB backup complete → ./backups/falkordb/"
+		--output ./backups/$(BACKUP_TIMESTAMP)/falkordb
+	@echo "✅ FalkorDB backup complete → ./backups/$(BACKUP_TIMESTAMP)/falkordb/"
 
-backup-vector: ## Backup Milvus collections and download to local
-	@echo "📦 Backing up Milvus collections..."
-	@mkdir -p backups/milvus
+backup-vector: ## Backup Milvus collections and download to local (versioned)
+	@echo "📦 Backing up Milvus collections to backups/$(BACKUP_TIMESTAMP)/..."
+	@mkdir -p backups/$(BACKUP_TIMESTAMP)/milvus
 	uv run --group migration python scripts/migration/milvus_backup.py backup \
 		--name brandmind_backup \
 		--collections "DocumentChunks,EntityDescriptions,RelationDescriptions" \
-		--output ./backups/milvus \
+		--output ./backups/$(BACKUP_TIMESTAMP)/milvus \
 		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
 		--minio-access-key "$${MINIO_ACCESS_KEY_ID:-minioadmin}" \
 		--minio-secret-key "$${MINIO_SECRET_ACCESS_KEY:-minioadmin_secret}"
-	@echo "✅ Milvus backup complete → ./backups/milvus/"
+	@echo "✅ Milvus backup complete → ./backups/$(BACKUP_TIMESTAMP)/milvus/"
 
 backup-download-vector: ## Download existing Milvus backup from MinIO
 	@echo "📥 Downloading Milvus backup from MinIO..."
-	@mkdir -p backups/milvus
+	@mkdir -p backups/$(BACKUP_TIMESTAMP)/milvus
 	uv run --group migration python scripts/migration/milvus_backup.py download \
 		--name brandmind_backup \
-		--output ./backups/milvus \
+		--output ./backups/$(BACKUP_TIMESTAMP)/milvus \
 		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
 		--minio-access-key "$${MINIO_ACCESS_KEY_ID:-minioadmin}" \
 		--minio-secret-key "$${MINIO_SECRET_ACCESS_KEY:-minioadmin_secret}"
-	@echo "✅ Milvus backup downloaded → ./backups/milvus/"
+	@echo "✅ Milvus backup downloaded → ./backups/$(BACKUP_TIMESTAMP)/milvus/"
 
-backup-all: backup-graph backup-vector ## Backup both FalkorDB and Milvus
+backup-all: backup-graph backup-vector ## Backup both FalkorDB and Milvus (versioned)
 	@echo ""
-	@echo "✅ Full backup complete → ./backups/"
+	@echo "✅ Full backup complete → ./backups/$(BACKUP_TIMESTAMP)/"
 	@echo "📦 Package for migration: make backup-package"
 
-backup-package: backup-all ## Backup all and create split zip package in backups/
-	@echo "📦 Creating backup package..."
-	@cd backups && zip -r backup.zip falkordb/ milvus/
+backup-package: backup-all ## Backup all and create split zip package (versioned)
+	@echo "📦 Creating backup package in backups/$(BACKUP_TIMESTAMP)/..."
+	@cd backups/$(BACKUP_TIMESTAMP) && zip -r backup.zip falkordb/ milvus/
 	@echo "📦 Splitting into 40MB parts for GitHub..."
-	@cd backups && split -b 40m backup.zip backup.zip.part.
-	@rm -f backups/backup.zip
-	@rm -rf backups/falkordb backups/milvus
-	@echo "✅ Package ready: backups/backup.zip.part.* (use 'make restore-package' to restore)"
+	@cd backups/$(BACKUP_TIMESTAMP) && split -b 40m backup.zip backup.zip.part.
+	@rm -f backups/$(BACKUP_TIMESTAMP)/backup.zip
+	@rm -rf backups/$(BACKUP_TIMESTAMP)/falkordb backups/$(BACKUP_TIMESTAMP)/milvus
+	@echo "✅ Package ready: backups/$(BACKUP_TIMESTAMP)/backup.zip.part.*"
 
-restore-graph: ## Restore FalkorDB graph from CSV backup (use OVERWRITE=true to clear first)
+restore-graph: ## Restore FalkorDB graph from CSV backup (BACKUP_DIR=path, OVERWRITE=true)
 	@echo "🔄 Restoring FalkorDB graph..."
 	@uv run python scripts/migration/falkordb_restore.py \
-		--backup-dir ./backups/falkordb \
+		--backup-dir $(or $(BACKUP_DIR),./backups/falkordb) \
 		--graph knowledge_graph \
 		--host localhost --port $${FALKORDB_PORT:-6380} \
 		--username "$${FALKORDB_USERNAME:-brandmind}" \
@@ -273,10 +278,10 @@ restore-graph: ## Restore FalkorDB graph from CSV backup (use OVERWRITE=true to 
 		$(if $(filter true,$(OVERWRITE)),--overwrite,)
 	@echo "✅ FalkorDB restore complete"
 
-restore-vector: ## Restore Milvus from local backup (upload to MinIO + restore)
+restore-vector: ## Restore Milvus from local backup (BACKUP_DIR=path)
 	@echo "🔄 Restoring Milvus collections..."
 	@uv run --group migration python scripts/migration/milvus_restore.py restore \
-		--backup-dir ./backups/milvus/brandmind_backup \
+		--backup-dir $(or $(BACKUP_DIR),./backups/milvus)/brandmind_backup \
 		--name brandmind_backup \
 		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
 		--minio-access-key "$${MINIO_ACCESS_KEY_ID:-minioadmin}" \
@@ -292,10 +297,10 @@ restore-all: restore-graph restore-vector ## Restore both FalkorDB and Milvus
 	@echo ""
 	@echo "✅ Full restore complete"
 
-restore-clean-vector: ## Clean restore Milvus (DROP existing + restore from backup)
+restore-clean-vector: ## Clean restore Milvus (DROP existing + restore from backup, BACKUP_DIR=path)
 	@echo "🔄 Clean restoring Milvus collections..."
 	@uv run --group migration python scripts/migration/milvus_restore.py restore \
-		--backup-dir ./backups/milvus/brandmind_backup \
+		--backup-dir $(or $(BACKUP_DIR),./backups/milvus)/brandmind_backup \
 		--name brandmind_backup \
 		--drop-existing \
 		--minio-endpoint "localhost:$${MINIO_PORT:-9000}" \
@@ -311,30 +316,34 @@ restore-clean-vector: ## Clean restore Milvus (DROP existing + restore from back
 		uv run python scripts/migration/milvus_post_restore.py
 	@echo "✅ Milvus clean restore complete"
 
-restore-clean-package: ## Extract backup and clean restore (DELETE existing data first)
+restore-clean-package: ## Extract backup and clean restore (VERSION=YYYYMMDD_HHMM, default=latest)
+	@echo "📦 Using backup version: $(BACKUP_VERSION)"
+	@test -d backups/$(BACKUP_VERSION) || (echo "❌ Version backups/$(BACKUP_VERSION) not found" && exit 1)
+	@test -f backups/$(BACKUP_VERSION)/backup.zip.part.aa || (echo "❌ backups/$(BACKUP_VERSION)/backup.zip.part.* not found" && exit 1)
 	@echo "📦 Merging backup parts..."
-	@test -f backups/backup.zip.part.aa || (echo "❌ backups/backup.zip.part.* not found" && exit 1)
-	@cd backups && cat backup.zip.part.* > backup.zip
+	@cd backups/$(BACKUP_VERSION) && cat backup.zip.part.* > backup.zip
 	@echo "📦 Extracting backup package..."
-	@cd backups && unzip -o backup.zip
-	@rm -f backups/backup.zip
+	@cd backups/$(BACKUP_VERSION) && unzip -o backup.zip
+	@rm -f backups/$(BACKUP_VERSION)/backup.zip
 	@echo "🔄 Clean restoring databases (DELETE existing + CREATE from backup)..."
-	@$(MAKE) restore-graph OVERWRITE=true
-	@$(MAKE) restore-clean-vector
-	@rm -rf backups/falkordb backups/milvus
+	@$(MAKE) restore-graph OVERWRITE=true BACKUP_DIR=./backups/$(BACKUP_VERSION)/falkordb
+	@$(MAKE) restore-clean-vector BACKUP_DIR=./backups/$(BACKUP_VERSION)/milvus
+	@rm -rf backups/$(BACKUP_VERSION)/falkordb backups/$(BACKUP_VERSION)/milvus
 	@echo ""
-	@echo "✅ Clean restore complete - exact snapshot restored"
+	@echo "✅ Clean restore complete from version $(BACKUP_VERSION)"
 
-restore-package: ## Merge split parts, extract, and restore all databases
+restore-package: ## Merge split parts, extract, and restore (VERSION=YYYYMMDD_HHMM, default=latest)
+	@echo "📦 Using backup version: $(BACKUP_VERSION)"
+	@test -d backups/$(BACKUP_VERSION) || (echo "❌ Version backups/$(BACKUP_VERSION) not found" && exit 1)
+	@test -f backups/$(BACKUP_VERSION)/backup.zip.part.aa || (echo "❌ backups/$(BACKUP_VERSION)/backup.zip.part.* not found" && exit 1)
 	@echo "📦 Merging backup parts..."
-	@test -f backups/backup.zip.part.aa || (echo "❌ backups/backup.zip.part.* not found" && exit 1)
-	@cd backups && cat backup.zip.part.* > backup.zip
+	@cd backups/$(BACKUP_VERSION) && cat backup.zip.part.* > backup.zip
 	@echo "📦 Extracting backup package..."
-	@cd backups && unzip -o backup.zip
-	@rm -f backups/backup.zip
+	@cd backups/$(BACKUP_VERSION) && unzip -o backup.zip
+	@rm -f backups/$(BACKUP_VERSION)/backup.zip
 	@echo "🔄 Restoring databases..."
-	@$(MAKE) restore-graph
-	@$(MAKE) restore-vector
-	@rm -rf backups/falkordb backups/milvus
+	@$(MAKE) restore-graph BACKUP_DIR=./backups/$(BACKUP_VERSION)/falkordb
+	@$(MAKE) restore-vector BACKUP_DIR=./backups/$(BACKUP_VERSION)/milvus
+	@rm -rf backups/$(BACKUP_VERSION)/falkordb backups/$(BACKUP_VERSION)/milvus
 	@echo ""
-	@echo "✅ Full migration restore complete"
+	@echo "✅ Full migration restore complete from version $(BACKUP_VERSION)"

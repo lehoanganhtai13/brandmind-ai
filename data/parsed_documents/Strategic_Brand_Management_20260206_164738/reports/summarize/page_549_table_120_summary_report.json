@@ -1,0 +1,10 @@
+{
+  "table_id": "page_549_table_120",
+  "page_number": 549,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Brand Knowledge</th>\n      <th colspan=\"2\">Brand Awareness</th>\n      <th colspan=\"2\">Attributes</th>\n      <th colspan=\"3\">Benefits</th>\n      <th>Attitudes</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td rowspan=\"8\"></td>\n<td>Brand recall</td>\n      <td rowspan=\"2\"></td>\n<td>Non-product-related</td>\n      <td rowspan=\"2\"></td>\n<td>Functional</td>\n      <td rowspan=\"3\"></td>\n      <td rowspan=\"3\"></td>\n      <td rowspan=\"3\"></td>\n      <td rowspan=\"4\"></td>\n    </tr>\n<tr>\n      <td>Brand recognition</td>\n<td>Product-related</td>\n<td>Experiential</td>\n    </tr>\n<tr>\n      <td rowspan=\"6\">Brand Image</td>\n<td>Types of brand association</td>\n<td>Price</td>\n<td>Symbolic</td>\n    </tr>\n<tr>\n      <td>Favorability of brand associations</td>\n<td>User and usage imagery</td>\n    </tr>\n<tr>\n      <td>Strength of brand associations</td>\n<td>Brand personality</td>\n    </tr>\n<tr>\n      <td>Uniqueness of brand associations</td>\n<td>Feelings and experiences</td>\n    </tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This table outlines the components of Brand Knowledge, which encompasses Brand Awareness, Attributes, Benefits, and Attitudes. Brand Awareness is further divided into Brand Recall and Brand Recognition. Brand Knowledge also includes Brand Image, which is characterized by the Favorability, Strength, and Uniqueness of brand associations. Attributes are categorized into Non-product-related and Product-related types. Benefits are classified as Functional, Experiential, and Symbolic. Finally, Attitudes represent the overall evaluation of the brand. The structure suggests a hierarchical breakdown of Brand Knowledge, with Brand Image acting as a significant component influencing the other elements.",
+  "processing_time": 0.7991759777069092,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.277642"
+}

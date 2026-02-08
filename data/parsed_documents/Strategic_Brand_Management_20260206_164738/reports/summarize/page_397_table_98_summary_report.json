@@ -1,0 +1,10 @@
+{
+  "table_id": "page_397_table_98",
+  "page_number": 397,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Brand Category</th>\n<th>Brands</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Iconic Luxury</td>\n<td>\nBvlgari<br>\nThe Ritz-Carlton<br>\nThe Ritz-Carlton Destination Club\n</td>\n</tr>\n<tr>\n<td>Luxury</td>\n<td>JW Marriott</td>\n</tr>\n<tr>\n<td>Lifestyle | Collections</td>\n<td>\nEdition<br>\nAutograph Collection<br>\nRenaissance Hotels<br>\nAC Hotels\n</td>\n</tr>\n<tr>\n<td>Signature</td>\n<td>Marriott Hotels and Resorts</td>\n</tr>\n<tr>\n<td>Modern Essentials</td>\n<td>\nCourtyard<br>\nSpringHill Suites<br>\nFairfield Inn and Suites\n</td>\n</tr>\n<tr>\n<td>Extended Stay</td>\n<td>\nResidence Inn<br>\nTownePlace Suites<br>\nExecuStay<br>\nMarriott Executive Apartments\n</td>\n</tr>\n<tr>\n<td>Vacation Clubs</td>\n<td>\nMarriott Vacation Club<br>\nGrand Residences\n</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines the brand architecture of Marriott International, categorizing its various hotel and resort brands into a hierarchical structure. At the apex are \"Iconic Luxury\" brands, including Bvlgari and The Ritz-Carlton. Below this sits the \"Luxury\" tier, represented by JW Marriott. The \"Lifestyle | Collections\" category encompasses brands like Edition and Autograph Collection, followed by the \"Signature\" brand, Marriott Hotels and Resorts. Further down are \"Modern Essentials\" brands such as Courtyard and Fairfield Inn and Suites, and the \"Extended Stay\" segment featuring Residence Inn and TownePlace Suites. Finally, the \"Vacation Clubs\" category includes Marriott Vacation Club and Grand Residences, completing the brand portfolio.",
+  "processing_time": 1.282283067703247,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.275417"
+}

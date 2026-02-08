@@ -1,0 +1,26 @@
+# Page 24
+
+**Document Title**: Strategic Brand Management: Building, Measuring, and Managing Brand Equity
+**Author**: Kevin Lane Keller
+**Original File**: data/raw_documents/Strategic_Brand_Management.pdf
+**Page Number**: 24/591
+**Processing Time**: 2026-02-06T16:53:10.231583
+
+---
+
+# HOW IS THE BOOK ORGANIZED?
+
+The book is divided into six major parts, adhering to the “three-exposure opportunity” approach to learning new material. Part I introduces branding concepts; Parts II, III, IV, and V provide all the specific details of those concepts; and Part VI summarizes and applies the concepts in various contexts. The specific chapters for each part and their contents are as follows.
+
+Part I sets the stage by providing the “big picture” of what strategic brand management is all about and provides a blueprint for the rest of the book. The goal is to provide a sense for the content and context of strategic brand management by identifying key branding decisions and suggesting some of the important considerations for those decisions. Specifically, Chapter 1 introduces some basic notions about brands, and the role they’ve played and continue to play in marketing strategies. It defines what a brand is, why brands matter, and how anything can be branded, and provides an overview of the strategic brand management process.
+
+Part II addresses the topic of brand equity and introduces three models critical for brand planning. Chapter 2 introduces the concept of customer-based brand equity, outlines the customer-based brand equity framework, and provides detailed guidelines for the critically important topic of brand positioning. Chapter 3 describes the brand resonance and brand value chain models that assist marketers in developing profitable marketing programs for their brand and creating much customer loyalty.
+
+Part III examines the three major ways to build customer-based brand equity, taking a single product–single brand perspective. Chapter 4 addresses the first way to build customer-based brand equity and how to choose brand elements (brand names, logos, symbols, slogans), and the role they play in contributing to brand equity. Chapters 5 and 6 outline the second way to build brand equity and how to optimize the marketing mix to create customer-based brand equity. Chapter 5 covers product, pricing, and distribution strategies; Chapter 6 is devoted to creating integrated marketing communication programs to build brand equity. Although most readers are probably familiar with these “4 P’s” of marketing, it’s illuminating to consider them from the standpoint of brand equity and the effects of brand knowledge on consumer response to marketing mix activity and vice versa. Finally, Chapter 7 examines the third major way to build brand equity—by leveraging secondary associations from other entities like a company, geographical region, person, or other brand.
+
+Part IV looks at how to measure customer-based brand equity. These chapters take a detailed look at what consumers know about brands, what marketers want them to know, and how marketers can develop measurement procedures to assess how well they’re doing. Chapter 8 provides a big-picture perspective of these topics, specifically examining how to develop and implement an efficient and effective brand equity measurement system. Chapter 9 examines approaches to measuring customers’ brand knowledge structures, in order to identify and quantify potential sources of brand equity. Chapter 10 looks at measuring potential outcomes of brand equity in terms of the major benefits a firm accrues from these sources of brand equity as well as how to measure the overall value of a brand.
+
+Part V addresses how to manage brand equity, taking a broader, multiple product–multiple brand perspective as well as a longer-term, multiple-market view of brands. Chapter 11 considers issues related to brand architecture strategies—which brand elements a firm chooses to apply across its various products—and how to maximize brand equity across all the different brands and products that a firm might sell. It also describes two important tools to help formulate branding strategies—brand portfolios and the brand hierarchies. Chapter 12 outlines the pros and cons of brand extensions and develops guidelines for introducing and naming new products and brand extensions. Chapter 13 considers how to reinforce, revitalize, and retire brands, examining a number of specific topics in managing brands over time. Chapter 14 examines the implications of differences in consumer behavior and different types of market segments for managing brand equity. We pay particular attention to international issues and global branding strategies.
+
+Finally, Part VI considers some implications and applications of the customer-based brand equity framework. Chapter 15 highlights managerial guidelines and key themes that emerged in earlier chapters of the book. This chapter also summarizes success factors for branding and applies the customer-based brand equity framework to address specific strategic brand management issues for different types of products (online, industrial goods, high-tech products, services, retailers, and small businesses).
+

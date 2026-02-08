@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_34_chain_1",
+  "page_number": 34,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 34,
+      "start_pos": 1217,
+      "end_pos": 2526,
+      "html_size": 1309,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_34.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 34,
+      "start_pos": 2528,
+      "end_pos": 2856,
+      "html_size": 328,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_34.md"
+    }
+  ],
+  "is_cross_page": false,
+  "page_range": "34",
+  "merge_decision": {
+    "chain_id": "page_34_chain_1",
+    "status": "NO_MERGE",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No rowspan cell splitting was necessary."
+      },
+      "reasoning": "The first table provides a clear header ('Level', 'Air Conditioner') and structured data. The second table contains a list of company names that do not align with the columns or data types of the first table. Therefore, they are considered separate and not mergeable."
+    },
+    "final_merged_html": null,
+    "processing_time": 1.2465238571166992
+  },
+  "timestamp": "2026-02-06T16:56:11.254582"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_359_table_92",
+  "page_number": 359,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"5\" style=\"text-align:center;\">FIGURE 9-20 Google Is Consistently a Global Brand Leader</th>\n</tr>\n<tr>\n<th style=\"text-align:center;\">100</th>\n<th colspan=\"3\" style=\"text-align:center;\">Brand Stature</th>\n<th style=\"text-align:center;\">Energized Brand Strength</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td></td>\n<td>0</td>\n<td>50</td>\n<td>100</td>\n<td>100</td>\n</tr>\n<tr>\n<td>Mexico</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>Brazil</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>Chile</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>Russia</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>Japan</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>Italy</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>0</td>\n<td></td>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This figure, \"Google Is Consistently a Global Brand Leader,\" presents a comparative analysis of Google's brand strength across various countries. The data is structured around two primary axes: \"Brand Stature,\" ranging from 0 to 100, and \"Energized Brand Strength,\" also scaled from 0 to 100. The table lists several countries, including Mexico, Brazil, Chile, Russia, Japan, and Italy, with implicit data points indicating Google's standing on these metrics within each nation. While the specific values are not explicitly detailed in the provided table structure, the visual representation suggests a multi-dimensional assessment of Google's brand presence, likely illustrating how its stature and energized strength vary geographically, with the ultimate goal of demonstrating its global leadership.",
+  "processing_time": 1.3081519603729248,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T16:56:11.274940"
+}

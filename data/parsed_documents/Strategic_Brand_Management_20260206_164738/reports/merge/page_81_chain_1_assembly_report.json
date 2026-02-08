@@ -1,0 +1,56 @@
+{
+  "chain_id": "page_81_chain_1",
+  "page_number": 81,
+  "fragment_count": 4,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 81,
+      "start_pos": 285,
+      "end_pos": 647,
+      "html_size": 362,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_81.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 81,
+      "start_pos": 649,
+      "end_pos": 984,
+      "html_size": 335,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_81.md"
+    },
+    {
+      "fragment_index": 3,
+      "page_number": 81,
+      "start_pos": 986,
+      "end_pos": 1413,
+      "html_size": 427,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_81.md"
+    },
+    {
+      "fragment_index": 4,
+      "page_number": 81,
+      "start_pos": 1415,
+      "end_pos": 1597,
+      "html_size": 182,
+      "page_file": "data/parsed_documents/Strategic_Brand_Management_20260206_164738/page_81.md"
+    }
+  ],
+  "is_cross_page": false,
+  "page_range": "81",
+  "merge_decision": {
+    "chain_id": "page_81_chain_1",
+    "status": "NO_MERGE",
+    "analysis": {
+      "fragments_received": 4,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No rowspan cell splitting was necessary."
+      },
+      "reasoning": "The tables appear to be distinct sections of a larger classification system, likely related to marketing segmentation. Each table has a unique primary header ('Behavioral', 'Demographic', 'Psychographic', 'Geographic') and distinct secondary headers or data points that do not overlap or require merging into a single coherent table structure. They represent separate categories rather than continuations of the same table."
+    },
+    "final_merged_html": null,
+    "processing_time": 1.704531192779541
+  },
+  "timestamp": "2026-02-06T16:56:11.255830"
+}
