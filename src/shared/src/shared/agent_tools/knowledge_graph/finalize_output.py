@@ -5,7 +5,6 @@ catching truncation and syntax errors early to prevent chunk loss.
 """
 
 import json
-from typing import Any
 
 from loguru import logger
 
@@ -52,7 +51,9 @@ def finalize_output(output_json: str) -> str:
         errors = []
 
         if not isinstance(data, dict):
-            errors.append("Output must be a JSON object (dict), not " + type(data).__name__)
+            errors.append(
+                "Output must be a JSON object (dict), not " + type(data).__name__
+            )
         else:
             if "entities" not in data:
                 errors.append("Missing required key: 'entities'")
@@ -66,8 +67,8 @@ def finalize_output(output_json: str) -> str:
 
         if errors:
             return (
-                f"[ERROR] STRUCTURE ERROR\n\n"
-                f"Issues found:\n"
+                "[ERROR] STRUCTURE ERROR\n\n"
+                "Issues found:\n"
                 + "\n".join(f"- {e}" for e in errors)
                 + "\n\nPlease fix and call finalize_output again."
             )
@@ -87,8 +88,8 @@ def finalize_output(output_json: str) -> str:
 
         if entity_errors:
             return (
-                f"[ERROR] ENTITY STRUCTURE ERROR\n\n"
-                f"Issues found:\n"
+                "[ERROR] ENTITY STRUCTURE ERROR\n\n"
+                "Issues found:\n"
                 + "\n".join(f"- {e}" for e in entity_errors[:5])  # Limit to 5
                 + ("\n- ... and more" if len(entity_errors) > 5 else "")
                 + "\n\nPlease fix and call finalize_output again."
@@ -109,8 +110,8 @@ def finalize_output(output_json: str) -> str:
 
         if rel_errors:
             return (
-                f"[ERROR] RELATIONSHIP STRUCTURE ERROR\n\n"
-                f"Issues found:\n"
+                "[ERROR] RELATIONSHIP STRUCTURE ERROR\n\n"
+                "Issues found:\n"
                 + "\n".join(f"- {e}" for e in rel_errors[:5])
                 + ("\n- ... and more" if len(rel_errors) > 5 else "")
                 + "\n\nPlease fix and call finalize_output again."
@@ -119,7 +120,9 @@ def finalize_output(output_json: str) -> str:
         # All checks passed
         entity_count = len(data.get("entities", []))
         rel_count = len(data.get("relationships", []))
-        logger.debug(f"Output valid: {entity_count} entities, {rel_count} relationships")
+        logger.debug(
+            f"Output valid: {entity_count} entities, {rel_count} relationships"
+        )
 
         return (
             f"[VALID] OUTPUT VERIFIED\n\n"

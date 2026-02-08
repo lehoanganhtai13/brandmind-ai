@@ -96,7 +96,7 @@ def create_miner_agent(
     # 5. Create agent with all middlewares
     agent = create_agent(  # type: ignore[var-annotated]
         model=model,
-        tools=tools,
+        tools=tools,  # type: ignore[arg-type]
         system_prompt=system_prompt,
         middleware=[
             context_edit_middleware,

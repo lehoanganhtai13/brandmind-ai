@@ -127,22 +127,25 @@ class GoogleAIClientLLMConfig(LLMConfig):
             raise ValueError(
                 "Cannot use both thinking_budget and thinking_level. Choose one:\n"
                 "- thinking_budget (int): For Gemini 2.5 models\n"
-                "- thinking_level (str): For Gemini 3 models ('low', 'medium', 'high', 'minimal')"
+                "- thinking_level (str): For Gemini 3 models "
+                "('low', 'medium', 'high', 'minimal')"
             )
-        
+
         # Check model-parameter mismatch
         is_gemini_3 = "gemini-3" in self.model
         if is_gemini_3 and self.thinking_budget is not None:
             raise ValueError(
                 f"thinking_budget is not supported for Gemini 3 models ({self.model}). "
-                "Use thinking_level instead ('low', 'medium', 'high', or 'minimal' for Flash)."
+                "Use thinking_level instead ('low', 'medium', 'high', or 'minimal' "
+                "for Flash)."
             )
         if not is_gemini_3 and self.thinking_level is not None:
             raise ValueError(
-                f"thinking_level is not supported for Gemini 2.5 models ({self.model}). "
-                "Use thinking_budget instead (integer value, 0 to disable)."
+                "thinking_level is not supported for Gemini 2.5 models "
+                f"({self.model}). Use thinking_budget instead "
+                "(integer value, 0 to disable)."
             )
-        
+
         # Check grounding/tools vs structured output
         if self.use_grounding or self.tools:
             has_structured_mime_type = (

@@ -140,8 +140,8 @@ class GoogleAIClientLLM(BaseLLM):
 
         Args:
             system_instruction (str, optional): Override default system instruction.
-            thinking_budget (int, optional): Override default thinking budget (2.5 models).
-            thinking_level (str, optional): Override default thinking level (Gemini 3 models).
+            thinking_budget (int, optional): Override thinking budget (2.5 models).
+            thinking_level (str, optional): Override thinking level (Gemini 3).
             temperature (float, optional): Override default temperature.
             top_p (float, optional): Override default top_p.
             max_tokens (int, optional): Override default max tokens.
@@ -165,22 +165,21 @@ class GoogleAIClientLLM(BaseLLM):
         # Configure thinking based on model version
         # Gemini 3 uses thinking_level (str), Gemini 2.5 uses thinking_budget (int)
         is_gemini_3 = "gemini-3" in self.config.model
-        
+
         thinking_level_to_use = (
-            thinking_level
-            if thinking_level is not None
-            else self.config.thinking_level
+            thinking_level if thinking_level is not None else self.config.thinking_level
         )
         thinking_budget_to_use = (
             thinking_budget
             if thinking_budget is not None
             else self.config.thinking_budget
         )
-        
+
         if is_gemini_3 and thinking_level_to_use is not None:
             # Gemini 3: use thinking_level (low, medium, high, minimal)
+            level_enum = types.ThinkingLevel(thinking_level_to_use.upper())
             config_kwargs["thinking_config"] = types.ThinkingConfig(
-                thinking_level=thinking_level_to_use,
+                thinking_level=level_enum,
                 include_thoughts=False,
             )
         elif not is_gemini_3 and thinking_budget_to_use is not None:
