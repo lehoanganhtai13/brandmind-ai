@@ -1,0 +1,10 @@
+{
+  "table_id": "page_138_table_5",
+  "page_number": 138,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>High-speed letter cities</th>\n<th>27%</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Low-cost Telegram cities</td>\n<td>23%</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of two types of urban centers based on their communication infrastructure and associated costs. \"High-speed letter cities\" represent 27% of the analyzed urban areas, indicating a significant portion of cities with advanced, likely digital, communication capabilities. In contrast, \"Low-cost Telegram cities\" constitute 23%, suggesting a segment of cities that rely on or are characterized by more traditional, potentially less expensive, communication methods. The structure is a simple comparison of two distinct categories of cities, highlighting their relative prevalence within an unspecified dataset.",
+  "processing_time": 1.293935775756836,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.515083"
+}

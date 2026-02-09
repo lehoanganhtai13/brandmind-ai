@@ -1,0 +1,10 @@
+{
+  "table_id": "page_146_table_17",
+  "page_number": 146,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Bank</th>\n<th>Rating</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><b>Citibank</b></td>\n<td>7.8</td>\n</tr>\n<tr>\n<td><b>Chemical</b></td>\n<td>7.6</td>\n</tr>\n<tr>\n<td><b>Chase Manhattan</b></td>\n<td>7.5</td>\n</tr>\n<tr>\n<td><b>Long Island Trust</b></td>\n<td>7.1</td>\n</tr>\n<tr>\n<td><b>National Bank of North America</b></td>\n<td>7.1</td>\n</tr>\n<tr>\n<td><b>European American</b></td>\n<td>7.0</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of six banks, each assigned a numerical rating. Citibank holds the highest rating at 7.8, followed closely by Chemical at 7.6 and Chase Manhattan at 7.5. Long Island Trust and National Bank of North America share an identical rating of 7.1, placing them in the middle tier. European American receives the lowest rating among the listed institutions, with a score of 7.0. The structure is a simple ranking, illustrating a performance or quality hierarchy based on the provided rating scale.",
+  "processing_time": 1.3553979396820068,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.518490"
+}

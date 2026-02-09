@@ -1,0 +1,10 @@
+{
+  "table_id": "page_118_table_1",
+  "page_number": 118,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Manufacturer</th>\n<th>Interest</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>IBM</td>\n<td>81%</td>\n</tr>\n<tr>\n<td>Wang</td>\n<td>40%</td>\n</tr>\n<tr>\n<td>Digital Equipment</td>\n<td>36%</td>\n</tr>\n<tr>\n<td>AT&amp;T</td>\n<td>22%</td>\n</tr>\n<tr>\n<td>Hewlett-Packard</td>\n<td>21%</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of manufacturer interest, likely within a specific market or technology sector. The structure is a simple two-column table, listing five distinct manufacturers: IBM, Wang, Digital Equipment, AT&T, and Hewlett-Packard. Each manufacturer is associated with a percentage representing their level of interest. IBM demonstrates the highest interest at 81%, significantly exceeding the other listed companies. Wang follows with 40% interest, and Digital Equipment shows 36% interest. AT&T and Hewlett-Packard exhibit lower, comparable levels of interest at 22% and 21%, respectively. The data highlights a clear hierarchy of interest, with IBM leading and a gradual decrease in interest among the remaining manufacturers.",
+  "processing_time": 1.5237340927124023,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.513814"
+}

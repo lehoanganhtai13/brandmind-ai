@@ -1,0 +1,10 @@
+{
+  "table_id": "page_130_table_2",
+  "page_number": 130,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Destination</th>\n<th>Highest Point</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Bermuda</td>\n<td>259 feet</td>\n</tr>\n<tr>\n<td>Bahamas</td>\n<td>400 feet</td>\n</tr>\n<tr>\n<td>U.S. Virgin Islands</td>\n<td>1556 feet</td>\n</tr>\n<tr>\n<td>Puerto Rico</td>\n<td>4389 feet</td>\n</tr>\n<tr>\n<td>Jamaica</td>\n<td>7402 feet</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative overview of Caribbean destinations, specifically highlighting their highest topographical points. The structure is a simple mapping of geographical locations to their maximum elevations. The destinations range from low-lying islands like Bermuda at 259 feet and the Bahamas at 400 feet, to progressively higher elevations. The U.S. Virgin Islands reach 1556 feet, Puerto Rico ascends to 4389 feet, and Jamaica represents the highest point among the listed locations at 7402 feet. This arrangement allows for a direct comparison of the relative mountainous terrain across these island territories.",
+  "processing_time": 1.2780978679656982,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.514341"
+}

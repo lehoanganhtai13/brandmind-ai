@@ -1,0 +1,10 @@
+{
+  "table_id": "page_130_table_3",
+  "page_number": 130,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Destination</th>\n<th>Length of Largest Island</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Bermuda</td>\n<td>4 miles</td>\n</tr>\n<tr>\n<td>Bahamas</td>\n<td>8 miles</td>\n</tr>\n<tr>\n<td>U.S. Virgin Islands</td>\n<td>7½ miles</td>\n</tr>\n<tr>\n<td>Puerto Rico</td>\n<td>50 miles</td>\n</tr>\n<tr>\n<td>Jamaica</td>\n<td>62½ miles</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparison of the length of the largest island for several Caribbean destinations. The destinations are Bermuda, Bahamas, U.S. Virgin Islands, Puerto Rico, and Jamaica. The lengths of their largest islands range from 4 miles in Bermuda to 62½ miles in Jamaica. Puerto Rico's largest island measures 50 miles, while Jamaica's is 62½ miles, indicating a significant difference in scale between these two larger islands. The Bahamas and U.S. Virgin Islands have intermediate island sizes of 8 miles and 7½ miles, respectively. The structure is comparative, highlighting variations in island size across different geographical locations within the Caribbean region.",
+  "processing_time": 1.3872029781341553,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.514597"
+}

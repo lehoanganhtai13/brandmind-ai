@@ -1,0 +1,10 @@
+{
+  "table_id": "page_142_table_11",
+  "page_number": 142,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Chemical</th>\n<th>7.2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Citibank</td>\n<td>7.0</td>\n</tr>\n<tr>\n<td>National Bank of North America</td>\n<td>7.0</td>\n</tr>\n<tr>\n<td>Chase Manhattan</td>\n<td>6.9</td>\n</tr>\n<tr>\n<td>European American</td>\n<td>6.8</td>\n</tr>\n<tr>\n<td>Long Island Trust</td>\n<td>6.7</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of chemical properties, specifically focusing on a metric labeled \"7.2\" across several financial institutions. The institutions listed include Citibank, National Bank of North America, Chase Manhattan, European American, and Long Island Trust. Each institution is associated with a numerical value on the \"7.2\" scale, indicating varying degrees of this chemical property. Citibank and National Bank of North America share the highest recorded value at 7.0. Chase Manhattan follows with 6.9, European American with 6.8, and Long Island Trust with the lowest value of 6.7. The structure is comparative, ranking these entities based on a single, unspecified chemical characteristic.",
+  "processing_time": 1.4269001483917236,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.516844"
+}

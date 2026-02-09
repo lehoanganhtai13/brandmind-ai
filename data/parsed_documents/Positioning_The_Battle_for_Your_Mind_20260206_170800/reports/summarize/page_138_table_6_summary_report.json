@@ -1,0 +1,10 @@
+{
+  "table_id": "page_138_table_6",
+  "page_number": 138,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>High-speed letter cities</th>\n<th>25%</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Low-cost Telegram cities</td>\n<td>47%</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of two categories of cities based on their associated costs. \"High-speed letter cities\" represent 25% of the total, indicating a segment with a higher associated cost for letter delivery. Conversely, \"Low-cost Telegram cities\" constitute a larger portion at 47%, suggesting a segment where telegram delivery is more economically viable. The remaining 28% (100% - 25% - 47%) is not explicitly defined but is implied to represent other categories or a baseline. The structure is comparative, highlighting the differing cost profiles and market penetration of these two distinct communication service types within urban environments.",
+  "processing_time": 1.443497896194458,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.515339"
+}

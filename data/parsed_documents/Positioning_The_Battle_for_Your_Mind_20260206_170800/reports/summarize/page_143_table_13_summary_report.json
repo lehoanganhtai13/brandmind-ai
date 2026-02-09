@@ -1,0 +1,10 @@
+{
+  "table_id": "page_143_table_13",
+  "page_number": 143,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Long Island Trust</th>\n<th>7.5</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><em>National Bank of North America</em></td>\n<td>6.6</td>\n</tr>\n<tr>\n<td>European American</td>\n<td>5.2</td>\n</tr>\n<tr>\n<td>Chemical</td>\n<td>5.1</td>\n</tr>\n<tr>\n<td>Chase Manhattan</td>\n<td>4.7</td>\n</tr>\n<tr>\n<td>Citibank</td>\n<td>4.5</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of several financial institutions, ranked by a numerical value, likely representing market share, asset size, or a similar metric. Long Island Trust leads with a value of 7.5, followed by National Bank of North America at 6.6. European American is third with 5.2, and Chemical Bank is fourth with 5.1. Chase Manhattan and Citibank are ranked fifth and sixth, respectively, with values of 4.7 and 4.5. The structure is a simple ranking, illustrating a clear hierarchy among these entities based on the presented metric.",
+  "processing_time": 1.1477439403533936,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.517693"
+}

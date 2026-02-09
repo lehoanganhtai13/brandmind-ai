@@ -1,0 +1,10 @@
+{
+  "table_id": "page_139_table_8",
+  "page_number": 139,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Year</th>\n<th>Volume</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1981</td>\n<td>41 million</td>\n</tr>\n<tr>\n<td>1982</td>\n<td>37 million</td>\n</tr>\n<tr>\n<td>1983</td>\n<td>30 million</td>\n</tr>\n<tr>\n<td>1984</td>\n<td>22 million</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a chronological overview of a specific volume over a four-year period, from 1981 to 1984. The structure is comparative, highlighting changes in volume year-over-year. In 1981, the volume was recorded at 41 million. This figure subsequently decreased each year, reaching 37 million in 1982, then dropping to 30 million in 1983. The trend continued downwards, with the volume recorded at 22 million in 1984, indicating a consistent decline over the observed timeframe.",
+  "processing_time": 1.073038101196289,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.515856"
+}

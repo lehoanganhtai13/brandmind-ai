@@ -1,0 +1,10 @@
+{
+  "table_id": "page_142_table_10",
+  "page_number": 142,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Chemical</th>\n<th>7.7</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Citibank</td>\n<td>7.7</td>\n</tr>\n<tr>\n<td>Chase Manhattan</td>\n<td>7.6</td>\n</tr>\n<tr>\n<td>National Bank of North America</td>\n<td>7.4</td>\n</tr>\n<tr>\n<td>European American</td>\n<td>7.3</td>\n</tr>\n<tr>\n<td>Long Island Trust</td>\n<td>7.0</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of chemical concentrations, specifically focusing on Citibank, with a value of 7.7. It then lists other entities – Chase Manhattan (7.6), National Bank of North America (7.4), European American (7.3), and Long Island Trust (7.0) – alongside their corresponding chemical values. The structure is comparative, ranking these institutions based on their measured chemical levels, with Citibank exhibiting the highest concentration among those listed.",
+  "processing_time": 1.0395550727844238,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.516464"
+}

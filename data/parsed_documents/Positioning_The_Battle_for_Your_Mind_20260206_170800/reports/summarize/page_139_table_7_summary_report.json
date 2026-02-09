@@ -1,0 +1,10 @@
+{
+  "table_id": "page_139_table_7",
+  "page_number": 139,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Year</th>\n<th>Volume</th>\n<th>Year</th>\n<th>Volume</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1972</td>\n<td>6 million</td>\n<td>1977</td>\n<td>28 million</td>\n</tr>\n<tr>\n<td>1973</td>\n<td>11 million</td>\n<td>1978</td>\n<td>33 million</td>\n</tr>\n<tr>\n<td>1974</td>\n<td>20 million</td>\n<td>1979</td>\n<td>37 million</td>\n</tr>\n<tr>\n<td>1975</td>\n<td>23 million</td>\n<td>1980</td>\n<td>39 million</td>\n</tr>\n<tr>\n<td>1976</td>\n<td>25 million</td>\n<td>1981</td>\n<td>41 million</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative overview of the volume of something over two distinct, yet sequential, periods. The first period spans from 1972 to 1976, showing an increase in volume from 6 million to 25 million. The second period, from 1977 to 1981, continues this upward trend, with the volume escalating from 28 million to 41 million. The structure is comparative, highlighting the growth trajectory across these two five-year intervals, with a slight overlap in the starting point of the second period (28 million in 1977) compared to the end of the first (25 million in 1976), indicating sustained and accelerating growth.",
+  "processing_time": 1.7456390857696533,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:09:24.515575"
+}
