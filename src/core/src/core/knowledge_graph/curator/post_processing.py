@@ -15,6 +15,9 @@ from typing import Dict, List, Set
 
 from loguru import logger
 
+from core.knowledge_graph.curator.entity_name_normalizer import (
+    normalize_entity_names,
+)
 from core.knowledge_graph.curator.entity_resolver import merge_descriptions
 from shared.database_clients.graph_database.base_graph_database import (
     BaseGraphDatabase,
@@ -401,7 +404,7 @@ async def run_post_processing(
     all_stats = {}
 
     # 1. Clean up duplicate entities
-    logger.info("[1/2] Cleaning duplicate entities (label casing issues)...")
+    logger.info("[1/3] Cleaning duplicate entities (label casing issues)...")
     entity_stats = await cleanup_duplicate_entities(
         graph_db=graph_db,
         vector_db=vector_db,
@@ -411,8 +414,24 @@ async def run_post_processing(
     )
     all_stats["entities"] = entity_stats
 
-    # 2. Clean up orphan relations
-    logger.info("[2/2] Cleaning orphan relations...")
+    # 2. Normalize entity names (PascalCase -> Title Case)
+    logger.info("[2/3] Normalizing entity names (PascalCase -> Title Case)...")
+    name_result = await normalize_entity_names(
+        vector_db=vector_db,
+        graph_db=graph_db,
+        embedder=embedder,
+        collection_name=entity_collection_name,
+        dry_run=dry_run,
+    )
+    all_stats["name_normalization"] = {
+        "detected": name_result.normalized_count + name_result.skipped_count,
+        "normalized": name_result.normalized_count,
+        "skipped": name_result.skipped_count,
+        "failed": name_result.failed_count,
+    }
+
+    # 3. Clean up orphan relations
+    logger.info("[3/3] Cleaning orphan relations...")
     relation_stats = await cleanup_duplicate_relations(
         graph_db=graph_db,
         vector_db=vector_db,
@@ -426,6 +445,9 @@ async def run_post_processing(
     logger.info("POST-PROCESSING SUMMARY")
     logger.info("=" * 60)
     logger.info(f"Duplicate entity IDs found: {entity_stats['duplicates_found']}")
+    logger.info(
+        f"PascalCase entities detected: {all_stats['name_normalization']['detected']}"
+    )
     logger.info(f"Valid relations in Graph DB: {relation_stats['valid_relations']}")
     logger.info(
         f"Total relations in Vector DB: {relation_stats['total_vector_records']}"
@@ -436,6 +458,9 @@ async def run_post_processing(
         logger.info(f"Entities merged: {entity_stats['nodes_merged']}")
         logger.info(f"Edges migrated: {entity_stats['edges_migrated']}")
         logger.info(f"Descriptions merged: {entity_stats['descriptions_merged']}")
+        logger.info(
+            f"Names normalized: {all_stats['name_normalization']['normalized']}"
+        )
         logger.info(f"Orphan relations deleted: {relation_stats['orphans_deleted']}")
 
     return all_stats
