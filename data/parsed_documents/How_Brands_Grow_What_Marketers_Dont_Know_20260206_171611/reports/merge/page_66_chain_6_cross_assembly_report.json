@@ -1,0 +1,48 @@
+{
+  "chain_id": "page_66_chain_6_cross",
+  "page_number": 66,
+  "fragment_count": 3,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 66,
+      "start_pos": 2942,
+      "end_pos": 3437,
+      "html_size": 495,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_66.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 67,
+      "start_pos": 261,
+      "end_pos": 2664,
+      "html_size": 2403,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_67.md"
+    },
+    {
+      "fragment_index": 3,
+      "page_number": 68,
+      "start_pos": 261,
+      "end_pos": 1058,
+      "html_size": 797,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_68.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "66-68",
+  "merge_decision": {
+    "chain_id": "page_66_chain_6_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 3,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No rowspan cell splitting was required."
+      },
+      "reasoning": "The first table provides a clear header with column names ('Category', 'Demo', 'Media', 'Values', 'Average'). The second and third tables have headers that appear to be data rows or malformed headers. Specifically, the second table's header row contains 'Sweets' and numerical values that align with the data rows, suggesting it's a data row. The third table has an empty header cell and numerical values, also indicating it's likely a data fragment. The column counts and general structure suggest these fragments belong together and can be merged by treating the headers of the second and third tables as data rows and aligning them with the master header of the first table."
+    },
+    "final_merged_html": "<table><thead><tr><th>Category</th><th>Demo</th><th>Media</th><th>Values</th><th>Average</th></tr></thead><tbody><tr><td>Cigarettes</td><td>4</td><td>4</td><td>6</td><td>6</td></tr><tr><td>Cat food</td><td>3</td><td>1</td><td>4</td><td>4</td></tr><tr><td>Mints</td><td>3</td><td>1</td><td>3</td><td>3</td></tr><tr><td>Toothbrushes</td><td>3</td><td>1</td><td>3</td><td>3</td></tr><tr><td>Private health insurance</td><td>4</td><td>2</td><td>3</td><td>3</td></tr><tr><td>Sweets</td><td>3</td><td>1</td><td>2</td><td>3</td></tr><tr><td>Crisps</td><td>3</td><td>1</td><td>3</td><td>3</td></tr><tr><td>Toilet soap</td><td>3</td><td>1</td><td>2</td><td>3</td></tr><tr><td>Package holidays</td><td>3</td><td>1</td><td>3</td><td>3</td></tr><tr><td>Dry batteries</td><td>3</td><td>1</td><td>2</td><td>3</td></tr><tr><td>Other chocolate</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Kitchen rolls</td><td>3</td><td>1</td><td>3</td><td>2</td></tr><tr><td>Nuts</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Chocolate bars</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Toothpaste</td><td>2</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Toilet paper</td><td>2</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Computers</td><td>3</td><td>2</td><td>2</td><td>2</td></tr><tr><td>Record shops</td><td>3</td><td>1</td><td>1</td><td>2</td></tr><tr><td>Store retail cards</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Computer games</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Vitamins</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Liquid detergent</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Grocers</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Yogurt</td><td>3</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Light bulbs</td><td>2</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Car tyres</td><td>2</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Stain removers</td><td>2</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Car insurance</td><td>3</td><td>1</td><td>1</td><td>2</td></tr><tr><td>Coffee</td><td>2</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Home contents</td><td>2</td><td>1</td><td>1</td><td>2</td></tr><tr><td>Paint</td><td>3</td><td>1</td><td>1</td><td>2</td></tr><tr><td>Shampoo</td><td>2</td><td>1</td><td>2</td><td>2</td></tr><tr><td>Airlines</td><td>2</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Camera film</td><td>2</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Headache tablets</td><td>2</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Cars</td><td>2</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Credit cards</td><td>2</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Mortgages</td><td>2</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Fuel</td><td>2</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Retailers</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><td>Average</td><td>3</td><td>1</td><td>2</td><td>2</td></tr></tbody></table>",
+    "processing_time": 3.8937768936157227
+  },
+  "timestamp": "2026-02-06T17:20:38.291723"
+}

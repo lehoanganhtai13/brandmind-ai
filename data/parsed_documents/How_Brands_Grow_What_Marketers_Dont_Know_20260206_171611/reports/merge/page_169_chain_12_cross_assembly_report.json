@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_169_chain_12_cross",
+  "page_number": 169,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 169,
+      "start_pos": 2148,
+      "end_pos": 2508,
+      "html_size": 360,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_169.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 170,
+      "start_pos": 263,
+      "end_pos": 606,
+      "html_size": 343,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_170.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "169-170",
+  "merge_decision": {
+    "chain_id": "page_169_chain_12_cross",
+    "status": "NO_MERGE",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No collapsed column errors were found or repaired."
+      },
+      "reasoning": "The two table fragments appear to be distinct tables with different headers and column structures. The first table has a primary header 'Brand Performance' and a second header row with 7 columns. The second table has a primary header 'Customers' and a second header row with 8 columns, one of which is empty. There is no clear overlap or continuation that would suggest they belong to the same table. Therefore, they are treated as separate."
+    },
+    "final_merged_html": null,
+    "processing_time": 1.4065310955047607
+  },
+  "timestamp": "2026-02-06T17:20:38.292918"
+}

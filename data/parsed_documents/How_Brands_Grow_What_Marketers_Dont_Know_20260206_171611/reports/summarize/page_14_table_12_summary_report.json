@@ -1,0 +1,10 @@
+{
+  "table_id": "page_14_table_12",
+  "page_number": 14,
+  "original_table_html": "<table><thead><tr><th></th><th>Crest</th><th>Colgate</th></tr></thead><tbody><tr><td style=\"text-align:center;\">Crest switchers</td><td style=\"background-color:#1b4f8b; color:white; text-align:center;\">~95%</td><td style=\"background-color:#66a9e0; color:white; text-align:center;\">~70%</td></tr><tr><td>Colgate switchers</td><td>100</td><td><table><tr><td style=\"background-color:#003366; height:80px; width:40px;\"></td><td style=\"background-color:#66a3ff; height:75px; width:40px;\"></td></tr></table>",
+  "summary_markdown": "This data presents a comparative analysis of brand switching behavior between Crest and Colgate. It indicates that approximately 95% of Crest switchers also switch to Colgate, while around 70% of Colgate switchers switch to Crest. The table further details that 100% of Colgate switchers are accounted for within the Crest switching category, suggesting a strong directional flow from Colgate to Crest. Conversely, the data implies that while a significant portion of Crest users switch to Colgate, the reverse flow is less pronounced, with the provided visual representation for Colgate switchers showing a larger proportion remaining loyal or switching to other brands not explicitly detailed. The structure is comparative, highlighting the extent of cross-brand switching.",
+  "processing_time": 1.2102558612823486,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.295366"
+}

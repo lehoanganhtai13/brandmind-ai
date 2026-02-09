@@ -1,0 +1,10 @@
+{
+  "table_id": "page_73_table_44",
+  "page_number": 73,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Market share in a particular demographic group</th>\n<th>Small bottle (%)</th>\n<th>Large bottle (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Overall market</td>\n<td>19</td>\n<td>43</td>\n</tr>\n<tr>\n<td>Male</td>\n<td>25</td>\n<td>38</td>\n</tr>\n<tr>\n<td>Female</td>\n<td>14</td>\n<td>47</td>\n</tr>\n<tr>\n<td>1 person household</td>\n<td>22</td>\n<td>44</td>\n</tr>\n<tr>\n<td>3+ person household</td>\n<td>20</td>\n<td>41</td>\n</tr>\n<tr>\n<td>Children in household</td>\n<td>20</td>\n<td>39</td>\n</tr>\n<tr>\n<td>No children in household</td>\n<td>17</td>\n<td>46</td>\n</tr>\n<tr>\n<td>&lt;34 years old</td>\n<td>37</td>\n<td>23</td>\n</tr>\n<tr>\n<td>55-74 years old</td>\n<td>12</td>\n<td>52</td>\n</tr>\n<tr>\n<td>AB socioeconomic</td>\n<td>17</td>\n<td>46</td>\n</tr>\n<tr>\n<td>E socioeconomic</td>\n<td>17</td>\n<td>47</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of market share for small and large bottles across various demographic groups. The overall market shows a higher share for large bottles (43%) compared to small bottles (19%). This trend generally holds true for most segments, with notable exceptions. Females exhibit a stronger preference for large bottles (47%) than males (38%), while males show a higher market share for small bottles (25%) compared to females (14%). Households with children or multiple persons generally favor large bottles, though the difference is marginal. A significant divergence appears in age demographics: younger individuals (<34 years old) strongly prefer small bottles (37%) over large ones (23%), whereas older individuals (55-74 years old) overwhelmingly favor large bottles (52%) over small ones (12%). Socioeconomic groups AB and E show similar, moderate preferences for large bottles.",
+  "processing_time": 1.0461890697479248,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.299739"
+}

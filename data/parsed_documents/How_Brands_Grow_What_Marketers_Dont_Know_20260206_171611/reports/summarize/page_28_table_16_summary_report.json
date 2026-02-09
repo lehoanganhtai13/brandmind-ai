@@ -1,0 +1,10 @@
+{
+  "table_id": "page_28_table_16",
+  "page_number": 28,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"4\">Double Jeopardy Law - shampoo (UK 2010)</th>\n</tr>\n<tr>\n<th>Shampoo brands</th>\n<th>Market Share (%)</th>\n<th>Annual market penetration (%)</th>\n<th>Purchase frequency (average)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Head & Shoulders</td>\n<td>11</td>\n<td>23</td>\n<td>1.9</td>\n</tr>\n<tr>\n<td>Pantene</td>\n<td>9</td>\n<td>19</td>\n<td>1.8</td>\n</tr>\n<tr>\n<td>Herbal Essences</td>\n<td>8</td>\n<td>18</td>\n<td>1.7</td>\n</tr>\n<tr>\n<td>Dove</td>\n<td>5</td>\n<td>10</td>\n<td>1.7</td>\n</tr>\n<tr>\n<td>L’Oreal Elvive</td>\n<td>2</td>\n<td>4</td>\n<td>1.6</td>\n</tr>\n<tr>\n<td>Sunsilk</td>\n<td>2</td>\n<td>4</td>\n<td>1.5</td>\n</tr>\n<tr>\n<td>Vosene</td>\n<td>2</td>\n<td>4</td>\n<td>1.6</td>\n</tr>\n<tr>\n<td><strong>Average</strong></td>\n<td></td>\n<td></td>\n<td><strong>1.7</strong></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of shampoo brands in the UK market as of 2010, illustrating the \"Double Jeopardy Law\" principle. The table details market share, annual market penetration, and average purchase frequency for several brands, including Head & Shoulders, Pantene, Herbal Essences, Dove, L’Oreal Elvive, Sunsilk, and Vosene. Head & Shoulders leads with the highest market share (11%) and penetration (23%), while also exhibiting a relatively high purchase frequency (1.9). Conversely, brands with lower market shares, such as L’Oreal Elvive, Sunsilk, and Vosene, generally show lower penetration rates and purchase frequencies. The data suggests a correlation where leading brands command larger market shares and higher customer engagement, while smaller brands struggle to achieve comparable penetration and repeat purchase rates, with an overall average purchase frequency of 1.7 across the analyzed brands.",
+  "processing_time": 1.9410550594329834,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.295854"
+}

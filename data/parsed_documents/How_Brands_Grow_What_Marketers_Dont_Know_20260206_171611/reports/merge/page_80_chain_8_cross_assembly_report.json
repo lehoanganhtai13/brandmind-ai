@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_80_chain_8_cross",
+  "page_number": 80,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 80,
+      "start_pos": 2179,
+      "end_pos": 2882,
+      "html_size": 703,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_80.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 81,
+      "start_pos": 261,
+      "end_pos": 1101,
+      "html_size": 840,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_81.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "80-81",
+  "merge_decision": {
+    "chain_id": "page_80_chain_8_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No collapsed column errors were found or fixed."
+      },
+      "reasoning": "The first table provides a comprehensive header structure with column definitions. The second table contains data that aligns with the latter columns of the first table and appears to be a continuation or a related subset of data. The column headers in the second table, while slightly different, can be mapped to the existing structure after accounting for the 'Buyers of brand' column which is absent in the second snippet. The data types and general structure suggest they belong together."
+    },
+    "final_merged_html": "<table><thead><tr><th rowspan=\"2\">Buyers of brand:</th><th colspan=\"2\">(Walls) Carte D’Or</th><th>Walls Dessert</th><th>Ben & Jerry’s</th><th>Häagen Dazs</th><th>Nestle</th><th>Walls</th><th>Mars</th></tr><tr><th>(Walls)</th><th>Cart D’Or</th><th></th><th></th><th></th><th></th><th></th><th></th></tr></thead><tbody><tr><td>(Walls) Cart D’Or Walls Dessert Ben & Jerry’s</td><td>-</td><td>15</td><td>8</td><td>8</td><td>9</td><td>5</td><td>4</td></tr><tr><td></td><td>34</td><td>-</td><td>7</td><td>8</td><td>9</td><td>4</td><td>3</td></tr><tr><td></td><td>38</td><td>14</td><td>-</td><td>26</td><td>13</td><td>7</td><td>8</td></tr><tr><td>Häagen Dazs</td><td>37</td><td>17</td><td>26</td><td>-</td><td>8</td><td>7</td><td>8</td></tr><tr><td>Nestle</td><td>39</td><td>17</td><td>12</td><td>7</td><td>-</td><td>8</td><td>9</td></tr><tr><td>Walls</td><td>37</td><td>14</td><td>12</td><td>11</td><td>15</td><td>-</td><td>11</td></tr><tr><td>Mars</td><td>41</td><td>12</td><td>18</td><td>17</td><td>22</td><td>13</td><td>-</td></tr><tr><td><strong>Average %</strong></td><td><strong>38</strong></td><td><strong>15</strong></td><td><strong>14</strong></td><td><strong>13</strong></td><td><strong>13</strong></td><td><strong>7</strong></td><td><strong>7</strong></td></tr></tbody></table>",
+    "processing_time": 2.287945032119751
+  },
+  "timestamp": "2026-02-06T17:20:38.292224"
+}

@@ -1,0 +1,19 @@
+# Page 170
+
+**Document Title**: How Brands Grow: What Marketers Don't Know
+**Author**: Byron Sharp
+**Original File**: data/raw_documents/How_Brands_Grow_What_Marketers_Dont_Know.pdf
+**Page Number**: 170/208
+**Processing Time**: 2026-02-06T17:18:18.728078
+
+---
+
+This table outlines a "New World View" for customers, characterized by several key strategies. It emphasizes "Growth Through Penetration," suggesting a focus on increasing market share within existing customer bases. This is supported by the development of "Predictable Meaningful Brand Metrics" to track progress and "Sophisticated Mass Marketing" to reach a broad audience. The view also incorporates "Price Promotions Existing Loyal Customers," indicating a strategy to retain and incentivize current patrons. Furthermore, it acknowledges the role of "Heuristics" in customer decision-making and the importance of "Distinctiveness" in brand positioning. The structure appears to be a comparative or descriptive framework, detailing various facets of a modern customer-centric approach.
+
+This table outlines a comparative framework for advertising strategies, contrasting a "Past World View" with a "New World View." The "Past World View" emphasizes core advertising functions such as Positioning, Message Comprehension, Unique Selling Propositions, Persuasion, Teaching, and Campaign Bursts. In contrast, the "New World View" reframes these concepts with a focus on Salience, Getting Noticed and Emotional Response, Relevant Associations, Refreshing & Building Memory Structures, Reaching, and Continuous Presence. This structure suggests a shift from a more direct, feature-driven approach to one that prioritizes brand awareness, emotional connection, and sustained visibility in the consumer's mind.
+
+This theory has to be a new replacement for the twentieth century Kotlerian view of marketing. According to Kotler, competition for sales is about creating differentiated brands that carve off sections of market share by addressing the heterogeneity between consumers. Thus, competing brands sell to different types of consumers; brands have substantially different images; and brand loyalty varies considerably. This view also holds that many brands are niche brands; and that considerable growth is possible by becoming even more niche and selling more to a brand’s most loyal customers.
+
+This worldview was partly responsible for the very large (and low return) investments in loyalty programs and customer relationship management (CRM) that occurred towards the end of the twentieth century. <sup>81</sup> On a less visible level, this worldview was also responsible for millions of misguided and productivity-sapping marketing plans. Some marketers got lucky and succeeded in spite of their plan <sup>82</sup>, through implementation ‘mistakes’ or from competitors getting it even more wrong. But many misplaced plans did their bit to erode their brand’s customer franchise.
+
+However, this twentieth century view of marketing is not completely wrong. It just describes a limited part of the competition for sales. It more aptly describes the competition between product categories than the competition between brands within a category (yet, even in this case it is often an exaggeration). The Kotlerian view doesn’t fit the facts of branded competition; it fails the most basic test of scientific theories: it does not lead to empirical laws. In some cases, it even clashes with these empirical laws (i.e. it predicts different patterns). For example, strong differentiation and differences in brand user profiles would destroy the laws of double jeopardy and duplication of purchase. Yet in the real world we find only minor deviations from these laws. The Kotlerian worldview is not the opposite of reality, but it is a very poor representation of it. It’s similar to the view that the world is flat – it isn’t, though there are flat-ish parts (much of Australia, for instance).

@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_42_chain_4_cross",
+  "page_number": 42,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 42,
+      "start_pos": 2794,
+      "end_pos": 2933,
+      "html_size": 139,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_42.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 43,
+      "start_pos": 261,
+      "end_pos": 1199,
+      "html_size": 938,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_43.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "42-43",
+  "merge_decision": {
+    "chain_id": "page_42_chain_4_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No rowspan cell splitting was necessary."
+      },
+      "reasoning": "The first table provides the primary header structure. The second table contains data rows that align with the column definitions of the first table. The second table's header is redundant and its rows are appended to the first table's body."
+    },
+    "final_merged_html": "<table><thead><tr><th>UK automobiles</th><th>Penetration (%)</th><th>Buyer defection (%)</th></tr></thead><tbody><tr><td>Ford</td><td>27</td><td>31</td></tr><tr><td>Rover</td><td>16</td><td>46</td></tr><tr><td>GM</td><td>14</td><td>42</td></tr><tr><td>Nissan</td><td>6</td><td>45</td></tr><tr><td>VW/Audi</td><td>5</td><td>46</td></tr><tr><td>Peugeot</td><td>5</td><td>57</td></tr><tr><td>Renault</td><td>4</td><td>52</td></tr><tr><td>Fiat</td><td>3</td><td>50</td></tr><tr><td>Citroen</td><td>2</td><td>48</td></tr><tr><td>Toyota</td><td>2</td><td>50</td></tr><tr><td>Honda</td><td>1</td><td>53</td></tr><tr><td><strong>Average defection</strong></td><td colspan=\"2\"><strong>49%</strong></td></tr></tbody></table>",
+    "processing_time": 1.5646488666534424
+  },
+  "timestamp": "2026-02-06T17:20:38.291272"
+}

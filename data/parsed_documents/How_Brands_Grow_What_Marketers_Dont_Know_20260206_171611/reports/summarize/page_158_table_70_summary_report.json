@@ -1,0 +1,10 @@
+{
+  "table_id": "page_158_table_70",
+  "page_number": 158,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"2\">Sales for a leading Cereal brand</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>15.00</td>\n<td></td>\n</tr>\n<tr>\n<td>11.25</td>\n<td></td>\n</tr>\n<tr>\n<td>7.50</td>\n<td></td>\n</tr>\n<tr>\n<td>3.75</td>\n<td></td>\n</tr>\n<tr>\n<td>0</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a series of sales figures for a leading cereal brand, illustrating a clear downward trend. The figures provided are 15.00, 11.25, 7.50, 3.75, and 0. These values represent a progressive decrease in sales, starting from a high of 15.00 and culminating at zero. The structure is a simple, linear progression of quantitative data points, indicating a decline over an unspecified period or across different metrics. The absence of accompanying labels or context within the table suggests these figures might represent sales over time, market share, or some other quantifiable metric where a reduction is being depicted.",
+  "processing_time": 1.3470938205718994,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.303233"
+}

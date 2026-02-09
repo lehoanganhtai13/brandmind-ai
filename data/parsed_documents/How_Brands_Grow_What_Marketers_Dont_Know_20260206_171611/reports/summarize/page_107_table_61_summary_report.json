@@ -1,0 +1,10 @@
+{
+  "table_id": "page_107_table_61",
+  "page_number": 107,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Brand</th>\n<th>Share of survey sample</th>\n<th>Repeat (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Dell</td>\n<td>26</td>\n<td>67</td>\n</tr>\n<tr>\n<td>HP/Compaq</td>\n<td>23</td>\n<td>47</td>\n</tr>\n<tr>\n<td>Apple</td>\n<td>10</td>\n<td>36</td>\n</tr>\n<tr>\n<td>Toshiba</td>\n<td>6</td>\n<td>19</td>\n</tr>\n<tr>\n<td>Gateway</td>\n<td>4</td>\n<td>58</td>\n</tr>\n<tr>\n<td>IBM/Lenovo</td>\n<td>2</td>\n<td>29</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of computer brands based on their share within a survey sample and their repeat purchase percentage. Dell leads with the largest share of the survey sample at 26%, also exhibiting a high repeat purchase rate of 67%. HP/Compaq follows with 23% of the sample and a 47% repeat rate. Apple holds 10% of the sample with a 36% repeat rate. Toshiba and Gateway represent smaller sample shares of 6% and 4% respectively, with repeat rates of 19% and 58%. IBM/Lenovo has the smallest sample share at 2% and a repeat rate of 29%. The structure is comparative, highlighting market presence and customer loyalty across different brands.",
+  "processing_time": 1.3897521495819092,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.301940"
+}

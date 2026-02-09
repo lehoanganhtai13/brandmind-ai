@@ -1,0 +1,10 @@
+{
+  "table_id": "page_42_table_23",
+  "page_number": 42,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>US automobiles</th>\n<th>Market penetration (%)</th>\n<th>Buyer defection (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr><td>Pontiac</td><td>9</td><td>58</td></tr>\n<tr><td>Dodge</td><td>8</td><td>58</td></tr>\n<tr><td>Chevrolet</td><td>8</td><td>71</td></tr>\n<tr><td>Buick</td><td>7</td><td>59</td></tr>\n<tr><td>Ford</td><td>6</td><td>71</td></tr>\n<tr><td>Toyota</td><td>6</td><td>70</td></tr>\n<tr><td>Oldsmobile</td><td>5</td><td>66</td></tr>\n<tr><td>Mercury</td><td>5</td><td>72</td></tr>\n<tr><td>Honda</td><td>4</td><td>71</td></tr>\n<tr><td><strong>Average defection</strong></td><td></td><td><strong>67%</strong></td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of US automobile brands, detailing their market penetration and buyer defection rates. Brands like Pontiac and Dodge exhibit the highest market penetration at 9% and 8% respectively, with Pontiac showing a 58% buyer defection rate and Dodge also at 58%. Chevrolet and Ford, both at 8% and 6% market penetration, respectively, demonstrate higher buyer defection rates of 71%. Buick and Toyota, with 7% and 6% market penetration, show defection rates of 59% and 70%. Lower market penetration is seen with Oldsmobile and Mercury at 5% each, accompanied by high defection rates of 66% and 72%. Honda has the lowest market penetration at 4% but a high defection rate of 71%. The average buyer defection rate across these brands is 67%.",
+  "processing_time": 1.456455945968628,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.296805"
+}

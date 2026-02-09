@@ -1,0 +1,10 @@
+{
+  "table_id": "page_96_table_55",
+  "page_number": 96,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Tomato sauce (ketchup) brands</th>\n<th>Market share (%)</th>\n<th>Penetration (%)</th>\n<th>Frequency of buying this brand (units per annum)</th>\n<th>Frequency of buying any tomato sauce (units per annum)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Heinz</td>\n<td>53</td>\n<td>50</td>\n<td>2.9</td>\n<td>4</td>\n</tr>\n<tr>\n<td>Daddies sauce</td>\n<td>4</td>\n<td>5</td>\n<td>2</td>\n<td>6</td>\n</tr>\n<tr>\n<td>C&amp;B sauce</td>\n<td>1</td>\n<td>2</td>\n<td>1.2</td>\n<td>8</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of three tomato sauce (ketchup) brands: Heinz, Daddies sauce, and C&B sauce, detailing their market performance. Heinz dominates the market with a 53% market share and 50% penetration, indicating widespread consumer adoption. Its customers purchase Heinz an average of 2.9 times per annum, contributing to a total of 4 annual purchases of any tomato sauce. In contrast, Daddies sauce holds a 4% market share and 5% penetration, with consumers buying it twice annually, and a higher overall frequency of 6 annual tomato sauce purchases. C&B sauce has the smallest market presence at 1% share and 2% penetration, yet its consumers exhibit the highest frequency of buying any tomato sauce at 8 times per annum, with individual C&B purchases averaging 1.2 times. The structure is comparative, highlighting key performance indicators across different brands.",
+  "processing_time": 1.5011651515960693,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.301205"
+}

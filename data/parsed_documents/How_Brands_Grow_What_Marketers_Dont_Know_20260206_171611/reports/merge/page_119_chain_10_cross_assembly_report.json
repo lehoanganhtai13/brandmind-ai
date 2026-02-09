@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_119_chain_10_cross",
+  "page_number": 119,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 119,
+      "start_pos": 2380,
+      "end_pos": 2877,
+      "html_size": 497,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_119.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 120,
+      "start_pos": 263,
+      "end_pos": 1442,
+      "html_size": 1179,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_120.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "119-120",
+  "merge_decision": {
+    "chain_id": "page_119_chain_10_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No rowspan cell splitting was necessary."
+      },
+      "reasoning": "The first table provides the main header structure with two distinct sections (Soft-drinks and Banks), each with sub-headers. The second table contains data rows that align perfectly with the column structure defined by the first table's sub-headers. The second table's header is empty and can be ignored, and its data rows directly follow the structure of the first table's header. Therefore, they are merged."
+    },
+    "final_merged_html": "<table><thead><tr><th colspan=\"3\">Soft-drinks</th><th colspan=\"3\">Banks</th></tr><tr><th>Different (%)</th><th>Unique (%)</th><th>Either (%)</th><th>Different (%)</th><th>Unique (%)</th><th>Either (%)</th></tr></thead><tbody><tr><td>Coca-Cola</td><td>8</td><td>13</td><td>19</td><td>ANZ</td><td>12</td><td>4</td><td>15</td></tr><tr><td>Diet Coke</td><td>9</td><td>8</td><td>15</td><td>CBA</td><td>12</td><td>12</td><td>19</td></tr><tr><td>Pepsi-Cola</td><td>7</td><td>10</td><td>15</td><td>NAB</td><td>8</td><td>12</td><td>12</td></tr><tr><td>Fanta</td><td>8</td><td>5</td><td>12</td><td>Westpac</td><td>9</td><td>6</td><td>11</td></tr><tr><td>Pepsi Max</td><td>9</td><td>10</td><td>19</td><td>St George</td><td>26</td><td>16</td><td>32</td></tr><tr><td>Schweppes</td><td>6</td><td>9</td><td>13</td><td></td><td></td><td></td><td></td></tr><tr><td>Canada Dry</td><td>10</td><td>9</td><td>17</td><td></td><td></td><td></td><td></td></tr><tr><td><strong>Average</strong></td><td><strong>9</strong></td><td><strong>9</strong></td><td><strong>16</strong></td><td><strong>Average</strong></td><td><strong>13</strong></td><td><strong>10</strong></td><td><strong>18</strong></td></tr></tbody></table>",
+    "processing_time": 2.1744370460510254
+  },
+  "timestamp": "2026-02-06T17:20:38.292615"
+}

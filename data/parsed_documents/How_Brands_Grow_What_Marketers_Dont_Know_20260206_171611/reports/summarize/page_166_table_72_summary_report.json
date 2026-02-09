@@ -1,0 +1,10 @@
+{
+  "table_id": "page_166_table_72",
+  "page_number": 166,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th rowspan=\"2\"></th>\n<th colspan=\"2\">Level of loyalty</th>\n</tr>\n<tr>\n<th>Low</th>\n<th>High</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td rowspan=\"2\">Category purchase level</td>\n<td>Light</td>\n<td>Unlikely to join the program (but this is the largest group of consumers, so a number still do join); not particularly desirable</td>\n<td>Likely to join the program, but undesirable</td>\n</tr>\n<tr>\n<td>Heavy</td>\n<td>Very unlikely to join the program, but very desirable</td>\n<td>Likely to join the program, but undesirable</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a two-by-two matrix categorizing consumers based on their purchase level (light or heavy) and their level of loyalty (low or high). The matrix illustrates the desirability and likelihood of these consumer segments joining a loyalty program. Consumers with a light purchase level and low loyalty are the largest group but are unlikely to join, making them not particularly desirable. Light purchasers with high loyalty are likely to join but are considered undesirable. Heavy purchasers with low loyalty are very unlikely to join but are highly desirable. Finally, heavy purchasers with high loyalty are likely to join but are also deemed undesirable. The structure is comparative, contrasting different consumer segments' characteristics in relation to loyalty program engagement.",
+  "processing_time": 1.462238073348999,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.303890"
+}

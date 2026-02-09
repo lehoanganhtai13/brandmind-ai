@@ -1,0 +1,10 @@
+{
+  "table_id": "page_7_table_2",
+  "page_number": 7,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Past World View</th>\n<th>New World View</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Positioning</td>\n<td>Salience</td>\n</tr>\n<tr>\n<td>Differentiation</td>\n<td>Distinctiveness</td>\n</tr>\n<tr>\n<td>Message Comprehension</td>\n<td>Getting noticed, emotional response</td>\n</tr>\n<tr>\n<td>Unique Selling Propositions</td>\n<td>Relevant associations</td>\n</tr>\n<tr>\n<td>Persuasion</td>\n<td>Refreshing &amp; building memory structures</td>\n</tr>\n<tr>\n<td>Teaching</td>\n<td>Reaching</td>\n</tr>\n<tr>\n<td>Rational involved viewers</td>\n<td>Emotional distracted viewers</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table contrasts a \"Past World View\" with a \"New World View,\" suggesting a shift in marketing and communication strategies. The past view focused on \"Positioning\" and \"Differentiation,\" aiming for \"Message Comprehension\" through \"Unique Selling Propositions\" and \"Persuasion\" by engaging \"Rational involved viewers.\" The emphasis was on clearly defining a product's place and advantages. In contrast, the new view prioritizes \"Salience\" and \"Distinctiveness,\" aiming for \"Getting noticed, emotional response\" and fostering \"Relevant associations.\" This approach seeks to build and refresh \"memory structures\" through \"Reaching\" rather than solely \"Teaching,\" acknowledging that audiences are often \"Emotional distracted viewers.\" The structure is comparative, highlighting a transition from a rational, feature-driven approach to an emotional, attention-grabbing one.",
+  "processing_time": 1.2948601245880127,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.293269"
+}

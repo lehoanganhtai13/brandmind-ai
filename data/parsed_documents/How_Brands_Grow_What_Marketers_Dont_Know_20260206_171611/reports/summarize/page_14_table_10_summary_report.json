@@ -1,0 +1,10 @@
+{
+  "table_id": "page_14_table_10",
+  "page_number": 14,
+  "original_table_html": "<table>\n  <tr>\n    <td>\n      \n\n<table>\n        <tr>\n          <td colspan=\"2\" style=\"text-align:center; font-weight:bold;\">Crest switchers</td>\n        </tr>\n<tr>\n          <td style=\"background-color:#1b4f8b; color:white; text-align:center;\">Agree<br>68%</td>\n          <td style=\"background-color:#66a9e0; color:white; text-align:center;\">Disagree<br>32%</td>\n        </tr>\n      </table>",
+  "summary_markdown": "This data presents a comparative analysis of \"Crest switchers,\" categorizing them based on their agreement or disagreement with a particular statement or proposition. The structure is a simple dichotomy, illustrating the proportion of individuals within this group who fall into each of the two opposing stances. Specifically, 68% of Crest switchers are shown to agree, while the remaining 32% disagree. This highlights a clear majority favoring agreement among this identified consumer segment.",
+  "processing_time": 1.0015480518341064,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.295147"
+}

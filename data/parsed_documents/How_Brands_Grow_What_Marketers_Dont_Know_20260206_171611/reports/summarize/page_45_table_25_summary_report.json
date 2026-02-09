@@ -1,0 +1,10 @@
+{
+  "table_id": "page_45_table_25",
+  "page_number": 45,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Bank</th>\n<th>Market share (%)</th>\n<th>Defection (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>CBA</td>\n<td>32</td>\n<td>3</td>\n</tr>\n<tr>\n<td>Westpac</td>\n<td>13</td>\n<td>4</td>\n</tr>\n<tr>\n<td>NAB</td>\n<td>11</td>\n<td>5</td>\n</tr>\n<tr>\n<td>ANZ</td>\n<td>10</td>\n<td>4</td>\n</tr>\n<tr>\n<td>STG</td>\n<td>6</td>\n<td>4</td>\n</tr>\n<tr>\n<td>BankSA</td>\n<td>1</td>\n<td>5</td>\n</tr>\n<tr>\n<td>Adelaide Bank</td>\n<td>1</td>\n<td>7</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of several banks, detailing their market share and customer defection rates. The structure is a direct comparison of individual entities against two key metrics. The Commonwealth Bank of Australia (CBA) exhibits the highest market share at 32%, with a relatively low defection rate of 3%. In contrast, Westpac, National Australia Bank (NAB), Australia and New Zealand Banking Group (ANZ), and State Government Insurance Office (STG) show progressively lower market shares, ranging from 13% down to 6%, with defection rates between 4% and 5%. Smaller institutions like BankSA and Adelaide Bank have the lowest market shares at 1%, but notably higher defection rates of 5% and 7% respectively, indicating a potential inverse relationship between size and customer loyalty among the smaller players.",
+  "processing_time": 1.331022024154663,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.297100"
+}

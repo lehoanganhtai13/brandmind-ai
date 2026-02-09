@@ -1,0 +1,10 @@
+{
+  "table_id": "page_60_table_34",
+  "page_number": 60,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"21\">Buyers (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20+</td>\n</tr>\n<tr>\n<td>59</td><td>13</td><td>8</td><td>6</td><td>4</td><td>3</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a distribution of buyers across different percentage brackets, indicating a comparative structure. The primary observation is a sharp decline in buyer percentages as the percentage bracket increases. Specifically, 59% of buyers fall into the 0% bracket, representing the largest segment. This percentage rapidly diminishes to 13% in the 1% bracket and further to 8% in the 2% bracket. The proportion of buyers continues to decrease steadily, reaching 6% for 3% and 4% for 4%. Beyond the 4% bracket, the buyer percentages become progressively smaller, with 3% for 5%, 2% for 6%, and 1% for 7%, 8%, 9%, and 10%. From the 11% bracket onwards, the percentage of buyers drops to 0%, indicating no buyers in these higher brackets. This pattern highlights a concentration of buyers at the lower end of the percentage spectrum.",
+  "processing_time": 1.660538911819458,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.298103"
+}

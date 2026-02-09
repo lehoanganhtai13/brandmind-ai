@@ -1,0 +1,10 @@
+{
+  "table_id": "page_193_table_81",
+  "page_number": 193,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"3\"></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Brand Reinforcing</td>\n<td></td>\n<td>Familiarity</td>\n</tr>\n<tr>\n<td>Relevant News</td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>Empathy</td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td><strong>High<br/>L<sub>A</sub></strong></td>\n<td></td>\n<td><strong>Low<br/>L<sub>A</sub></strong></td>\n</tr>\n<tr>\n<td></td>\n<td></td>\n<td>Confusion</td>\n</tr>\n<tr>\n<td></td>\n<td></td>\n<td>Alientation</td>\n</tr>\n<tr>\n<td></td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>Entertainment</td>\n<td></td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a framework for understanding brand perception, differentiating between high and low levels of \"L<sub>A</sub>\" (likely a measure of brand familiarity or engagement).  At the \"High L<sub>A</sub>\" end, positive brand associations are fostered through \"Brand Reinforcing\" activities, leading to \"Familiarity.\" Conversely, \"Low L<sub>A</sub>\" is associated with negative outcomes such as \"Confusion\" and \"Alienation.\" The table also indicates that \"Relevant News\" and \"Empathy\" contribute to the positive side, while \"Entertainment\" appears to be a neutral or potentially ambiguous factor, not explicitly tied to either high or low L<sub>A</sub> in this representation. The structure suggests a spectrum of brand impact, moving from positive reinforcement and familiarity to negative confusion and alienation based on the level of L<sub>A</sub>.",
+  "processing_time": 1.455132246017456,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.305105"
+}

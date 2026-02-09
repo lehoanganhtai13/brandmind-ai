@@ -1,0 +1,10 @@
+{
+  "table_id": "page_8_table_5",
+  "page_number": 8,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"7\" style=\"text-align:center;\">Brand Performance</th>\n</tr>\n<tr>\n<th>Past World View</th>\n<th>Growth Through Targeting Brand Loyals</th>\n<th>Obscure Proprietary Metrics</th>\n<th>Price Promotions Win New Customers</th>\n<th>Target Marketing</th>\n<th>Differentiation</th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>New World View</strong></td>\n<td>Growth Through Penetration</td>\n<td>Predictable Transparent Metrics</td>\n<td>Price Promotions Only Reach Existing Loyal Customers</td>\n<td>Sophisticated Mass Marketing</td>\n<td>Distinctiveness</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a comparative shift in brand performance strategies, moving from a \"Past World View\" to a \"New World View.\" The core structure is comparative, highlighting contrasting approaches across several key areas. In the past, growth was primarily sought through targeting existing brand loyals, whereas the new approach emphasizes growth through penetration. Metrics were previously obscure and proprietary but are now expected to be predictable and transparent. The effectiveness of price promotions has been re-evaluated; they were once seen as a way to win new customers but are now understood to primarily reach existing loyal customers. Marketing strategies have evolved from target marketing to sophisticated mass marketing. Finally, the concept of differentiation has been refined to distinctiveness, suggesting a more nuanced understanding of how brands stand out in the market.",
+  "processing_time": 1.5455961227416992,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.293712"
+}

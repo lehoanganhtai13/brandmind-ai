@@ -1,0 +1,10 @@
+{
+  "table_id": "page_169_table_74",
+  "page_number": 169,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"8\" style=\"text-align:center;\">Consumer Behavior</th>\n</tr>\n<tr>\n<th>Past World View</th>\n<th>Attitude Drives Behavior</th>\n<th>Brand Loyals</th>\n<th>Brand Switchers</th>\n<th>Deeply Committed Buyers</th>\n<th>Involvement</th>\n<th>Rational Involved Viewers</th>\n</tr>\n<tr>\n<th>New World View</th>\n<th>Behavior Drives Attitude</th>\n<th>Loyal Switchers</th>\n<th>Loyal Switchers</th>\n<th>Uncaring Cognitive Misers</th>\n<th>Heuristics</th>\n<th>Emotional Distracted Viewers</th>\n</tr>\n</thead>\n</table>",
+  "summary_markdown": "This table illustrates a shift in consumer behavior paradigms, moving from a \"Past World View\" to a \"New World View.\" The initial perspective emphasizes \"Attitude Drives Behavior,\" categorizing consumers into \"Brand Loyals,\" \"Brand Switchers,\" and \"Deeply Committed Buyers,\" all influenced by \"Involvement.\" In contrast, the \"New World View\" posits that \"Behavior Drives Attitude,\" redefining consumer types as \"Loyal Switchers\" (appearing twice, suggesting a dual aspect or emphasis), \"Uncaring Cognitive Misers\" who rely on \"Heuristics,\" and \"Emotional Distracted Viewers.\" This presents a comparative structure, contrasting two distinct models of understanding consumer actions and motivations.",
+  "processing_time": 1.1257779598236084,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.304150"
+}

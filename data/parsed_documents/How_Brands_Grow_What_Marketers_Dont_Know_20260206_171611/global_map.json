@@ -1,0 +1,220 @@
+{
+  "structure": [
+    {
+      "title": "Reviews of How Brands Grow",
+      "level": 1,
+      "start_page_id": "page_3.md",
+      "end_page_id": "page_3.md",
+      "start_line_index": 11,
+      "summary_context": "Features endorsements from industry giants and publications like CHOICE, Marketing Week (UK), The Coca-Cola Company (Joseph Tripodi), The Nielsen Company (Mitch Barns), and Mars Inc. (Bruce McColl). The reviews validate the book's scientific approach to marketing, highlighting its critique of traditional differentiation and its focus on the 'Laws of Growth.' It positions the book as a essential guide for evidence-based marketing.",
+      "children": []
+    },
+    {
+      "title": "Author",
+      "level": 1,
+      "start_page_id": "page_4.md",
+      "end_page_id": "page_4.md",
+      "start_line_index": 11,
+      "summary_context": "Biographical profile of Professor Byron Sharp, Director of the Ehrenberg-Bass Institute at the University of South Australia. It details his extensive academic background, including publishing over 100 papers, co-hosting conferences at Wharton Business School, and his research's financial support from global corporations like Coca-Cola, Procter & Gamble, and Unilever.",
+      "children": []
+    },
+    {
+      "title": "Contributors",
+      "level": 1,
+      "start_page_id": "page_5.md",
+      "end_page_id": "page_5.md",
+      "start_line_index": 11,
+      "summary_context": "Introduces key researchers from the Ehrenberg-Bass Institute who contributed to the book: John Dawes (Associate Professor and EMPGENS editor), Jenni Romaniuk (Research Professor and expert in brand equity), and John Scriven (specialist in brand performance measures). Their combined expertise in marketing science and industry experience provides the foundation for the book's empirical findings.",
+      "children": []
+    },
+    {
+      "title": "Preface",
+      "level": 1,
+      "start_page_id": "page_6.md",
+      "end_page_id": "page_6.md",
+      "start_line_index": 11,
+      "summary_context": "Sharp argues that marketing, like architecture, is a creative profession that must operate within the constraints of scientific laws. He challenges the 'anything goes' mentality of traditional marketing and asserts that predictable patterns in buyer behavior exist and must be understood. This section introduces the concept of evidence-based marketing strategy.",
+      "children": []
+    },
+    {
+      "title": "The most important knowledge contained in this book",
+      "level": 1,
+      "start_page_id": "page_7.md",
+      "end_page_id": "page_8.md",
+      "start_line_index": 18,
+      "summary_context": "Summarizes the core paradigm shift: growth comes from increasing penetration (popularity) among light buyers through mental and physical availability. Key concepts include Double Jeopardy, the importance of distinctiveness over differentiation, and the role of advertising in refreshing memory structures rather than rational persuasion. It contrasts the 'Past World View' (positioning, target marketing) with the 'New World View' (salience, sophisticated mass marketing).",
+      "children": []
+    },
+    {
+      "title": "Examples in this book",
+      "level": 1,
+      "start_page_id": "page_9.md",
+      "end_page_id": "page_9.md",
+      "start_line_index": 11,
+      "summary_context": "Explains that the scientific laws presented apply across diverse categories (consumer goods, services, industrial) and countries. Mentions the use of data from Nielsen and Kantar to demonstrate the breadth and stability of these marketing laws over decades.",
+      "children": []
+    },
+    {
+      "title": "Acknowledgements",
+      "level": 1,
+      "start_page_id": "page_9.md",
+      "end_page_id": "page_9.md",
+      "start_line_index": 22,
+      "summary_context": "Recognizes the corporate sponsors whose funding enabled the years of research at the Ehrenberg-Bass Institute. Key entities include Coca-Cola, PepsiCo, General Motors, ANZ Bank, and the Australian Research Council.",
+      "children": []
+    },
+    {
+      "title": "Special thanks",
+      "level": 1,
+      "start_page_id": "page_10.md",
+      "end_page_id": "page_10.md",
+      "start_line_index": 15,
+      "summary_context": "Personal acknowledgments to family, colleagues, and collaborators. Special mention is made of Professor Jerry Wind (Wharton) and Dr. Thomas Bayne (Mountainview Learning) for their roles in advancing behavioral science in marketing.",
+      "children": []
+    },
+    {
+      "title": "E-book version",
+      "level": 1,
+      "start_page_id": "page_10.md",
+      "end_page_id": "page_10.md",
+      "start_line_index": 23,
+      "summary_context": "Details the updates in the e-book edition, including new material on category growth, industrial buying, and brand loyalty (specifically Apple). It also mentions the addition of a Frequently Asked Questions chapter.",
+      "children": []
+    },
+    {
+      "title": "Chapter 1: Evidence-based Marketing",
+      "level": 1,
+      "start_page_id": "page_11.md",
+      "end_page_id": "page_24.md",
+      "start_line_index": 11,
+      "summary_context": "Introduces the scientific approach to marketing, using a case study of Colgate and Crest to illustrate how managers often misinterpret loyalty metrics. Key concepts: Double Jeopardy (smaller brands have fewer buyers who are also less loyal), and the shift from myth-based to evidence-based practice. Entities: Byron Sharp, Margaret (Colgate), Procter & Gamble, Andrew Ehrenberg.",
+      "children": []
+    },
+    {
+      "title": "Chapter 2: How Do Brands Grow?",
+      "level": 1,
+      "start_page_id": "page_25.md",
+      "end_page_id": "page_38.md",
+      "start_line_index": 11,
+      "summary_context": "Argues that brand growth is primarily driven by increasing penetration (market reach) rather than increasing purchase frequency (loyalty). Demonstrates through categories like shampoo and detergent that loyalty levels are remarkably stable across competitors. Key concepts: Heavy Buyer Fallacy, Niche Brand scarcity. Entities: Persil, Ariel, Head & Shoulders, Axe.",
+      "children": []
+    },
+    {
+      "title": "Chapter 3: How To Grow Your Customer Base",
+      "level": 1,
+      "start_page_id": "page_39.md",
+      "end_page_id": "page_46.md",
+      "start_line_index": 11,
+      "summary_context": "Focuses on acquisition as the primary driver of growth and maintenance. Rebuts the '5% retention' myth by Reichheld & Sasser, showing that defection rates are largely a function of market share (Defection Law). Key concepts: Non-controllable defection, Acquisition-driven dynamics. Entities: Reichheld & Sasser, Erica Riebe, Commonwealth Bank.",
+      "children": []
+    },
+    {
+      "title": "Chapter 4: Which Customers Matter Most?",
+      "level": 1,
+      "start_page_id": "page_47.md",
+      "end_page_id": "page_62.md",
+      "start_line_index": 11,
+      "summary_context": "Highlights the critical importance of 'light buyers' for brand volume and growth. Uses the NBD (Negative Binomial Distribution) to show that most of a brand's buyers buy only occasionally. Rejects the 80/20 rule in favor of a 20:30:50 distribution. Key concepts: Law of Buyer Moderation, Regression to the mean. Entities: Coca-Cola, Phil Kotler.",
+      "children": []
+    },
+    {
+      "title": "Chapter 5: Our Buyers Are Different",
+      "level": 1,
+      "start_page_id": "page_63.md",
+      "end_page_id": "page_76.md",
+      "start_line_index": 11,
+      "summary_context": "Debunks the idea that brands have unique, segmented buyer bases. Shows that competing brands' customer profiles (demographics, psychographics) are essentially identical. Argues for broad market targeting. Key concepts: Ford vs. Chevrolet study, My Mum phenomenon, Failure of extreme targeting. Entities: Ford, Chevrolet, Yorkie.",
+      "children": []
+    },
+    {
+      "title": "Chapter 6: Who Do You Really Compete With?",
+      "level": 1,
+      "start_page_id": "page_77.md",
+      "end_page_id": "page_88.md",
+      "start_line_index": 11,
+      "summary_context": "Introduces the Duplication of Purchase Law: brands share customers in proportion to market share. Markets are generally unpartitioned mass markets. Key concepts: Law of Sharing, Market Partitions, Sophisticated Mass Marketing. Entities: Ben & Jerry's, Carte D'Or.",
+      "children": []
+    },
+    {
+      "title": "Chapter 7: Passionate Customer Commitment",
+      "level": 1,
+      "start_page_id": "page_89.md",
+      "end_page_id": "page_110.md",
+      "start_line_index": 11,
+      "summary_context": "Explains that brand loyalty is usually habitual and passive ('prosaic') rather than passionate. Rejects 'Brand Love' and 'Lovemarks' concepts. Shows that 100% loyalty is rare and found mostly among light buyers. Key concepts: Divided Loyalty, Natural Monopoly Law, Attitude Stability. Entities: Harley-Davidson, Apple, Kevin Roberts.",
+      "children": []
+    },
+    {
+      "title": "Chapter 8: Differentiation Versus Distinctiveness",
+      "level": 1,
+      "start_page_id": "page_111.md",
+      "end_page_id": "page_129.md",
+      "start_line_index": 11,
+      "summary_context": "Argues that distinctiveness (ease of recognition) is more important for growth than meaningful differentiation. Brands should build 'Unique Identifying Characteristics.' Key concepts: Meaningless distinctiveness, Distinctive Assets (Famous & Unique). Entities: Nike, McDonald's, Jenni Romaniuk.",
+      "children": []
+    },
+    {
+      "title": "Chapter 9: How Advertising Really Works",
+      "level": 1,
+      "start_page_id": "page_130.md",
+      "end_page_id": "page_146.md",
+      "start_line_index": 11,
+      "summary_context": "Advertising works by building and refreshing 'mental availability' (memory structures) rather than rational persuasion. Reach is emphasized over frequency. Key concepts: Nudging propensity, Branding wastage, Emotion over rationality. Entities: Georgiana and June, John Philip Jones.",
+      "children": []
+    },
+    {
+      "title": "Chapter 10: What Price Promotions Really Do",
+      "level": 1,
+      "start_page_id": "page_147.md",
+      "end_page_id": "page_161.md",
+      "start_line_index": 11,
+      "summary_context": "Shows that price promotions create short-term spikes but fail to drive long-term growth or attract new buyers. They primarily reward existing loyalists. Key concepts: Price elasticity, Selection Effect, Reference Price Effect. Entities: John Dawes, John Scriven, Kahneman & Tversky.",
+      "children": []
+    },
+    {
+      "title": "Chapter 11: Why Loyalty Programs Don’t Work",
+      "level": 1,
+      "start_page_id": "page_162.md",
+      "end_page_id": "page_168.md",
+      "start_line_index": 11,
+      "summary_context": "Loyalty programs are ineffective because they target existing heavy buyers and ignore the law of Double Jeopardy. Key concepts: Skewed Recruitment, Retention Fallacy, Law of Buyer Moderation. Entities: FlyBuys, Lars Meyer-Waarden.",
+      "children": []
+    },
+    {
+      "title": "Chapter 12: Mental and Physical Availability",
+      "level": 1,
+      "start_page_id": "page_169.md",
+      "end_page_id": "page_199.md",
+      "start_line_index": 11,
+      "summary_context": "The book's central thesis: brands compete on availability (mental salience and physical ease of purchase). Key concepts: Satisficing, Heuristics, Seven Rules for Marketing. Entities: McDonald's, Apple, Kotler.",
+      "children": []
+    },
+    {
+      "title": "A fine future for marketing",
+      "level": 1,
+      "start_page_id": "page_200.md",
+      "end_page_id": "page_200.md",
+      "start_line_index": 11,
+      "summary_context": "Advocates for marketing departments to become custodians of mental and physical availability assets. Calls for a rejection of 'quackery' in favor of strategic experimentation based on empirical laws.",
+      "children": []
+    },
+    {
+      "title": "Chapter 13: The Scientific Laws",
+      "level": 1,
+      "start_page_id": "page_200.md",
+      "end_page_id": "page_203.md",
+      "start_line_index": 21,
+      "summary_context": "Summarizes the key empirical laws discussed in the book, centered around the Dirichlet model. Highlights popularity as the core metric driving penetration and loyalty together. Key concepts: Dirichlet Model, Double Jeopardy, Duplication of Purchase. Entities: Andrew Ehrenberg, Goodhardt, Chatfield.",
+      "children": []
+    },
+    {
+      "title": "Chapter 14: Frequently Asked Questions",
+      "level": 1,
+      "start_page_id": "page_204.md",
+      "end_page_id": "page_208.md",
+      "start_line_index": 11,
+      "summary_context": "Addresses common queries regarding loyalty, target markets, and the impact of digital media. Reaffirms the necessity of reach and the stability of mass media (like TV) despite the digital revolution. Key concepts: Reach Imperative, Broad Appeal, Continuity in budgeting. Entities: Coca-Cola, Facebook, Disney, Karen Nelson-Fields.",
+      "children": []
+    }
+  ]
+}

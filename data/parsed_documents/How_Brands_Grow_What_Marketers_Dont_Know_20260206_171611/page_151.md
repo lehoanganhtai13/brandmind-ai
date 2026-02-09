@@ -1,0 +1,15 @@
+# Page 151
+
+**Document Title**: How Brands Grow: What Marketers Don't Know
+**Author**: Byron Sharp
+**Original File**: data/raw_documents/How_Brands_Grow_What_Marketers_Dont_Know.pdf
+**Page Number**: 151/208
+**Processing Time**: 2026-02-06T17:18:18.726896
+
+---
+
+If price promotions can’t attract new buyers, can they at least bring back infrequent buyers? Perhaps the acts of purchase and use could reinforce infrequent buyers’ propensity to buy again. This possibility has been investigated as the ‘purchase reinforcement effect’. What has been found is that a price promotion pulls in a large proportion of infrequent buyers (i.e. buyers who have a low propensity to buy a brand). They buy during the promotion and then afterwards resume their very low buying propensity. In other words, after the promotional purchase it is as if nothing happened. Why is this the case? Let’s think about consumers’ purchases over a long period. They may have purchased that category dozens or hundreds of times before. Buying this brand on deal is nothing special to consumers; they have bought that brand before, just as they have bought competitor brands before, either on special or at normal price. Now let us consider what might occur before these infrequent buyers purchase from the category again. Ehrenberg’s work over decades shows that the incidence of category purchasing follows a negative binomial distribution (NBD): lots of infrequent buyers and a few frequent buyers (Ehrenberg 1959; Goodhardt, Ehrenberg & Chatfield 1984). So for the majority of buyers, a lot of time may elapse before they buy from that particular category again. While the elapsed time between purchases may only be a week or two for some buyers in some categories (e.g. regular milk or bread buyers), it could be several months for instant coffee or toothpaste and six months to a year for less regularly purchased goods. When the time does come for customers to re-buy from the category in question, they may have purchased dozens of brands in a range of other categories. Some of those purchases will have been on special, some not. This means that the act of buying any one particular brand on promotion in any one particular category will easily be forgotten before the next time. Buying brands that are temporarily promoted is a routine, very frequent behaviour for consumers. There is little scope for a permanent or semi-permanent behavioural change. In summary, what price promotions do (for established brands) is to jolt the short-term buying propensities of mainly infrequent buyers who take the opportunity to buy the brand cheaply and then resume their normal purchase behaviour afterwards (i.e. to buy it sometimes as part of a wider repertoire). As Pauwels, Hanssens and Siddarth (2002, p. 437) state, “Price promotions produce only temporary benefits for established brands”.
+
+# Negative after-effects
+
+Many marketers are justifiably worried about the possible negative after-effects of price promotions. Such after-effects include consumer resistance to paying normal price after purchasing at a discounted price; this is a manifestation of the ‘reference price effect’.

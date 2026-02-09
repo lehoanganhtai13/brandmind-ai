@@ -1,0 +1,10 @@
+{
+  "table_id": "page_42_table_24",
+  "page_number": 42,
+  "original_table_html": "<table><thead><tr><th>UK automobiles</th><th>Penetration (%)</th><th>Buyer defection (%)</th></tr></thead><tbody><tr><td>Ford</td><td>27</td><td>31</td></tr><tr><td>Rover</td><td>16</td><td>46</td></tr><tr><td>GM</td><td>14</td><td>42</td></tr><tr><td>Nissan</td><td>6</td><td>45</td></tr><tr><td>VW/Audi</td><td>5</td><td>46</td></tr><tr><td>Peugeot</td><td>5</td><td>57</td></tr><tr><td>Renault</td><td>4</td><td>52</td></tr><tr><td>Fiat</td><td>3</td><td>50</td></tr><tr><td>Citroen</td><td>2</td><td>48</td></tr><tr><td>Toyota</td><td>2</td><td>50</td></tr><tr><td>Honda</td><td>1</td><td>53</td></tr><tr><td><strong>Average defection</strong></td><td colspan=\"2\"><strong>49%</strong></td></tr></tbody></table>",
+  "summary_markdown": "This data presents a comparative analysis of UK automobile brands, detailing their market penetration and buyer defection rates. Ford leads in penetration at 27%, significantly higher than other brands, while Rover, GM, Nissan, VW/Audi, and Peugeot each hold substantial shares ranging from 16% down to 5%. Brands like Renault, Fiat, Citroen, Toyota, and Honda represent smaller market segments, with penetration rates from 4% down to 1%. Buyer defection rates, however, show a different pattern, with most brands experiencing over 40% defection. Peugeot exhibits the highest defection rate at 57%, followed closely by Honda (53%), Renault (52%), and Fiat and Toyota (both 50%). Rover, GM, and Nissan also show high defection rates above 40%. Ford, despite its high penetration, has a defection rate of 31%, which is lower than the average defection rate of 49% observed across all brands. The structure is comparative, highlighting variations in market performance and customer loyalty among different automobile manufacturers in the UK.",
+  "processing_time": 1.5855050086975098,
+  "was_merged": true,
+  "source_chain_id": "page_42_chain_4_cross",
+  "timestamp": "2026-02-06T17:20:38.296969"
+}

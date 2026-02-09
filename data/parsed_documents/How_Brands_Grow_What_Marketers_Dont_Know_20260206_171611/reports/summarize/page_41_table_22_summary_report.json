@@ -1,0 +1,10 @@
+{
+  "table_id": "page_41_table_22",
+  "page_number": 41,
+  "original_table_html": "<table>\n  <tr>\n    <td colspan=\"2\" rowspan=\"3\">Big Brand</td>\n<td>100 customers switch each way</td>\n  </tr>\n<tr></tr>\n<tr></tr>\n<tr></tr>\n<tr>\n    <td colspan=\"2\" rowspan=\"3\"></td>\n<td>Small Brand</td>\n  </tr>\n<tr></tr>\n<tr></tr>\n<tr>\n    <td colspan=\"3\">More of the small brand's customer base turns over.</td>\n  </tr>\n</table>",
+  "summary_markdown": "This data depicts a customer switching dynamic between a \"Big Brand\" and a \"Small Brand.\" The core relationship is a bidirectional customer flow, with \"100 customers switch each way\" indicating an equal number of customers moving from the Big Brand to the Small Brand and vice-versa. The structure highlights a comparative aspect, contrasting the customer base turnover rates. Specifically, the Small Brand experiences a higher proportion of its customer base switching away, implying a greater churn rate for the smaller entity compared to the larger one. This suggests a competitive landscape where the Small Brand, despite receiving customers from the Big Brand, struggles with customer retention.",
+  "processing_time": 1.3142030239105225,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.296664"
+}

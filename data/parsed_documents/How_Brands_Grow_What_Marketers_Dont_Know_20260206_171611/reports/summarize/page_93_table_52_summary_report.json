@@ -1,0 +1,10 @@
+{
+  "table_id": "page_93_table_52",
+  "page_number": 93,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th># of channels hh has access to</th>\n<td>0</td>\n<td>10</td>\n<td>20</td>\n<td>30</td>\n<td>40</td>\n<td>50</td>\n<td>60</td>\n<td>70</td>\n<td>80</td>\n<td>90</td>\n<td>100</td>\n<td>110</td>\n<td>...</td>\n<td>200</td>\n</tr>\n</thead>\n<tbody>\n<tr>\n<th>Number of channels viewed</th>\n<td>0</td>\n<td>2</td>\n<td>5</td>\n<td>7</td>\n<td>13</td>\n<td>15</td>\n<td>15</td>\n<td>16</td>\n<td>16</td>\n<td>16</td>\n<td>16</td>\n<td>16</td>\n<td>...</td>\n<td>16</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data illustrates a relationship between the number of channels a household has access to and the number of channels they actually view. Initially, as the number of accessible channels increases from 0 to approximately 70, the number of viewed channels also shows a corresponding increase, rising from 0 to 16. However, beyond roughly 70 accessible channels, the number of viewed channels plateaus and remains constant at 16, even as the number of accessible channels continues to rise significantly, up to 200. This suggests a saturation point where additional channel availability does not lead to increased viewing.",
+  "processing_time": 1.206225872039795,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.300830"
+}

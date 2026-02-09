@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_6_chain_2_cross",
+  "page_number": 6,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 6,
+      "start_pos": 2459,
+      "end_pos": 2588,
+      "html_size": 129,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_6.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 7,
+      "start_pos": 258,
+      "end_pos": 908,
+      "html_size": 650,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_7.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "6-7",
+  "merge_decision": {
+    "chain_id": "page_6_chain_2_cross",
+    "status": "NO_MERGE",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No collapsed column errors were found or fixed."
+      },
+      "reasoning": "The first table provides a clear header structure ('Strategic Assumptions', 'True, False, or Don’t Know?'). The second table contains a list of questions that appear to be examples or sub-points related to strategic assumptions, but it lacks a consistent column structure to merge directly with the first table's header. The second table's header is also a question, not a general column definition. Therefore, these tables are treated as separate entities and not merged."
+    },
+    "final_merged_html": null,
+    "processing_time": 1.3467938899993896
+  },
+  "timestamp": "2026-02-06T17:20:38.290886"
+}

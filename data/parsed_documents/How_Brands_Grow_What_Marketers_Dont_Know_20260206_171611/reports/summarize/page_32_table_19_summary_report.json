@@ -1,0 +1,10 @@
+{
+  "table_id": "page_32_table_19",
+  "page_number": 32,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Target to increase:</th>\n<th>Penetration</th>\n<th>Loyalty</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Gold winners</td>\n<td>21%</td>\n<td>2%</td>\n</tr>\n<tr>\n<td>Silver winners</td>\n<td>20%</td>\n<td>6%</td>\n</tr>\n<tr>\n<td>Bronze winners</td>\n<td>18%</td>\n<td>3%</td>\n</tr>\n<tr>\n<td>No medal</td>\n<td>41%</td>\n<td>89%</td>\n</tr>\n<tr>\n<td></td>\n<td>100%</td>\n<td>100%</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of customer engagement, specifically focusing on \"Penetration\" and \"Loyalty,\" across different customer segments categorized by their award status: \"Gold winners,\" \"Silver winners,\" \"Bronze winners,\" and \"No medal.\" The structure highlights how these award tiers correlate with the percentage of customers exhibiting penetration and loyalty behaviors. Notably, \"Gold winners\" show the highest penetration at 21% and a modest 2% loyalty, while \"Silver winners\" exhibit 20% penetration and 6% loyalty. \"Bronze winners\" have 18% penetration and 3% loyalty. Conversely, the \"No medal\" segment, representing the largest customer group at 41% penetration, demonstrates a significantly higher loyalty rate of 89%. The data concludes with a total of 100% for both penetration and loyalty, indicating these represent the complete customer base within each category.",
+  "processing_time": 1.5714259147644043,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.296156"
+}

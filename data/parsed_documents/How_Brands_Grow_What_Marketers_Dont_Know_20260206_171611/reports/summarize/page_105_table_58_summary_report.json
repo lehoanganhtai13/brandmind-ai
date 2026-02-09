@@ -1,0 +1,10 @@
+{
+  "table_id": "page_105_table_58",
+  "page_number": 105,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Brand</th>\n<th>Repeat (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Dell</td>\n<td>71</td>\n</tr>\n<tr>\n<td>Apple</td>\n<td>55</td>\n</tr>\n<tr>\n<td>HP/Compaq</td>\n<td>52</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of brand repeat purchase percentages, highlighting customer loyalty across different manufacturers. Dell leads with the highest repeat purchase rate at 71%, indicating strong customer retention. Apple follows with a repeat rate of 55%, demonstrating a significant level of customer loyalty. HP/Compaq is positioned third, with a repeat purchase percentage of 52%. The structure is a simple ranking, illustrating a direct comparison of a single metric—repeat purchase percentage—across three distinct brands. This suggests a hierarchy of customer loyalty, with Dell at the apex, followed by Apple, and then HP/Compaq.",
+  "processing_time": 0.9866228103637695,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.301565"
+}

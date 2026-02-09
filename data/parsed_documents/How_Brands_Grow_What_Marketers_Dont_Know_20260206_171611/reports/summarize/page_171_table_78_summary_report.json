@@ -1,0 +1,10 @@
+{
+  "table_id": "page_171_table_78",
+  "page_number": 171,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Rank</th>\n      <th>Search Term</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr><td>1</td><td>Britney Spears</td></tr>\n<tr><td>2</td><td>WWE (wrestling)</td></tr>\n<tr><td>3</td><td>Barack Obama</td></tr>\n<tr><td>4</td><td>Miley Cyrus</td></tr>\n<tr><td>5</td><td>RuneScape</td></tr>\n<tr><td>6</td><td>Jessica Alba</td></tr>\n<tr><td>7</td><td>Naruto</td></tr>\n<tr><td>8</td><td>Lindsay Lohan</td></tr>\n<tr><td>9</td><td>Angelina Jolie</td></tr>\n<tr><td>10</td><td>American Idol</td></tr>\n  </tbody>\n</table>",
+  "summary_markdown": "This data presents a ranked list of the top 10 most searched terms, indicating their relative popularity. The structure is a simple, linear ranking from 1 to 10. The terms themselves span diverse categories, including celebrities (Britney Spears, Miley Cyrus, Jessica Alba, Lindsay Lohan, Angelina Jolie, Barack Obama), entertainment franchises (WWE, Naruto, American Idol), and a video game (RuneScape). This comparative ranking highlights which topics garnered the most online search interest within the observed period, with entertainment figures and events dominating the top positions.",
+  "processing_time": 1.2590599060058594,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.304681"
+}

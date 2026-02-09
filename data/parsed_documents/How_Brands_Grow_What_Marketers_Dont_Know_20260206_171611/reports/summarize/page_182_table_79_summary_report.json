@@ -1,0 +1,10 @@
+{
+  "table_id": "page_182_table_79",
+  "page_number": 182,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"11\">Market Share (dn)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>0</td>\n<td></td>\n<td>2</td>\n<td></td>\n<td>4</td>\n<td></td>\n<td>6</td>\n<td></td>\n<td>8</td>\n<td></td>\n<td>10</td>\n</tr>\n<tr>\n<td colspan=\"11\" style=\"text-align:center;\">+</td>\n</tr>\n<tr>\n<td>0</td>\n<td>25</td>\n<td>50</td>\n<td>75</td>\n<td colspan=\"7\" style=\"text-align:center;\">100</td>\n</tr>\n<tr>\n<td colspan=\"11\" style=\"text-align:center;\">Weighted Distribution</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data visually represents a market share distribution, likely illustrating how different market segments contribute to overall market share. The structure appears to be a comparative or correlational display, mapping a range of market share percentages from 0 to 100 against a scale that also ranges from 0 to 10. The presence of a '+' symbol suggests an additive or cumulative relationship between the two scales, implying that as the value on the 0-10 scale increases, the weighted distribution of market share also increases, reaching a maximum of 100%. The table's layout indicates a direct relationship where higher values on the initial scale correspond to higher weighted distributions of market share.",
+  "processing_time": 1.2554912567138672,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.304815"
+}

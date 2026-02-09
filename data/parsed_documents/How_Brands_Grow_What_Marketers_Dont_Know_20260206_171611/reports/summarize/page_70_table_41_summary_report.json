@@ -1,0 +1,10 @@
+{
+  "table_id": "page_70_table_41",
+  "page_number": 70,
+  "original_table_html": "<table>\n  <thead>\n    <tr>\n      <th>Male (%)</th>\n      <th>Female (%)</th>\n      <th>Single (%)</th>\n      <th>Couple with no kids (%)</th>\n      <th>Family with kids (%)</th>\n      <th>Other (%)</th>\n    </tr>\n  </thead>\n  <tbody>\n  <!-- Table data not provided in the image or OCR -->\n  </tbody>\n</table>",
+  "summary_markdown": "This table presents a demographic breakdown of a population, categorizing individuals by gender and household composition. The primary division is between males and females, each represented as a percentage of the total. Further segmentation occurs within these gender groups based on their relationship status and family structure. These categories include singles, couples without children, families with children, and an 'other' classification for individuals not fitting the preceding descriptions. The data structure allows for a comparative analysis of how different household types are distributed across genders, offering insights into family structures and relationship statuses within the surveyed population.",
+  "processing_time": 1.3879857063293457,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.299268"
+}

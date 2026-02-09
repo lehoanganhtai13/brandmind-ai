@@ -1,0 +1,10 @@
+{
+  "table_id": "page_20_table_13",
+  "page_number": 20,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Strategic Assumptions</th>\n<th>True, False, or<br>Don’t Know?</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Differentiating our brand is a vital marketing task?</td>\n<td></td>\n</tr>\n<tr>\n<td>Loyalty metrics reflect the strength, not size, of our brand?</td>\n<td></td>\n</tr>\n<tr>\n<td>Customer retention is cheaper than acquisition?</td>\n<td></td>\n</tr>\n<tr>\n<td>Price promotions boost penetration not loyalty?</td>\n<td></td>\n</tr>\n<tr>\n<td>Who we compete with depends on the positioning of our brand image?</td>\n<td></td>\n</tr>\n<tr>\n<td>Mass marketing is dead, no longer competitive?</td>\n<td></td>\n</tr>\n<tr>\n<td>Our buyers have a special reason why they buy our brand?</td>\n<td></td>\n</tr>\n<tr>\n<td>Our consumers are distinctive type of person?</td>\n<td></td>\n</tr>\n<tr>\n<td>Our heaviest 20% of our customers deliver at least 80% of our sales?</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a series of strategic assumptions related to brand management and marketing, each requiring a True, False, or Don't Know assessment. The assumptions explore core tenets of marketing strategy, including the importance of brand differentiation, the interpretation of loyalty metrics, the cost-effectiveness of customer retention versus acquisition, and the impact of price promotions on penetration versus loyalty. Further assumptions delve into competitive dynamics influenced by brand image positioning, the viability of mass marketing, and the existence of unique customer motivations and buyer personas. Finally, it includes a common heuristic regarding the Pareto principle's application to customer purchasing behavior, specifically the contribution of the heaviest 20% of customers to overall sales. The structure is comparative, posing distinct strategic statements for evaluation.",
+  "processing_time": 1.3300220966339111,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.295480"
+}

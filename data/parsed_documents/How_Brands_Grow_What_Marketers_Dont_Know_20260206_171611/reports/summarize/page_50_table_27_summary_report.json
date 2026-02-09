@@ -1,0 +1,10 @@
+{
+  "table_id": "page_50_table_27",
+  "page_number": 50,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Frequency of purchases (times per year)</th>\n<th>Percentage of cola buyers buying Coke x times</th>\n</tr>\n</thead>\n<tbody>\n<tr><td>0</td><td>0%</td></tr>\n<tr><td>1</td><td>32%</td></tr>\n<tr><td>2</td><td>18%</td></tr>\n<tr><td>3</td><td>10%</td></tr>\n<tr><td>4</td><td>7%</td></tr>\n<tr><td>5</td><td>4%</td></tr>\n<tr><td>6</td><td>3%</td></tr>\n<tr><td>7</td><td>2%</td></tr>\n<tr><td>8</td><td>1.5%</td></tr>\n<tr><td>9</td><td>1.5%</td></tr>\n<tr><td>10</td><td>1%</td></tr>\n<tr><td>11</td><td>0.5%</td></tr>\n<tr><td>12</td><td>0.5%</td></tr>\n<tr><td>13-52</td><td>less than 0.5%</td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of cola buyer purchasing frequency, specifically for Coca-Cola, detailing the percentage of buyers who purchase at a given frequency per year. The structure is a direct mapping of purchase instances to buyer proportions. It shows that a significant portion of buyers, 32%, purchase Coca-Cola once per year, with decreasing percentages for higher purchase frequencies. Notably, 18% buy twice annually, and 10% buy three times. As the frequency increases, the percentage of buyers diminishes, with 7% buying four times and 4% buying five times. Frequencies beyond five purchases show progressively smaller buyer segments, with 1% buying ten times and a cumulative less than 0.5% buying between 13 and 52 times per year, indicating a concentration of purchasing behavior at lower frequencies.",
+  "processing_time": 1.3590850830078125,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.297379"
+}

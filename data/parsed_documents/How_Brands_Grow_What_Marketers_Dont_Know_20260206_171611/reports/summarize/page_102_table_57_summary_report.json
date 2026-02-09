@@ -1,0 +1,10 @@
+{
+  "table_id": "page_102_table_57",
+  "page_number": 102,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Category</th>\n<th>Brand image belief</th>\n<th>Initial agreement (%)</th>\n<th>Repeated agreement (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Fast food outlets</td>\n<td>Good for a snack</td>\n<td>29</td>\n<td>56</td>\n</tr>\n<tr>\n<td>Banks</td>\n<td>Progressive</td>\n<td>22</td>\n<td>47</td>\n</tr>\n<tr>\n<td>Banks</td>\n<td>Expert in the areas it deals in</td>\n<td>21</td>\n<td>48</td>\n</tr>\n<tr>\n<td>Insurance</td>\n<td>Provides fast service</td>\n<td>17</td>\n<td>42</td>\n</tr>\n<tr>\n<td>Supermarket</td>\n<td>Sells low-quality fruit</td>\n<td>14</td>\n<td>36</td>\n</tr>\n<tr>\n<td>Liquor/spirits</td>\n<td>Unique</td>\n<td>10</td>\n<td>36</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of brand image beliefs across different service categories, specifically contrasting initial agreement percentages with repeated agreement percentages. For fast food outlets, the belief \"Good for a snack\" shows a significant increase from 29% initial to 56% repeated agreement. Banks exhibit similar patterns, with \"Progressive\" rising from 22% to 47% and \"Expert in the areas it deals in\" from 21% to 48%. Insurance sees a substantial jump for \"Provides fast service\" from 17% to 42%. Supermarkets, with the belief \"Sells low-quality fruit,\" move from 14% to 36% repeated agreement. Finally, liquor/spirits, under the belief \"Unique,\" also demonstrates growth from 10% to 36% repeated agreement. The overarching structure highlights how repeated exposure or experience with a brand can positively influence consumer perception, often more than initial impressions, across diverse industries.",
+  "processing_time": 1.594836950302124,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.301446"
+}

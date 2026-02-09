@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_56_chain_5_cross",
+  "page_number": 56,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 56,
+      "start_pos": 2588,
+      "end_pos": 3109,
+      "html_size": 521,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_56.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 57,
+      "start_pos": 261,
+      "end_pos": 596,
+      "html_size": 335,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_57.md"
+    }
+  ],
+  "is_cross_page": true,
+  "page_range": "56-57",
+  "merge_decision": {
+    "chain_id": "page_56_chain_5_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No collapsed column errors were found or fixed."
+      },
+      "reasoning": "The second table appears to be a continuation of the first table, as indicated by the header row in the second table ('Heavy buyers', '9', '5+', '43%', '34%') which logically follows the data structure established by the first table's header and data rows. The column headers and data types align, suggesting a single, continuous table."
+    },
+    "final_merged_html": "<table><thead>\n<tr>\n<th>Buyer group</th>\n<th>% of total sample</th>\n<th>Buying frequency in year 1</th>\n<th colspan=\"2\">Representing brand sales volume</th>\n</tr>\n<tr>\n<th></th>\n<th></th>\n<th></th>\n<th>Year 1</th>\n<th>Year 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Non-buyers</td>\n<td>44</td>\n<td>0</td>\n<td>0%</td>\n<td>14%</td>\n</tr>\n<tr>\n<td>Light buyers</td>\n<td>22</td>\n<td>1</td>\n<td>14%</td>\n<td>16%</td>\n</tr>\n<tr>\n<td>Moderate buyers</td>\n<td>25</td>\n<td>2 - 4</td>\n<td>43%</td>\n<td>36%</td>\n</tr>\n<tr>\n<th>Heavy buyers</th>\n<td>9</td>\n<td>5+</td>\n<td>43%</td>\n<td>34%</td>\n</tr>\n<tr>\n<td><strong>Total</strong></td>\n<td><strong>100</strong></td>\n<td></td>\n<td><strong>100</strong></td>\n<td><strong>100</strong></td>\n</tr>\n</tbody>\n</table>",
+    "processing_time": 1.9819281101226807
+  },
+  "timestamp": "2026-02-06T17:20:38.291476"
+}

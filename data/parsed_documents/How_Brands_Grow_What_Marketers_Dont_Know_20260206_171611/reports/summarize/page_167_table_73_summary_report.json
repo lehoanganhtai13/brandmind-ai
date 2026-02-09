@@ -1,0 +1,10 @@
+{
+  "table_id": "page_167_table_73",
+  "page_number": 167,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th rowspan=\"2\"> </th>\n<th colspan=\"2\">Average purchase frequency</th>\n</tr>\n<tr>\n<th>Consumers who joined the program</th>\n<th>Consumers who did not join the program</th>\n</tr>\n</thead>\n<tbody>\n<tr><td>Supermarkets</td><td>27</td><td>28</td></tr>\n<tr><td>Retail fuel</td><td>13</td><td>14</td></tr>\n<tr><td>Department stores</td><td>10</td><td>9</td></tr>\n<tr><td>Credit cards</td><td>10</td><td>9</td></tr>\n<tr><td>Telecommunications</td><td>26</td><td>26</td></tr>\n<tr><td>Petrol</td><td>12</td><td>13</td></tr>\n<tr><td>Credit cards</td><td>9</td><td>9</td></tr>\n<tr><td><strong>Average</strong></td><td><strong>15</strong></td><td><strong>15</strong></td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of average purchase frequency across various retail categories for consumers who joined a program versus those who did not. The structure is comparative, highlighting differences in purchasing behavior based on program participation. For supermarkets, consumers who joined the program had an average purchase frequency of 27, while non-participants averaged 28. Retail fuel showed a similar pattern with frequencies of 13 and 14, respectively. Department stores and credit cards exhibited a slightly higher frequency among non-participants (10 vs. 9). Telecommunications displayed identical average purchase frequencies of 26 for both groups. A second entry for credit cards showed 9 for both participants and non-participants. Overall, the average purchase frequency across all listed categories was 15 for both consumers who joined the program and those who did not, indicating no significant difference at the aggregate level.",
+  "processing_time": 1.4018101692199707,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.304023"
+}

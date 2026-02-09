@@ -1,0 +1,10 @@
+{
+  "table_id": "page_34_table_20",
+  "page_number": 34,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Insurance providers (Australia)</th>\n<th>Market penetration (%)</th>\n<th>Average number of products held by customers</th>\n</tr>\n</thead>\n<tbody>\n<tr><td>RAA</td><td>16</td><td>1.5</td></tr>\n<tr><td>CGU</td><td>14</td><td>1.4</td></tr>\n<tr><td>SGIC</td><td>13</td><td>1.5</td></tr>\n<tr><td>AAMI</td><td>9</td><td>1.5</td></tr>\n<tr><td>APIA</td><td>6</td><td>1.4</td></tr>\n<tr><td><b>Average</b></td><td><b>12</b></td><td><b>1.5</b></td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of insurance providers in Australia, detailing their market penetration and the average number of products held by their customers. The structure is comparative, highlighting differences and similarities across several key providers. RAA demonstrates the highest market penetration at 16%, closely followed by CGU at 14% and SGIC at 13%. AAMI and APIA show lower market penetration, at 9% and 6% respectively. In terms of customer product holding, the average is consistently around 1.4 to 1.5 products per customer across all listed providers, with AAMI, SGIC, and RAA customers holding an average of 1.5 products, while CGU and APIA customers hold an average of 1.4 products. The overall average for market penetration across these providers is 12%, with an average of 1.5 products held per customer.",
+  "processing_time": 1.4529330730438232,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.296368"
+}

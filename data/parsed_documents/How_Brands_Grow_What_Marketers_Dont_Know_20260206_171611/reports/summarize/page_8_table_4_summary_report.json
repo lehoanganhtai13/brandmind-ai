@@ -1,0 +1,10 @@
+{
+  "table_id": "page_8_table_4",
+  "page_number": 8,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"7\" style=\"text-align:center;\">Consumer Behavior</th>\n</tr>\n<tr>\n<th>Past World View</th>\n<th>Attitude Drives Behavior</th>\n<th>Brand Loyals</th>\n<th>Brand Switchers</th>\n<th>Deeply Committed Buyers</th>\n<th>Involvement</th>\n<th>Rational Involved Viewers</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>New World View</strong></td>\n<td>Behavior Drives Attitude</td>\n<td>Loyal Switchers</td>\n<td>Loyal Switchers</td>\n<td>Uncaring Cognitive Misers</td>\n<td>Heuristics</td>\n<td>Emotional Distracted Viewers</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a shift in consumer behavior, moving from a \"Past World View\" to a \"New World View.\" In the past, the framework suggested that \"Attitude Drives Behavior,\" leading to distinct consumer types such as \"Brand Loyals,\" \"Brand Switchers,\" and \"Deeply Committed Buyers,\" all characterized by a degree of \"Involvement\" and a \"Rational Involved View\" of their choices. The \"New World View\" inverts this dynamic, proposing that \"Behavior Drives Attitude.\" This new perspective reclassifies consumers into categories like \"Loyal Switchers\" (appearing under both \"Brand Loyals\" and \"Brand Switchers\" from the past), \"Uncaring Cognitive Misers\" (formerly \"Deeply Committed Buyers\"), and \"Emotional Distracted Viewers\" (formerly \"Rational Involved Viewers\"). This shift is underpinned by the concept of \"Heuristics,\" suggesting a move towards simpler decision-making processes.",
+  "processing_time": 1.0741229057312012,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.293507"
+}

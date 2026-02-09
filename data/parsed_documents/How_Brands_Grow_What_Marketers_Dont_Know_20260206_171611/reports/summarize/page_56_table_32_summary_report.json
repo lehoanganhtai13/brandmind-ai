@@ -1,0 +1,10 @@
+{
+  "table_id": "page_56_table_32",
+  "page_number": 56,
+  "original_table_html": "<table><thead>\n<tr>\n<th>Buyer group</th>\n<th>% of total sample</th>\n<th>Buying frequency in year 1</th>\n<th colspan=\"2\">Representing brand sales volume</th>\n</tr>\n<tr>\n<th></th>\n<th></th>\n<th></th>\n<th>Year 1</th>\n<th>Year 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Non-buyers</td>\n<td>44</td>\n<td>0</td>\n<td>0%</td>\n<td>14%</td>\n</tr>\n<tr>\n<td>Light buyers</td>\n<td>22</td>\n<td>1</td>\n<td>14%</td>\n<td>16%</td>\n</tr>\n<tr>\n<td>Moderate buyers</td>\n<td>25</td>\n<td>2 - 4</td>\n<td>43%</td>\n<td>36%</td>\n</tr>\n<tr>\n<th>Heavy buyers</th>\n<td>9</td>\n<td>5+</td>\n<td>43%</td>\n<td>34%</td>\n</tr>\n<tr>\n<td><strong>Total</strong></td>\n<td><strong>100</strong></td>\n<td></td>\n<td><strong>100</strong></td>\n<td><strong>100</strong></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a breakdown of buyer groups based on their purchasing frequency and representation of brand sales volume over two years. The sample is categorized into Non-buyers, Light buyers, Moderate buyers, and Heavy buyers, with percentages of the total sample indicated for each. Buying frequency is measured in years, ranging from zero for Non-buyers to five or more for Heavy buyers. The table further illustrates the proportion of total brand sales volume attributed to each buyer group in Year 1 and Year 2. Notably, Non-buyers represent 0% of sales volume in Year 1 but 14% in Year 2, while Light, Moderate, and Heavy buyers collectively account for the remaining sales volume, showing shifts in their contributions between the two years. The structure is comparative, highlighting differences across buyer segments and changes over time.",
+  "processing_time": 0.984389066696167,
+  "was_merged": true,
+  "source_chain_id": "page_56_chain_5_cross",
+  "timestamp": "2026-02-06T17:20:38.297916"
+}

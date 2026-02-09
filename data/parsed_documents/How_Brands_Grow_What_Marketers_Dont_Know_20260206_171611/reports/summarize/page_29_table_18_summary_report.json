@@ -1,0 +1,10 @@
+{
+  "table_id": "page_29_table_18",
+  "page_number": 29,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Concrete suppliers<br>(West Yorkshire, UK)</th>\n<th>Market penetration<br>(%)</th>\n<th>Average number of purchases<br>in last 3 months</th>\n</tr>\n</thead>\n<tbody>\n<tr><td>A</td><td>46</td><td>2.96</td></tr>\n<tr><td>B</td><td>36</td><td>1.54</td></tr>\n<tr><td>C</td><td>35</td><td>1.46</td></tr>\n<tr><td>D</td><td>31</td><td>1.27</td></tr>\n<tr><td>E</td><td>26</td><td>1.03</td></tr>\n<tr><td>F</td><td>26</td><td>1.03</td></tr>\n<tr><td>G</td><td>16</td><td>0.83</td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of seven concrete suppliers (A through G) operating in West Yorkshire, UK, detailing their market penetration and average purchase frequency. Supplier A demonstrates the highest market penetration at 46%, alongside the highest average number of purchases in the last three months at 2.96. As market penetration decreases among suppliers B through G, the average number of purchases also generally declines. Suppliers B, C, and D show moderate market penetration (36% to 31%) with average purchases ranging from 1.54 to 1.27. Suppliers E and F exhibit identical figures, with 26% market penetration and 1.03 average purchases. Supplier G has the lowest market penetration at 16% and the lowest average number of purchases at 0.83. The structure highlights a correlation between market penetration and customer purchase frequency across these regional concrete suppliers.",
+  "processing_time": 1.638575792312622,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.296058"
+}

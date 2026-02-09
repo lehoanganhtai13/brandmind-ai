@@ -1,0 +1,10 @@
+{
+  "table_id": "page_134_table_67",
+  "page_number": 134,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"3\">BRAND PURCHASING HOUSEHOLDS<br>DOLLARS/1000 HHS</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>$269</td>\n<td>$250</td>\n<td>$258</td>\n</tr>\n<tr>\n<td>$257</td>\n<td>$212</td>\n<td>$192</td>\n</tr>\n<tr>\n<td colspan=\"3\" style=\"text-align:center;\">Competitive pressure</td>\n</tr>\n<tr>\n<td>Pre Period</td>\n<td colspan=\"2\">TV Ads on air</td>\n</tr>\n<tr>\n<td>Exposed to ads</td>\n<td colspan=\"2\" style=\"text-align:right;\">Not exposed to ads</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of brand purchasing, specifically focusing on household spending in dollars per thousand households, under varying conditions of competitive pressure and television advertising exposure. The table displays six distinct dollar values, likely representing different market segments or time periods, with three values ($269, $250, $258) appearing in the first row and three others ($257, $212, $192) in the second. A central theme of \"Competitive pressure\" is indicated, with a distinction made between a \"Pre Period\" and the impact of \"TV Ads on air.\" Further segmentation categorizes households as either \"Exposed to ads\" or \"Not exposed to ads,\" suggesting an investigation into how advertising influences purchasing behavior within a competitive landscape. The structure implies a comparison of spending levels across these different exposure and competitive scenarios.",
+  "processing_time": 1.6702618598937988,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.302803"
+}

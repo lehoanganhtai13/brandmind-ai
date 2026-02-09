@@ -1,0 +1,10 @@
+{
+  "table_id": "page_28_table_17",
+  "page_number": 28,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"4\">Double Jeopardy Law - shampoo (USA 2005)</th>\n</tr>\n<tr>\n<th>Shampoo brands</th>\n<th>Market share (%)</th>\n<th>Annual market penetration (%)</th>\n<th>Purchase frequency (average)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Suave Naturals</td>\n<td>12</td>\n<td>19</td>\n<td>2</td>\n</tr>\n<tr>\n<td>Pantene Pro-V</td>\n<td>10</td>\n<td>16</td>\n<td>1.9</td>\n</tr>\n<tr>\n<td>Alberto V05</td>\n<td>6</td>\n<td>11</td>\n<td>1.6</td>\n</tr>\n<tr>\n<td>Garnier Fructis</td>\n<td>5</td>\n<td>9</td>\n<td>1.7</td>\n</tr>\n<tr>\n<td>Dove</td>\n<td>4</td>\n<td>8</td>\n<td>1.5</td>\n</tr>\n<tr>\n<td>Finesse</td>\n<td>1</td>\n<td>2</td>\n<td>1.4</td>\n</tr>\n<tr>\n<td><strong>Average</strong></td>\n<td></td>\n<td></td>\n<td><strong>1.7</strong></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of shampoo brands in the US market in 2005, illustrating the \"Double Jeopardy Law\" concept. It details market share, annual market penetration, and average purchase frequency for several brands, including Suave Naturals, Pantene Pro-V, Alberto V05, Garnier Fructis, Dove, and Finesse. The data shows a general trend where brands with higher market share, such as Suave Naturals (12%) and Pantene Pro-V (10%), also exhibit higher annual market penetration (19% and 16%, respectively) and purchase frequencies (2 and 1.9). Conversely, brands with lower market share, like Finesse (1%), have correspondingly lower penetration (2%) and purchase frequency (1.4). The overall average purchase frequency across these brands is 1.7. This structure highlights a relationship where leading brands tend to be purchased more frequently, supporting the Double Jeopardy Law's assertion that larger brands are more likely to be bought more often.",
+  "processing_time": 1.4971699714660645,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.295962"
+}

@@ -1,0 +1,40 @@
+{
+  "chain_id": "page_12_chain_1_cross",
+  "page_number": 12,
+  "fragment_count": 2,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 12,
+      "start_pos": 261,
+      "end_pos": 835,
+      "html_size": 574,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_12.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 12,
+      "start_pos": 837,
+      "end_pos": 1282,
+      "html_size": 445,
+      "page_file": "data/parsed_documents/How_Brands_Grow_What_Marketers_Dont_Know_20260206_171611/page_12.md"
+    }
+  ],
+  "is_cross_page": false,
+  "page_range": "12",
+  "merge_decision": {
+    "chain_id": "page_12_chain_1_cross",
+    "status": "SUCCESS",
+    "analysis": {
+      "fragments_received": 2,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No rowspan cell splitting was necessary."
+      },
+      "reasoning": "The two table fragments share identical header rows and structure, indicating they are likely continuations or duplicates of the same table data. The column content and styling are consistent, suggesting they belong together."
+    },
+    "final_merged_html": "<table><thead><tr><td colspan=\"3\" style=\"text-align:center;\"><b>Data source: Spaeth & Hess 1989.</b></td></tr><tr><td style=\"text-align:center; background-color:#9dd0ff; color:white;\">One time buyers<br>16%</td><td style=\"text-align:center; background-color:#5ca9f7; color:white;\">Loyals<br>38%</td><td style=\"text-align:center; background-color:#003a6f; color:white;\">Switchers<br>46%</td></tr><tr><td colspan=\"3\" style=\"text-align:center; font-style:italic;\"><b>Figure 1.3:</b> Colgate consumer base</td></tr></thead><tbody><tr><td style=\"text-align:center; background-color:#9dd0ff; color:white;\">One time buyers<br>11%</td><td style=\"text-align:center; background-color:#5ca9f7; color:white;\">Loyals<br>21%</td><td style=\"text-align:center; background-color:#003a6f; color:white;\">Switchers<br>68%</td></tr></tbody></table>",
+    "processing_time": 2.1829710006713867
+  },
+  "timestamp": "2026-02-06T17:20:38.290023"
+}

@@ -1,0 +1,15 @@
+# Page 87
+
+**Document Title**: How Brands Grow: What Marketers Don't Know
+**Author**: Byron Sharp
+**Original File**: data/raw_documents/How_Brands_Grow_What_Marketers_Dont_Know.pdf
+**Page Number**: 87/208
+**Processing Time**: 2026-02-06T17:18:18.722618
+
+---
+
+The small degree of fragmentation is often catered for by brand variants[^39], which leaves marketers still needing to know how to compete in a mass market. This is Kotler’s ‘product-variety marketing’, which is a type of mass marketing.
+
+Toothpaste is often used as an example of segment marketing where marketers have broken the market into many sub-markets. For example, Colgate provides numerous varieties, each of which is supposed to successfully target and meet the needs of specific consumers. “These include ‘normal’ toothpaste, gel toothpaste, children’s toothpaste, tooth whitening toothpastes, anti-bacterial, tartar control, toothpaste for sensitive teeth, and toothpaste with extra strong fluoride” (Kotler et al. 1998). However, there is little evidence that Colgate actually targets specific market segments. To say there is a tartar control segment as shown by the tartar control toothpaste is circular logic. Kotler and colleagues (1998, p. 296) tell us that segment marketers “develop the right product for each target market and adjust their prices, distribution channels and advertising to reach the target market efficiently”. But this does not hold up to scrutiny in the Colgate example (and for Coca-Cola discussed earlier). Colgate does not use different distribution channels for their tartar control product. In fact their products are all on the same shelf, in the same stores, put there by the same merchandisers. The products’ prices are often within cents of one another and, while there might be different ads for some products (alongside much corporate brand advertising), these ads typically appear in the same (mass) media – television ads in particular are known for their wide, unsegmented reach (see Sharp et al 2009 for evidence). The difference in each product’s marketing mix is limited to the difference that exists between each product variant. The role of advertising is largely to “bring to public notice” that different products exist and are available. These marketing practices fit perfectly Kotler’s definition of mass, product-variety marketing – which is exactly the marketing situation that most firms find themselves in.
+
+Therefore, brand managers need to be cognisant of all their competitors. They should be wary of thinking that their brand is partitioned or positioned away from other brands. It might be fashionable for a brand manager to call him- or herself a target marketer, but it’s best to think like a sophisticated mass marketer. This means being aware of the considerable heterogeneity within the mass market; for example, in purchase frequency and in the brands that individuals buy. Within the mass market there are lots of different buyers. Sophisticated mass marketers cleverly react to this heterogeneity (e.g. by marketing multiple brands and variants, by using multiple media and distribution channels).

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_131_table_66",
+  "page_number": 131,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"8\">Advertising</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td rowspan=\"2\"><b>Past world view</b></td>\n<td>Rational or emotional</td>\n<td>Message comprehension</td>\n<td>Unique selling propositions</td>\n<td>Persuasion</td>\n<td>Teaching</td>\n<td>Positioning</td>\n</tr>\n<tr>\n<td><b>New world view</b></td>\n<td>Emotional and rational</td>\n<td>Getting noticed</td>\n<td>Relevant associations</td>\n<td>Refreshing and building memory structures</td>\n<td>Reaching</td>\n<td>Salience</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines a shift in advertising strategy, moving from a \"Past world view\" to a \"New world view.\" The past approach focused on rational or emotional appeals, message comprehension, unique selling propositions, persuasion, teaching, and positioning. In contrast, the new world view emphasizes emotional and rational appeals, prioritizing getting noticed over deep comprehension. It shifts from unique selling propositions to building relevant associations, and from persuasion to refreshing and building memory structures. The focus also moves from teaching to reaching the audience, and from positioning to achieving salience. This represents a transition from a product-centric, information-driven model to a more audience-centric, attention-grabbing, and memory-focused approach.",
+  "processing_time": 1.2032861709594727,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.302663"
+}

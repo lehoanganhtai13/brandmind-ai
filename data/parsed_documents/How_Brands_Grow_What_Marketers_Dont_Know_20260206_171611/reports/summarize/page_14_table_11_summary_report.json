@@ -1,0 +1,10 @@
+{
+  "table_id": "page_14_table_11",
+  "page_number": 14,
+  "original_table_html": "<table>\n        <tr>\n          <td colspan=\"2\" style=\"text-align:center; font-weight:bold;\">Colgate switchers</td>\n        </tr>\n<tr>\n          <td style=\"background-color:#1b4f8b; color:white; text-align:center;\">Agree<br>43%</td>\n          <td style=\"background-color:#66a9e0; color:white; text-align:center;\">Disagree<br>57%</td>\n        </tr>\n      </table>",
+  "summary_markdown": "This data presents a comparative analysis of Colgate switchers' agreement and disagreement with a particular statement, revealing a clear majority sentiment. Specifically, 43% of Colgate switchers indicated agreement, while a larger proportion, 57%, expressed disagreement. This suggests that the statement in question does not resonate with the majority of consumers who have switched to Colgate. The structure is a simple dichotomy, directly contrasting the two opposing viewpoints within this specific consumer segment.",
+  "processing_time": 1.1418559551239014,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.295255"
+}

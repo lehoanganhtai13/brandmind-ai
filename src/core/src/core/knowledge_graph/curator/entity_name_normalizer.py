@@ -23,6 +23,7 @@ Example:
 
 import json
 import re
+from collections import defaultdict
 from typing import Dict, List, Optional
 
 from loguru import logger
@@ -296,51 +297,60 @@ async def update_entity_names(
     """
     result = NormalizationResult(name_mapping=name_mapping)
 
-    # Build lookup from current name to entity for quick access
-    entity_lookup = {e.current_name: e for e in entities}
+    # Build lookup from current name to LIST of entities (multiple
+    # entities can have same name)
+    entity_lookup: Dict[str, List[EntityToNormalize]] = defaultdict(list)
+    for e in entities:
+        entity_lookup[e.current_name].append(e)
 
     for old_name, new_name in name_mapping.items():
-        entity = entity_lookup.get(old_name)
-        if not entity:
+        matching_entities = entity_lookup.get(old_name, [])
+        if not matching_entities:
             result.errors.append(f"Entity not found for name: {old_name}")
             result.failed_count += 1
             continue
 
-        if dry_run:
-            logger.info(f"[DRY RUN] Would update: {old_name} -> {new_name}")
-            result.normalized_count += 1
-            continue
+        # Update ALL entities with this name
+        for entity in matching_entities:
+            if dry_run:
+                logger.info(f"[DRY RUN] Would update: {old_name} -> {new_name}")
+                result.normalized_count += 1
+                continue
 
-        try:
-            # Step 1: Re-embed the new name
-            name_embedding = await embedder.aget_text_embedding(new_name)
+            try:
+                # Step 1: Re-embed the new name
+                name_embedding = await embedder.aget_text_embedding(new_name)
 
-            # Step 2: Update Vector DB (partial update - only name and embedding)
-            vector_data = {
-                "id": entity.entity_id,
-                "name": new_name,
-                "name_embedding": name_embedding,
-            }
-            await vector_db.async_upsert_vectors(
-                data=[vector_data],
-                collection_name=collection_name,
-                partial_update=True,
-            )
+                # Step 2: Update Vector DB (partial update - only name and embedding)
+                vector_data = {
+                    "id": entity.entity_id,
+                    "name": new_name,
+                    "name_embedding": name_embedding,
+                }
+                await vector_db.async_upsert_vectors(
+                    data=[vector_data],
+                    collection_name=collection_name,
+                    partial_update=True,
+                )
 
-            # Step 3: Update Graph DB node
-            await graph_db.async_update_node(
-                label=entity.entity_type,
-                match_properties={"id": entity.entity_id},
-                update_properties={"name": new_name},
-            )
+                # Step 3: Update Graph DB node
+                await graph_db.async_update_node(
+                    label=entity.entity_type,
+                    match_properties={"id": entity.entity_id},
+                    update_properties={"name": new_name},
+                )
 
-            logger.info(f"Updated: {old_name} -> {new_name}")
-            result.normalized_count += 1
+                logger.info(
+                    f"Updated: {old_name} -> {new_name} (ID: {entity.entity_id})"
+                )
+                result.normalized_count += 1
 
-        except Exception as e:
-            logger.error(f"Failed to update {old_name}: {e}")
-            result.errors.append(f"{old_name}: {str(e)}")
-            result.failed_count += 1
+            except Exception as e:
+                logger.error(
+                    f"Failed to update {old_name} (ID: {entity.entity_id}): {e}"
+                )
+                result.errors.append(f"{old_name} ({entity.entity_id}): {str(e)}")
+                result.failed_count += 1
 
     # Track skipped entities (those not in name_mapping)
     for entity in entities:

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_157_table_69",
+  "page_number": 157,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th rowspan=\"2\">Price reduction (%)</th>\n<th colspan=\"2\">For a brand with a 30% contribution margin at normal price</th>\n<th colspan=\"2\">For a brand with a 40% contribution margin at normal price</th>\n<th colspan=\"2\">For a brand with a 50% contribution margin at normal price</th>\n</tr>\n<tr>\n<th>Increase in sales needed to match the current contribution (%)</th>\n<th></th>\n<th>Increase in sales needed to match the current contribution (%)</th>\n<th></th>\n<th>Increase in sales needed to match the current contribution (%)</th>\n<th></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>5</td>\n<td>20</td>\n<td></td>\n<td>10</td>\n<td></td>\n<td>11</td>\n<td></td>\n</tr>\n<tr>\n<td>10</td>\n<td>50</td>\n<td></td>\n<td>33</td>\n<td></td>\n<td>25</td>\n<td></td>\n</tr>\n<tr>\n<td>20</td>\n<td>200</td>\n<td></td>\n<td>100</td>\n<td></td>\n<td>66</td>\n<td></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of the sales volume increase required to maintain the current contribution margin across different price reduction scenarios and brand contribution margins. The structure is comparative, examining three distinct brand contribution margins (30%, 40%, and 50%) against three price reduction percentages (5%, 10%, and 20%). For each price reduction, the table quantifies the necessary percentage increase in sales volume to offset the reduced margin per unit. Notably, higher initial contribution margins generally require smaller sales volume increases to compensate for the same price reduction. Conversely, lower initial contribution margins necessitate significantly larger sales volume increases to achieve the same financial outcome. The data highlights the sensitivity of contribution margin to price reductions, particularly for brands with lower initial margins.",
+  "processing_time": 1.4282548427581787,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.303099"
+}

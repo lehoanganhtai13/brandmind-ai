@@ -1,0 +1,10 @@
+{
+  "table_id": "page_94_table_53",
+  "page_number": 94,
+  "original_table_html": "<table>\n    <thead>\n      <tr>\n        <td colspan=\"6\"># of different brands bought</td>\n      </tr>\n    </thead>\n    <tbody>\n      <tr>\n        <td>40.0</td>\n<td>32.2</td>\n<td>24.4</td>\n<td>16.6</td>\n<td>8.8</td>\n<td>1.0</td>\n      </tr>\n<tr>\n        <td>1</td>\n<td>6-9</td>\n<td>15-17</td>\n<td>22-25</td>\n        <td colspan=\"2\">29-31</td>\n      </tr>\n    </tbody>\n    <tfoot>\n      <tr>\n        <td colspan=\"6\"># of category purchases</td>\n      </tr>\n    </tfoot>\n  </table>",
+  "summary_markdown": "This data presents a comparative analysis of the number of different brands bought against the number of category purchases. The structure appears to be a distribution or frequency count, where specific ranges of category purchases correspond to a percentage of different brands bought. Specifically, approximately 40% of category purchases involve buying only 1 brand, while the percentage decreases as the number of different brands bought increases. A significant portion, around 32.2%, of category purchases involve buying 6-9 different brands, and 24.4% involve 15-17 different brands. The data further indicates that 16.6% of category purchases involve 22-25 different brands, and 8.8% involve 29-31 different brands. A very small percentage, 1.0%, is associated with the highest number of brands bought, though the exact upper limit for this category is not explicitly defined beyond the 29-31 range.",
+  "processing_time": 1.4753601551055908,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.300968"
+}

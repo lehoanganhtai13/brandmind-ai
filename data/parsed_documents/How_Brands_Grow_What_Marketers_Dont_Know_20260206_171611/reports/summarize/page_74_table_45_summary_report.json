@@ -1,0 +1,10 @@
+{
+  "table_id": "page_74_table_45",
+  "page_number": 74,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th><b>Market share in a particular demographic group</b></th>\n<th><b>Cola (%)</b></th>\n<th><b>Lemonade (%)</b></th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Overall market</td>\n<td>40</td>\n<td>13</td>\n</tr>\n<tr>\n<td>Male</td>\n<td>44</td>\n<td>11</td>\n</tr>\n<tr>\n<td>Female</td>\n<td>37</td>\n<td>14</td>\n</tr>\n<tr>\n<td>1 person household</td>\n<td>41</td>\n<td>19</td>\n</tr>\n<tr>\n<td>3+ person household</td>\n<td>41</td>\n<td>11</td>\n</tr>\n<tr>\n<td>Children in household</td>\n<td>39</td>\n<td>10</td>\n</tr>\n<tr>\n<td>No children in household</td>\n<td>41</td>\n<td>15</td>\n</tr>\n<tr>\n<td>&lt;34 years old</td>\n<td>45</td>\n<td>5</td>\n</tr>\n<tr>\n<td>55-74 years old</td>\n<td>34</td>\n<td>21</td>\n</tr>\n<tr>\n<td>AB socioeconomic</td>\n<td>35</td>\n<td>13</td>\n</tr>\n<tr>\n<td>E socioeconomic</td>\n<td>41</td>\n<td>12</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of market share for Cola and Lemonade across various demographic groups. The structure is comparative, highlighting the percentage of market share each beverage holds within distinct segments. Overall, Cola demonstrates a significantly larger market share (40%) compared to Lemonade (13%). This trend generally holds true across most demographic categories, with Cola consistently outperforming Lemonade. Notable variations occur within specific groups: Lemonade shows a higher share among females (14%) than males (11%), and particularly strong performance in the 55-74 years old segment (21%) and households with no children (15%). Conversely, Cola exhibits its highest market share among individuals under 34 years old (45%). The data also breaks down share by household size and socioeconomic status, revealing minor fluctuations but a consistent dominance of Cola across the board.",
+  "processing_time": 1.4846341609954834,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.299862"
+}

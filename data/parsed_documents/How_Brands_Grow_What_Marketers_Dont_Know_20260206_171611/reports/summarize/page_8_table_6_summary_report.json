@@ -1,0 +1,10 @@
+{
+  "table_id": "page_8_table_6",
+  "page_number": 8,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"7\" style=\"text-align:center;\">Advertising</th>\n</tr>\n<tr>\n<th>Past World View</th>\n<th>Positioning</th>\n<th>Message Comprehension</th>\n<th>Unique Selling Propositions</th>\n<th>Persuasion</th>\n<th>Teaching</th>\n<th>Campaign Bursts</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>New World</strong></td>\n<td></td>\n<td></td>\n<td>Relevant</td>\n<td>Refreshing &amp;</td>\n<td></td>\n<td>Continuous</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This table outlines key components of advertising, structured around a \"New World\" perspective. It highlights the importance of \"Positioning\" and \"Message Comprehension\" in crafting effective advertising strategies. Central to this is the identification of \"Unique Selling Propositions\" which are described as \"Relevant.\" The persuasive aspect of advertising is characterized as \"Refreshing,\" suggesting a need for novelty and impact. Furthermore, advertising serves a \"Teaching\" function, implying an educational role in informing consumers. Finally, the deployment of advertising is characterized by \"Campaign Bursts,\" indicating a strategic approach to timing and frequency. The overall structure suggests a framework for modern advertising, emphasizing relevance, persuasion, education, and strategic execution.",
+  "processing_time": 1.4992010593414307,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.293826"
+}

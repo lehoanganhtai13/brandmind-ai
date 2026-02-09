@@ -1,0 +1,10 @@
+{
+  "table_id": "page_27_table_15",
+  "page_number": 27,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"1\">Double Jeopardy Law - washing powder (UK 2005)</th>\n<th colspan=\"1\"></th>\n<th colspan=\"1\"></th>\n<th colspan=\"1\"></th>\n</tr>\n<tr>\n<th>Washing powder brands</th>\n<th>Market share (%)</th>\n<th>Annual market penetration (%)</th>\n<th>Purchase frequency (average)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Persil</td>\n<td>22</td>\n<td>41</td>\n<td>3.9</td>\n</tr>\n<tr>\n<td>Ariel</td>\n<td>14</td>\n<td>26</td>\n<td>3.9</td>\n</tr>\n<tr>\n<td>Bold</td>\n<td>10</td>\n<td>19</td>\n<td>3.8</td>\n</tr>\n<tr>\n<td>Daz</td>\n<td>9</td>\n<td>17</td>\n<td>3.7</td>\n</tr>\n<tr>\n<td>Surf</td>\n<td>8</td>\n<td>17</td>\n<td>3.4</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of leading washing powder brands in the UK market as of 2005, illustrating their competitive landscape under the \"Double Jeopardy Law\" framework. The table details five brands: Persil, Ariel, Bold, Daz, and Surf, alongside their respective market share percentages. It also quantifies their annual market penetration, indicating the proportion of households purchasing each brand within a year. Furthermore, the data provides the average purchase frequency for each brand, offering insight into consumer loyalty and repeat purchasing behavior. Persil leads significantly in market share, followed by Ariel, with the remaining brands holding smaller but still notable positions. The purchase frequencies show a general trend of higher frequency for brands with larger market shares, though minor variations exist.",
+  "processing_time": 1.1992342472076416,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.295753"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_34_table_21",
+  "page_number": 34,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Banks (Australia)</th>\n<th>Average number of banking products held by customers with that bank</th>\n</tr>\n</thead>\n<tbody>\n<tr><td>Commonwealth Bank</td><td>2</td></tr>\n<tr><td>ANZ Bank</td><td>2.1</td></tr>\n<tr><td>Westpac Bank</td><td>2.2</td></tr>\n<tr><td>National Australia Bank</td><td>2.3</td></tr>\n<tr><td><b>Average</b></td><td><b>2.1</b></td></tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of the average number of banking products held by customers across four major Australian banks: Commonwealth Bank, ANZ Bank, Westpac Bank, and National Australia Bank. The structure is a simple comparison of a single metric—average products per customer—for each entity. Commonwealth Bank customers hold an average of 2 products, followed closely by ANZ Bank with 2.1 products. Westpac Bank customers average 2.2 products, and National Australia Bank customers hold the highest average at 2.3 products. The overall average across all listed banks is 2.1 products per customer, indicating a relatively consistent customer engagement with banking products across these institutions.",
+  "processing_time": 0.9072909355163574,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.296515"
+}

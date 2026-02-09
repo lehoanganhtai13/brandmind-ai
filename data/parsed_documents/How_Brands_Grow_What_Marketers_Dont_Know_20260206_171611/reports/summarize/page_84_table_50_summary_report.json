@@ -1,0 +1,10 @@
+{
+  "table_id": "page_84_table_50",
+  "page_number": 84,
+  "original_table_html": "<table>\n  <tr>\n    <td colspan=\"2\" rowspan=\"2\">tough<br>men<br><b>Max</b></td>\n<td></td>\n    <td colspan=\"3\" rowspan=\"3\" style=\"text-align:center;\">\n      low fat<br>healthy<br>new<br>unpopular<br>nutritious<br>minor brand<br>women<br>beautiful people\n    </td>\n  </tr>\n<tr></tr>\n<tr>\n    <td>working class<br>hangover cure<br>hi caffeine</td>\n<td></td>\n  </tr>\n<tr>\n    <td><b>FU</b><br>popular</td>\n<td>fresh<br>ugly people</td>\n<td>yuppie brand</td>\n  </tr>\n<tr>\n    <td></td>\n<td>fattening</td>\n    <td rowspan=\"2\" style=\"text-align:center;\">\n      Sth Australian<br><b>DV</b><br>childrens brand\n    </td>\n  </tr>\n<tr>\n    <td>traditional</td>\n<td>premium brand</td>\n  </tr>\n<tr>\n    <td colspan=\"2\" style=\"text-align:center;\">sweet</td>\n<td></td>\n  </tr>\n</table>",
+  "summary_markdown": "This table presents a comparative analysis of different brands, likely beverages, based on various attributes. The central axis appears to differentiate brands based on their target demographic and perceived qualities, with \"low fat, healthy, new, unpopular, nutritious, minor brand, women, beautiful people\" representing one cluster of attributes. Contrasting this are attributes like \"working class, hangover cure, hi caffeine\" associated with the \"Max\" brand, and \"fresh, ugly people\" linked to the \"FU\" brand. Further distinctions are made with \"yuppie brand\" and \"premium brand\" attributes, alongside \"fattening\" and \"childrens brand\" associated with \"DV\". The \"sweet\" attribute is also noted, suggesting a taste dimension. The structure is comparative, highlighting how different brands are positioned across a spectrum of consumer perceptions and product characteristics.",
+  "processing_time": 1.4331088066101074,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.300574"
+}

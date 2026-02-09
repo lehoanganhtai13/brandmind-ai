@@ -1,0 +1,10 @@
+{
+  "table_id": "page_106_table_59",
+  "page_number": 106,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Brand</th>\n<th>Share of survey sample</th>\n<th>Repeat (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Dell</td>\n<td>29</td>\n<td>50</td>\n</tr>\n<tr>\n<td>HP/Compaq</td>\n<td>30</td>\n<td>36</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of two computer brands, Dell and HP/Compaq, based on their share of a survey sample and customer repeat purchase rates. HP/Compaq represents a slightly larger portion of the survey sample at 30%, compared to Dell at 29%. However, Dell demonstrates a significantly higher customer loyalty, with 50% of its surveyed customers indicating they would make a repeat purchase. In contrast, HP/Compaq has a lower repeat purchase rate of 36%. The structure is comparative, highlighting key performance indicators for each brand to facilitate a direct assessment of their market presence and customer retention.",
+  "processing_time": 1.3907649517059326,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.301689"
+}

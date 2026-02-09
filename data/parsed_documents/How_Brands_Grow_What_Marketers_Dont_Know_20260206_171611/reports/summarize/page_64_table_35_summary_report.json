@@ -1,0 +1,10 @@
+{
+  "table_id": "page_64_table_35",
+  "page_number": 64,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th rowspan=\"2\">Owners of:</th>\n<th colspan=\"2\">Gender (%)</th>\n<th colspan=\"2\">Household size (%)</th>\n<th colspan=\"2\">Owners who read newspapers (%)</th>\n</tr>\n<tr>\n<th>Men</th>\n<th>Women</th>\n<th>1 - 2 people</th>\n<th>2+</th>\n<th>Sun</th>\n<th>Telegraph</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Rover</td>\n<td>52</td>\n<td>48</td>\n<td>40</td>\n<td>24</td>\n<td>20</td>\n<td>9</td>\n</tr>\n<tr>\n<td>Escort</td>\n<td>50</td>\n<td>50</td>\n<td>34</td>\n<td>27</td>\n<td>26</td>\n<td>5</td>\n</tr>\n<tr>\n<td>Sierra</td>\n<td>50</td>\n<td>50</td>\n<td>25</td>\n<td>34</td>\n<td>28</td>\n<td>4</td>\n</tr>\n<tr>\n<td>Cavalier</td>\n<td>51</td>\n<td>49</td>\n<td>29</td>\n<td>33</td>\n<td>24</td>\n<td>6</td>\n</tr>\n<tr>\n<td><strong>Average</strong></td>\n<td><strong>51</strong></td>\n<td><strong>49</strong></td>\n<td><strong>31</strong></td>\n<td><strong>30</strong></td>\n<td><strong>25</strong></td>\n<td><strong>6</strong></td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents a comparative analysis of owners across five car models: Rover, Escort, Sierra, and Cavalier, alongside an overall average. The comparison focuses on demographic and media consumption characteristics. For each car model and the average, the data details the gender distribution of owners, showing a slight male majority across the board. Household size is also broken down, distinguishing between smaller (1-2 people) and larger (2+ people) households, with a general trend towards smaller households, though the average indicates a near-even split. Finally, the data quantifies the percentage of owners who read specific newspapers, the \"Sun\" and the \"Telegraph,\" revealing a significantly higher readership of the \"Sun\" compared to the \"Telegraph\" across all car models and the average.",
+  "processing_time": 1.5152790546417236,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.298200"
+}

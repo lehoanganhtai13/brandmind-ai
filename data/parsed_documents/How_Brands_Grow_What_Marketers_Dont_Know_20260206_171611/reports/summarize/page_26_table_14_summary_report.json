@@ -1,0 +1,10 @@
+{
+  "table_id": "page_26_table_14",
+  "page_number": 26,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Hypothetical brands of equal size</th>\n<th>Annual market penetration (%)</th>\n<th>Number of purchases per buyer per annum</th>\n<th>Resulting market share (%)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Dell-icious</td>\n<td>32</td>\n<td>3</td>\n<td>14</td>\n</tr>\n<tr>\n<td>AppleCore</td>\n<td>16</td>\n<td>6</td>\n<td>14</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data illustrates a comparative analysis of two hypothetical brands, Dell-icious and AppleCore, both of equal size, to determine their resulting market share. The comparison focuses on two key metrics: annual market penetration, representing the percentage of the market that purchases from the brand annually, and the number of purchases made per buyer per annum. Dell-icious exhibits a higher annual market penetration at 32% but a lower number of purchases per buyer per annum (3), leading to a market share of 14%. Conversely, AppleCore has a lower annual market penetration of 16% but a higher number of purchases per buyer per annum (6), also resulting in a market share of 14%. This demonstrates that different combinations of market penetration and purchase frequency can yield identical market shares.",
+  "processing_time": 1.1923062801361084,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.295623"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_79_table_48",
+  "page_number": 79,
+  "original_table_html": "<table><thead><tr><th colspan=\"2\"></th><th colspan=\"4\">Percentage of buyers who also bought brand</th></tr><tr><th></th><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody><tr><td><strong>A</strong></td><td>100%</td><td></td><td></td><td></td><td></td></tr><tr><td><strong>B</strong></td><td></td><td>100%</td><td></td><td></td><td></td></tr><tr><td><strong>C</strong></td><td></td><td></td><td>100%</td><td></td><td></td></tr><tr><td><strong>D</strong></td><td></td><td></td><td></td><td>100%</td><td></td></tr></tbody></table>",
+  "summary_markdown": "This data presents a comparative analysis of brand purchasing behavior, specifically focusing on the percentage of buyers who also purchased other brands. The table is structured with brands A, B, C, and D listed along the rows and columns. The diagonal entries, representing the percentage of buyers who also bought the same brand, are all 100%. The off-diagonal entries are empty, implying no data is presented for buyers of one brand also purchasing another. This structure highlights a self-purchasing pattern for each brand individually, without indicating any cross-brand purchasing relationships or cannibalization effects. The overarching structure is comparative, examining each brand's purchasing behavior in isolation.",
+  "processing_time": 1.3345489501953125,
+  "was_merged": true,
+  "source_chain_id": "page_79_chain_7_cross",
+  "timestamp": "2026-02-06T17:20:38.300315"
+}

@@ -1,0 +1,10 @@
+{
+  "table_id": "page_6_table_1",
+  "page_number": 6,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th>Strategic Assumptions</th>\n<th>True, False, or Don’t Know?</th>\n</tr>\n</thead>\n<tbody>\n</tbody>\n</table>",
+  "summary_markdown": "This table presents a framework for evaluating strategic assumptions, categorizing them into three possible states: True, False, or Don't Know. The structure is a simple two-column format, with the first column listing various \"Strategic Assumptions\" and the second column providing a space to indicate the assessed truth value of each assumption. This implies a process of critical analysis where each underlying belief or premise of a strategy is systematically examined and validated or invalidated. The \"Don't Know\" option acknowledges that some assumptions may not be immediately verifiable, suggesting a need for further investigation or data collection. The overall purpose appears to be the rigorous assessment of the foundational elements of a strategic plan to ensure its viability and effectiveness.",
+  "processing_time": 1.5432302951812744,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:20:38.293100"
+}
