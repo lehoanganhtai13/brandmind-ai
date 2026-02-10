@@ -1,0 +1,10 @@
+{
+  "table_id": "page_163_table_3",
+  "page_number": 163,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"11\">Number of noncommercial airplane fatalities</th>\n</tr>\n<tr>\n<th>-2</th><th>-1</th><th>0</th><th>+1</th><th>+2</th><th>+3</th><th>+4</th><th>+5</th><th>+6</th><th>+7</th><th>+8</th><th>+9</th><th>+10</th><th>+11</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>30</td><td>25</td><td>30</td><td>40</td><td>50</td><td>60</td><td>70</td><td>30</td><td>40</td><td>45</td><td>50</td><td>40</td><td>35</td><td>30</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents the number of noncommercial airplane fatalities across a timeline, indicated by years relative to a reference point (year 0). The fatalities are tracked from year -2 to year +11. The numbers show a general upward trend in fatalities from year -2 (30) to year +6 (70), after which the trend reverses, with fatalities decreasing from year +7 (30) to year +11 (30). The peak in fatalities occurs around year +6, with a subsequent decline and stabilization towards the end of the observed period. This structure suggests an analysis of fatality trends over time, highlighting a period of increase followed by a decrease.",
+  "processing_time": 1.2647769451141357,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:23:38.345658"
+}

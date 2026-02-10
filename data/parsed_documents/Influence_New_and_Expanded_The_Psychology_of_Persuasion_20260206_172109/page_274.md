@@ -1,0 +1,15 @@
+# Page 274
+
+**Document Title**: Influence: The Psychology of Persuasion (New and Expanded Edition)
+**Author**: Robert B. Cialdini
+**Original File**: data/raw_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion.pdf
+**Page Number**: 274/397
+**Processing Time**: 2026-02-06T17:23:26.330126
+
+---
+
+Commitment strategies are aimed at us by compliance professionals of nearly every sort. Each of the strategies is intended to get us to take some action or make some statement that will trap us into later compliance through consistency pressures. Procedures designed to create commitments take various forms. Some are bluntly straightforward; others are among the most subtle compliance tactics we will encounter. On the blunt side, consider the approach of Jack Stanko, used-car sales manager for an Albuquerque auto dealership. While leading a session called “Used Car Merchandising” at a National Auto Dealers Association convention in San Francisco, he advised one hundred sales-hungry dealers as follows: “Put ’em on paper. Get the customer’s OK on paper. Control ’em. Ask ’em if they would buy the car right now if the price is right. Pin ’em down.” Obviously, Mr. Stanko—an expert in these matters—believes that the way to customer compliance is through commitments, which serve to “control ’em.”
+
+Commitment practices involving substantially more finesse can be just as effective. Suppose you wanted to increase the number of people in your area who would agree to go door to door collecting donations for your favorite charity. You would be wise to study the approach taken by social psychologist Steven J. Sherman. He simply called a sample of Bloomington, Indiana, residents as part of a survey he was taking and asked them to predict what they would say if asked to spend three hours collecting money for the American Cancer Society. Of course, not wanting to seem uncharitable to the survey-taker or to themselves, many of these people said that they would volunteer. The consequence of this subtle commitment procedure was a 700 percent increase in volunteers when, a few days later, a representative of the American Cancer Society did call and ask for neighborhood canvassers.
+
+Using the same strategy, but this time asking citizens to predict whether they would vote on Election Day, other researchers have been able to increase significantly the turnout at the polls among those called. Courtroom combatants appear to have adopted this practice of extracting a lofty initial commitment designed to spur future consistent behavior. When screening potential jurors before a trial, Jo-Ellen Demitrius, reputed to be the best consultant in the business of jury selection, asks an artful question: “If you were the only person who believed in my client’s innocence, could you withstand the pressure of the rest of the jury to change your mind?” How could any self-respecting prospective juror say no? And having made the public promise, how could any self-respecting selected juror repudiate it later?

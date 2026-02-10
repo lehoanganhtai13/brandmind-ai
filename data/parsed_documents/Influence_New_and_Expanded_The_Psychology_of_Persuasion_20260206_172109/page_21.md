@@ -1,0 +1,15 @@
+# Page 21
+
+**Document Title**: Influence: The Psychology of Persuasion (New and Expanded Edition)
+**Author**: Robert B. Cialdini
+**Original File**: data/raw_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion.pdf
+**Page Number**: 21/397
+**Processing Time**: 2026-02-06T17:23:26.309645
+
+---
+
+Especially relevant to this book are those heuristics that tell us when to believe or do what we are asked. Consider, for example, the shortcut rule that goes, “If an expert said so, it must be true.” As we will see in chapter 5, there is an unsettling tendency in our society to accept unthinkingly the statements and directions of individuals who appear to be authorities on a topic. That is, rather than thinking about an expert’s arguments and being convinced (or not), we frequently ignore the arguments and allow ourselves to be convinced just by the expert’s status as “expert.” This tendency to respond mechanically to one piece of information in a situation is what we have been calling automatic or *click, run* responding; the tendency to react on the basis of a thorough analysis of all of the information can be referred to as *controlled* responding.
+
+Quite a lot of laboratory research has shown that people are more likely to deal with information in a controlled fashion when they have both the desire and the ability to analyze it carefully; otherwise, they are likely to use the easier *click, run* approach. For instance, in one study, university students listened to a recorded speech supporting the idea of requiring all seniors to pass comprehensive examinations before they would be allowed to graduate. The issue affected some of them personally, because they were told that the exams could go into effect in the next year—before they had the chance to graduate. Of course, this news made them want to analyze the arguments carefully. However, for other subjects in the study, the issue had little personal importance, because they were told the exams would not begin until long after they had graduated; consequently, these students had no strong need to carefully consider the arguments’ validity. The study’s results were straightforward: those students with no personal stake in the topic were primarily persuaded by the speaker’s expertise in the field of education; they used the “If an expert said so, it must be true” rule, paying little attention to the strength of the speaker’s arguments. Those students for whom the issue mattered personally, on the other hand, ignored the speaker’s expertise and were persuaded primarily by the quality of the speaker’s arguments.
+
+So it appears that when it comes to the dangerous business of *click, run* responding, we give ourselves a safety net. We resist the seductive luxury of registering and reacting to just a single (trigger) feature of the available information when an issue is important to us. No doubt this is often the case. Yet I am not fully comforted. Recall that we learned that people are likely to respond in a controlled, thoughtful fashion only when they have both the desire and the ability to do so.

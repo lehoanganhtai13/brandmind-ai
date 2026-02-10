@@ -1,0 +1,10 @@
+{
+  "table_id": "page_326_table_5",
+  "page_number": 326,
+  "original_table_html": "<table>\n  <tr>\n    <td colspan=\"7\" style=\"text-align:center;\">Please circle the picture below that best describes your relationship with your partner.</td>\n  </tr>\n<tr>\n    <td><circle>Self</circle></td>\n<td><circle>Other</circle></td>\n<td><circle>Self</circle></td>\n<td><circle>Other</circle></td>\n<td><circle>Self</circle></td>\n<td><circle>Other</circle></td>\n<td><circle>Self</circle></td>\n<td><circle>Other</circle></td>\n  </tr>\n<tr>\n    <td colspan=\"2\"></td>\n    <td colspan=\"2\"></td>\n    <td colspan=\"2\"></td>\n    <td colspan=\"2\"></td>\n  </tr>\n<tr>\n    <td><circle>Self</circle></td>\n<td><circle>Other</circle></td>\n<td><circle>Self</circle></td>\n<td><circle>Other</circle></td>\n<td><circle>Self</circle></td>\n<td><circle>Other</circle></td>\n  </tr>\n</table>",
+  "summary_markdown": "This diagram presents a self-report measure for assessing relationship dynamics, specifically focusing on the perceived relationship with a partner. It employs a comparative approach, prompting individuals to circle a picture that best describes their relationship. The structure involves paired choices, where \"Self\" and \"Other\" represent distinct perspectives within each choice. The diagram offers multiple such paired options, suggesting a range of relationship configurations or qualities are being evaluated. The core function is to capture an individual's subjective interpretation of their bond with their partner through a visual, comparative selection process.",
+  "processing_time": 1.3679399490356445,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:23:38.346273"
+}

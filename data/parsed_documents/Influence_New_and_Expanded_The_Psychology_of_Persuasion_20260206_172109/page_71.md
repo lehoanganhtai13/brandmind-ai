@@ -1,0 +1,15 @@
+# Page 71
+
+**Document Title**: Influence: The Psychology of Persuasion (New and Expanded Edition)
+**Author**: Robert B. Cialdini
+**Original File**: data/raw_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion.pdf
+**Page Number**: 71/397
+**Processing Time**: 2026-02-06T17:23:26.313245
+
+---
+
+Perhaps by rejecting a requester’s initial favor or concessions, we can evade the problem. Perhaps, but then, perhaps not. Invariably declining a requester’s initial offer of a favor or sacrifice works better in theory than in practice. The major difficulty is that when it is first presented, it is difficult to know whether such an offer is honest or whether it is the initial step in an exploitation attempt. It’s a trick-or-treat problem: if we always assume the worst (trick), it would not be possible to receive the benefit of any legitimate favor or concession (treat) offered by individuals who had no intention of exploiting the reciprocity rule.
+
+I have a colleague who remembers with anger how his ten-year-old daughter’s feelings were terribly hurt by a man whose method of avoiding the jaws of the reciprocity rule was to refuse her kindness. The children of her class were hosting an open house at school for their grandparents, and her job was to give a flower to each visitor entering the school grounds. The first man she approached with a flower growled at her, “Keep it.” Not knowing what to do, she extended it toward him again, only to have him demand to know what he had to give in return. When she replied weakly, “Nothing. It’s a gift,” he fixed her with a disbelieving glare and brushed on past. The girl was so stung by the experience that she could not approach anyone else and had to be removed from her assignment—one she had anticipated fondly. It is hard to know whom to blame more, the insensitive man or the exploiters who had abused his tendency to reciprocate a gift until his response had soured to an automatic refusal. No matter whom you find more blameworthy, the lesson is clear. We will always encounter authentically generous individuals as well as many people who try to play fairly by the reciprocity rule rather than to exploit it. They will doubtless become insulted by someone who consistently rejects their efforts; social friction and isolation could well result. A policy of blanket rejection, then, seems ill-advised.
+
+Another solution holds more promise. It advises us to accept the offers of others but to accept the offers only for what they fundamentally are, not for what they are represented to be. If a person offers us a nice favor, we might well accept, recognizing that we have obligated ourselves to a return favor sometime in the future. To engage in this sort of arrangement with another is not to be exploited by that person through the rule of reciprocation. Quite the contrary; it is to participate fairly in the “honored network of obligation” that has served us so well, both individually and societally, from the dawn of humanity.

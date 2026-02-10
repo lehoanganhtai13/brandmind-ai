@@ -1,0 +1,48 @@
+{
+  "chain_id": "page_163_chain_1",
+  "page_number": 163,
+  "fragment_count": 3,
+  "fragments_info": [
+    {
+      "fragment_index": 1,
+      "page_number": 163,
+      "start_pos": 1154,
+      "end_pos": 1605,
+      "html_size": 451,
+      "page_file": "data/parsed_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion_20260206_172109/page_163.md"
+    },
+    {
+      "fragment_index": 2,
+      "page_number": 163,
+      "start_pos": 1607,
+      "end_pos": 2067,
+      "html_size": 460,
+      "page_file": "data/parsed_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion_20260206_172109/page_163.md"
+    },
+    {
+      "fragment_index": 3,
+      "page_number": 163,
+      "start_pos": 2069,
+      "end_pos": 2528,
+      "html_size": 459,
+      "page_file": "data/parsed_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion_20260206_172109/page_163.md"
+    }
+  ],
+  "is_cross_page": false,
+  "page_range": "163",
+  "merge_decision": {
+    "chain_id": "page_163_chain_1",
+    "status": "NO_MERGE",
+    "analysis": {
+      "fragments_received": 3,
+      "repairs_performed": {
+        "collapsed_columns_fixed": false,
+        "description": "No rowspan cell splitting was necessary."
+      },
+      "reasoning": "The three table fragments represent distinct datasets (commercial airplane fatalities, noncommercial airplane fatalities, and motor vehicle fatalities) with identical header structures and column counts. They do not appear to be parts of a single, larger table that needs merging. Therefore, they are treated as separate tables."
+    },
+    "final_merged_html": null,
+    "processing_time": 1.3083488941192627
+  },
+  "timestamp": "2026-02-06T17:23:38.343987"
+}

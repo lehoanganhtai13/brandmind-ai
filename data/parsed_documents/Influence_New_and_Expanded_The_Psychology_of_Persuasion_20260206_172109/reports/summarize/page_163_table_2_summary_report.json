@@ -1,0 +1,10 @@
+{
+  "table_id": "page_163_table_2",
+  "page_number": 163,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"11\">Number of commercial airplane fatalities</th>\n</tr>\n<tr>\n<th>-2</th><th>-1</th><th>0</th><th>+1</th><th>+2</th><th>+3</th><th>+4</th><th>+5</th><th>+6</th><th>+7</th><th>+8</th><th>+9</th><th>+10</th><th>+11</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>0</td><td>0</td><td>0</td><td>10</td><td>20</td><td>80</td><td>90</td><td>40</td><td>20</td><td>50</td><td>10</td><td>0</td><td>0</td><td>0</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents the number of commercial airplane fatalities across a timeline, indicated by years relative to a reference point (year 0). The timeline spans from two years prior to year 0 (-2) to eleven years after year 0 (+11). Fatalities are recorded as zero for the initial three years (-2, -1, 0). A notable increase occurs in year +1, with 10 fatalities, followed by a significant surge to 20 in year +2 and peaking at 80 in year +3. The number of fatalities then declines to 90 in year +4, before dropping to 40 in year +5 and 20 in year +6. A subsequent rise to 50 fatalities is observed in year +7, followed by a decrease to 10 in year +8. The data shows zero fatalities for the final three years presented (+9, +10, +11). This structure illustrates a temporal pattern of commercial airplane fatalities, characterized by an initial period of no incidents, followed by a period of significant increase and subsequent decrease, and finally a return to zero fatalities.",
+  "processing_time": 1.7282180786132812,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:23:38.345391"
+}

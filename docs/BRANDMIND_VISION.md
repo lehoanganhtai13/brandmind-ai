@@ -2,8 +2,8 @@
 
 > **Purpose**: This document captures the complete vision, architecture, and design decisions for BrandMind AI. It serves as a reference for any AI agent working on this project to understand the full context without needing to ask the user again.
 
-**Last Updated**: 2026-02-03
-**Status**: Baseline approved, ready for implementation
+**Last Updated**: 2026-02-10
+**Status**: Knowledge Graph complete, agent implementation next
 
 ---
 
@@ -258,10 +258,10 @@ Stage 5: Retrieval (The Retriever)
 | # | Document                                             | Author               | Status      | Phase Coverage | Purpose                                                   |
 | - | ---------------------------------------------------- | -------------------- | ----------- | -------------- | --------------------------------------------------------- |
 | 1 | **Principles of Marketing** (17th Ed)          | Philip Kotler        | ✅ Indexed  | P1, P3         | Core marketing fundamentals, STP, marketing mix           |
-| 2 | **Strategic Brand Management**                 | Kevin Lane Keller    | 🔄 To Index | P1, P2, P5     | CBBE Pyramid, Brand Value Chain, brand equity measurement |
-| 3 | **Positioning: The Battle for Your Mind**      | Al Ries & Jack Trout | 🔄 To Index | P2             | Mental positioning, laddering, differentiation techniques |
-| 4 | **How Brands Grow**                            | Byron Sharp          | 🔄 To Index | P2, P4, P5     | Evidence-based growth laws, Distinctive Brand Assets      |
-| 5 | **Influence: Psychology of Persuasion** (2021) | Robert B. Cialdini   | 🔄 To Index | P3             | 7 principles of persuasion for messaging psychology       |
+| 2 | **Strategic Brand Management**                 | Kevin Lane Keller    | ✅ Indexed  | P1, P2, P5     | CBBE Pyramid, Brand Value Chain, brand equity measurement |
+| 3 | **Positioning: The Battle for Your Mind**      | Al Ries & Jack Trout | ✅ Indexed  | P2             | Mental positioning, laddering, differentiation techniques |
+| 4 | **How Brands Grow**                            | Byron Sharp          | ✅ Indexed  | P2, P4, P5     | Evidence-based growth laws, Distinctive Brand Assets      |
+| 5 | **Influence: Psychology of Persuasion** (2021) | Robert B. Cialdini   | ✅ Indexed  | P3             | 7 principles of persuasion for messaging psychology       |
 
 **Why these 5 books?**
 
@@ -298,9 +298,12 @@ Key: ✅ = Strong coverage, ⚪ = Partial/None, ✅✅ = Primary source
 
 ### 3.4 Current KG Stats
 
-- **EntityDescriptions**: ~25,000+ embeddings
-- **RelationDescriptions**: ~23,000+ embeddings
-- **Graph Database**: FalkorDB with entity nodes + relationship edges
+- **Nodes**: 27,143 entities across 15 labels (Company, BusinessConcept, MarketingStrategy, etc.)
+- **Edges**: 30,448 relationships across 18 types (MANAGES, EMPLOYS_STRATEGY, BUILDS, etc.)
+- **EntityDescriptions** (Milvus): ~27,000+ vector embeddings
+- **RelationDescriptions** (Milvus): ~30,000+ vector embeddings
+- **Source Documents**: 5 books fully indexed (see table above)
+- **Graph Database**: FalkorDB (`knowledge_graph`)
 
 ---
 
@@ -324,7 +327,7 @@ Key: ✅ = Strong coverage, ⚪ = Partial/None, ✅✅ = Primary source
 │                                                                   │
 │   ┌─────────────────────┐                   ┌───────────────────┐ │
 │   │ branding-strategy   │     Search        │ Marketing KG      │ │
-│   │ Skill (skeleton)    │ ◄──────────────── │ 25K+ entities     │ │
+│   │ Skill (skeleton)    │ ◄──────────────── │ 27K+ entities     │ │
 │   └─────────────────────┘                   └───────────────────┘ │
 │                                                                   │
 └───────────────────────────────────────────────────────────────────┘
@@ -383,7 +386,7 @@ kg_results = await search_kg("April Dunford positioning framework")
 | **Consistency**  | Skills ensure same phases, same checkpoints every project |
 | **Flexibility**  | KG allows agent to adapt approach to situation            |
 | **Evaluability** | Can test output quality at each phase checkpoint          |
-| **Depth**        | 25K+ entities provide rich domain expertise               |
+| **Depth**        | 27K+ entities provide rich domain expertise               |
 | **Efficiency**   | Skills loaded on-demand, KG queried as needed             |
 
 ---
@@ -565,7 +568,7 @@ brandmind-ai/
 
 ### 8.1 Immediate Next Steps
 
-1. **Complete KG** - Add 3-4 more marketing documents
+1. ~~**Complete KG** - Add 3-4 more marketing documents~~ ✅ **Done** (5/5 books indexed)
 2. **Build `branding-strategy` skill** - Skeleton with phases, quality gates
 3. **Implement main agent** - With hybrid Skills + KG approach
 4. **Run evaluation** - Using defined evaluation framework

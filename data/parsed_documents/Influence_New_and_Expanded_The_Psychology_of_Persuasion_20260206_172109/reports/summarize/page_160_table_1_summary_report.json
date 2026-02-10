@@ -1,0 +1,10 @@
+{
+  "table_id": "page_160_table_1",
+  "page_number": 160,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"2\">Differences Between Observed and Usual Monthly Suicide Rates</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1 Month Before</td>\n<td>-200</td>\n</tr>\n<tr>\n<td>Month of Story</td>\n<td>+1300</td>\n</tr>\n<tr>\n<td>1 Month After</td>\n<td>+900</td>\n</tr>\n<tr>\n<td>2 Months After</td>\n<td>+100</td>\n</tr>\n<tr>\n<td>3 Months After</td>\n<td>+200</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data illustrates the fluctuations in monthly suicide rates relative to a specific event, likely a media story, as indicated by the column headers. The observed rates show a significant increase during the month of the story, with a difference of +1300 compared to usual rates. This surge is followed by a substantial, though diminished, increase in the month immediately after the story (+900). The elevated rates persist for a longer duration, with a smaller positive difference observed two months after (+100) and a slight increase three months after (+200). Conversely, the month preceding the story shows a decrease in suicide rates (-200), suggesting a potential temporal relationship where the event is associated with a temporary spike in suicide occurrences. The structure is comparative, highlighting deviations from a baseline over a defined time period.",
+  "processing_time": 1.5092790126800537,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:23:38.344958"
+}

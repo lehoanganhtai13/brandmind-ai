@@ -1,0 +1,15 @@
+# Page 298
+
+**Document Title**: Influence: The Psychology of Persuasion (New and Expanded Edition)
+**Author**: Robert B. Cialdini
+**Original File**: data/raw_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion.pdf
+**Page Number**: 298/397
+**Processing Time**: 2026-02-06T17:23:26.331408
+
+---
+
+Some have argued that the groups themselves are composed of psychological or social miscreants whose twisted needs demand that others be harmed and humiliated. The evidence does not support the view. Studies done on the personality traits of fraternity members, for instance, show them to be, if anything, slightly healthier than other college students in their psychological adjustment. Similarly, fraternities are known for their willingness to engage in beneficial community projects for the general social good. What they are not willing to do, however, is substitute these projects for their initiation ceremonies. One survey at the University of Washington found that of the fraternity chapters examined, most had a type of Help Week tradition but that this community service was *in addition* to Hell Week. In only one case was such service directly related to initiation procedures.
+
+The picture that emerges of the perpetrators of hazing practices is of normal individuals who tend to be psychologically stable and socially concerned but who become aberrantly harsh as a group at only one time—immediately before the admission of new members to the society. The evidence points to the ceremony as culprit. There must be something about its rigors that is vital to the group. There must be some function to its harshness that the society will fight relentlessly to maintain. What?
+
+In my view, the answer appeared in the results of a study little known outside of social psychology. A pair of researchers, Elliot Aronson and Judson Mills, decided to test their observation that “persons who go through a great deal of trouble or pain to attain something tend to value it more highly than persons who attain the same thing with a minimum of effort.” The real stroke of inspiration came in their choice of the initiation ceremony as the best place to examine this possibility. They found that college women who had to endure a severely embarrassing initiation ceremony in order to gain access to a sex-discussion group convinced themselves their new group and its discussions were extremely valuable, even though Aronson and Mills had rehearsed the other group members to be as “worthless and uninteresting” as possible. Different coeds who went through a much milder initiation ceremony or went through no initiation at all, were decidedly less positive about the “worthless” new group they had joined. Additional research showed the same results when coeds were required to endure pain rather than embarrassment to get into a group. The more electric shock a woman received as part of the initiation ceremony, the more she later persuaded herself that her new group and its activities were interesting, intelligent, and desirable.

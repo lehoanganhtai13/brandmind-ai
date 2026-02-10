@@ -15,9 +15,10 @@
 ## 🚀 About The Project
 
 In the marketing world, there's a significant **"Experience Gap"** for junior professionals. They often lack:
-*   **Strategic Direction:** Difficulty translating business goals into a coherent brand roadmap.
-*   **Expert Guidance:** Limited access to senior mentorship to challenge and refine their ideas.
-*   **Resource Constraints:** Inability to afford expensive courses or consultancy.
+
+* **Strategic Direction:** Difficulty translating business goals into a coherent brand roadmap.
+* **Expert Guidance:** Limited access to senior mentorship to challenge and refine their ideas.
+* **Resource Constraints:** Inability to afford expensive courses or consultancy.
 
 BrandMind AI is not just another automation tool. It's a **cognitive augmentation system** designed to act as a virtual senior strategist. It doesn't just give you the answers; it teaches you **how to think** by simulating a real-world mentorship process.
 
@@ -57,12 +58,12 @@ make setup-env
 
 This will prompt you for each configuration value. Only `GEMINI_API_KEY` is required - all other values have sensible defaults for local development.
 
-| Variable | Required | Description | Get it from |
-|----------|----------|-------------|-------------|
-| `GEMINI_API_KEY` | ✅ Yes | Google Gemini LLM & Embedding API | [Google AI Studio](https://aistudio.google.com/) |
-| `LLAMA_PARSE_API_KEY` | ❌ Optional | LlamaParse PDF→Markdown parser | [LlamaIndex](https://www.llamaindex.ai/llamaparse) |
-| `PERPLEXITY_API_KEY` | ❌ Optional | Perplexity AI search provider | [Perplexity](https://www.perplexity.ai/) |
-| `TAVILY_API_KEY` | ❌ Optional | Tavily web search provider | [Tavily](https://tavily.com/) |
+| Variable                | Required    | Description                       | Get it from                                     |
+| ----------------------- | ----------- | --------------------------------- | ----------------------------------------------- |
+| `GEMINI_API_KEY`      | ✅ Yes      | Google Gemini LLM & Embedding API | [Google AI Studio](https://aistudio.google.com/)   |
+| `LLAMA_PARSE_API_KEY` | ❌ Optional | LlamaParse PDF→Markdown parser   | [LlamaIndex](https://www.llamaindex.ai/llamaparse) |
+| `PERPLEXITY_API_KEY`  | ❌ Optional | Perplexity AI search provider     | [Perplexity](https://www.perplexity.ai/)           |
+| `TAVILY_API_KEY`      | ❌ Optional | Tavily web search provider        | [Tavily](https://tavily.com/)                      |
 
 After setup, load the environment variables:
 
@@ -95,10 +96,12 @@ make services-up
 This will start the following services:
 
 #### Search & Crawling
+
 - **[SearXNG](https://github.com/searxng/searxng)** (port 8080): Privacy-focused metasearch engine aggregating results from multiple sources
 - **[Crawl4AI](https://github.com/unclecode/crawl4ai)** (port 11235): Advanced web scraping service for extracting structured data
 
 #### Databases
+
 - **[FalkorDB](https://www.falkordb.com/)**: Graph database for knowledge graphs and GraphRAG
   - Server (port 6380): Graph database with Cypher query language
   - Browser UI (port 3000): Web interface for managing graphs
@@ -112,26 +115,29 @@ This will start the following services:
 
 Web search supports multiple providers with automatic fallback:
 
-| Provider | API Key | Notes |
-|----------|---------|-------|
-| **SearXNG** | Not required | Self-hosted, included by default |
-| **Perplexity** | `PERPLEXITY_API_KEY` | AI-powered search |
-| **Tavily** | `TAVILY_API_KEY` | Web search API |
-| **Bing** | Not required | Fallback option |
+| Provider             | API Key                | Notes                            |
+| -------------------- | ---------------------- | -------------------------------- |
+| **SearXNG**    | Not required           | Self-hosted, included by default |
+| **Perplexity** | `PERPLEXITY_API_KEY` | AI-powered search                |
+| **Tavily**     | `TAVILY_API_KEY`     | Web search API                   |
+| **Bing**       | Not required           | Fallback option                  |
 
 > **Tip**: Run `make setup-env` to configure API keys. Use `make services-up SKIP_SEARXNG=true` if you only want to use external providers.
 
 **Check service status:**
+
 ```bash
 make services-status
 ```
 
 **View logs:**
+
 ```bash
 make services-logs
 ```
 
 **Stop services:**
+
 ```bash
 make services-down
 ```
@@ -157,18 +163,36 @@ make restore-package
 
 This will restore the complete knowledge graph built from marketing textbooks, ready for querying.
 
+<details>
+<summary>📚 Knowledge Graph Contents (after restore)</summary>
+
+The pre-built knowledge graph contains **27,143 entity nodes** and **30,448 relationships** extracted from 5 authoritative marketing textbooks:
+
+| Book                                                     | Author                        | Knowledge Domains                                                                                        |
+| -------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Principles of Marketing** (17th Ed)              | Philip Kotler, Gary Armstrong | Marketing fundamentals, STP framework, marketing mix (4Ps), consumer behavior, market research           |
+| **Strategic Brand Management**                     | Kevin Lane Keller             | CBBE Pyramid, brand equity measurement, Brand Value Chain, brand positioning, brand portfolio strategy   |
+| **Positioning: The Battle for Your Mind**          | Al Ries & Jack Trout          | Mental positioning, competitive differentiation, category strategy, laddering techniques                 |
+| **How Brands Grow: What Marketers Don't Know**     | Byron Sharp                   | Evidence-based marketing laws, double jeopardy, mental & physical availability, Distinctive Brand Assets |
+| **Influence: The Psychology of Persuasion** (2021) | Robert B. Cialdini            | 7 principles of persuasion (reciprocity, commitment, social proof, authority, liking, scarcity, unity)   |
+
+</details>
+
 <p align="center">
   <img src="media/knowledge_graph_screenshot.png" alt="BrandMind AI Knowledge Graph" width="800">
 </p>
 
-### 7. Build Knowledge Graph (Optional)
+### 7. Extend Knowledge Graph (Optional)
 
-If you want to build the knowledge graph from your own documents:
+The knowledge graph pipeline is **additive** — each document you process adds new entities and relationships to the existing graph. This means:
+
+- **If you restored from backup (Step 6)**: New documents will extend the pre-built knowledge graph with additional domain knowledge.
+- **If you skipped Step 6**: The pipeline will build a fresh knowledge graph from scratch using your documents.
 
 #### Step 1: Prepare your documents
 
 1. Place your PDF files in `data/raw_documents/`
-2. Create/update `data/raw_documents/document_metadata.json`:
+2. Add your document to `data/raw_documents/document_metadata.json`:
    ```json
    [
      {
@@ -199,20 +223,30 @@ Output will be saved to `data/parsed_documents/<DocumentName_Timestamp>/page_*.m
 
 #### Step 3: Build knowledge graph
 
-```bash
-# Run all stages (folder name from Step 2 output)
-build-kg --folder YOUR_PARSED_FOLDER_NAME --stage all
+We recommend running each stage individually for better control over the build process. If a stage fails, you can re-run just that stage instead of restarting from the beginning:
 
-# Or run individual stages:
+```bash
+# Recommended: run stages individually (folder name from Step 2 output)
 build-kg --folder YOUR_PARSED_FOLDER_NAME --stage mapping
 build-kg --folder YOUR_PARSED_FOLDER_NAME --stage chunking
 build-kg --folder YOUR_PARSED_FOLDER_NAME --stage extraction
 build-kg --folder YOUR_PARSED_FOLDER_NAME --stage validation
 build-kg --folder YOUR_PARSED_FOLDER_NAME --stage indexing
 build-kg --folder YOUR_PARSED_FOLDER_NAME --stage post-process
+
+# Or run all stages at once (not recommended for large documents)
+build-kg --folder YOUR_PARSED_FOLDER_NAME --stage all
 ```
 
-> **Note**: Building the full knowledge graph requires significant time and API calls. Use `--resume` flag to continue from a checkpoint if interrupted.
+> **Note**: Building the knowledge graph requires significant time and API calls. The `extraction` stage supports `--resume` to continue from a checkpoint if interrupted.
+
+#### Step 4: Backup your knowledge graph
+
+After successfully extending the knowledge graph, it's recommended to create a backup. This allows you to restore the data on another machine or recover if something goes wrong:
+
+```bash
+make backup-package
+```
 
 ### 8. Running the CLI
 
@@ -306,12 +340,12 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 When contributing, please follow a rebase workflow rather than a merge workflow for your Pull Requests to maintain a clean commit history.
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)
-4.  Rebase your branch onto the target branch (e.g., `main`)
-5.  Push to the Branch (`git push --force-with-lease origin feature/AmazingFeature`)
-6.  Open a Pull Request
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)
+4. Rebase your branch onto the target branch (e.g., `main`)
+5. Push to the Branch (`git push --force-with-lease origin feature/AmazingFeature`)
+6. Open a Pull Request
 
 ## 📄 License
 

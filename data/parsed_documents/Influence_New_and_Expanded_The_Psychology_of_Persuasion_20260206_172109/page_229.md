@@ -1,0 +1,15 @@
+# Page 229
+
+**Document Title**: Influence: The Psychology of Persuasion (New and Expanded Edition)
+**Author**: Robert B. Cialdini
+**Original File**: data/raw_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion.pdf
+**Page Number**: 229/397
+**Processing Time**: 2026-02-06T17:23:26.326477
+
+---
+
+Sometimes the limited-number information was true, sometimes wholly false. In each instance, however, the intent was to convince customers of an item’s scarcity and thereby increase its immediate value in their eyes. I developed a grudging admiration for the practitioners who made this simple device work in a multitude of ways and styles. I was most impressed with a particular version that extended the basic approach to its logical extreme by selling a piece of merchandise at its scarcest point—when it seemingly could no longer be had. The tactic was played to perfection in one appliance store I investigated, where 30 to 50 percent of the stock was regularly listed on sale. Suppose a couple in the store seemed moderately interested in a certain sale item. There are all sorts of cues that tip off such interest—a closer-than-normal examination of the appliance, a casual look at any instruction booklets associated with the appliance, and discussions held in front of the appliance. After observing the couple so engaged, a salesperson might approach and say, “I see you’re interested in this model here. But, unfortunately, I sold it to another couple not more than twenty minutes ago. And I believe it was our last one.”
+
+The customers’ disappointment registers unmistakably. Because of its lost availability, the appliance suddenly becomes more attractive. Typically, one of the customers asks if there is any chance that an unsold model still exists in the store’s back room or warehouse or other location. “Well,” the salesperson allows, “that is possible, and I’d be willing to check. But do I understand that this is the model you want, and if I can get it for you at this price, you’ll take it?” Therein lies the beauty of the technique. In accord with the scarcity principle, the customers are asked to commit to buying the appliance when it looks least available and therefore most desirable. Many customers do agree to purchase at this singularly vulnerable time. Thus, when the salesperson (invariably) returns with the news that an additional supply of the appliance has been found, it is also with a pen and sales contract in hand. The information that the desired model is in good supply may actually make some customers find it less attractive again, although by then the business transaction has progressed too far for most people to back out. The purchase decision made and committed to publicly at an earlier point still holds. They buy.
+
+When I speak to business groups about the scarcity principle, I stress the importance of avoiding the use of such tricks as providing false limited-number information. In response, I regularly get a version of the question “But what if we don’t have a limited supply of what we offer.

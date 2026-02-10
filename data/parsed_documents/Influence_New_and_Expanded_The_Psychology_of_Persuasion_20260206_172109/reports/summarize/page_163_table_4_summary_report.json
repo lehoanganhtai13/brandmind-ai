@@ -1,0 +1,10 @@
+{
+  "table_id": "page_163_table_4",
+  "page_number": 163,
+  "original_table_html": "<table>\n<thead>\n<tr>\n<th colspan=\"11\">Number of motor vehicle fatalities</th>\n</tr>\n<tr>\n<th>-2</th><th>-1</th><th>0</th><th>+1</th><th>+2</th><th>+3</th><th>+4</th><th>+5</th><th>+6</th><th>+7</th><th>+8</th><th>+9</th><th>+10</th><th>+11</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>235</td><td>245</td><td>255</td><td>265</td><td>275</td><td>285</td><td>295</td><td>305</td><td>315</td><td>325</td><td>335</td><td>0</td><td>0</td><td>0</td>\n</tr>\n</tbody>\n</table>",
+  "summary_markdown": "This data presents the number of motor vehicle fatalities over a period of 13 years, indicated by time points -2 through +11. The structure is a simple time-series observation, showing a consistent increase in fatalities from year -2 (235) to year +11 (335). Specifically, fatalities rose by 10 units each year from year -2 to year +9, reaching a peak of 335. For the subsequent years, +10, +11, and +12, the number of fatalities dropped to zero, suggesting a significant change or cessation of reporting in the later period. The overall trend observed is a steady, linear increase in motor vehicle fatalities for the initial 12-year span, followed by an abrupt and complete halt.",
+  "processing_time": 1.5403590202331543,
+  "was_merged": false,
+  "source_chain_id": null,
+  "timestamp": "2026-02-06T17:23:38.346006"
+}

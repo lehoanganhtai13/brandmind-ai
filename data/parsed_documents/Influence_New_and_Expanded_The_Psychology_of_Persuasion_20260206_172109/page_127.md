@@ -1,0 +1,15 @@
+# Page 127
+
+**Document Title**: Influence: The Psychology of Persuasion (New and Expanded Edition)
+**Author**: Robert B. Cialdini
+**Original File**: data/raw_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion.pdf
+**Page Number**: 127/397
+**Processing Time**: 2026-02-06T17:23:26.319165
+
+---
+
+*Science-based recommendations*: During the COVID-19 outbreak of 2020, researchers examined the reasons Japanese citizens employed to decide how often to wear face masks, as urged by the country’s health scientists; although multiple reasons were measured—such as perceived severity of the disease, likelihood mask-wearing would protect oneself from infection, likelihood mask-wearing would protect others from infection—only one made a major difference in mask-wearing frequency: seeing other people wearing masks. *Environmental action*: Observers who perceive that many others are acting to preserve or protect the environment by recycling or conserving energy or saving water in their homes then act similarly.
+
+In the arena of environmental action, social proof works on organizations too. Many governments expend significant resources regulating, monitoring, and sanctioning companies that pollute our air and water; these expenditures often appear wasted on some of the offenders who either flout the regulations altogether or are willing to pay fines that are smaller than the expense of compliance. But certain nations have developed cost-effective programs that work by firing up the (nonpolluting) engine of social proof. They initially rate the environmental performance of polluting firms within an industry and then publicize the ratings so all companies in that industry can see where they stand relative to their peers. The improvements have been dramatic—upwards of 30 percent—almost all of which have come from changes made by the relatively heavy polluters, who recognized how poorly they’d been doing compared with their contemporaries.
+
+Researchers have also found that procedures based in social proof can work early in life—sometimes with astounding results. One psychologist in particular, Albert Bandura, led the way in developing such procedures to eliminate undesirable behavior. Bandura and his colleagues have shown how people suffering from phobias can be rid of these extreme fears in an amazingly simple fashion. For instance, in an initial study, nursery-school-aged children, chosen because they were terrified of dogs, merely watched a little boy playing happily with a dog for twenty minutes a day. This exhibition produced such marked changes in the reactions of the fearful children that after only four days, 67 percent of them were willing to climb into a playpen with a dog and remain confined there petting and scratching the dog while everyone else left the room. Moreover, when the researchers tested the children’s fear levels again, one month later, they found the improvement had not diminished during that time; in fact, the children were more willing than ever to interact with dogs.

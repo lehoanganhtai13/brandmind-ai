@@ -1,0 +1,13 @@
+# Page 42
+
+**Document Title**: Influence: The Psychology of Persuasion (New and Expanded Edition)
+**Author**: Robert B. Cialdini
+**Original File**: data/raw_documents/Influence_New_and_Expanded_The_Psychology_of_Persuasion.pdf
+**Page Number**: 42/397
+**Processing Time**: 2026-02-06T17:23:26.310884
+
+---
+
+* At the top, elected officials engage in the exchange of favors that makes politics the place of strange bedfellows, indeed. The out-of-character vote of one of our elected representatives on a bill can often be understood as a favor returned to the bill’s sponsor. Political experts were amazed at Lyndon Johnson’s success in getting so many of his programs through Congress during his early administration; even members of Congress who were thought to be strongly opposed to the programs were voting for them. Close examination by analysts, such as Robert Caro in his influential biography of Johnson (Caro, 2012), has found the cause to be not so much Johnson’s political savvy as the large score of favors he had been able to provide to other legislators during his many years of power in the US House and Senate. As president, he was able to produce a truly remarkable amount of legislation in a short time by calling in those favors. It is interesting that this same process may account for the problems some subsequent presidents—Carter, Clinton, Obama, and Trump—had in getting their programs through Congress. They came to the presidency from outside the Capitol Hill establishment and campaigned on their outside-Washington identities, saying that they were indebted to no one in Washington. Much of their early legislative difficulties may be traced to the fact that no one there was indebted to *them*.
+
+* At another level, we can see the recognized strength of the reciprocity rule in the desire of corporations and individuals to provide judicial and legislative officials with gifts and favors and in the series of legal restrictions against such gifts and favors. Even with legitimate political contributions, the stockpiling of obligations often belies the stated purpose of supporting a favorite candidate. One look at the lists of companies and organizations that contribute to the campaigns of *both* major candidates in important elections gives evidence of such motives. A skeptic, requiring direct evidence of the quid pro quo expected by political contributors, might look to the remarkably bald-faced admission by businessman Roger Tamraz at congressional hearings on campaign-finance reform. When asked if he felt he received a good return on his contribution of $300,000, he smiled and replied, “I think next time, I’ll give $600,000.” Honesty of this sort is rare in politics.
