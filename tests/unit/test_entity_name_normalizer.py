@@ -9,6 +9,8 @@ import asyncio
 import sys
 from pathlib import Path
 
+import pytest
+
 # Add project paths
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
@@ -62,9 +64,11 @@ def test_case_1_detection_accuracy():
         print(f"  {status} '{name}': Expected {expected}, Got {result}")
 
     print(f"\nResult: {passed}/{len(test_cases)} passed")
-    return failed == 0
+    assert failed == 0, f"{failed} detection test(s) failed"
 
 
+@pytest.mark.asyncio
+@pytest.mark.skip(reason="Requires live LLM API call — run manually")
 async def test_case_2_llm_normalization():
     """
     Test Case 2: LLM Normalization
@@ -180,9 +184,9 @@ def test_case_3_data_models():
         print(f"  ✅ Default values work correctly")
     except Exception as e:
         print(f"  ❌ Default values failed: {e}")
-        return False
+        assert False, f"Default values failed: {e}"
 
-    return True
+    assert True
 
 
 def test_case_4_edge_cases():
@@ -224,7 +228,7 @@ def test_case_4_edge_cases():
         print(f"  {status} '{name}': Expected {expected}, Got {result}")
 
     print(f"\nResult: {passed}/{len(edge_cases)} passed")
-    return failed == 0
+    assert failed == 0, f"{failed} edge case test(s) failed"
 
 
 async def main():
