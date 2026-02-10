@@ -43,7 +43,7 @@ def create_cartographer_agent(
     - StopCheck hook for ensuring tasks are completed
     - ContextEditing and Summarization middlewares for managing model context
     - LogModelMessage middleware for logging model messages
-    - Gemini 2.5 Pro with thinking mode by default
+    - Gemini 3 Flash with thinking mode by default
 
     Args:
         document_folder: Absolute path to parsed document folder
