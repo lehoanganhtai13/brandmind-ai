@@ -221,3 +221,5 @@ data/raw_documents/*.pdf
 
 # Agent config
 .agent
+# Gemini CLI Agent
+.gemini/
