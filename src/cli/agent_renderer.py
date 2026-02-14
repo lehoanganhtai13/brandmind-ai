@@ -17,6 +17,7 @@ from rich.tree import Tree
 from shared.agent_middlewares.callback_types import (
     BaseAgentEvent,
     ModelLoadingEvent,
+    StreamingTokenEvent,
     ThinkingEvent,
     TodoUpdateEvent,
     ToolCallEvent,
@@ -44,6 +45,7 @@ class AgentOutputRenderer:
         self._todos: list[dict[str, Any]] = []
         self._live: Live | None = None
         self._is_loading: bool = False
+        self._streaming_text: str = ""
 
     def start(self) -> None:
         """Start the live display."""
@@ -150,6 +152,14 @@ class AgentOutputRenderer:
         elif isinstance(event, TodoUpdateEvent):
             self._todos = event.todos
 
+        elif isinstance(event, StreamingTokenEvent):
+            # Handle streaming token
+            if event.done:
+                # Reset buffer when done
+                self._streaming_text = ""
+            else:
+                self._streaming_text += event.token
+
         elif isinstance(event, ModelLoadingEvent):
             self._is_loading = event.loading
 
@@ -243,6 +253,14 @@ class AgentOutputRenderer:
                     tree.add(f"[green]Result:[/] {result_preview}")
 
                 elements.append(tree)
+
+        # === Streaming answer (if currently streaming) ===
+        if self._streaming_text:
+            elements.append(Text(""))  # Separator
+            elements.append(Text("═" * 60, style="bold #6DB3B3"))
+            elements.append(Text("\n📝 Answer", style="bold #6DB3B3"))
+            elements.append(Markdown(self._streaming_text))
+            elements.append(Text("═" * 60, style="bold #6DB3B3"))
 
         # === Other logs ===
         if self._other_logs:

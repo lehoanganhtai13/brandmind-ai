@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import pyperclip
+from langchain_core.messages import AIMessageChunk
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import ScrollableContainer
@@ -20,6 +21,7 @@ from textual.widgets import Header, Static
 
 from cli.tui.widgets.banner import BannerWidget
 from cli.tui.widgets.input_bar import InputBar
+from shared.agent_middlewares.callback_types import StreamingTokenEvent
 
 if TYPE_CHECKING:
     from cli.tui.tui_renderer import TUIRenderer
@@ -321,24 +323,57 @@ class BrandMindApp(App[None]):
                     if self._cancel_requested:
                         return
 
-                    # Execute agent query
-                    result = await agent.ainvoke(
+                    # Stream agent response token-by-token
+                    accumulated_answer = ""
+                    async for message_chunk, metadata in agent.astream(
                         {"messages": [{"role": "user", "content": query}]},
                         {"recursion_limit": 100},
-                    )
+                        stream_mode="messages",
+                    ):
+                        # Check cancellation during streaming
+                        if self._cancel_requested:
+                            break
+
+                        # Only process AI message chunks (not tool messages)
+                        if isinstance(message_chunk, AIMessageChunk):
+                            # Skip messages with tool calls - they are intermediate
+                            # responses, not the final answer
+                            if message_chunk.tool_calls:
+                                continue
+
+                            # Extract token text from message chunk
+                            token_text = ""
+                            if isinstance(message_chunk.content, str):
+                                token_text = message_chunk.content
+                            elif isinstance(message_chunk.content, list):
+                                for part in message_chunk.content:
+                                    if (
+                                        isinstance(part, dict)
+                                        and part.get("type") == "text"
+                                    ):
+                                        token_text += part.get("text", "")
+
+                            if token_text:
+                                accumulated_answer += token_text
+                                renderer.handle_event(
+                                    StreamingTokenEvent(token=token_text)
+                                )
+
+                    # Send done signal to finalize streaming (only if not cancelled)
+                    if not self._cancel_requested:
+                        renderer.handle_event(StreamingTokenEvent(token="", done=True))
 
                     # Check cancellation after execution
                     if self._cancel_requested:
                         return
 
-                    # Extract answer from result
-                    answer = self._extract_answer(result)
+                    # Set final answer
+                    answer = accumulated_answer
 
-                # Set final answer (only if not cancelled)
+                # Store final answer for history (only if not cancelled)
                 if not self._cancel_requested:
                     final_answer = answer if answer else "No response generated"
                     self._last_answer = final_answer
-                    renderer.set_answer(final_answer)
 
             elif mode == "search-kg":
                 # Direct KG search without agent

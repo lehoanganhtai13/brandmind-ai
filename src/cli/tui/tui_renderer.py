@@ -18,6 +18,7 @@ from textual.widgets import Markdown, Static
 from shared.agent_middlewares.callback_types import (
     BaseAgentEvent,
     ModelLoadingEvent,
+    StreamingTokenEvent,
     ThinkingEvent,
     TodoUpdateEvent,
     ToolCallEvent,
@@ -107,6 +108,11 @@ class TUIRenderer:
         # Cancellation flag - ignore events after cancel
         self._cancelled: bool = False
 
+        # Streaming answer state
+        self._streaming_widget: Markdown | None = None
+        self._streaming_buffer: str = ""
+        self._is_streaming_answer: bool = False
+
     def show_query(self, query: str) -> None:
         """Append query to main body."""
         widget = Static(f"\n[dim]>[/dim] [bold]{query}[/bold]")
@@ -157,6 +163,8 @@ class TUIRenderer:
             self._on_tool_result(event)
         elif isinstance(event, TodoUpdateEvent):
             self._on_todo_update(event.todos)
+        elif isinstance(event, StreamingTokenEvent):
+            self._on_streaming_token(event)
 
     def _on_model_loading(self, loading: bool) -> None:
         """Handle model loading state - show/hide spinner."""
@@ -168,6 +176,11 @@ class TUIRenderer:
 
     def _on_thinking(self, content: str) -> None:
         """Append thinking block with Markdown rendering."""
+        # Ignore thinking events while streaming final answer
+        # to prevent them from appearing below the answer widget
+        if self._is_streaming_answer:
+            return
+
         # Deduplication
         if self._last_thinking:
             if content.startswith(self._last_thinking[:50]):
@@ -471,6 +484,47 @@ class TUIRenderer:
             result = data.get("result")
             if result:
                 widget.update(self._get_result_display(result))
+
+    def _on_streaming_token(self, event: StreamingTokenEvent) -> None:
+        """Handle streaming token - append to answer area progressively.
+
+        This method enables real-time token-by-token rendering of the agent's
+        final answer. On the first token, it mounts the answer header and a
+        Markdown widget. Subsequent tokens update the widget in-place for
+        smooth progressive display.
+
+        Args:
+            event: StreamingTokenEvent containing the token text and done flag
+        """
+        if event.done:
+            # Stream finished - finalize and reset state
+            self._streaming_widget = None
+            self._streaming_buffer = ""
+            self._is_streaming_answer = False  # Re-enable thinking display
+            return
+
+        # Hide spinner when first token arrives
+        self.hide_spinner()
+
+        # Set flag to ignore thinking events during streaming
+        self._is_streaming_answer = True
+
+        # Accumulate token text
+        self._streaming_buffer += event.token
+
+        if not self._streaming_widget:
+            # First token - mount answer header and content widget
+            header = Static("\n[bold #6DB3B3]━━━ 📝 Answer ━━━━━━━━[/bold #6DB3B3]\n")
+            self.main_body.mount(header)
+
+            # Create Markdown widget with initial content
+            self._streaming_widget = Markdown(self._streaming_buffer)
+            self.main_body.mount(self._streaming_widget)
+        else:
+            # Subsequent tokens - update widget in place
+            self._streaming_widget.update(self._streaming_buffer)
+
+        self._scroll()
 
     def _scroll(self) -> None:
         """Scroll to bottom."""

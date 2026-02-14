@@ -60,6 +60,29 @@ class TodoUpdateEvent(BaseAgentEvent):
     )
 
 
+class StreamingTokenEvent(BaseAgentEvent):
+    """Event emitted for each streamed token from the model's final response.
+
+    Used to enable real-time token-by-token display of the agent's answer
+    in both CLI and TUI renderers. This event is emitted during the streaming
+    phase of the agent's response, allowing progressive rendering of the final
+    answer as tokens arrive.
+
+    Attributes:
+        token: The text chunk from the model's streaming output. Can be a single
+            character, word, or phrase depending on the model's streaming behavior.
+        done: Whether this is the final token (stream complete). When True, this
+            signals that the streaming phase has ended and no more tokens will
+            be received for the current response.
+    """
+
+    type: Literal["streaming_token"] = "streaming_token"
+    token: str = Field(..., description="Text chunk from model streaming output")
+    done: bool = Field(
+        default=False, description="True if this is the final token (stream ended)"
+    )
+
+
 class ModelLoadingEvent(BaseAgentEvent):
     """Event emitted when model is busy/loading."""
 

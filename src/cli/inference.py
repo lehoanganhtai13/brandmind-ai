@@ -72,9 +72,9 @@ def create_qa_agent(
     # Initialize Gemini model
     model = ChatGoogleGenerativeAI(
         google_api_key=SETTINGS.GEMINI_API_KEY,
-        model="gemini-2.5-flash-lite",
-        temperature=0.1,
-        thinking_budget=2000,
+        model="gemini-3-flash-preview",
+        temperature=1.0,
+        thinking_level="high",
         max_output_tokens=5000,
         include_thoughts=True,
     )
@@ -222,39 +222,42 @@ async def run_ask_mode(question: str, verbose: bool = False) -> None:
                     on_tool_start=set_current_tool,  # Inject hook
                     on_tool_end=reset_current_tool,  # Inject hook
                 )
-                result = await agent.ainvoke(
-                    {"messages": [{"role": "user", "content": question}]}
-                )
-                # Extract answer from result
-                answer = ""  # Default empty answer
-                if result and "messages" in result:
-                    for msg in reversed(result["messages"]):
-                        if hasattr(msg, "content") and msg.content:
-                            # Get text content from message
-                            content = msg.content
-                            if isinstance(content, list):
-                                for part in content:
-                                    if (
-                                        isinstance(part, dict)
-                                        and part.get("type") == "text"
-                                    ):
-                                        answer = part.get("text", "")
-                                        break
-                            elif isinstance(content, str):
-                                answer = content
-                            if answer:
-                                break
 
-        # Show final answer (after both renderer and log capture stop)
-        console.print()
-        console.print(
-            Panel(
-                Markdown(answer),
-                title="📝 Answer",
-                border_style="green",
-                padding=(1, 2),
-            )
-        )
+                # Stream agent response token-by-token for real-time display
+                from langchain_core.messages import AIMessageChunk
+
+                from shared.agent_middlewares.callback_types import StreamingTokenEvent
+
+                accumulated_answer = ""
+                async for message_chunk, metadata in agent.astream(
+                    {"messages": [{"role": "user", "content": question}]},
+                    stream_mode="messages",
+                ):
+                    # Only process AI message chunks (not tool messages)
+                    if isinstance(message_chunk, AIMessageChunk):
+                        # Skip messages with tool calls - they are intermediate
+                        # responses, not the final answer
+                        if message_chunk.tool_calls:
+                            continue
+
+                        # Extract token text from message chunk
+                        token_text = ""
+                        if isinstance(message_chunk.content, str):
+                            token_text = message_chunk.content
+                        elif isinstance(message_chunk.content, list):
+                            for part in message_chunk.content:
+                                if (
+                                    isinstance(part, dict)
+                                    and part.get("type") == "text"
+                                ):
+                                    token_text += part.get("text", "")
+
+                        if token_text:
+                            accumulated_answer += token_text
+                            renderer.handle_event(StreamingTokenEvent(token=token_text))
+
+                # Send done signal to finalize streaming
+                renderer.handle_event(StreamingTokenEvent(token="", done=True))
     except Exception as e:
         console.print(Panel(f"[red]{e}[/red]", title="❌ Error", border_style="red"))
         logger.exception("Q&A Agent failed")

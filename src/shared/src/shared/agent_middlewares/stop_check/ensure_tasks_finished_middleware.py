@@ -474,34 +474,43 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
             logger.warning("No message found in response")
             return False
 
-        if last_ai_message.content is not None and (
-            (
-                isinstance(last_ai_message.content, list)
-                and len(last_ai_message.content) > 0
-                and isinstance(last_ai_message.content[0], dict)
-                and "text" in last_ai_message.content[0]
-                and isinstance(last_ai_message.content[0]["text"], str)
-                and last_ai_message.content[0]["text"].strip() != ""
-            )
-            or (
+        if last_ai_message.content is not None:
+            # Check string content
+            if (
                 isinstance(last_ai_message.content, str)
                 and last_ai_message.content.strip() != ""
-            )
-        ):
-            return False  # Has content, not stopping
-        elif (
+            ):
+                return False  # Has text content, not stopping
+
+            # Check list content - iterate ALL items to find text
+            # Thinking models put thinking blocks before text blocks,
+            # so we must check all items, not just content[0]
+            if isinstance(last_ai_message.content, list):
+                for part in last_ai_message.content:
+                    if (
+                        isinstance(part, dict)
+                        and part.get("type") == "text"
+                        and isinstance(part.get("text"), str)
+                        and part["text"].strip() != ""
+                    ):
+                        return False  # Has text content, not stopping
+
+        # Check for function calls
+        if (
             last_ai_message.additional_kwargs is not None
             and "function_call" in last_ai_message.additional_kwargs
         ):
             return False  # Has function call, not stopping
-        else:
-            if last_ai_message.response_metadata is not None:
-                metadata = last_ai_message.response_metadata
-                if metadata.get("finish_reason") == "STOP":
-                    # Model indicated stopping
-                    return True
-            # Default case: not stopping
-            return False
+
+        # No content and no function call - check finish reason
+        if last_ai_message.response_metadata is not None:
+            metadata = last_ai_message.response_metadata
+            if metadata.get("finish_reason") == "STOP":
+                # Model indicated stopping
+                return True
+
+        # Default case: not stopping
+        return False
 
     def _get_incomplete_tasks(self, todos: List[TodoItem]) -> Dict[str, List[TodoItem]]:
         """
