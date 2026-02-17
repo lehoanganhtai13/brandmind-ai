@@ -10,6 +10,7 @@ from typing import Any
 from rich.console import Console, Group
 from rich.live import Live
 from rich.markdown import Markdown
+from rich.panel import Panel
 from rich.spinner import Spinner
 from rich.text import Text
 from rich.tree import Tree
@@ -17,6 +18,7 @@ from rich.tree import Tree
 from shared.agent_middlewares.callback_types import (
     BaseAgentEvent,
     ModelLoadingEvent,
+    StreamingThinkingEvent,
     StreamingTokenEvent,
     ThinkingEvent,
     TodoUpdateEvent,
@@ -46,6 +48,8 @@ class AgentOutputRenderer:
         self._live: Live | None = None
         self._is_loading: bool = False
         self._streaming_text: str = ""
+        self._streaming_thinking: str = ""
+        self._has_streamed_thinking: bool = False
 
     def start(self) -> None:
         """Start the live display."""
@@ -75,6 +79,11 @@ class AgentOutputRenderer:
         Events are added to ordered list for chronological display.
         """
         if isinstance(event, ThinkingEvent):
+            # Suppress middleware ThinkingEvent if thinking was already streamed
+            # This prevents duplicate display when StreamingThinkingEvent was used
+            if self._has_streamed_thinking:
+                return
+
             # Deduplication: Check if this thinking content is a version
             # (prefix/suffix) of any existing thinking block to prevent replays.
             for ev in self._events:
@@ -111,6 +120,26 @@ class AgentOutputRenderer:
                 }
             )
             self._refresh()
+
+        elif isinstance(event, StreamingThinkingEvent):
+            # Handle streaming thinking tokens for progressive display
+            if event.done:
+                # Thinking stream finished - move to events list
+                if self._streaming_thinking:
+                    self._events.append(
+                        {
+                            "type": "thinking",
+                            "content": self._streaming_thinking,
+                        }
+                    )
+                # Reset streaming state
+                self._streaming_thinking = ""
+                self._has_streamed_thinking = True
+                self._refresh()
+            else:
+                # Accumulate thinking tokens
+                self._streaming_thinking += event.token
+                self._refresh()
 
         elif isinstance(event, ToolCallEvent):
             if event.tool_name == "write_todos":
@@ -155,8 +184,14 @@ class AgentOutputRenderer:
         elif isinstance(event, StreamingTokenEvent):
             # Handle streaming token
             if event.done:
+                # Persist the final answer to events history so it remains visible
+                if self._streaming_text:
+                    self._events.append(
+                        {"type": "answer", "content": self._streaming_text}
+                    )
                 # Reset buffer when done
                 self._streaming_text = ""
+                # Note: We do NOT reset _has_streamed_thinking here.
             else:
                 self._streaming_text += event.token
 
@@ -164,6 +199,12 @@ class AgentOutputRenderer:
             self._is_loading = event.loading
 
         self._refresh()
+
+    def reset_streaming_state(self) -> None:
+        """Reset streaming state variables for a new interaction."""
+        self._has_streamed_thinking = False
+        self._streaming_thinking = ""
+        self._streaming_text = ""
 
     def add_tool_log(self, tool_name: str, message: str) -> None:
         """Add log message for the currently active tool instance."""
@@ -204,6 +245,7 @@ class AgentOutputRenderer:
         for event in self._events:
             if event["type"] == "thinking":
                 # Thinking block with header
+                elements.append(Text(""))  # Spacing before thinking
                 thinking_header = Text()
                 thinking_header.append("● Agent thinking", style="bold magenta")
                 elements.append(thinking_header)
@@ -213,9 +255,21 @@ class AgentOutputRenderer:
                 if len(event["content"]) > 800:
                     content += "..."
                 elements.append(Markdown(content))
-                elements.append(Text(""))  # Spacing
+
+            elif event["type"] == "answer":
+                # Final answer block
+                elements.append(Text(""))  # Spacing before answer
+                elements.append(
+                    Panel(
+                        Markdown(event["content"]),
+                        title="📝 Answer",
+                        border_style="green",
+                    )
+                )
+                elements.append(Text(""))
 
             elif event["type"] == "tool":
+                elements.append(Text(""))  # Spacing before tool
                 tool_name = event["name"]
 
                 # Build tree for tool call
@@ -253,6 +307,14 @@ class AgentOutputRenderer:
                     tree.add(f"[green]Result:[/] {result_preview}")
 
                 elements.append(tree)
+
+        # === Streaming thinking (if currently accumulating) ===
+        if self._streaming_thinking:
+            elements.append(Text(""))  # Spacing before thinking
+            thinking_header = Text()
+            thinking_header.append("● Agent thinking (streaming)", style="bold magenta")
+            elements.append(thinking_header)
+            elements.append(Markdown(self._streaming_thinking))
 
         # === Streaming answer (if currently streaming) ===
         if self._streaming_text:

@@ -226,35 +226,91 @@ async def run_ask_mode(question: str, verbose: bool = False) -> None:
                 # Stream agent response token-by-token for real-time display
                 from langchain_core.messages import AIMessageChunk
 
-                from shared.agent_middlewares.callback_types import StreamingTokenEvent
+                from shared.agent_middlewares.callback_types import (
+                    StreamingThinkingEvent,
+                    StreamingTokenEvent,
+                )
 
                 accumulated_answer = ""
+                thinking_done = False  # Track if thinking phase has completed
+
+                # Reset streaming state for new query
+                renderer.reset_streaming_state()
+
                 async for message_chunk, metadata in agent.astream(
                     {"messages": [{"role": "user", "content": question}]},
                     stream_mode="messages",
                 ):
                     # Only process AI message chunks (not tool messages)
                     if isinstance(message_chunk, AIMessageChunk):
-                        # Skip messages with tool calls - they are intermediate
-                        # responses, not the final answer
+                        # Extract both thinking and text tokens from message chunk
+                        # Models with thinking capability emit content as list with
+                        # multiple parts: thinking blocks first, then text blocks
+                        if isinstance(message_chunk.content, list):
+                            # Complex content - may contain thinking + text
+                            for part in message_chunk.content:
+                                if isinstance(part, dict):
+                                    # Extract thinking tokens
+                                    if part.get("type") == "thinking":
+                                        # New block (e.g. multi-step)
+                                        if thinking_done:
+                                            thinking_done = False
+
+                                        thinking_text = part.get("thinking", "")
+                                        if thinking_text:
+                                            renderer.handle_event(
+                                                StreamingThinkingEvent(
+                                                    token=thinking_text
+                                                )
+                                            )
+
+                                    # Extract text tokens
+                                    elif part.get("type") == "text":
+                                        token_text = part.get("text", "")
+                                        if token_text:
+                                            # When first text arrives, finalize thinking
+                                            if not thinking_done:
+                                                renderer.handle_event(
+                                                    StreamingThinkingEvent(
+                                                        token="", done=True
+                                                    )
+                                                )
+                                                thinking_done = True
+                                            accumulated_answer += token_text
+                                            renderer.handle_event(
+                                                StreamingTokenEvent(token=token_text)
+                                            )
+
+                        elif isinstance(message_chunk.content, str):
+                            # Simple string content - just text
+                            token_text = message_chunk.content
+                            if token_text:
+                                # Finalize thinking if we haven't yet
+                                if not thinking_done:
+                                    renderer.handle_event(
+                                        StreamingThinkingEvent(token="", done=True)
+                                    )
+                                    thinking_done = True
+                                accumulated_answer += token_text
+                                renderer.handle_event(
+                                    StreamingTokenEvent(token=token_text)
+                                )
+
+                        # Handle messages with tool calls - they are intermediate
+                        # responses, not the final answer.
+                        # Important: If we encounter tool calls, thinking is done.
                         if message_chunk.tool_calls:
+                            if not thinking_done:
+                                renderer.handle_event(
+                                    StreamingThinkingEvent(token="", done=True)
+                                )
+                                thinking_done = True
                             continue
 
-                        # Extract token text from message chunk
-                        token_text = ""
-                        if isinstance(message_chunk.content, str):
-                            token_text = message_chunk.content
-                        elif isinstance(message_chunk.content, list):
-                            for part in message_chunk.content:
-                                if (
-                                    isinstance(part, dict)
-                                    and part.get("type") == "text"
-                                ):
-                                    token_text += part.get("text", "")
-
-                        if token_text:
-                            accumulated_answer += token_text
-                            renderer.handle_event(StreamingTokenEvent(token=token_text))
+                # Ensure thinking is finalized if stream ends without text/tools
+                if not thinking_done:
+                    renderer.handle_event(StreamingThinkingEvent(token="", done=True))
+                    thinking_done = True
 
                 # Send done signal to finalize streaming
                 renderer.handle_event(StreamingTokenEvent(token="", done=True))

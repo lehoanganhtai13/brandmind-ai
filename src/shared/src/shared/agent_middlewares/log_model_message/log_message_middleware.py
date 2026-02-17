@@ -334,10 +334,11 @@ class LogModelMessageMiddleware(AgentMiddleware):
                                     )
 
                             # Emit event via callback (Pydantic model)
-                            if self.callback:
+                            # Only if log_thinking is enabled!
+                            if self.callback and self.log_thinking:
                                 self.callback(ThinkingEvent(content=truncated_thinking))
                             # Fallback to loguru
-                            elif self.log_thinking:
+                            elif self.log_thinking and not self.callback:
                                 logger.info(f"💭 Model Thinking:\n{truncated_thinking}")
 
                     # Log text responses

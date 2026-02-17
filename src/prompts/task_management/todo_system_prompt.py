@@ -43,7 +43,7 @@ Skip using this tool when:
 3.  The task can be completed in less than 3 trivial steps
 4.  The task is purely conversational or informational
 
-**NOTE** that you should not use this tool if there is only one trivial task to do. In this case you are better off just doing the task directly.
+**NOTE** that you should not use this tool if there is only **ONE** trivial task to do. In this case you are better off just doing the task directly.
 
 ## Task States and Management
 

@@ -18,6 +18,7 @@ from textual.widgets import Markdown, Static
 from shared.agent_middlewares.callback_types import (
     BaseAgentEvent,
     ModelLoadingEvent,
+    StreamingThinkingEvent,
     StreamingTokenEvent,
     ThinkingEvent,
     TodoUpdateEvent,
@@ -113,6 +114,11 @@ class TUIRenderer:
         self._streaming_buffer: str = ""
         self._is_streaming_answer: bool = False
 
+        # Streaming thinking state
+        self._streaming_thinking_widget: Markdown | None = None
+        self._streaming_thinking_buffer: str = ""
+        self._has_streamed_thinking: bool = False
+
     def show_query(self, query: str) -> None:
         """Append query to main body."""
         widget = Static(f"\n[dim]>[/dim] [bold]{query}[/bold]")
@@ -123,6 +129,8 @@ class TUIRenderer:
         """Show animated spinner."""
         if not self._spinner:
             self._spinner = SpinnerWidget()
+            # Add top margin to separate from previous content (e.g. tool calls)
+            self._spinner.styles.margin = (1, 0, 0, 0)
             self.main_body.mount(self._spinner)
             self._scroll()
 
@@ -163,6 +171,8 @@ class TUIRenderer:
             self._on_tool_result(event)
         elif isinstance(event, TodoUpdateEvent):
             self._on_todo_update(event.todos)
+        elif isinstance(event, StreamingThinkingEvent):
+            self._on_streaming_thinking(event)
         elif isinstance(event, StreamingTokenEvent):
             self._on_streaming_token(event)
 
@@ -179,6 +189,11 @@ class TUIRenderer:
         # Ignore thinking events while streaming final answer
         # to prevent them from appearing below the answer widget
         if self._is_streaming_answer:
+            return
+
+        # Suppress middleware ThinkingEvent if thinking was already streamed
+        # This prevents duplicate display when StreamingThinkingEvent was used
+        if self._has_streamed_thinking:
             return
 
         # Deduplication
@@ -214,6 +229,60 @@ class TUIRenderer:
             return content
         # Inline Ctrl+O hint at end of truncated text
         return content[:600] + " *... (Ctrl+O to expand)*"
+
+    def _on_streaming_thinking(self, event: StreamingThinkingEvent) -> None:
+        """Handle streaming thinking tokens for progressive display.
+
+        Renders thinking content token-by-token as it arrives from the model's
+        stream, providing real-time visibility into the reasoning process.
+        This method mirrors the pattern used in _on_streaming_token but with
+        thinking-specific styling.
+
+        The thinking widget is mounted on the first token and updated in-place
+        for subsequent tokens. When done=True is received, the thinking phase
+        is finalized and the widget content is stored for expand/collapse.
+
+        Args:
+            event: StreamingThinkingEvent containing token text and done flag
+        """
+        if event.done:
+            # Thinking stream finished - finalize and reset state
+            if self._streaming_thinking_widget and self._streaming_thinking_buffer:
+                # Store finalized thinking content for expand/collapse
+                self._thinking_contents.append(self._streaming_thinking_buffer)
+                self._thinking_widgets.append(self._streaming_thinking_widget)
+
+                # Apply truncation if needed
+                display_content = self._get_thinking_display(
+                    self._streaming_thinking_buffer
+                )
+                self._streaming_thinking_widget.update(display_content)
+
+            # Reset streaming state
+            self._streaming_thinking_widget = None
+            self._streaming_thinking_buffer = ""
+            self._has_streamed_thinking = True
+            return
+
+        # Hide spinner when first thinking token arrives
+        self.hide_spinner()
+
+        # Accumulate thinking token text
+        self._streaming_thinking_buffer += event.token
+
+        if not self._streaming_thinking_widget:
+            # First thinking token - mount thinking header and content widget
+            header = Static("\n[bold #8FCECE]● Thinking[/bold #8FCECE]")
+            self.main_body.mount(header)
+
+            # Create Markdown widget with initial content
+            self._streaming_thinking_widget = Markdown(self._streaming_thinking_buffer)
+            self.main_body.mount(self._streaming_thinking_widget)
+        else:
+            # Subsequent thinking tokens - update widget in place
+            self._streaming_thinking_widget.update(self._streaming_thinking_buffer)
+
+        self._scroll()
 
     def _on_tool_call(self, event: ToolCallEvent) -> None:
         """Create tool widget."""
@@ -266,12 +335,12 @@ class TUIRenderer:
             widget.update(self._build_tool_display(call_key))
 
             # Mount separate Markdown widget for result content
-            if event.result:
-                result_content = self._get_result_display(event.result)
-                result_widget = Markdown(result_content)
-                self.main_body.mount(result_widget)
-                # Track for expand/collapse
-                self._tool_result_widgets[call_key] = result_widget
+            # if event.result:
+            #     result_content = self._get_result_display(event.result)
+            #     result_widget = Markdown(result_content)
+            #     self.main_body.mount(result_widget)
+            #     # Track for expand/collapse
+            #     self._tool_result_widgets[call_key] = result_widget
 
         self._scroll()
 
@@ -343,50 +412,6 @@ class TUIRenderer:
         if self.is_expanded or len(result_str) <= 400:
             return result_str
         return result_str[:400] + f"\n\n*... (+{len(result_str) - 400} chars)*"
-
-    def _build_tool_markdown(self, tool_name: str) -> str:
-        """Build tool display as Markdown (for result with proper formatting)."""
-        data = self._tool_data.get(tool_name, {})
-        args = data.get("args", {})
-        logs = data.get("logs", [])
-        result = data.get("result")
-        done = data.get("done", False)
-
-        lines = []
-
-        # Convert to PascalCase for display
-        display_name = _snake_to_pascal(tool_name)
-
-        # Header with styled dot (like thinking block)
-        if done:
-            lines.append(f"**● {display_name}**")
-        else:
-            lines.append(f"**◐ {display_name}**")
-
-        # Arguments
-        for k, v in args.items():
-            val = str(v)[:50] + "..." if len(str(v)) > 50 else str(v)
-            lines.append(f"  - {k}: `{val}`")
-
-        # Logs
-        if logs:
-            if self.is_expanded:
-                lines.append("\n**📋 Logs:**")
-                for log in logs[-5:]:
-                    lines.append(f"  - {log}")
-                if len(logs) > 5:
-                    lines.append(f"  - *... +{len(logs) - 5} more*")
-            else:
-                lines.append(f"  - *📋 [{len(logs)} logs] (Ctrl+O)*")
-
-        # Result as markdown
-        if result:
-            preview = str(result)[:400]
-            if len(str(result)) > 400:
-                preview += f"\n\n*... (+{len(str(result)) - 400} chars)*"
-            lines.append(f"\n**Result:**\n{preview}")
-
-        return "\n".join(lines)
 
     def add_tool_log(self, tool_name: str, message: str) -> None:
         """Add log - schedule on main thread."""
@@ -497,10 +522,10 @@ class TUIRenderer:
             event: StreamingTokenEvent containing the token text and done flag
         """
         if event.done:
-            # Stream finished - finalize and reset state
+            # Stream finished - finalize but KEEP _has_streamed_thinking
             self._streaming_widget = None
             self._streaming_buffer = ""
-            self._is_streaming_answer = False  # Re-enable thinking display
+            self._is_streaming_answer = False
             return
 
         # Hide spinner when first token arrives
@@ -525,6 +550,15 @@ class TUIRenderer:
             self._streaming_widget.update(self._streaming_buffer)
 
         self._scroll()
+
+    def reset_streaming_state(self) -> None:
+        """Reset streaming state variables for a new interaction."""
+        self._is_streaming_answer = False
+        self._has_streamed_thinking = False
+        self._streaming_thinking_buffer = ""
+        self._streaming_thinking_widget = None
+        self._streaming_widget = None
+        self._streaming_buffer = ""
 
     def _scroll(self) -> None:
         """Scroll to bottom."""

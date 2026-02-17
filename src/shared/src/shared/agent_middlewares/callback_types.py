@@ -83,6 +83,39 @@ class StreamingTokenEvent(BaseAgentEvent):
     )
 
 
+class StreamingThinkingEvent(BaseAgentEvent):
+    """Event emitted for each streamed thinking token from the model.
+
+    Enables real-time progressive display of the model's reasoning process
+    as thinking tokens arrive from the stream, rather than showing the full
+    thinking block all at once after completion. This provides better user
+    experience by allowing users to observe the model's thought process in
+    real-time as it generates.
+
+    Attributes:
+        token: Thinking text chunk from the model's streaming output. Can be
+            a word, phrase, or sentence depending on streaming granularity.
+        done: Whether this is the final thinking token for the current step.
+            When True, signals the end of the thinking phase and that the
+            model is transitioning to generating the final answer.
+        title: Optional title summarizing the thinking block. Some models
+            emit a brief title as the first part of thinking content.
+    """
+
+    type: Literal["streaming_thinking"] = "streaming_thinking"
+    token: str = Field(
+        ..., description="Thinking text chunk from model streaming output"
+    )
+    done: bool = Field(
+        default=False,
+        description="True if thinking is complete for this step",
+    )
+    title: str = Field(
+        default="",
+        description="Optional title for thinking block",
+    )
+
+
 class ModelLoadingEvent(BaseAgentEvent):
     """Event emitted when model is busy/loading."""
 
