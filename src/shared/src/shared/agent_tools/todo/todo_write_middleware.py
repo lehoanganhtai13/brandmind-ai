@@ -25,6 +25,7 @@ from loguru import logger
 
 from prompts.task_management.todo_system_prompt import (
     EMPTY_TODO_REMINDER,
+    PLAN_CHECK_NUDGE,
     TODO_REMINDER_FINAL_CONFIRMATION,
     TODO_REMINDER_TEMPLATE,
     WRITE_TODOS_SYSTEM_PROMPT,
@@ -87,6 +88,7 @@ class TodoWriteMiddleware(AgentMiddleware):
         self.tool_description = tool_description.replace(
             "{{write_todos_function_name}}", tool_name
         )
+        self._turns_since_update = 0  # Track model calls since last write_todos
         self.tools = [self._create_write_todos_tool()]
 
     def wrap_model_call(
@@ -120,19 +122,31 @@ class TodoWriteMiddleware(AgentMiddleware):
 
             # Inject additional reminder for empty todo lists (initial state)
             if not todos:
-                # Return EMPTY_TODO_REMINDER
                 reminder = self._generate_reminder(todos)
                 if reminder:
                     updated_prompt = f"{updated_prompt}\n\n{reminder}"
+            elif self._turns_since_update >= 2:
+                # "Just enough" nudge: only when agent hasn't updated in 2+ turns
+                # AND just received tool results (= work was done)
+                if self._has_recent_tool_results(request.messages):
+                    in_progress = [t for t in todos if t.get("status") == "in_progress"]
+                    if in_progress:
+                        nudge = PLAN_CHECK_NUDGE.replace(
+                            "{{task_content}}", in_progress[0].get("content", "")
+                        ).replace("{{task_status}}", in_progress[0].get("status", ""))
+                        updated_prompt = f"{updated_prompt}\n\n{nudge}"
+
+            self._turns_since_update += 1
 
             # Create new request with updated system prompt
             system_message = SystemMessage(content=updated_prompt)
             updated_request = request.override(system_message=system_message)
-            return handler(updated_request)
         except Exception as e:
             # Log error but don't break the middleware chain
             logger.error(f"Failed to inject system reminder: {e}")
-            return handler(request)
+            updated_request = request
+
+        return handler(updated_request)
 
     async def awrap_model_call(
         self,
@@ -166,19 +180,31 @@ class TodoWriteMiddleware(AgentMiddleware):
 
             # Inject additional reminder for empty todo lists (initial state)
             if not todos:
-                # Return EMPTY_TODO_REMINDER
                 reminder = self._generate_reminder(todos)
                 if reminder:
                     updated_prompt = f"{updated_prompt}\n\n{reminder}"
+            elif self._turns_since_update >= 1:
+                # "Just enough" nudge: only when agent hasn't updated in 1+ turns
+                # AND just received tool results (= work was done)
+                if self._has_recent_tool_results(request.messages):
+                    in_progress = [t for t in todos if t.get("status") == "in_progress"]
+                    if in_progress:
+                        nudge = PLAN_CHECK_NUDGE.replace(
+                            "{{task_content}}", in_progress[0].get("content", "")
+                        ).replace("{{task_status}}", in_progress[0].get("status", ""))
+                        updated_prompt = f"{updated_prompt}\n\n{nudge}"
+
+            self._turns_since_update += 1
 
             # Create new request with updated system prompt
             system_message = SystemMessage(content=updated_prompt)
             updated_request = request.override(system_message=system_message)
-            return await handler(updated_request)
         except Exception as e:
             # Log error but don't break the middleware chain
             logger.error(f"Failed to inject system reminder: {e}")
-            return await handler(request)
+            updated_request = request
+
+        return await handler(updated_request)
 
     def _create_write_todos_tool(self):
         """
@@ -235,6 +261,7 @@ class TodoWriteMiddleware(AgentMiddleware):
                         response_message += f"\n\n{reminder}"
 
                 # Update state with new todos using Command object
+                self._turns_since_update = 0  # Reset counter on plan update
                 return Command(
                     update={
                         "todos": todos,
@@ -258,6 +285,29 @@ class TodoWriteMiddleware(AgentMiddleware):
                 )
 
         return write_todos
+
+    def _has_recent_tool_results(self, messages: list) -> bool:
+        """
+        Check if the most recent messages are ToolMessages (non-write_todos).
+        This indicates the agent just received results from doing actual work.
+        """
+        if not messages:
+            return False
+
+        # Walk backwards to find most recent non-system message
+        for msg in reversed(messages):
+            if isinstance(msg, ToolMessage):
+                # Skip if it's from our own write_todos tool
+                content = msg.content if isinstance(msg.content, str) else ""
+                if "Todo list updated with" in content:
+                    return False
+                return True
+            elif isinstance(msg, SystemMessage):
+                continue  # Skip system messages, keep looking
+            else:
+                return False  # Not a tool result
+
+        return False
 
     def _generate_reminder(self, todos: List[Dict[str, Any]]) -> str:
         """

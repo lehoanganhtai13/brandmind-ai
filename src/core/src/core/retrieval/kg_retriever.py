@@ -323,12 +323,12 @@ class KGRetriever:
         try:
             llm = GoogleAIClientLLM(
                 config=GoogleAIClientLLMConfig(
-                    model="gemini-2.5-flash-lite",
+                    model="gemini-3-flash-preview",
                     api_key=SETTINGS.GEMINI_API_KEY,
                     system_instruction=RERANK_DIVERSITY_INSTRUCTION,
-                    temperature=0.1,
-                    max_tokens=4000,
-                    thinking_budget=2000,
+                    temperature=1.0,
+                    thinking_level="low",
+                    max_tokens=5000,
                     response_mime_type="application/json",
                     response_schema=RerankResponse,
                 )

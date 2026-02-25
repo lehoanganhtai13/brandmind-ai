@@ -16,7 +16,7 @@ from langchain.agents.middleware.types import (
     ModelRequest,
     ModelResponse,
 )
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from loguru import logger
 
 from prompts.task_management.stop_check_prompts import (
@@ -146,6 +146,13 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                 # Try multiple reminders in the same stopping attempt
                 current_response = response
                 for attempt in range(self.max_reminders):
+                    # Preserve previous response context
+                    previous_ai_content = self._extract_response_content(
+                        current_response
+                    )
+                    if previous_ai_content:
+                        request.messages.append(AIMessage(content=previous_ai_content))
+
                     # Generate critical reminder
                     re_prompt = self._generate_re_prompt(incomplete_tasks)
 
@@ -208,6 +215,15 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                     # Try multiple reminders in the same stopping attempt
                     final_response = response
                     for attempt in range(self.max_reminders):
+                        # Preserve previous response context
+                        previous_ai_content = self._extract_response_content(
+                            final_response
+                        )
+                        if previous_ai_content:
+                            request.messages.append(
+                                AIMessage(content=previous_ai_content)
+                            )
+
                         final_confirmation_reminder = (
                             self.final_confirmation_template.replace(
                                 "{{all_tasks_count}}", str(len(todos))
@@ -324,6 +340,13 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                 # Try multiple reminders in the same stopping attempt
                 current_response = response
                 for attempt in range(self.max_reminders):
+                    # Preserve previous response context
+                    previous_ai_content = self._extract_response_content(
+                        current_response
+                    )
+                    if previous_ai_content:
+                        request.messages.append(AIMessage(content=previous_ai_content))
+
                     # Generate critical reminder
                     re_prompt = self._generate_re_prompt(incomplete_tasks)
 
@@ -386,6 +409,15 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                     # Try multiple reminders in the same stopping attempt
                     final_response = response
                     for attempt in range(self.max_reminders):
+                        # Preserve previous response context
+                        previous_ai_content = self._extract_response_content(
+                            final_response
+                        )
+                        if previous_ai_content:
+                            request.messages.append(
+                                AIMessage(content=previous_ai_content)
+                            )
+
                         final_confirmation_reminder = (
                             self.final_confirmation_template.replace(
                                 "{{all_tasks_count}}", str(len(todos))
@@ -571,3 +603,40 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
             .replace("{{next_task_instruction}}", next_task_instruction)
             .replace("{{write_todos_function_name}}", self.tool_name)
         )
+
+    def _extract_response_content(self, response: ModelResponse) -> str:
+        """
+        Extract text content from model response for context preservation.
+
+        When the stop check middleware needs to re-prompt the model,
+        the previous response content must be preserved in the message
+        history so the model knows what it already generated and avoids
+        duplicating its output.
+
+        Args:
+            response: The model response to extract content from
+
+        Returns:
+            str: Extracted text content, or empty string if none found
+        """
+        if not hasattr(response, "result"):
+            return ""
+
+        result = response.result  # type: ignore
+        if not result or len(result) == 0:
+            return ""
+
+        last_ai_message = result[-1]
+        if not last_ai_message or not hasattr(last_ai_message, "content"):
+            return ""
+
+        content = last_ai_message.content
+        if isinstance(content, str):
+            return content
+        elif isinstance(content, list):
+            text_parts = []
+            for part in content:
+                if isinstance(part, dict) and part.get("type") == "text":
+                    text_parts.append(part.get("text", ""))
+            return "\\n".join(text_parts)
+        return ""

@@ -100,7 +100,10 @@ class SmartLogCapture:
         Stop capturing logs and restore default handler.
         """
         if self._handler_id is not None:
-            logger.remove(self._handler_id)
+            try:
+                logger.remove(self._handler_id)
+            except ValueError:
+                pass  # Handler already removed (race condition)
             self._handler_id = None
 
         # Re-add default stderr handler

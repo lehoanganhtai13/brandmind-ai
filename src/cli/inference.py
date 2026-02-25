@@ -55,7 +55,6 @@ def create_qa_agent(
         SummarizationMiddleware,
         ToolRetryMiddleware,
     )
-    from langchain_google_genai import ChatGoogleGenerativeAI
 
     from config.system_config import SETTINGS
     from prompts.inference import QA_AGENT_SYSTEM_PROMPT
@@ -63,18 +62,19 @@ def create_qa_agent(
         EnsureTasksFinishedMiddleware,
         LogModelMessageMiddleware,
     )
+    from shared.agent_models.retry_gemini import RetryChatGoogleGenerativeAI
     from shared.agent_tools import TodoWriteMiddleware
     from shared.agent_tools.retrieval import (
         search_document_library,
         search_knowledge_graph,
     )
 
-    # Initialize Gemini model
-    model = ChatGoogleGenerativeAI(
+    # Initialize Gemini model with built-in retry for 503/429 errors
+    model = RetryChatGoogleGenerativeAI(
         google_api_key=SETTINGS.GEMINI_API_KEY,
         model="gemini-3-flash-preview",
         temperature=1.0,
-        thinking_level="high",
+        thinking_level="medium",
         max_output_tokens=5000,
         include_thoughts=True,
     )
