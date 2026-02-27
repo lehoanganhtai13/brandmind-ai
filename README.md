@@ -25,6 +25,7 @@ BrandMind AI is not just another automation tool. It's a **cognitive augmentatio
 ## ✨ Key Features
 
 - **Automated Document Parsing**: Ingests and understands PDF documents, extracting key information and summaries.
+- **Autonomous Web Browsing**: Agents can actively browse social media and the web using [`browser-use`](https://github.com/browser-use/browser-use) and Playwright.
 - **Intelligent Web Crawling**: Crawls websites to gather relevant brand and market data using [`Crawl4AI`](https://github.com/unclecode/crawl4ai).
 - **Advanced Search**: Utilizes a private, aggregated search engine ([`SearXNG`](https://github.com/searxng/searxng)) to find the most relevant information.
 - **Vector Search**: Powered by [`Milvus`](https://milvus.io/) for semantic similarity search and RAG applications.
@@ -40,6 +41,7 @@ Follow these steps to get your local development environment up and running.
 
 - **[uv](https://github.com/astral-sh/uv)**: An extremely fast Python package manager. It will automatically download and manage Python for you.
 - **[Docker](https://www.docker.com/)**: For running the required infrastructure services.
+- **[Google Chrome](https://www.google.com/chrome/)**: Required for the Autonomous Web Browsing feature. The AI Agent will use your host machine's Chrome installation for natural behavior matching and avoiding bot detection.
 
 ### 2. Clone the Repository
 
@@ -248,22 +250,38 @@ After successfully extending the knowledge graph, it's recommended to create a b
 make backup-package
 ```
 
-### 8. Running the CLI
+### 8. Setup Browser for Agent
 
-BrandMind AI provides a powerful CLI with multiple interaction modes:
+BrandMind's AI Agent can actively browse social media (like Facebook, Instagram, TikTok) on your behalf to conduct market research. To do this securely without risking your primary accounts, you need to set up an isolated browser session.
+
+First, download the required Chromium binaries for the agent:
+```bash
+make install-browser
+```
+
+Then, launch the interactive setup:
+```bash
+brandmind browser setup
+```
+
+Follow the on-screen instructions to log into your secondary clone accounts. **Note: Logging in is optional.** If you choose not to log in, you can simply close the browser; the Agent will still be able to browse the web but its access to certain content may be limited.
+
+The session will be saved locally and used by the AI Agent autonomously.
+
+You can also manage the session with:
+
+```bash
+brandmind browser status  # Check if a session exists
+brandmind browser reset   # Delete the saved session
+```
+
+### 9. Running the CLI
+
+BrandMind AI provides a powerful CLI for interaction:
 
 ```bash
 # Launch interactive TUI (default)
 brandmind
-
-# One-shot Q&A mode with AI agent
-brandmind ask -q "What is Marketing Myopia?"
-
-# Direct Knowledge Graph search
-brandmind search-kg -q "customer value" -n 5
-
-# Direct Document Library search
-brandmind search-docs -q "pricing strategy" --chapter "Chapter 10"
 ```
 
 You are now ready to start development!

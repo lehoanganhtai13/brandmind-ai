@@ -409,6 +409,109 @@ async def run_docs_search_mode(
             logger.exception("Document search failed")
 
 
+async def run_browser_setup_mode() -> None:
+    """
+    Run Browser Login Setup mode.
+
+    Opens a headed browser in the persistent context allowing the user
+    to manually log into social media platforms (Facebook, Instagram, TikTok)
+    using clone accounts. Session is saved for future Agent use.
+    """
+    from shared.agent_tools.browser import BrowserManager
+
+    # Print prominent warning using Rich
+    warning_panel = Panel(
+        "[bold yellow]⚠️ WARNING: ALWAYS USE CLONE ACCOUNTS ⚠️[/bold yellow]\n\n"
+        "AI agents can sometimes trigger automated bot detection systems on social\n"
+        "media platforms like Facebook, Instagram, or TikTok.\n\n"
+        "[bold red]DO NOT use your personal or main business accounts.[/bold red]\n"
+        "Please log in using secondary 'clone' accounts to absolutely guarantee\n"
+        "that your primary accounts are not at risk of being banned or restricted.\n\n"
+        "[dim]The browser will now open 3 platforms for you to log in.\n"
+        "Close the browser window when you are completely finished.[/dim]",
+        title="Security Advisory",
+        border_style="yellow",
+        expand=False,
+    )
+    console.print(warning_panel)
+    console.print()
+
+    from rich.prompt import Confirm
+
+    if not Confirm.ask("[bold]I understand the risks and want to proceed[/bold]"):
+        console.print("[yellow]Setup aborted.[/yellow]")
+        return
+
+    with console.status(
+        "[bold cyan]Launching secure browser environment...", spinner="dots"
+    ):
+        manager = BrowserManager()
+
+    try:
+        # Default platforms for brand intelligence
+        urls = [
+            "https://www.facebook.com",
+            "https://www.instagram.com",
+            "https://www.tiktok.com",
+        ]
+        await manager.setup_login(urls)
+        console.print("[bold green]✅ Browser session saved successfully![/bold green]")
+        console.print("[dim]The AI Agent can now use this session for research.[/dim]")
+    except Exception as e:
+        console.print(f"[bold red]❌ Browser setup failed: {e}[/bold red]")
+        logger.exception("Browser setup failed")
+
+
+async def run_browser_status_mode() -> None:
+    """Check the status of the persistent browser session."""
+    from shared.agent_tools.browser import BrowserManager
+
+    manager = BrowserManager()
+    if manager.is_session_valid():
+        console.print(
+            "[bold green]✅ Browser session is VALID and ready "
+            "for Agent use.[/bold green]"
+        )
+        console.print(f"[dim]Data directory: {manager.data_dir}[/dim]")
+    else:
+        console.print("[bold yellow]⚠️ No valid browser session found.[/bold yellow]")
+        console.print(
+            "Run [cyan]brandmind browser setup[/cyan] to login and create a session."
+        )
+
+
+async def run_browser_reset_mode() -> None:
+    """Reset the persistent browser session."""
+    from rich.prompt import Confirm
+
+    from shared.agent_tools.browser import BrowserManager
+
+    manager = BrowserManager()
+
+    if not manager.is_session_valid():
+        console.print("[yellow]No active session to reset.[/yellow]")
+        return
+
+    console.print(
+        Panel(
+            "[bold red]WARNING: This will delete your saved "
+            "browser session.[/bold red]\n"
+            "You will need to run 'brandmind browser setup' again "
+            "to log into social platforms.",
+            title="Reset Session",
+            border_style="red",
+        )
+    )
+
+    if Confirm.ask("[bold red]Are you sure you want to delete the session?[/bold red]"):
+        manager.reset_session()
+        console.print(
+            "[bold green]✅ Browser session deleted successfully.[/bold green]"
+        )
+    else:
+        console.print("[yellow]Reset aborted.[/yellow]")
+
+
 async def async_main() -> None:
     """
     Main CLI entry point for inference operations.
@@ -427,6 +530,9 @@ Examples:
   brandmind ask -q "What is Marketing Myopia?"   # One-shot Q&A
   brandmind search-kg -q "customer value" -n 10  # Search Knowledge Graph
   brandmind search-docs -q "pricing" -c "Ch 10"  # Search Documents
+  brandmind browser setup                        # Login to social media
+  brandmind browser status                       # Check session validity
+  brandmind browser reset                        # Delete current session
         """,
     )
 
@@ -467,6 +573,30 @@ Examples:
         "--top-k", "-k", type=int, default=10, help="Number of results (default: 10)"
     )
 
+    # Mode: browser
+    browser_parser = subparsers.add_parser(
+        "browser", help="Manage browser agent settings"
+    )
+    browser_subparsers = browser_parser.add_subparsers(
+        dest="browser_action", help="Browser action"
+    )
+
+    # Sub-mode: browser setup
+    browser_subparsers.add_parser(
+        "setup",
+        help="Open browser to login to social platforms using clone accounts",
+    )
+    # Sub-mode: browser status
+    browser_subparsers.add_parser(
+        "status",
+        help="Check if the saved browser session is valid",
+    )
+    # Sub-mode: browser reset
+    browser_subparsers.add_parser(
+        "reset",
+        help="Delete the saved browser session",
+    )
+
     args = parser.parse_args()
 
     if args.mode is None:
@@ -482,6 +612,15 @@ Examples:
         await run_docs_search_mode(
             args.query, args.book, args.chapter, args.author, args.top_k
         )
+    elif args.mode == "browser":
+        if args.browser_action == "setup":
+            await run_browser_setup_mode()
+        elif args.browser_action == "status":
+            await run_browser_status_mode()
+        elif args.browser_action == "reset":
+            await run_browser_reset_mode()
+        else:
+            parser.parse_args(["browser", "--help"])
 
     return args.mode
 

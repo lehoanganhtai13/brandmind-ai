@@ -32,6 +32,10 @@ install-migration: ## Install migration dependencies only
 install-all: ## Install all dependencies (chatbot + indexer + dev + migration)
 	uv sync --group chatbot --group indexer --group dev --group migration
 
+install-browser: ## Download Chromium for browser tool (run once after install-all)
+	uv run playwright install chromium
+	@echo "✅ Browser tool ready. Run 'brandmind browser setup' to login."
+
 ## Environment Setup
 setup-env: ## Interactive environment setup - creates environments/.env with your configuration
 	@./scripts/setup_env.sh
