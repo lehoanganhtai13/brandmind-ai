@@ -3,28 +3,105 @@
 ## 📌 Metadata
 
 - **Epic**: [Epic Name]
-- **Priority**: High/Medium/Low
-- **Estimated Effort**: X weeks
-- **Team**: Backend/Mobile/Full-stack
-- **Related Tasks**: [link]
-- **Blocking**: []
-- **Blocked by**: @suneox
+- **Priority**: High / Medium / Low
+- **Status**: Backlog / In Progress / Done / Blocked
+- **Estimated Effort**: X days / X weeks
+- **Team**: Backend / Mobile / Full-stack
+- **Related Tasks**: [Task XX — description]
+- **Blocking**: [Task XX, YY]
+- **Blocked by**: [Task XX, or @person]
 
 ### ✅ Progress Checklist
 
-- [ ] 🎯 [Context & Goals](#🎯-context--goals) - Problem definition and success metrics
-- [ ] 🛠 [Solution Design](#🛠-solution-design) - Architecture and technical approach
-- [ ] 🔄 [Implementation Plan](#🔄-implementation-plan) - Detailed execution phases
-- [ ] 📋 [Implementation Detail](#📋-implementation-detail) - Component requirements
-    - [ ] ✅ [Component 1](#component-1) - Ready
-    - [ ] 🚧 [Component 2](#component-2) - In progress
-    - [ ] ⏳ [Component 3](#component-3) - Pending
-- [ ] 🧪 [Test Cases](#🧪-test-cases) - Manual test cases and validation
-- [ ] 📝 [Task Summary](#📝-task-summary) - Final implementation summary
+> **Agent**: Update checkboxes as each section is completed. Do NOT mark a section done until it is fully verified.
+
+- [ ] 🤖 [Agent Protocol](#-agent-protocol) — Read and confirm before starting
+- [ ] 🎯 [Context & Goals](#-context--goals) — Problem definition and success metrics
+- [ ] 🛠 [Solution Design](#-solution-design) — Architecture and technical approach
+- [ ] 🔬 [Pre-Implementation Research](#-pre-implementation-research) — Findings logged before coding
+- [ ] 🔄 [Implementation Plan](#-implementation-plan) — Phased execution plan confirmed with user
+- [ ] 📋 [Implementation Detail](#-implementation-detail) — Component-level specs with test cases
+    - [ ] ⏳ [Component 1](#component-1) — Pending
+    - [ ] ⏳ [Component 2](#component-2) — Pending
+- [ ] 🧪 [Test Execution Log](#-test-execution-log) — All tests run and results recorded
+- [ ] 📊 [Decision Log](#-decision-log) — Key decisions documented
+- [ ] 📝 [Task Summary](#-task-summary) — Final implementation summary completed
 
 ## 🔗 Reference Documentation
 
-- **Coding Standards**: Follow enterprise-level Python standards with comprehensive documentation
+- **Coding Standards**: Follow enterprise-level Python standards (see Agent Protocol section)
+- **Blueprint Reference**: `docs/[RELEVANT_DOC].md` — Section [X]
+- **External Spec**: [URL or path to relevant spec/API docs]
+- **Related Pattern**: [Path to existing code that follows the same pattern]
+
+------------------------------------------------------------------------
+
+## 🤖 Agent Protocol
+
+> **MANDATORY**: Read this section in full before starting any implementation work.
+
+### Rule 1 — Research Before Coding
+
+Before writing any code for a component:
+1. Read all files referenced in "Reference Documentation" above
+2. Read existing code in the relevant module to understand current patterns
+3. If an external library or API is involved, fetch its documentation (use web search or context7)
+4. Log your findings in [Pre-Implementation Research](#-pre-implementation-research) before proceeding
+5. **Do NOT assume or invent** behavior — verify against actual source
+
+### Rule 2 — Ask, Don't Guess
+
+When encountering any of the following, **STOP and ask the user** before proceeding:
+
+- A requirement is ambiguous or contradictory
+- Two valid implementation approaches exist with non-trivial trade-offs
+- An existing interface, API, or behavior conflicts with the spec
+- A dependency behaves differently than documented
+- The scope of a change is larger than anticipated
+
+Format: State the issue clearly, present your options with pros/cons, and ask for a decision.
+
+### Rule 3 — Update Progress As You Go
+
+After completing each component or sub-task:
+1. Check off the corresponding item in the Progress Checklist
+2. Update the component status emoji: ⏳ Pending → 🚧 In Progress → ✅ Done
+3. Fill in the Test Execution Log with actual results as tests run
+4. Log any significant decisions in the Decision Log
+
+### Rule 4 — Production-Grade Code Standards
+
+All code MUST meet these standards (no exceptions):
+
+| Standard | Requirement |
+|----------|-------------|
+| **Docstrings** | Every module, class, and function — purpose, args, returns, business context |
+| **Comments** | Inline comments for complex logic, business rules, non-obvious decisions |
+| **String quotes** | Double quotes `"` consistently throughout |
+| **Type hints** | All function signatures — no `Any` unless truly unavoidable |
+| **Naming** | PEP 8 — `snake_case` functions/vars, `PascalCase` classes, `UPPER_SNAKE` constants |
+| **Line length** | Max 100 characters — **exception: prompt strings** (see Rule 5) |
+| **Language** | English only — all code, comments, docstrings |
+| **Modularity** | Single responsibility — break large functions into focused, reusable units |
+
+### Rule 5 — Prompt Engineering Standards
+
+Applies whenever this task involves writing or modifying **any prompt string** passed to an LLM
+(system prompts, agent instructions, skill content, persona definitions, workflow directives).
+
+**Line length**: Prompt strings are **exempt from the 100-character rule**. Break lines at
+semantic boundaries (end of a rule, end of a clause), not at character count.
+
+**Full standards**: `tasks/prompt_engineering_standards.md`
+
+Key requirements:
+- Structure with Markdown headings (`##`, `###`) to separate role, process, rules, output format
+- Use imperative mood — direct commands, no hedging (`"Always X"`, not `"try to X"`)
+- Every conditional must have an explicit "otherwise" branch — no undefined edge cases
+- Define what the agent must **never** do, not just what it should do
+- Multi-phase workflows require explicit **phase transition rules** and **user confirmation gates**
+- Output format must be specified as a template, not a description
+- Review using the checklist at the end of `prompt_engineering_standards.md` before finalizing
 
 ------------------------------------------------------------------------
 
@@ -32,19 +109,19 @@
 
 ### Bối cảnh
 
-- [Current problem/situation]
-- [Impact or pain point]
+- [Current problem or situation — what exists today]
+- [Pain point or impact — why this needs to be solved]
 
 ### Mục tiêu
 
-[Clear objective statement - what we want to achieve]
+[Clear objective statement — what this task will achieve and what changes for the better]
 
 ### Success Metrics / Acceptance Criteria
 
-- **Performance**: [Measurable target]
-- **Scale**: [User/data requirements]  
-- **Reliability**: [Uptime/error rate]
-- **Business**: [User impact]
+- **Performance**: [Measurable target — e.g., "API response < 200ms at p95"]
+- **Scale**: [User/data volume requirements]
+- **Reliability**: [Uptime, error rate, or resilience requirement]
+- **Business**: [User-facing impact or business outcome]
 
 ------------------------------------------------------------------------
 
@@ -52,222 +129,285 @@
 
 ### Giải pháp đề xuất
 
-**[Approach name]**: [Brief solution description in 1-2 sentences]
+**[Approach Name]**: [1–2 sentence description of the chosen approach and why it was selected over alternatives]
 
 ### Stack công nghệ
 
-- **[Technology]**: [Purpose and why chosen]
-- **[Technology]**: [Purpose and why chosen]
+| Technology | Purpose | Why Chosen |
+|------------|---------|------------|
+| [Library/Framework] | [What it does in this context] | [Rationale] |
+| [Library/Framework] | [What it does in this context] | [Rationale] |
+
+### Architecture Overview
+
+```
+[ASCII diagram or description of how components fit together]
+```
 
 ### Issues & Solutions
 
-1. **[Challenge]** → [Solution approach]
-2. **[Challenge]** → [Solution approach]
+1. **[Anticipated Challenge]** → [How it will be addressed]
+2. **[Anticipated Challenge]** → [How it will be addressed]
+
+------------------------------------------------------------------------
+
+## 🔬 Pre-Implementation Research
+
+> **Agent**: Complete this section BEFORE writing any implementation code.
+> Log your findings here so the user can verify your understanding is correct.
+> If anything contradicts the spec above, flag it immediately.
+
+### Codebase Audit
+
+- **Files read**: [List of existing files reviewed]
+- **Relevant patterns found**: [Describe patterns in existing code that this task should follow]
+- **Potential conflicts**: [Any existing code, interface, or behavior that may conflict with the spec]
+
+### External Library / API Research
+
+- **Library/API**: [Name and version]
+- **Documentation source**: [URL or local path]
+- **Key findings**: [Relevant behaviors, limitations, or gotchas discovered]
+- **Interface confirmed**: [The specific function/class/method signatures you will use]
+
+### Unknown / Risks Identified
+
+> List any items that are still unclear after research. These must be resolved (via user Q&A or further research) before implementation begins.
+
+- [ ] [Unknown item — will ask user / will research further]
+- [ ] [Risk — mitigation approach]
+
+### Research Status
+
+- [ ] All referenced documentation read
+- [ ] Existing codebase patterns understood
+- [ ] External dependencies verified
+- [ ] No unresolved ambiguities remain → Ready to implement
 
 ------------------------------------------------------------------------
 
 ## 🔄 Implementation Plan
 
-### **Phase 1**
-1. **[Component Development]**
-   - [Key task 1]
-   - [Key task 2] 
-   - *Decision Point: [Critical milestone or condition]*
+> **Agent**: Present this plan to the user before beginning implementation.
+> Do not start coding until the user confirms the plan is correct.
 
-2. **[Integration & Testing]**
-   - [Integration task]
-   - [Testing approach]
+### Phase 1: [Phase Name] — [Estimated time]
 
-### **Phase 2**
-1. **[Production Deployment]**
-   - [Deployment task]
-   - [Monitoring setup]
+1. **[Task]**
+   - [Sub-task or key consideration]
+   - [Sub-task or key consideration]
+   - *Checkpoint: [What to verify before moving on]*
+
+2. **[Task]**
+   - [Sub-task]
+   - *Checkpoint: [What to verify before moving on]*
+
+### Phase 2: [Phase Name] — [Estimated time]
+
+1. **[Task]**
+   - [Sub-task]
+   - *Checkpoint: [Integration or validation step]*
+
+### Rollback Plan
+
+[How to safely undo this change if something goes wrong — e.g., "revert file X, remove migration Y"]
 
 ------------------------------------------------------------------------
 
 ## 📋 Implementation Detail
 
-> **📝 Coding Standards & Documentation Requirements**
->
-> All code implementations **MUST** follow **enterprise-level Python standards**:
->
-> - **Comprehensive Docstrings**: Every module, class, and function must have detailed docstrings in English explaining:
->   - **Purpose**: What this component does and why it exists
->   - **Functionality**: How it processes data and what transformations occur
->   - **Data Types**: Input/output types and data structures
->   - **Business Logic**: How it fits into the overall workflow
->
-> - **Detailed Comments**: Add inline comments explaining complex logic, business rules, and decision points
->
-> - **Consistent String Quoting**: Use double quotes `"` consistently throughout all code (not single quotes `'`)
->
-> - **Focus on Functionality**: Document the "what" and "why" rather than the "how" - explain business purpose, not code implementation details
->
-> - **Language**: All code, comments, and docstrings must be in **English only**
->
-> - **Naming Conventions**: Follow PEP 8 naming conventions for variables, functions, classes, and modules
->
-> - **Modularization**: Break down large functions/classes into smaller, reusable components with clear responsibilities
->
-> - **Type Hints**: Use Python type hints for all function signatures to ensure clarity on expected data types
->
-> - **Line Length**: Max 100 characters - break long lines for readability
->
-> **Example of Good Documentation Style**:
-> ```python
-> def process_meal_nutrition_data(user_profile: UserProfile, recipe_data: List[RecipeData]) -> NutritionSummary:
->     """
->     Processes raw recipe data to calculate comprehensive nutrition metrics for meal planning optimization.
->
->     This function transforms individual recipe nutrition values into aggregated meal-level metrics
->     that support dietary goal tracking and macro-nutrient balance optimization. The processing
->     accounts for user-specific dietary restrictions and TDEE requirements.
->
->     Args:
->         user_profile (UserProfile): User's dietary preferences, restrictions, and health goals
->         recipe_data (List[RecipeData]): Collection of recipes with detailed nutrition information
->
->     Returns:
->         nutrition_summary (NutritionSummary): Aggregated nutrition summary with macro breakdowns and 
->         compliance metrics for use in meal plan optimization algorithms
->     """
->     # Implementation goes here
-> ```
+> **📝 Coding Standards Reminder**: Apply the standards from Agent Protocol Rule 4 to every file.
+> Test specifications are written BEFORE implementation — follow TDD order within each requirement.
 
-### Component 1
+### Component 1: [Component Name]
 
-#### Requirement 1 - [Title]
-- **Requirement**: [What needs to be built]
-- **Implementation**:
-  - `meal_planning/path/to/file.py`
+> Status: ⏳ Pending / 🚧 In Progress / ✅ Done
+
+#### Requirement 1 — [Title]
+
+- **Requirement**: [What needs to be built — business purpose and behavior]
+
+- **Test Specification** *(define before implementing)*:
   ```python
-  # Example: Data model definition or service class structure
-  class ExampleDataModel(BaseModel):
-      """
-      Represents structured data for meal planning component processing.
+  # Test case 1: [What is being validated]
+  # Input: [describe input]
+  # Expected: [describe expected output or behavior]
 
-      This model defines the core data structure used throughout the meal planning
-      workflow to maintain consistency and type safety across service boundaries.
-
-      Attributes:
-          id (str): Unique identifier for the meal plan entry
-          name (str): Descriptive name of the meal
-          nutrition_data (Dict[str, float]): Key-value pairs of nutrition metrics
-      """
-      id: str
-      name: str
-      nutrition_data: Dict[str, float]
-
-  class ExampleService:
-      """
-      Handles business logic for meal planning component operations.
-
-      This service manages the transformation and validation of meal planning data,
-      ensuring all processing follows established nutritional guidelines and user
-      preference constraints.
-      """
-
-      def process_meal_data(self, data: ExampleDataModel) -> ProcessedResult:
-          """
-          Transforms raw meal data into optimized format for nutrition analysis.
-
-          Args:
-              data (ExampleDataModel): Raw meal information with nutrition metrics
-
-          Returns:
-              processed_data (ProcessedResult): Processed meal data ready for optimization algorithms
-          """
-          pass
+  # Test case 2: [Edge case or error condition]
+  # Input: [describe input]
+  # Expected: [describe expected output or behavior]
   ```
+
+- **Implementation**:
+  - `path/to/file.py`
+  ```python
+  def example_function(param: ParamType) -> ReturnType:
+      """
+      [One-line summary of what this function does.]
+
+      [Longer description of business purpose, data transformations,
+      and how this fits into the overall workflow.]
+
+      Args:
+          param (ParamType): [Description of the parameter]
+
+      Returns:
+          result (ReturnType): [Description of the return value]
+
+      Raises:
+          ValueError: [When and why this is raised]
+      """
+      pass
+  ```
+
+- **Acceptance Criteria**:
+  - [ ] [Measurable outcome — e.g., "function returns X given input Y"]
+  - [ ] [Measurable outcome — e.g., "raises ValueError when Z"]
+  - [ ] [Code standard — e.g., "mypy passes with no errors"]
+
+#### Requirement 2 — [Title]
+
+- **Requirement**: [What needs to be built]
+
+- **Test Specification** *(define before implementing)*:
+  ```python
+  # Test case 1: [Normal path]
+  # Test case 2: [Error path]
+  ```
+
+- **Implementation**:
+  - `path/to/file.py`
+  - [Brief description of approach — focus on business logic, not code syntax]
+
 - **Acceptance Criteria**:
   - [ ] [Measurable outcome 1]
   - [ ] [Measurable outcome 2]
 
-### Component 2
+### Component 2: [Component Name]
 
-#### Requirement 1 - [Title]
+> Status: ⏳ Pending / 🚧 In Progress / ✅ Done
+
+#### Requirement 1 — [Title]
+
 - **Requirement**: [What needs to be built]
+
+- **Test Specification** *(define before implementing)*:
+  ```python
+  # Test case 1: [Normal path]
+  # Test case 2: [Error path]
+  ```
+
 - **Implementation**:
-  - `meal_planning/path/to/file.py`
-  - [Brief description of approach with focus on business functionality]
+  - `path/to/file.py`
+  - [Brief description of approach]
+
 - **Acceptance Criteria**:
   - [ ] [Measurable outcome 1]
   - [ ] [Measurable outcome 2]
 
 ------------------------------------------------------------------------
 
-## 🧪 Test Cases
+## 🧪 Test Execution Log
 
-### Test Case 1: [Test Name]
+> **Agent**: Record actual test results here as you run them.
+> Do not mark a test as Passed until you have run it and seen the output.
+
+### Test 1: [Test Name]
+
 - **Purpose**: [What this test validates]
 - **Steps**:
-  1. [Test step 1]
-  2. [Test step 2]
-  3. [Test step 3]
-- **Expected Result**: [Expected outcome]
-- **Status**: ⏳ Pending / 🚧 In Progress / ✅ Passed / ❌ Failed
+  1. [Step 1]
+  2. [Step 2]
+  3. [Step 3]
+- **Expected Result**: [What success looks like]
+- **Actual Result**: [Fill in after running]
+- **Status**: ⏳ Pending / 🚧 Running / ✅ Passed / ❌ Failed
 
-### Test Case 2: [Test Name]
+### Test 2: [Test Name]
+
 - **Purpose**: [What this test validates]
 - **Steps**:
-  1. [Test step 1]
-  2. [Test step 2]
-- **Expected Result**: [Expected outcome]
-- **Status**: ⏳ Pending / 🚧 In Progress / ✅ Passed / ❌ Failed
+  1. [Step 1]
+  2. [Step 2]
+- **Expected Result**: [What success looks like]
+- **Actual Result**: [Fill in after running]
+- **Status**: ⏳ Pending / 🚧 Running / ✅ Passed / ❌ Failed
+
+### Test 3: Error / Edge Case — [Scenario Name]
+
+- **Purpose**: Verify correct behavior when [error condition occurs]
+- **Steps**:
+  1. [Setup error condition]
+  2. [Trigger the code path]
+- **Expected Result**: [Expected error, fallback, or rejection]
+- **Actual Result**: [Fill in after running]
+- **Status**: ⏳ Pending / 🚧 Running / ✅ Passed / ❌ Failed
+
+------------------------------------------------------------------------
+
+## 📊 Decision Log
+
+> **Agent**: Document every significant decision made during implementation.
+> Include the options considered, the trade-off, and the final choice.
+> This section is what transforms a task file into institutional knowledge.
+
+| # | Decision | Options Considered | Choice Made | Rationale |
+|---|----------|--------------------|-------------|-----------|
+| 1 | [What decision was made] | [Option A vs Option B] | [Option chosen] | [Why] |
+| 2 | [What decision was made] | [Option A vs Option B] | [Option chosen] | [Why] |
 
 ------------------------------------------------------------------------
 
 ## 📝 Task Summary
 
-> **⚠️ Important**: Complete this section after task implementation to document what was actually accomplished.
+> **Agent**: Complete this section AFTER the task is fully implemented and all tests pass.
+> This is the permanent record of what was built and how it works.
 
 ### What Was Implemented
 
 **Components Completed**:
-- [ ] [Component 1]: [Brief description of what was actually built]
-- [ ] [Component 2]: [Brief description of what was actually built]
-- [ ] [Component 3]: [Brief description of what was actually built]
+- [ ] [Component 1]: [What was actually built — 1–2 sentences]
+- [ ] [Component 2]: [What was actually built — 1–2 sentences]
 
-**Files Created/Modified**:
+**Files Created / Modified**:
 ```
-meal_planning/
-├── path/to/new_file.py           # [Purpose and key functionality]
-├── path/to/modified_file.py      # [What was changed and why]
-└── path/to/another_file.py       # [Purpose and key functionality]
+[module]/
+├── path/to/new_file.py           # [Purpose]
+├── path/to/modified_file.py      # [What changed and why]
+└── path/to/another_file.py       # [Purpose]
 ```
 
 **Key Features Delivered**:
 1. **[Feature Name]**: [Business functionality and impact]
 2. **[Feature Name]**: [Business functionality and impact]
-3. **[Feature Name]**: [Business functionality and impact]
 
 ### Technical Highlights
 
-**Architecture Decisions**:
-- [Decision 1]: [Rationale and impact]
-- [Decision 2]: [Rationale and impact]
+**Architecture Decisions** (see Decision Log for details):
+- [Decision 1]: [One-line rationale]
+- [Decision 2]: [One-line rationale]
 
-**Performance Improvements**:
-- [Metric]: [Before vs After with specific numbers]
-- [Metric]: [Before vs After with specific numbers]
+**Performance / Quality Results**:
+- [Metric]: [Observed result — e.g., "p95 latency: 120ms (target: <200ms) ✅"]
 
-**Documentation Added**:
-- [ ] All functions have comprehensive docstrings
-- [ ] Complex business logic is well-commented
-- [ ] Module-level documentation explains purpose
-- [ ] Type hints are complete and accurate
+**Documentation Checklist**:
+- [ ] All functions have comprehensive docstrings (purpose, args, returns)
+- [ ] Complex business logic has inline comments
+- [ ] Module-level docstrings explain purpose and usage
+- [ ] Type hints complete and accurate
+- [ ] `mypy` / `make typecheck` passes with 0 errors
 
 ### Validation Results
 
-**Test Coverage**:
-- [ ] All test cases pass
-- [ ] Edge cases handled
-- [ ] Error scenarios tested
-- [ ] Performance benchmarks met
+**Test Results**:
+- [ ] All test cases in Test Execution Log: ✅ Passed
+- [ ] Edge cases and error scenarios covered
+- [ ] No regressions in related functionality
 
 **Deployment Notes**:
-- [Any special deployment considerations]
-- [Configuration changes required]
-- [Database migrations needed]
+- [New dependencies added, if any]
+- [Config changes or environment variables required]
+- [Database migrations or one-time setup steps]
+- [Anything the next developer needs to know]
 
 ------------------------------------------------------------------------
