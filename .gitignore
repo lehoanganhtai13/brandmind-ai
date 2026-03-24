@@ -219,6 +219,10 @@ agent_workspace/
 data/raw_documents/*.pdf
 !data/raw_documents/*_test.pdf
 
+# Session data for testing run
+data/brand_strategy_sessions
+brandmind-output
+
 # Agent config
 .agent
 # Gemini CLI Agent

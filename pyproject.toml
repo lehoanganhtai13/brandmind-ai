@@ -20,6 +20,12 @@ sources = ["src"]
 [tool.uv.workspace]
 members = ["src/shared", "src/core"]
 
+# chardet 7.x is not compatible with requests 2.32.x (requires chardet <6.0.0)
+# crawl4ai only declares chardet>=5.2.0, so uv resolves to latest (7.x)
+# This constraint forces chardet to stay in the 5.x range
+[tool.uv]
+constraint-dependencies = ["chardet<6.0.0"]
+
 [dependency-groups]
 chatbot = [
     "shared",
@@ -36,7 +42,6 @@ migration = [
 ]
 dev = [
  "pytest>=7.0.0",
- "black>=23.0.0",
  "mypy>=1.0.0",
  "pytest-asyncio>=1.2.0",
  "ruff>=0.14.5",

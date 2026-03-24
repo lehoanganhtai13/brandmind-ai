@@ -71,31 +71,37 @@ add-core-optional: ## Add optional dependency to core. Usage: make add-core-opti
 
 remove-indexer: ## Remove package from indexer group. Usage: make remove-indexer PKG=package_name
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
-	uv remove --group indexer $(PKG)
+	uv remove --group indexer $(PKG) --no-sync
+	@echo "✅ Removed. Run 'make sync' to update your environment."
 
 remove-chatbot: ## Remove package from chatbot group. Usage: make remove-chatbot PKG=package_name
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
-	uv remove --group chatbot $(PKG)
+	uv remove --group chatbot $(PKG) --no-sync
+	@echo "✅ Removed. Run 'make sync' to update your environment."
 
 remove-shared: ## Remove package from shared package. Usage: make remove-shared PKG=package_name
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
-	cd src/shared && uv remove $(PKG)
+	cd src/shared && uv remove $(PKG) --no-sync
+	@echo "✅ Removed. Run 'make sync' to update your environment."
 
 remove-core: ## Remove package from core package. Usage: make remove-core PKG=package_name
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
-	cd src/core && uv remove $(PKG)
+	cd src/core && uv remove $(PKG) --no-sync
+	@echo "✅ Removed. Run 'make sync' to update your environment."
 
 remove-dev: ## Remove development dependency. Usage: make remove-dev PKG=package_name
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
-	uv remove --group dev $(PKG)
+	uv remove --group dev $(PKG) --no-sync
+	@echo "✅ Removed. Run 'make sync' to update your environment."
 
 remove-migration: ## Remove package from migration group. Usage: make remove-migration PKG=package_name
 	@if [ -z "$(PKG)" ]; then echo "Error: PKG is required."; exit 1; fi
-	uv remove --group migration $(PKG)
+	uv remove --group migration $(PKG) --no-sync
+	@echo "✅ Removed. Run 'make sync' to update your environment."
 
 ## Maintenance
 sync: ## Sync dependencies with lock file
-	uv sync
+	uv sync --group chatbot --group indexer --group dev
 
 update: ## Update all dependencies
 	uv lock --upgrade
@@ -118,9 +124,8 @@ test-watch: ## Run tests in watch mode
 test-unit: ## Run unit tests only
 	uv run pytest tests/unit/
 
-format: ## Format code with ruff and black
+format: ## Format code with ruff
 	uv run ruff format src/
-	uv run black src/
 
 lint: ## Lint code with ruff and mypy
 	uv run ruff check src/ --fix

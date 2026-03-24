@@ -19,6 +19,9 @@ class RetryChatGoogleGenerativeAI(ChatGoogleGenerativeAI):
     when using LangChain's Runnable.with_retry().
     """
 
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
     async def _astream(
         self,
         *args: Any,

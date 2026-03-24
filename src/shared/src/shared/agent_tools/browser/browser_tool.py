@@ -47,6 +47,7 @@ from .browser_manager import BrowserManager
 
 _DEFAULT_MODEL = "gemini-3-flash-preview"
 _DEFAULT_THINKING_LEVEL: Literal["minimal", "low", "medium", "high"] = "medium"
+_DEFAULT_MAX_STEPS = 30  # Cap browser actions per task to prevent runaway sessions
 
 
 def _create_browser_llm() -> ChatGoogle:
@@ -171,26 +172,38 @@ def create_browse_tool(
             ValueError: If ``GEMINI_API_KEY`` is not configured. Run
                 ``make setup-env`` to set it up.
         """
-        # Create the LLM instance for this browsing session.
-        # A new instance is created per call to ensure the API key is always
-        # current (in case SETTINGS changes between calls).
         llm = _create_browser_llm()
-
-        # get_browser() validates that a login session exists and raises
-        # RuntimeError if the user hasn't run setup_login() yet.
         browser = browser_manager.get_browser()
 
+        # Inject guardrails into the task description so the browser
+        # agent knows when to STOP instead of endlessly retrying.
+        task_with_guardrails = (
+            task + "\n\n---\n"
+            "**CRITICAL RULES:**\n"
+            "- If you encounter a login wall, paywall, or authentication "
+            "requirement, try **AT MOST ONE** alternative approach. "
+            "If that also fails, **STOP IMMEDIATELY**.\n"
+            "- Do **NOT** try multiple proxy/viewer services to bypass "
+            "login walls. This wastes time with no result.\n"
+            "- When you cannot access content, report clearly: "
+            "(1) what you **could** observe before being blocked, "
+            "(2) which URL was inaccessible, "
+            "(3) the reason (login required, content blocked, etc.).\n"
+            "- **Partial information is valuable.** Reporting 'profile has "
+            "~6K followers but content is login-gated' is far better than "
+            "spending 20 steps trying to bypass the wall.\n"
+        )
+
         agent: BrowserAgent = BrowserAgent(
-            task=task,
+            task=task_with_guardrails,
             llm=llm,
             browser=browser,
         )
 
-        # agent.run() returns AgentHistoryList, not a plain str.
-        # final_result() extracts the last agent response as Optional[str].
-        # We fall back to str() conversion if final_result() returns None
-        # (e.g., the agent was interrupted or returned no explicit answer).
-        history = await agent.run()
+        # agent.run() returns AgentHistoryList; final_result() extracts
+        # the last response. max_steps is a safety net in case guardrails
+        # don't fully prevent runaway sessions.
+        history = await agent.run(max_steps=_DEFAULT_MAX_STEPS)
         final: str = history.final_result() or str(history)
         return final
 

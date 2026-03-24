@@ -77,14 +77,12 @@ async def cleanup_duplicate_entities(
     logger.info("Scanning for duplicate entity IDs in Graph DB...")
 
     # 1. Find all nodes with their ID and labels
-    result = await graph_db.async_execute_query(
-        """
+    result = await graph_db.async_execute_query("""
         MATCH (n)
         WHERE n.id IS NOT NULL
         RETURN n.id as id, labels(n) as labels, n.name as name,
                n.description as desc, id(n) as internal_id
-        """
-    )
+        """)
 
     # Group by UUID
     id_to_nodes: Dict[str, List[Dict]] = defaultdict(list)
@@ -306,13 +304,11 @@ async def cleanup_duplicate_relations(
 
     # 1. Get all valid relation IDs from Graph DB edges
     logger.info("Getting valid relation IDs from Graph DB...")
-    result = await graph_db.async_execute_query(
-        """
+    result = await graph_db.async_execute_query("""
         MATCH ()-[r]->()
         WHERE r.vector_db_ref_id IS NOT NULL
         RETURN DISTINCT r.vector_db_ref_id as ref_id
-        """
-    )
+        """)
 
     valid_ids: Set[str] = set()
     for record in result.result_set:

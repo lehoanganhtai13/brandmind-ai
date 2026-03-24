@@ -1,15 +1,21 @@
 """Deep Agent configuration for Document Cartographer.
 
-Sets up Gemini 2.5 Flash Lite model with FilesystemMiddleware, TodoWriteMiddleware,
+Sets up Gemini 3 Flash model with FilesystemMiddleware, TodoWriteMiddleware,
 SubAgentMiddleware, and custom tools for document structure analysis.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import cast
 
 from deepagents.backends import FilesystemBackend
 from deepagents.middleware.filesystem import FilesystemMiddleware
 from deepagents.middleware.patch_tool_calls import PatchToolCallsMiddleware
-from deepagents.middleware.subagents import SubAgentMiddleware
+from deepagents.middleware.subagents import (
+    GENERAL_PURPOSE_SUBAGENT,
+    SubAgentMiddleware,
+)
 from langchain.agents import create_agent
 from langchain.agents.middleware import (
     ClearToolUsesEdit,
@@ -17,6 +23,7 @@ from langchain.agents.middleware import (
     SummarizationMiddleware,
     ToolRetryMiddleware,
 )
+from langchain_core.tools import BaseTool, StructuredTool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from loguru import logger
 
@@ -91,6 +98,9 @@ def create_cartographer_agent(
         )
         from langchain.tools import ToolRuntime, tool
 
+        # Get the underlying callable from the original grep tool
+        _original_grep_func = cast(StructuredTool, original_grep).func
+
         @tool(description=GREP_TOOL_DESCRIPTION)
         def grep(
             pattern: str,
@@ -108,7 +118,8 @@ def create_cartographer_agent(
                 glob = glob.lstrip("/")
 
             # Call original grep implementation
-            return original_grep.func(
+            assert _original_grep_func is not None
+            return _original_grep_func(
                 pattern=pattern,
                 runtime=runtime,
                 path=path,
@@ -117,9 +128,10 @@ def create_cartographer_agent(
             )
 
         # Replace grep in middleware's tools list
-        for i, t in enumerate(fs_middleware.tools):
+        tools_list = cast(list[BaseTool], fs_middleware.tools)
+        for i, t in enumerate(tools_list):
             if t.name == "grep":
-                fs_middleware.tools[i] = grep
+                tools_list[i] = grep
                 logger.info("✓ Grep tool patched with virtual glob fix")
                 break
 
@@ -188,19 +200,24 @@ def create_cartographer_agent(
     # Sub-agents can handle repetitive tasks (e.g., searching multiple headers)
     # They have same tools/middlewares as main agent (except SubAgentMiddleware itself)
     subagent_middleware = SubAgentMiddleware(
-        default_model=model,
-        default_tools=[line_search_wrapper],  # Sub-agent uses wrapped tool
-        default_middleware=[
-            context_edit_middleware,
-            msg_summary_middleware,
-            todo_middleware,
-            fs_middleware,
-            patch_middleware,
-            log_message_middleware,
-            retry_middleware,
-            stop_check_middleware,
+        backend=backend,
+        subagents=[
+            {
+                **GENERAL_PURPOSE_SUBAGENT,
+                "model": model,
+                "tools": [line_search_wrapper],
+                "middleware": [
+                    context_edit_middleware,
+                    msg_summary_middleware,
+                    todo_middleware,
+                    fs_middleware,
+                    patch_middleware,
+                    log_message_middleware,
+                    retry_middleware,
+                    stop_check_middleware,
+                ],
+            }
         ],
-        general_purpose_agent=True,  # Sub-agent can handle general tasks
     )
     logger.info("✓ Middlewares configured (including SubAgent)")
 

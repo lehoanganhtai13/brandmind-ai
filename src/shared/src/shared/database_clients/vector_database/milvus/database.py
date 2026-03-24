@@ -518,9 +518,9 @@ class MilvusVectorDatabase(BaseVectorDatabase):
         Raises:
             ValueError: If the metric type is not supported.
         """
-        assert isinstance(
-            metric_type, MetricType
-        ), "metric_type must be an instance of MetricType Enum"
+        assert isinstance(metric_type, MetricType), (
+            "metric_type must be an instance of MetricType Enum"
+        )
 
         supported_metric_types = list(MetricType)
         if metric_type not in supported_metric_types:
@@ -542,9 +542,9 @@ class MilvusVectorDatabase(BaseVectorDatabase):
         Raises:
             ValueError: If the index type is not supported.
         """
-        assert isinstance(
-            index_type, IndexType
-        ), "index_type must be an instance of IndexType Enum"
+        assert isinstance(index_type, IndexType), (
+            "index_type must be an instance of IndexType Enum"
+        )
 
         supported_index_types = list(IndexType)
         if index_type not in supported_index_types:

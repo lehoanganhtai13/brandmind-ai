@@ -243,6 +243,12 @@ def search_web(
             "response_time": 0.0,
             "result_count": 0,
             "engine_used": "none",
+            "error": (
+                "All search engines are temporarily unavailable or rate-limited. "
+                "Do NOT retry the same query — try a different query, "
+                "use a different tool (scrape_web_content, deep_research), "
+                "or move on to the next task."
+            ),
         }
 
     # -------------------------------------------------------------------------

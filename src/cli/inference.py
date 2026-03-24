@@ -527,6 +527,9 @@ async def async_main() -> None:
         epilog="""
 Examples:
   brandmind                                      # Launch interactive TUI (default)
+  brandmind brand-strategy                       # Interactive brand strategy session
+  brandmind brand-strategy -m "Quán café mới"    # Start with initial message
+  brandmind brand-strategy --session abc123      # Resume a saved session
   brandmind ask -q "What is Marketing Myopia?"   # One-shot Q&A
   brandmind search-kg -q "customer value" -n 10  # Search Knowledge Graph
   brandmind search-docs -q "pricing" -c "Ch 10"  # Search Documents
@@ -573,6 +576,23 @@ Examples:
         "--top-k", "-k", type=int, default=10, help="Number of results (default: 10)"
     )
 
+    # Mode: brand-strategy
+    brand_strategy_parser = subparsers.add_parser(
+        "brand-strategy",
+        help="Start interactive brand strategy session",
+    )
+    brand_strategy_parser.add_argument(
+        "-m",
+        "--message",
+        help="Initial message to start the session",
+        default=None,
+    )
+    brand_strategy_parser.add_argument(
+        "--session",
+        help="Resume a previous session by ID",
+        default=None,
+    )
+
     # Mode: browser
     browser_parser = subparsers.add_parser(
         "browser", help="Manage browser agent settings"
@@ -604,7 +624,14 @@ Examples:
         return None
 
     # Dispatch to handlers
-    if args.mode == "ask":
+    if args.mode == "brand-strategy":
+        from cli.brand_strategy import run_brand_strategy_session
+
+        await run_brand_strategy_session(
+            initial_message=args.message,
+            session_id=args.session,
+        )
+    elif args.mode == "ask":
         await run_ask_mode(args.question, verbose=args.verbose)
     elif args.mode == "search-kg":
         await run_kg_search_mode(args.query, args.max_results)

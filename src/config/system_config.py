@@ -39,6 +39,9 @@ class Settings:
         self.PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY", "")
         self.TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 
+        # Google Places API settings
+        self.GOOGLE_PLACES_API_KEY = os.getenv("GOOGLE_PLACES_API_KEY", "")
+
         # Database settings
         self.MILVUS_HOST = os.getenv("MILVUS_HOST", "localhost")
         self.MILVUS_PORT = int(os.getenv("MILVUS_PORT", 19530))
