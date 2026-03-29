@@ -145,6 +145,10 @@ def create_brand_strategy_agent(
         if brand_name and brand_name != session.brand_name:
             session.brand_name = brand_name
             updated.append(f"brand: {brand_name}")
+            # Update workspace project metadata with new brand name
+            from shared.workspace import ensure_project_workspace
+
+            ensure_project_workspace(session.session_id, brand_name)
 
         # Advance to next phase
         if advance:
@@ -188,6 +192,36 @@ def create_brand_strategy_agent(
             updated.append(f"phase: {old} → {next_phase}")
             updated.append(f"Next: Read /brand-strategy-orchestrator/{ref_file}")
             updated.append(f"Remaining: {remaining_str}")
+
+            # Workspace update reminder (Task 50 — phase transition hook)
+            workspace_hint = (
+                "\n\n--- WORKSPACE UPDATE REQUIRED ---\n"
+                "Before reading the next phase's reference file, "
+                "update your workspace notes:\n"
+                "1. `/workspace/brand_brief.md` — Write SOAP (S/O/A/P) "
+                "for the phase you just completed. Compress the previous "
+                "phase to bullet summary. Update Executive Summary and "
+                "Golden Thread.\n"
+                "2. `/workspace/working_notes.md` — Process inbox items. "
+                "Add session reflection for this phase. Clear resolved "
+                "pending questions.\n"
+                "3. `/workspace/quality_gates.md` — Mark completed gates. "
+                "Write Thread Check. Add gate checklist for the next phase.\n"
+                "4. `/user/profile.md` — Any new user preferences or "
+                "constraints learned?\n"
+                "Use edit_file for targeted updates. Do NOT rewrite "
+                "entire files."
+            )
+            # Extra emphasis on user profile after Phase 0/0.5
+            if old in ("phase_0", "phase_0_5"):
+                workspace_hint += (
+                    "\n\nIMPORTANT — You just completed diagnosis/audit. "
+                    "Update `/user/profile.md` NOW with: role, experience "
+                    "level, language, communication style, constraints, "
+                    "working style. This is your best chance to capture "
+                    "user context comprehensively."
+                )
+            updated.append(workspace_hint)
 
         # Loop back (proactive triggers)
         if loop_back_to:
@@ -272,13 +306,39 @@ def create_brand_strategy_agent(
         keep=("messages", 30),
     )
 
+    # Pre-compact workspace notes reminder (Task 50)
+    # Fires BEFORE summarization to give agent time to save workspace notes
+    from shared.agent_middlewares import PreCompactNotesMiddleware
+
+    pre_compact_middleware = PreCompactNotesMiddleware(
+        context_window=model_context_window,
+        trigger_ratio=0.65,
+    )
+
     # ToolSearch middleware (Task 47)
     tool_search_middleware = create_tool_search_middleware(
         all_tools=tools,
     )
 
-    # Skills middleware + filesystem (Task 35)
-    skills_middleware, fs_middleware = create_brand_strategy_skills_middleware()
+    # Skills middleware + filesystem + workspace (Task 35 + Task 48)
+    workspace_dir: str | None = None
+    user_dir: str | None = None
+    session = get_active_session()
+    if session is not None:
+        from shared.workspace import ensure_project_workspace
+
+        ws_path, user_path = ensure_project_workspace(
+            session_id=session.session_id,
+            brand_name=session.brand_name,
+        )
+        if ws_path is not None and user_path is not None:
+            workspace_dir = str(ws_path)
+            user_dir = str(user_path)
+
+    skills_middleware, fs_middleware = create_brand_strategy_skills_middleware(
+        workspace_dir=workspace_dir,
+        user_dir=user_dir,
+    )
 
     # Sub-agent middleware (Task 41)
     tools_registry = {
@@ -289,14 +349,45 @@ def create_brand_strategy_agent(
         tools_registry=tools_registry,
     )
 
+    # Session-aware system prompt (Task 49)
+    system_prompt = BRAND_STRATEGY_SYSTEM_PROMPT
+    if session is not None and session.completed_phases:
+        # Resumed session — instruct agent to restore context from workspace
+        completed_str = ", ".join(
+            p.replace("phase_", "Phase ") for p in session.completed_phases
+        )
+        current_str = session.current_phase.replace("phase_", "Phase ")
+        resume_addendum = (
+            "\n\n# SESSION RESUME\n\n"
+            "This is a **RESUMED session**. "
+            f"You have completed phases: {completed_str}. "
+            f"Current phase: **{current_str}**.\n\n"
+            "**BEFORE responding to the user**, read your workspace notes "
+            "to restore context:\n"
+            '1. `read_file("/workspace/brand_brief.md")` — '
+            "Executive Summary + Golden Thread\n"
+            '2. `read_file("/workspace/working_notes.md")` — '
+            "Pending items + observations\n"
+            '3. `read_file("/workspace/quality_gates.md")` — '
+            "Current gate status\n"
+            '4. `read_file("/user/profile.md")` — '
+            "User preferences\n\n"
+            "After reading, briefly acknowledge to the user where you "
+            "left off and what comes next. "
+            "Do NOT ask the user to repeat information that is already "
+            "in your workspace notes."
+        )
+        system_prompt = system_prompt + resume_addendum
+
     # ---- Assemble Agent ----
     agent = create_agent(
         model=model,
         tools=tools,
-        system_prompt=BRAND_STRATEGY_SYSTEM_PROMPT,
+        system_prompt=system_prompt,
         middleware=[
             context_edit_middleware,
-            msg_summary_middleware,
+            pre_compact_middleware,  # Task 50: remind at 65%
+            msg_summary_middleware,  # Summarize at 80%
             tool_search_middleware,
             fs_middleware,
             skills_middleware,

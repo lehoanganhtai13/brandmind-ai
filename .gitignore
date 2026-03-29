@@ -225,5 +225,10 @@ brandmind-output
 
 # Agent config
 .agent
+.mcp.json
+AGENTS.md
+CLAUDE.md
+
 # Gemini CLI Agent
 .gemini/
+.gitnexus

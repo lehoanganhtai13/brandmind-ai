@@ -5,30 +5,36 @@ instances for different agent domains. Uses progressive disclosure pattern:
 agent sees skill name + description in system prompt, reads full SKILL.md
 on-demand via FilesystemMiddleware.
 
-Architecture:
-    SkillsMiddleware (built-in from DeepAgents)
-    └── FilesystemBackend (local filesystem access, virtual_mode=True)
-        └── sources: ["/"]
-            ├── brand-strategy-orchestrator/SKILL.md
-            ├── market-research/SKILL.md
-            ├── brand-positioning-identity/SKILL.md
-            └── brand-communication-planning/SKILL.md
-    FilesystemMiddleware (same backend)
-    └── Provides read_file, ls, glob, grep tools for reading SKILL.md
+Architecture (with workspace):
+    CompositeBackend
+    ├── default: skills FilesystemBackend (read-only, virtual_mode=True)
+    │   └── brand-strategy-orchestrator/SKILL.md, market-research/SKILL.md, ...
+    ├── route "/workspace/" → workspace FilesystemBackend (read-write)
+    │   └── ~/.brandmind/projects/{session_id}/workspace/
+    └── route "/user/" → user FilesystemBackend (read-write)
+        └── ~/.brandmind/user/
+
+Architecture (without workspace — backward compatible):
+    FilesystemBackend (read-only, virtual_mode=True)
+    └── brand-strategy-orchestrator/SKILL.md, ...
 
 Usage:
     from shared.agent_skills import create_brand_strategy_skills_middleware
 
-    skills_mw, fs_mw = create_brand_strategy_skills_middleware()
-    agent = create_agent(
-        model=model,
-        middleware=[fs_mw, skills_mw, ...],
+    # With workspace (normal brand strategy session)
+    skills_mw, fs_mw = create_brand_strategy_skills_middleware(
+        workspace_dir="/path/to/workspace",
+        user_dir="/path/to/user",
     )
+
+    # Without workspace (backward compatible, tests)
+    skills_mw, fs_mw = create_brand_strategy_skills_middleware()
 """
 
 from pathlib import Path
 from typing import Literal, cast
 
+from deepagents.backends.composite import CompositeBackend
 from deepagents.backends.filesystem import FilesystemBackend
 from deepagents.middleware.filesystem import (
     GREP_TOOL_DESCRIPTION,
@@ -47,15 +53,25 @@ _AGENT_SKILLS_DIR = Path(__file__).parent
 _BRAND_STRATEGY_SKILLS_DIR = _AGENT_SKILLS_DIR / "brand_strategy"
 
 
-def create_brand_strategy_skills_middleware() -> tuple[
-    SkillsMiddleware, FilesystemMiddleware
-]:
-    """Create SkillsMiddleware + FilesystemMiddleware for brand strategy skills.
+def create_brand_strategy_skills_middleware(
+    workspace_dir: str | None = None,
+    user_dir: str | None = None,
+) -> tuple[SkillsMiddleware, FilesystemMiddleware]:
+    """Create SkillsMiddleware + FilesystemMiddleware for brand strategy agent.
 
-    Both middlewares share the same FilesystemBackend (virtual_mode=True,
-    read-only). SkillsMiddleware injects skill names + descriptions into
-    the system prompt. FilesystemMiddleware provides the read_file tool
-    so the agent can actually read SKILL.md content on demand.
+    When workspace_dir and user_dir are provided, creates a CompositeBackend
+    that routes paths to three separate backends:
+    - Default (no prefix): skills directory (read-only)
+    - "/workspace/": project workspace notes (read-write)
+    - "/user/": global user profile (read-write)
+
+    When not provided, falls back to skills-only backend (backward compatible).
+
+    Args:
+        workspace_dir: Path to project workspace directory on disk.
+            When provided, enables read-write access via "/workspace/" prefix.
+        user_dir: Path to global user profile directory on disk.
+            When provided, enables read-write access via "/user/" prefix.
 
     Returns:
         Tuple of (SkillsMiddleware, FilesystemMiddleware).
@@ -68,11 +84,40 @@ def create_brand_strategy_skills_middleware() -> tuple[
             f"Brand strategy skills directory not found: {_BRAND_STRATEGY_SKILLS_DIR}"
         )
 
-    # FilesystemBackend with virtual_mode=True for safe read-only access
-    backend = FilesystemBackend(
+    # Skills backend: always present, read-only
+    skills_backend = FilesystemBackend(
         root_dir=str(_BRAND_STRATEGY_SKILLS_DIR),
         virtual_mode=True,
     )
+
+    # Determine backend: CompositeBackend if workspace provided, else skills-only
+    backend: CompositeBackend | FilesystemBackend
+    if workspace_dir and user_dir:
+        workspace_backend = FilesystemBackend(
+            root_dir=workspace_dir,
+            virtual_mode=True,
+        )
+        user_backend = FilesystemBackend(
+            root_dir=user_dir,
+            virtual_mode=True,
+        )
+        backend = CompositeBackend(
+            default=skills_backend,
+            routes={
+                "/workspace/": workspace_backend,
+                "/user/": user_backend,
+            },
+        )
+        logger.info(
+            f"CompositeBackend configured: skills (read-only) + "
+            f"workspace ({workspace_dir}) + user ({user_dir})"
+        )
+    else:
+        backend = skills_backend
+        logger.info(
+            "Skills-only backend configured (no workspace). "
+            f"Skills dir: {_BRAND_STRATEGY_SKILLS_DIR}"
+        )
 
     # SkillsMiddleware: scans for SKILL.md, injects metadata into system prompt
     skills_middleware = SkillsMiddleware(
@@ -80,20 +125,14 @@ def create_brand_strategy_skills_middleware() -> tuple[
         sources=["/"],
     )
 
-    # FilesystemMiddleware: provides read_file tool so agent can read SKILL.md
+    # FilesystemMiddleware: provides read_file, write_file, edit_file, etc.
     fs_middleware = FilesystemMiddleware(
         backend=backend,
         tool_token_limit_before_evict=None,
     )
 
-    # Patch grep tool: FilesystemBackend virtual_mode doesn't strip leading /
-    # from glob patterns before passing to ripgrep (deepagents<=0.3.12 bug).
+    # Patch grep tool for virtual_mode glob bug (deepagents<=0.3.12)
     _patch_grep_virtual_glob(fs_middleware)
-
-    logger.info(
-        "Brand strategy SkillsMiddleware configured. "
-        f"Skills dir: {_BRAND_STRATEGY_SKILLS_DIR}"
-    )
 
     return skills_middleware, fs_middleware
 
