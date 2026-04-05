@@ -157,9 +157,7 @@ class LiteLLMClientLLM(BaseLLM):
                         full_text += delta
                         yield CompletionResponse(text=full_text, delta=delta)
         except Exception as e:
-            raise CallServerLLMError(
-                f"LiteLLM stream call failed: {e!s}"
-            ) from e
+            raise CallServerLLMError(f"LiteLLM stream call failed: {e!s}") from e
 
     async def acomplete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
         """
@@ -187,9 +185,7 @@ class LiteLLMClientLLM(BaseLLM):
             content = response.choices[0].message.content or ""
             return CompletionResponse(text=content)
         except Exception as e:
-            raise CallServerLLMError(
-                f"Async LiteLLM API call failed: {e!s}"
-            ) from e
+            raise CallServerLLMError(f"Async LiteLLM API call failed: {e!s}") from e
 
     async def astream_complete(  # type: ignore[override]
         self, prompt: str, **kwargs: Any
@@ -224,6 +220,4 @@ class LiteLLMClientLLM(BaseLLM):
                         full_text += delta
                         yield CompletionResponse(text=full_text, delta=delta)
         except Exception as e:
-            raise CallServerLLMError(
-                f"Async LiteLLM stream call failed: {e!s}"
-            ) from e
+            raise CallServerLLMError(f"Async LiteLLM stream call failed: {e!s}") from e
