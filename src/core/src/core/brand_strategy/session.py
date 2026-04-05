@@ -15,6 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
+from langchain_core.messages import messages_from_dict, messages_to_dict
 from pydantic import BaseModel, Field
 
 from core.brand_strategy.orchestrator.brand_brief import (
@@ -106,12 +107,20 @@ class BrandStrategySession(BaseModel):
 
 
 def save_session(session: BrandStrategySession) -> Path:
-    """Save session to disk."""
+    """Save session to disk.
+
+    Uses LangChain's messages_to_dict for proper serialization of
+    message objects (HumanMessage, AIMessage with tool_calls, ToolMessage).
+    """
     SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
     session.updated_at = datetime.now().isoformat()
     filepath = SESSIONS_DIR / f"{session.session_id}.json"
+
+    data = session.model_dump()
+    data["messages"] = messages_to_dict(session.messages) if session.messages else []
+
     filepath.write_text(
-        session.model_dump_json(indent=2),
+        json.dumps(data, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
     return filepath
@@ -120,12 +129,21 @@ def save_session(session: BrandStrategySession) -> Path:
 def load_session(
     session_id: str,
 ) -> Optional[BrandStrategySession]:
-    """Load session from disk."""
+    """Load session from disk.
+
+    Converts serialized message dicts back to LangChain message objects
+    via messages_from_dict.
+    """
     filepath = SESSIONS_DIR / f"{session_id}.json"
     if not filepath.exists():
         return None
     data = json.loads(filepath.read_text(encoding="utf-8"))
-    return BrandStrategySession(**data)
+
+    raw_messages = data.pop("messages", [])
+    session = BrandStrategySession(**data)
+    session.messages = messages_from_dict(raw_messages) if raw_messages else []
+
+    return session
 
 
 def list_sessions() -> list[dict[str, Any]]:
