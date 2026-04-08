@@ -21,6 +21,7 @@ SLASH_COMMANDS: dict[str, dict] = {
         "description": "Change operation mode",
         "subcommands": {
             "ask": "Interactive Q&A with agent",
+            "brand-strategy": "Brand strategy development",
             "search-kg": "Search Knowledge Graph directly",
             "search-docs": "Search Document Library directly",
         },
@@ -78,6 +79,9 @@ class SuggestionPopup(Vertical):
     Shows filtered suggestions based on user typing.
     Positioned above the input bar using dock: bottom with offset.
     """
+
+    can_focus = False
+    can_focus_children = False
 
     DEFAULT_CSS = """
     SuggestionPopup {
@@ -342,76 +346,55 @@ class InputBar(Input):
         else:
             self._navigate_history(1)
 
-    async def on_key(self, event) -> None:
-        """Handle special keys including tab and macOS editing shortcuts."""
+    async def _on_key(self, event) -> None:
+        """Handle key workarounds and custom bindings.
+
+        Handles:
+        - space: Textual bug workaround (v8.x creates Key with char=None)
+        - shift+enter: Insert newline for multi-line input
+        - tab: Slash command popup completion
+        - ctrl+delete / alt+delete: Delete word right (Windows WSL2 / macOS)
+
+        All other keys pass through to Input._on_key (next in MRO).
+        """
+        # Workaround: Textual creates space Key with char=None
+        if event.key == "space":
+            if self.selection.is_empty:
+                self.insert_text_at_cursor(" ")
+            else:
+                self.replace(" ", *self.selection)
+            event.stop()
+            event.prevent_default()
+            return
+
         # Tab completion for popup
-        if self._popup and event.key == "tab":
-            selected = self._popup.get_selected_command()
-            if selected:
-                await self._complete_command(selected)
+        if event.key == "tab":
+            if self._popup:
+                selected = self._popup.get_selected_command()
+                if selected:
+                    await self._complete_command(selected)
             event.prevent_default()
             event.stop()
             return
 
-        # macOS-style Cmd+Backspace: Delete from cursor to start of line
-        if event.key == "ctrl+u":  # Terminal standard for "kill line to start"
-            self._delete_to_start()
-            event.prevent_default()
-            event.stop()
-            return
-
-        # macOS-style Opt+Backspace: Delete word to the left
-        # In terminals, Opt+Backspace often sends "ctrl+w" or special escape sequence
-        if event.key == "ctrl+w":  # Standard Unix "kill word"
-            self._delete_word_left()
-            event.prevent_default()
-            event.stop()
-            return
-
-        # Alt/Opt+Delete: Delete word to the right
-        if event.key == "ctrl+delete" or event.key == "alt+delete":
+        # Delete word right (ctrl+delete for WSL2/Windows, alt+delete for macOS)
+        if event.key in ("ctrl+delete", "alt+delete"):
             self._delete_word_right()
             event.prevent_default()
             event.stop()
             return
 
-    def _delete_to_start(self) -> None:
-        """Delete text from cursor position to start of line."""
-        cursor = self.cursor_position
-        if cursor > 0:
-            self.value = self.value[cursor:]
-            self.cursor_position = 0
-
-    def _delete_word_left(self) -> None:
-        """Delete word to the left of cursor (Opt+Backspace behavior)."""
-        text = self.value
-        cursor = self.cursor_position
-
-        if cursor == 0:
-            return
-
-        # Find start of previous word
-        pos = cursor - 1
-        # Skip trailing spaces
-        while pos > 0 and text[pos - 1] == " ":
-            pos -= 1
-        # Skip word characters
-        while pos > 0 and text[pos - 1] != " ":
-            pos -= 1
-
-        # Delete from pos to cursor
-        self.value = text[:pos] + text[cursor:]
-        self.cursor_position = pos
+        # All other keys: Input._on_key handles them (next in MRO)
+        self._restart_blink()
 
     def _delete_word_right(self) -> None:
-        """Delete word to the right of cursor (Opt+Delete behavior)."""
+        """Delete word to the right of cursor."""
         text = self.value
         cursor = self.cursor_position
 
         if cursor >= len(text):
             return
 
-        # Find end of current/next word
         pos = cursor
         # Skip leading spaces
         while pos < len(text) and text[pos] == " ":
@@ -420,9 +403,7 @@ class InputBar(Input):
         while pos < len(text) and text[pos] != " ":
             pos += 1
 
-        # Delete from cursor to pos
         self.value = text[:cursor] + text[pos:]
-        # cursor_position stays the same
 
     async def _complete_command(self, command: str) -> None:
         """Complete input with selected command.

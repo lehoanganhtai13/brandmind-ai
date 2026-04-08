@@ -54,6 +54,10 @@ get_description() {
         LITELLM_API_KEY) echo "LiteLLM proxy API key (optional)" ;;
         PERPLEXITY_API_KEY) echo "Perplexity API key for AI search (optional, get from https://perplexity.ai)" ;;
         TAVILY_API_KEY) echo "Tavily API key for web search (optional, get from https://tavily.com)" ;;
+        BRANDMIND_HOST) echo "Server bind address (use 0.0.0.0 for all interfaces)" ;;
+        BRANDMIND_PORT) echo "Server port number" ;;
+        BRANDMIND_SESSION_TTL) echo "Session time-to-live in seconds (idle sessions auto-cleanup)" ;;
+        BRANDMIND_OUTPUT_DIR) echo "Output directory for generated files (images, docs). Empty = project root/brandmind-output/" ;;
         EMBEDDING_DIM) echo "Embedding dimension" ;;
         MINIO_ACCESS_KEY_ID) echo "MinIO access key" ;;
         MINIO_SECRET_ACCESS_KEY) echo "MinIO secret key" ;;
@@ -90,6 +94,10 @@ is_optional() {
         LITELLM_API_KEY) return 0 ;;
         PERPLEXITY_API_KEY) return 0 ;;
         TAVILY_API_KEY) return 0 ;;
+        BRANDMIND_HOST) return 0 ;;
+        BRANDMIND_PORT) return 0 ;;
+        BRANDMIND_SESSION_TTL) return 0 ;;
+        BRANDMIND_OUTPUT_DIR) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -140,6 +148,9 @@ for i in "${!VAR_NAMES[@]}"; do
             ;;
         PERPLEXITY_API_KEY|TAVILY_API_KEY)
             section="🔍 Search API Keys"
+            ;;
+        BRANDMIND_*)
+            section="🌐 BrandMind Server"
             ;;
         EMBEDDING_DIM)
             section="📊 Embedding Configuration"
@@ -237,6 +248,10 @@ echo -e "${CYAN}═════════════════════�
             PERPLEXITY_API_KEY)
                 echo ""
                 echo "# Search API Keys"
+                ;;
+            BRANDMIND_HOST)
+                echo ""
+                echo "# BrandMind Server"
                 ;;
             EMBEDDING_DIM)
                 echo ""

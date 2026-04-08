@@ -6,7 +6,9 @@ build-backend = "hatchling.build"
 name = "brandmind-ai"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "httpx-sse>=0.4.3",
+]
 
 [project.scripts]
 parse-docs = "cli.parse_documents:main"
@@ -14,7 +16,7 @@ build-kg = "cli.build_knowledge_graph:main"
 brandmind = "cli.inference:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cli", "src/config", "src/prompts", "src/services"]
+packages = ["src/cli", "src/config", "src/prompts", "src/server", "src/services"]
 sources = ["src"]
 
 [tool.uv.workspace]
@@ -35,6 +37,13 @@ indexer = [
     "shared",
     "core[document_processing]",
     "core[knowledge_graph]",
+]
+server = [
+    "shared",
+    "core[retrieval]",
+    "fastapi>=0.115.0",
+    "sse-starlette>=2.0.0",
+    "uvicorn>=0.34.0",
 ]
 migration = [
     "minio>=7.2.20",
@@ -71,7 +80,7 @@ ignore = []
 
 [tool.ruff.lint.isort]
 # Declare project's own modules for correct import sorting
-known-first-party = ["cli", "config", "core", "prompts", "services", "shared"]
+known-first-party = ["cli", "config", "core", "prompts", "server", "services", "shared"]
 
 [tool.mypy]
 exclude = ["src/prompts"]

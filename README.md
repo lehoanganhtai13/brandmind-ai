@@ -275,13 +275,55 @@ brandmind browser status  # Check if a session exists
 brandmind browser reset   # Delete the saved session
 ```
 
-### 9. Running the CLI
+### 9. Running BrandMind
 
-BrandMind AI provides a powerful CLI for interaction:
+BrandMind uses a client-server architecture. Start the API server first, then use the CLI or TUI.
+
+#### Start the Server
 
 ```bash
-# Launch interactive TUI (default)
+# Start the API server (required for all modes)
+brandmind serve
+```
+
+> **Note**: Server port is configured via `BRANDMIND_PORT` in your `.env` file (default: 8000). Both server and client read from the same config, so they always agree on the port.
+
+#### Interactive TUI (Default)
+
+```bash
+# Launch full-screen TUI with slash commands
 brandmind
+```
+
+The TUI supports multiple modes — type `/mode` to switch:
+- **ask** — Interactive Q&A with the AI agent
+- **brand-strategy** — Full brand strategy development (6-phase workflow)
+- **search-kg** — Direct Knowledge Graph search
+- **search-docs** — Direct Document Library search
+
+#### Brand Strategy CLI
+
+```bash
+# Start interactive brand strategy session
+brandmind brand-strategy
+
+# Resume a previous session
+brandmind brand-strategy --session <session-id>
+```
+
+Type `/` to see available commands (`/status`, `/sessions`, `/clear`, `/help`, `/exit`).
+
+#### One-Shot Commands
+
+```bash
+# Ask a marketing question
+brandmind ask -q "What is brand positioning?"
+
+# Search Knowledge Graph
+brandmind search-kg -q "customer value" -n 10
+
+# Search Document Library
+brandmind search-docs -q "pricing strategy" -c "Chapter 10"
 ```
 
 You are now ready to start development!
@@ -326,7 +368,8 @@ make test-watch
 brandmind-ai/
 ├── .github/workflows/   # CI/CD workflows (GitHub Actions)
 ├── src/
-│   ├── cli/             # Command-line interface and TUI application
+│   ├── cli/             # Command-line interface and TUI application (HTTP client)
+│   ├── server/          # FastAPI API server (sessions, SSE streaming, agent orchestration)
 │   ├── shared/          # Shared utilities, models, and database clients
 │   ├── core/            # Core business logic and processing pipelines
 │   ├── config/          # System-wide configuration management

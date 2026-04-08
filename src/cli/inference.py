@@ -135,217 +135,101 @@ def create_qa_agent(
     return agent
 
 
-async def qa_agent_answer(question: str) -> str:
-    """
-    Answer marketing question using Q&A Agent with autonomous tool use.
-
-    Args:
-        question: Marketing question to answer
-
-    Returns:
-        Agent's answer based on retrieved knowledge
-    """
-    from langchain_core.messages import HumanMessage
-
-    agent = create_qa_agent()
-
-    # Agent expects {"messages": [HumanMessage(...)]} format
-    result = await agent.ainvoke(
-        {"messages": [HumanMessage(content=question)]},
-        {"recursion_limit": 100},  # Limit recursion for safety
-    )
-
-    # Extract final response from messages
-    if "messages" in result and result["messages"]:
-        # Get last AI message
-        for msg in reversed(result["messages"]):
-            if hasattr(msg, "content") and msg.content:
-                # Handle both string and list content
-                if isinstance(msg.content, list):
-                    # Extract text parts
-                    text_parts = []
-                    for part in msg.content:
-                        if isinstance(part, dict) and part.get("type") == "text":
-                            text_parts.append(part.get("text", ""))
-                        elif isinstance(part, str):
-                            text_parts.append(part)
-                    if text_parts:
-                        return "\n".join(text_parts)
-                else:
-                    return str(msg.content)
-
-    return "No response generated"
-
-
 async def run_ask_mode(question: str, verbose: bool = False) -> None:
-    """
-    Run Q&A Agent mode to answer marketing questions.
+    """Run Q&A Agent mode via server SSE streaming.
 
-    Uses Rich Live display with agent renderer for Claude Code-style output.
-    Tool logs are automatically routed based on contextvars.
+    Connects to BrandMind API server, creates an ask session,
+    and streams the response with Rich Live display.
 
     Args:
         question: Marketing question to answer
         verbose: Show detailed agent processing (not implemented yet)
     """
     from cli.agent_renderer import AgentOutputRenderer
-    from cli.log_capture import SmartLogCapture
-    from cli.tool_context import reset_current_tool, set_current_tool
+    from cli.client import BrandMindClient, ServerNotRunningError
+    from server.schemas.enums import SessionMode
+    from server.schemas.events import StreamDoneEvent
+    from shared.agent_middlewares.callback_types import StreamingTokenEvent
 
     console.print(
         Panel(
             f"[bold cyan]{question}[/bold cyan]",
-            title="🎯 Question",
+            title="Question",
             border_style="cyan",
         )
     )
 
-    # Create renderer
     renderer = AgentOutputRenderer(console)
-
-    # Create smart log capture with routing callbacks
-    log_capture = SmartLogCapture(
-        on_tool_log=renderer.add_tool_log,
-        on_other_log=renderer.add_other_log,
-    )
+    client = BrandMindClient()
 
     try:
-        # Start log capture FIRST - to catch early logs (FalkorDB init, etc.)
-        with log_capture:
-            # Then start renderer
-            with renderer:
-                # Create agent with:
-                # - callback: for middleware events (thinking, tool_call, tool_result)
-                # - on_tool_start/end: for context tracking (logs routing)
-                agent = create_qa_agent(
-                    callback=renderer.handle_event,
-                    on_tool_start=set_current_tool,  # Inject hook
-                    on_tool_end=reset_current_tool,  # Inject hook
-                )
+        # Check server health
+        await client.health()
 
-                # Stream agent response token-by-token for real-time display
-                from langchain_core.messages import AIMessageChunk
+        # Create session
+        info = await client.create_session(SessionMode.ASK)
 
-                from shared.agent_middlewares.callback_types import (
-                    StreamingThinkingEvent,
-                    StreamingTokenEvent,
-                )
+        with renderer:
+            renderer.reset_streaming_state()
 
-                accumulated_answer = ""
-                thinking_done = False  # Track if thinking phase has completed
+            accumulated_answer = ""
 
-                # Reset streaming state for new query
-                renderer.reset_streaming_state()
+            async for event in client.stream_message(info.session_id, question):
+                if isinstance(event, StreamDoneEvent):
+                    break
 
-                async for message_chunk, metadata in agent.astream(
-                    {"messages": [{"role": "user", "content": question}]},
-                    stream_mode="messages",
-                ):
-                    # Only process AI message chunks (not tool messages)
-                    if isinstance(message_chunk, AIMessageChunk):
-                        # Extract both thinking and text tokens from message chunk
-                        # Models with thinking capability emit content as list with
-                        # multiple parts: thinking blocks first, then text blocks
-                        if isinstance(message_chunk.content, list):
-                            # Complex content - may contain thinking + text
-                            for part in message_chunk.content:
-                                if isinstance(part, dict):
-                                    # Extract thinking tokens
-                                    if part.get("type") == "thinking":
-                                        # New block (e.g. multi-step)
-                                        if thinking_done:
-                                            thinking_done = False
+                renderer.handle_event(event)
 
-                                        thinking_text = part.get("thinking", "")
-                                        if thinking_text:
-                                            renderer.handle_event(
-                                                StreamingThinkingEvent(
-                                                    token=thinking_text
-                                                )
-                                            )
+                if isinstance(event, StreamingTokenEvent):
+                    if event.token and not event.done:
+                        accumulated_answer += event.token
 
-                                    # Extract text tokens
-                                    elif part.get("type") == "text":
-                                        token_text = part.get("text", "")
-                                        if token_text:
-                                            # When first text arrives, finalize thinking
-                                            if not thinking_done:
-                                                renderer.handle_event(
-                                                    StreamingThinkingEvent(
-                                                        token="", done=True
-                                                    )
-                                                )
-                                                thinking_done = True
-                                            accumulated_answer += token_text
-                                            renderer.handle_event(
-                                                StreamingTokenEvent(token=token_text)
-                                            )
+            if accumulated_answer:
+                console.print()
 
-                        elif isinstance(message_chunk.content, str):
-                            # Simple string content - just text
-                            token_text = message_chunk.content
-                            if token_text:
-                                # Finalize thinking if we haven't yet
-                                if not thinking_done:
-                                    renderer.handle_event(
-                                        StreamingThinkingEvent(token="", done=True)
-                                    )
-                                    thinking_done = True
-                                accumulated_answer += token_text
-                                renderer.handle_event(
-                                    StreamingTokenEvent(token=token_text)
-                                )
-
-                        # Handle messages with tool calls - they are intermediate
-                        # responses, not the final answer.
-                        # Important: If we encounter tool calls, thinking is done.
-                        if message_chunk.tool_calls:
-                            if not thinking_done:
-                                renderer.handle_event(
-                                    StreamingThinkingEvent(token="", done=True)
-                                )
-                                thinking_done = True
-                            continue
-
-                # Ensure thinking is finalized if stream ends without text/tools
-                if not thinking_done:
-                    renderer.handle_event(StreamingThinkingEvent(token="", done=True))
-                    thinking_done = True
-
-                # Send done signal to finalize streaming
-                renderer.handle_event(StreamingTokenEvent(token="", done=True))
+    except ServerNotRunningError:
+        console.print(
+            Panel(
+                "[bold red]BrandMind server not running.[/bold red]\n"
+                "Start with: [bold]brandmind serve[/bold]",
+                title="Error",
+                border_style="red",
+            )
+        )
     except Exception as e:
-        console.print(Panel(f"[red]{e}[/red]", title="❌ Error", border_style="red"))
+        console.print(Panel(f"[red]{e}[/red]", title="Error", border_style="red"))
         logger.exception("Q&A Agent failed")
 
 
 async def run_kg_search_mode(query: str, max_results: int = 10) -> None:
-    """
-    Run Knowledge Graph search mode.
-
-    Searches for marketing concepts, relationships, and source references
-    using direct KG query without agent overhead.
+    """Run Knowledge Graph search mode via server.
 
     Args:
         query: Conceptual query about marketing
         max_results: Maximum number of results to return
     """
-    from shared.agent_tools.retrieval import search_knowledge_graph
+    from cli.client import BrandMindClient, ServerNotRunningError
 
     console.print(
         Panel(
             f"[bold magenta]{query}[/bold magenta]\n"
             f"[dim]Max Results: {max_results}[/dim]",
-            title="🔍 Knowledge Graph Search",
+            title="Knowledge Graph Search",
             border_style="magenta",
         )
     )
 
+    client = BrandMindClient()
     with console.status("[bold magenta]Searching...", spinner="dots"):
         try:
-            results = await search_knowledge_graph(query=query, max_results=max_results)
+            results = await client.search_kg(query=query, max_results=max_results)
             console.print()
             console.print(Markdown(results))
+        except ServerNotRunningError:
+            console.print(
+                "[bold red]BrandMind server not running.[/bold red]\n"
+                "Start with: [bold]brandmind serve[/bold]"
+            )
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             logger.exception("KG search failed")
@@ -358,11 +242,7 @@ async def run_docs_search_mode(
     author: Optional[str] = None,
     top_k: int = 10,
 ) -> None:
-    """
-    Run Document Library search mode.
-
-    Searches for text passages with optional book/chapter/author filters
-    using hybrid search (dense + BM25).
+    """Run Document Library search mode via server.
 
     Args:
         query: Text to search for in documents
@@ -371,9 +251,8 @@ async def run_docs_search_mode(
         author: Filter by author (exact match)
         top_k: Number of results to return
     """
-    from shared.agent_tools.retrieval import search_document_library
+    from cli.client import BrandMindClient, ServerNotRunningError
 
-    # Build filter display
     filters = []
     if book:
         filters.append(f"Book: {book}")
@@ -388,22 +267,28 @@ async def run_docs_search_mode(
             f"[bold blue]{query}[/bold blue]\n"
             f"[dim]Filters: {filter_text}[/dim]\n"
             f"[dim]Top K: {top_k}[/dim]",
-            title="📚 Document Library Search",
+            title="Document Library Search",
             border_style="blue",
         )
     )
 
+    client = BrandMindClient()
     with console.status("[bold blue]Searching...", spinner="dots"):
         try:
-            results = await search_document_library(
+            results = await client.search_docs(
                 query=query,
-                filter_by_book=book,
-                filter_by_chapter=chapter,
-                filter_by_author=author,
+                book=book,
+                chapter=chapter,
+                author=author,
                 top_k=top_k,
             )
             console.print()
             console.print(results)
+        except ServerNotRunningError:
+            console.print(
+                "[bold red]BrandMind server not running.[/bold red]\n"
+                "Start with: [bold]brandmind serve[/bold]"
+            )
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             logger.exception("Document search failed")
@@ -533,6 +418,7 @@ Examples:
   brandmind ask -q "What is Marketing Myopia?"   # One-shot Q&A
   brandmind search-kg -q "customer value" -n 10  # Search Knowledge Graph
   brandmind search-docs -q "pricing" -c "Ch 10"  # Search Documents
+  brandmind serve                                # Start API server (port from .env)
   brandmind browser setup                        # Login to social media
   brandmind browser status                       # Check session validity
   brandmind browser reset                        # Delete current session
@@ -593,6 +479,12 @@ Examples:
         default=None,
     )
 
+    # Mode: serve
+    subparsers.add_parser(
+        "serve",
+        help="Start BrandMind API server (config via BRANDMIND_HOST/PORT in .env)",
+    )
+
     # Mode: browser
     browser_parser = subparsers.add_parser(
         "browser", help="Manage browser agent settings"
@@ -624,7 +516,11 @@ Examples:
         return None
 
     # Dispatch to handlers
-    if args.mode == "brand-strategy":
+    if args.mode == "serve":
+        # Serve runs synchronously (uvicorn manages its own event loop)
+        # Return early so async_main doesn't try to await it
+        return args.mode
+    elif args.mode == "brand-strategy":
         from cli.brand_strategy import run_brand_strategy_session
 
         await run_brand_strategy_session(
@@ -667,6 +563,17 @@ def main() -> None:
         from cli.tui.app import run_tui
 
         run_tui()
+        return
+
+    # Handle 'serve' mode synchronously (uvicorn runs its own loop)
+    if len(sys.argv) >= 2 and sys.argv[1] == "serve":
+        import uvicorn
+
+        from config.system_config import SETTINGS
+        from server.main import create_app
+
+        app = create_app()
+        uvicorn.run(app, host=SETTINGS.BRANDMIND_HOST, port=SETTINGS.BRANDMIND_PORT)
         return
 
     # Otherwise run the async CLI

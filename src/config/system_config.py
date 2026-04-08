@@ -57,6 +57,18 @@ class Settings:
         self.FALKORDB_PASSWORD = os.getenv("FALKORDB_PASSWORD", "")
         self.FALKORDB_GRAPH_NAME = os.getenv("FALKORDB_GRAPH_NAME", "knowledge_graph")
 
+        # Server settings
+        self.BRANDMIND_HOST = os.getenv("BRANDMIND_HOST", "0.0.0.0")  # nosec B104
+        self.BRANDMIND_PORT = int(os.getenv("BRANDMIND_PORT", 8000))
+        self.BRANDMIND_SESSION_TTL = int(os.getenv("BRANDMIND_SESSION_TTL", 3600))
+        self.BRANDMIND_OUTPUT_DIR = os.getenv(
+            "BRANDMIND_OUTPUT_DIR",
+            os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "brandmind-output",
+            ),
+        )
+
         # Vector Database Collection Names
         self.COLLECTION_DOCUMENT_CHUNKS = os.getenv(
             "COLLECTION_DOCUMENT_CHUNKS", "DocumentChunks"
