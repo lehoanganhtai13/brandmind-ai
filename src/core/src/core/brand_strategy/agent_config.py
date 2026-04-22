@@ -193,33 +193,28 @@ def create_brand_strategy_agent(
             updated.append(f"Next: Read /brand-strategy-orchestrator/{ref_file}")
             updated.append(f"Remaining: {remaining_str}")
 
-            # Workspace update reminder (phase transition hook)
+            # Workspace update + ref file hint (phase transition hook).
+            # Slimmed from 4-file cram to 2 explicit steps — reduces
+            # concerns-per-turn pressure while preserving workspace freshness
+            # for session resume. Detailed workspace section in system prompt
+            # + PreCompactNotesMiddleware provide redundant guidance.
             workspace_hint = (
-                "\n\n--- WORKSPACE UPDATE REQUIRED ---\n"
-                "Before reading the next phase's reference file, "
-                "update your workspace notes:\n"
-                "1. `/workspace/brand_brief.md` — Write SOAP (S/O/A/P) "
-                "for the phase you just completed. Compress the previous "
-                "phase to bullet summary. Update Executive Summary and "
-                "Golden Thread.\n"
-                "2. `/workspace/working_notes.md` — Process inbox items. "
-                "Add session reflection for this phase. Clear resolved "
-                "pending questions.\n"
-                "3. `/workspace/quality_gates.md` — Mark completed gates. "
-                "Write Thread Check. Add gate checklist for the next phase.\n"
-                "4. `/user/profile.md` — Any new user preferences or "
-                "constraints learned?\n"
-                "Use edit_file for targeted updates. Do NOT rewrite "
-                "entire files."
+                f"\n\n**STEP 1**: Append Phase {old} SOAP summary to "
+                f"`/workspace/brand_brief.md` "
+                f"(Subjective/Objective/Assessment/Plan). Preserves context "
+                f"across compression and session resume.\n"
+                f"**STEP 2**: Read "
+                f"`/brand-strategy-orchestrator/{ref_file}` for "
+                f"{next_phase} guidance.\n"
+                f"Execute STEP 1 before STEP 2."
             )
-            # Extra emphasis on user profile after Phase 0/0.5
+            # Extra emphasis on user profile after Phase 0/0.5 (one-time
+            # opportunity to capture user context comprehensively).
             if old in ("phase_0", "phase_0_5"):
                 workspace_hint += (
-                    "\n\nIMPORTANT — You just completed diagnosis/audit. "
-                    "Update `/user/profile.md` NOW with: role, experience "
-                    "level, language, communication style, constraints, "
-                    "working style. This is your best chance to capture "
-                    "user context comprehensively."
+                    "\n\n*Before STEP 1, also update `/user/profile.md` "
+                    "with user role, experience, language preference, "
+                    "communication style, constraints, working style.*"
                 )
             updated.append(workspace_hint)
 
