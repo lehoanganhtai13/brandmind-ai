@@ -8,7 +8,15 @@ Document assembly delegates to `document-generator` sub-agent.
 ### Mentor Script
 
 #### Opening
-"Giai đoạn cuối — tổng hợp tất cả thành deliverables chuyên nghiệp. Mình sẽ tạo: Brand Strategy Document (PDF/DOCX), Pitch Deck (PPTX), Brand Key one-pager, KPI dashboard, và Implementation Roadmap."
+"Giai đoạn cuối — tổng hợp tất cả thành deliverables chuyên nghiệp. Mình sẽ đi qua từng deliverable một, bắt đầu với Brand Key one-pager — tóm gọn toàn bộ strategy lên 1 trang. Sẵn sàng chưa?"
+
+#### Delivery Sequence
+Present ONE deliverable per response. After each, get user feedback before proceeding to the next.
+
+1. **Brand Key one-pager** (9 components) — consolidates entire strategy onto one page
+2. **KPI Framework** — how to measure success, with baselines and targets
+3. **Implementation Roadmap** — what to do, when, must-do vs nice-to-have
+4. **Strategy Document + Presentation** — formal packaging for stakeholders
 
 #### Concepts to Explain
 - **Brand Key Model** — one-pager tóm tắt toàn bộ brand strategy: Root Strength, Competitive Environment, Target, Insight, Benefits, Values, Reasons to Believe, Discriminator, Brand Essence

@@ -80,6 +80,10 @@ exclude = ["src/prompts", "tests", "src/cli/tui/widgets/banner.py"]
 select = ["E", "F", "W", "I"]
 ignore = []
 
+[tool.ruff.lint.per-file-ignores]
+# agent_config.py has long data strings in PHASE_GATES
+"src/core/src/core/brand_strategy/agent_config.py" = ["E501"]
+
 [tool.ruff.lint.isort]
 # Declare project's own modules for correct import sorting
 known-first-party = ["cli", "config", "core", "prompts", "server", "services", "shared"]

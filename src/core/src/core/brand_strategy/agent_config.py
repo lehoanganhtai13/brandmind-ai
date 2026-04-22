@@ -98,6 +98,79 @@ def create_brand_strategy_agent(
         get_next_phase,
     )
 
+    # Quality gate items per phase — copied from reference files.
+    # Used by two-step gate enforcement in report_progress.
+    # fmt: off
+    _PHASE_GATES: dict[str, list[tuple[str, str]]] = {
+        "phase_0": [
+            ("p0_knowledge_verified", "Key concepts verified via KG/doc search (scope classification, 5W1H, brand architecture)"),
+            ("p0_problem", "Clear problem statement articulated"),
+            ("p0_scope", "Scope classified (new_brand/refresh/repositioning/full_rebrand)"),
+            ("p0_category", "F&B category and concept understood"),
+            ("p0_location", "Target location/market identified"),
+            ("p0_budget", "Budget tier identified for implementation planning"),
+            ("p0_user_confirm", "User confirms understanding and agrees to proceed"),
+        ],
+        "phase_0_5": [
+            ("p05_knowledge_verified", "Key concepts verified via KG/doc search (brand equity, brand audit, preserve-discard matrix)"),
+            ("p05_inventory", "Brand Inventory completed (visual, verbal, experiential audit)"),
+            ("p05_perception", "Current brand perception assessed (reviews, social, customer voice)"),
+            ("p05_equity", "Brand equity sources identified (what to keep, evolve, discard)"),
+            ("p05_preserve_discard", "Preserve-Discard Matrix completed with user alignment"),
+        ],
+        "phase_1": [
+            ("p1_knowledge_verified", "Key concepts verified via KG/doc search (STP, competitor analysis, SWOT, customer insight, perceptual map)"),
+            ("p1_competitors", "At least 3 direct competitors profiled"),
+            ("p1_audience", "Target audience defined with psychographic + behavioral data"),
+            ("p1_insights", "At least 3 actionable customer insights identified"),
+            ("p1_swot", "SWOT analysis completed with market data support"),
+            ("p1_perceptual_map", "Competitive perceptual map created with white space identified"),
+            ("p1_synthesis", "Strategic synthesis completed (sweet spot + prioritized insights)"),
+        ],
+        "phase_2": [
+            ("p2_knowledge_verified", "Key concepts verified via KG/doc search (positioning, POPs/PODs, value ladder, brand essence, stress test)"),
+            ("p2_positioning", "Positioning statement complete (target, frame, POD, RTB)"),
+            ("p2_pops_pods", "Points of Parity and Difference defined"),
+            ("p2_value_ladder", "Value ladder built (attributes → functional → emotional → outcome)"),
+            ("p2_essence", "Brand essence / mantra articulated"),
+            ("p2_product_alignment", "Product-brand alignment checked (menu, pricing, service fit)"),
+            ("p2_stress_test", "Positioning stress test passed (5 criteria)"),
+        ],
+        "phase_3": [
+            ("p3_knowledge_verified", "Key concepts verified via KG/doc search (brand archetype, personality, DBA, naming criteria)"),
+            ("p3_personality", "Brand personality defined (archetype + traits with do/don't)"),
+            ("p3_voice", "Brand voice guidelines with do/don't examples"),
+            ("p3_naming", "Brand name finalized (new: full process; rebrand: keep/rename justified)"),
+            ("p3_visual", "Visual identity direction documented (colors, typography, imagery)"),
+            ("p3_mood_boards", "At least 2-3 mood board/concept images generated"),
+            ("p3_dba", "Distinctive Brand Assets strategy planned"),
+            ("p3_transition", "Identity transition plan completed"),
+        ],
+        "phase_4": [
+            ("p4_knowledge_verified", "Key concepts verified via KG/doc search (Cialdini, AIDA, messaging hierarchy, content pillars)"),
+            ("p4_value_prop", "Core value proposition clear, compelling, differentiated"),
+            ("p4_messaging", "Messaging hierarchy (functional, emotional, differentiating, credibility)"),
+            ("p4_cialdini", "At least 2 Cialdini principles applied to messaging"),
+            ("p4_aida", "AIDA flow mapped with specific messages per stage"),
+            ("p4_channels", "Channel strategy defined with content types and frequencies"),
+            ("p4_pillars", "3-5 content pillars established"),
+        ],
+        "phase_5": [
+            ("p5_knowledge_verified", "Key concepts verified via KG/doc search (Brand Key model, KPI metrics, implementation roadmap)"),
+            ("p5_document", "Complete brand strategy document generated (PDF/DOCX)"),
+            ("p5_brand_key", "Brand Key one-pager with all 9 components (Root Strength, Competitive Environment, Target, Insight, Benefits, Values & Personality, RTBs, Discriminator, Brand Essence)"),
+            ("p5_kpis", "At least 5 KPIs defined with baselines and targets"),
+            ("p5_roadmap", "Implementation roadmap with 3 time horizons, tied to budget_tier"),
+            ("p5_roadmap_priority", "Each roadmap item categorized Must Do / Nice to Have"),
+            ("p5_measurement", "Measurement plan with review cadence"),
+            ("p5_transition", "Transition & change management plan completed"),
+            ("p5_stakeholder", "Stakeholder communication plan defined"),
+        ],
+    }
+    # fmt: on
+    # Gates that only apply to rebrand scopes (not new_brand)
+    _REBRAND_ONLY_GATES = {"p3_transition", "p5_transition", "p5_stakeholder"}
+
     def report_progress(
         advance: bool = False,
         scope: str = "",
@@ -116,6 +189,8 @@ def create_brand_strategy_agent(
             advance: Set True to move to the **next phase** in the sequence.
                 The tool determines which phase is next based on the current
                 scope. You do NOT choose the phase — the sequence does.
+                NOTE: First call shows a quality gate checklist for review.
+                Call again after completing all gate items to advance.
             scope: Brand scope classification from Phase 0. Valid values:
                 new_brand, refresh, repositioning, full_rebrand.
                 Setting scope also defines the phase sequence.
@@ -158,6 +233,42 @@ def create_brand_strategy_agent(
                     "Set scope first with report_progress(scope='...') "
                     "before advancing."
                 )
+
+            # --- TWO-STEP GATE ENFORCEMENT ---
+            # First call: show gate checklist, block advance.
+            # Second call (gate_check_pending=True): advance normally.
+            if not session.gate_check_pending:
+                gates = _PHASE_GATES.get(session.current_phase, [])
+                # Filter rebrand-only gates for new_brand scope
+                if session.scope == "new_brand":
+                    gates = [
+                        (gid, desc)
+                        for gid, desc in gates
+                        if gid not in _REBRAND_ONLY_GATES
+                    ]
+                if gates:
+                    session.gate_check_pending = True
+                    checklist = "\n".join(f"  □ {gid}: {desc}" for gid, desc in gates)
+                    gate_msg = (
+                        f"⚠️ QUALITY GATE — {session.current_phase}\n\n"
+                        f"Before advancing, verify ALL deliverables:\n\n"
+                        f"{checklist}\n\n"
+                        f"For each item:\n"
+                        f"- If COMPLETED: present evidence to the user\n"
+                        f"- If NOT YET DONE: complete it now\n\n"
+                        f"Present this checklist to the user with your "
+                        f"evidence for each item.\n"
+                        f"Call report_progress(advance=True) again when "
+                        f"ALL items are done."
+                    )
+                    if updated:
+                        return (
+                            "Session updated: " + ", ".join(updated) + "\n\n" + gate_msg
+                        )
+                    return gate_msg
+
+            # Gate check passed — advance normally
+            session.gate_check_pending = False
             next_phase = get_next_phase(session.scope, session.current_phase)
             if next_phase is None:
                 return (
@@ -168,20 +279,14 @@ def create_brand_strategy_agent(
             old = session.current_phase
             session.advance_phase(next_phase)
             # Build reference file hint
-            phase_ref = next_phase.replace("phase_", "phase_")
-            ref_file = f"references/{phase_ref.replace('phase_', 'phase_')}"
-            if next_phase == "phase_0_5":
-                ref_file = "references/phase_0_5_equity_audit.md"
-            elif next_phase == "phase_1":
-                ref_file = "references/phase_1_research.md"
-            elif next_phase == "phase_2":
-                ref_file = "references/phase_2_positioning.md"
-            elif next_phase == "phase_3":
-                ref_file = "references/phase_3_identity.md"
-            elif next_phase == "phase_4":
-                ref_file = "references/phase_4_communication.md"
-            elif next_phase == "phase_5":
-                ref_file = "references/phase_5_deliverables.md"
+            ref_file = {
+                "phase_0_5": "references/phase_0_5_equity_audit.md",
+                "phase_1": "references/phase_1_research.md",
+                "phase_2": "references/phase_2_positioning.md",
+                "phase_3": "references/phase_3_identity.md",
+                "phase_4": "references/phase_4_communication.md",
+                "phase_5": "references/phase_5_deliverables.md",
+            }.get(next_phase, f"references/{next_phase}.md")
 
             # Remaining phases
             seq = PHASE_SEQUENCES[session.scope]
@@ -193,7 +298,7 @@ def create_brand_strategy_agent(
             updated.append(f"Next: Read /brand-strategy-orchestrator/{ref_file}")
             updated.append(f"Remaining: {remaining_str}")
 
-            # Workspace update reminder (Task 50 — phase transition hook)
+            # Workspace update reminder (phase transition hook)
             workspace_hint = (
                 "\n\n--- WORKSPACE UPDATE REQUIRED ---\n"
                 "Before reading the next phase's reference file, "
@@ -226,6 +331,7 @@ def create_brand_strategy_agent(
         # Loop back (proactive triggers)
         if loop_back_to:
             old = session.current_phase
+            session.gate_check_pending = False  # Reset gate state
             session.advance_phase(loop_back_to)
             updated.append(f"Loop back: {old} → {loop_back_to} (proactive trigger)")
 
