@@ -6,9 +6,7 @@ build-backend = "hatchling.build"
 name = "brandmind-ai"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = [
-    "httpx-sse>=0.4.3",
-]
+dependencies = []
 
 [project.scripts]
 parse-docs = "cli.parse_documents:main"
@@ -32,6 +30,10 @@ constraint-dependencies = ["chardet<6.0.0"]
 chatbot = [
     "shared",
     "core[retrieval]",
+    "httpx-sse>=0.4.3",
+    "pyperclip>=1.11.0",
+    "rich>=14.2.0",
+    "textual>=6.11.0",
 ]
 indexer = [
     "shared",

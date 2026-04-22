@@ -412,14 +412,15 @@ wheels = [
 name = "brandmind-ai"
 version = "0.1.0"
 source = { editable = "." }
-dependencies = [
-    { name = "httpx-sse" },
-]
 
 [package.dev-dependencies]
 chatbot = [
     { name = "core", extra = ["retrieval"] },
+    { name = "httpx-sse" },
+    { name = "pyperclip" },
+    { name = "rich" },
     { name = "shared" },
+    { name = "textual" },
 ]
 dev = [
     { name = "bandit" },
@@ -452,12 +453,15 @@ server = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "httpx-sse", specifier = ">=0.4.3" }]
 
 [package.metadata.requires-dev]
 chatbot = [
     { name = "core", extras = ["retrieval"], editable = "src/core" },
+    { name = "httpx-sse", specifier = ">=0.4.3" },
+    { name = "pyperclip", specifier = ">=1.11.0" },
+    { name = "rich", specifier = ">=14.2.0" },
     { name = "shared", editable = "src/shared" },
+    { name = "textual", specifier = ">=6.11.0" },
 ]
 dev = [
     { name = "bandit", specifier = ">=1.8.6" },
@@ -7671,7 +7675,6 @@ dependencies = [
     { name = "openpyxl" },
     { name = "pydantic" },
     { name = "pymilvus" },
-    { name = "pyperclip" },
     { name = "python-docx" },
     { name = "python-dotenv" },
     { name = "python-pptx" },
@@ -7679,8 +7682,6 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rapidfuzz" },
     { name = "requests" },
-    { name = "rich" },
-    { name = "textual" },
     { name = "tiktoken" },
     { name = "tqdm" },
 ]
@@ -7706,7 +7707,6 @@ requires-dist = [
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pydantic", specifier = ">=2.11.9" },
     { name = "pymilvus", specifier = ">=2.6.5" },
-    { name = "pyperclip", specifier = ">=1.11.0" },
     { name = "python-docx", specifier = ">=1.2.0" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
     { name = "python-pptx", specifier = ">=1.0.2" },
@@ -7714,8 +7714,6 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rapidfuzz", specifier = ">=3.14.3" },
     { name = "requests", specifier = ">=2.32.5" },
-    { name = "rich", specifier = ">=14.2.0" },
-    { name = "textual", specifier = ">=6.11.0" },
     { name = "tiktoken", specifier = ">=0.11.0" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]

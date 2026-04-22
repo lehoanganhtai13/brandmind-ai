@@ -62,11 +62,10 @@ class Settings:
         self.BRANDMIND_PORT = int(os.getenv("BRANDMIND_PORT", 8000))
         self.BRANDMIND_SESSION_TTL = int(os.getenv("BRANDMIND_SESSION_TTL", 3600))
         self.BRANDMIND_OUTPUT_DIR = os.getenv(
-            "BRANDMIND_OUTPUT_DIR",
-            os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "brandmind-output",
-            ),
+            "BRANDMIND_OUTPUT_DIR", ""
+        ) or os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "brandmind-output",
         )
 
         # Vector Database Collection Names
