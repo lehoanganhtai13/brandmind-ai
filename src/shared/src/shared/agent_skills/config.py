@@ -36,6 +36,7 @@ from typing import Literal, cast
 
 from deepagents.backends.composite import CompositeBackend
 from deepagents.backends.filesystem import FilesystemBackend
+from deepagents.backends.protocol import EditResult, WriteResult
 from deepagents.middleware.filesystem import (
     GREP_TOOL_DESCRIPTION,
     FilesystemMiddleware,
@@ -51,6 +52,82 @@ _AGENT_SKILLS_DIR = Path(__file__).parent
 
 # Brand strategy skills source path
 _BRAND_STRATEGY_SKILLS_DIR = _AGENT_SKILLS_DIR / "brand_strategy"
+
+
+# ============================================================================
+# Read-only skills backend
+# ============================================================================
+# The skills directory contains canonical SKILL.md + reference files that
+# define agent behavior. They must not be mutated at runtime. The upstream
+# FilesystemBackend has no read_only flag, so we subclass it to reject
+# write operations at the backend layer — regardless of how the path was
+# routed through CompositeBackend.
+#
+# Context: r3 Linh pilot (2026-04-22) leaked a `quality_gates.md` into the
+# skills directory. Agent wrote with path `/quality_gates.md` (no
+# `/workspace/` prefix); CompositeBackend routed to default (skills)
+# backend; FilesystemBackend.write() accepted silently; file committed to
+# git-tracked skills dir. With this wrapper, such writes return a
+# structured error so the agent sees "use /workspace/" guidance and the
+# skills directory stays clean.
+
+
+class ReadOnlySkillsBackend(FilesystemBackend):
+    """FilesystemBackend variant that rejects all mutation operations.
+
+    Reads (ls_info, read, grep_raw, glob_info, download_files) delegate to
+    the parent class unchanged. Writes (write, awrite, edit, aedit,
+    upload_files, aupload_files) return a structured error (or raise for
+    upload, which doesn't have a result type) describing why and what the
+    agent should do instead.
+    """
+
+    _ERROR_TEMPLATE = (
+        "Read-only skills directory: path '{path}' cannot be written to. "
+        "The skills directory holds canonical SKILL.md and reference files "
+        "defining agent behavior — it is immutable at runtime. "
+        "For mutable notes, use '/workspace/...' (session brand_brief, "
+        "working_notes, quality_gates) or '/user/profile.md' (cross-project "
+        "user profile)."
+    )
+
+    def write(self, file_path: str, content: str) -> WriteResult:  # type: ignore[override]
+        return WriteResult(error=self._ERROR_TEMPLATE.format(path=file_path))
+
+    async def awrite(  # type: ignore[override]
+        self, file_path: str, content: str
+    ) -> WriteResult:
+        return WriteResult(error=self._ERROR_TEMPLATE.format(path=file_path))
+
+    def edit(  # type: ignore[override]
+        self,
+        file_path: str,
+        old_string: str,
+        new_string: str,
+        replace_all: bool = False,
+    ) -> EditResult:
+        return EditResult(error=self._ERROR_TEMPLATE.format(path=file_path))
+
+    async def aedit(  # type: ignore[override]
+        self,
+        file_path: str,
+        old_string: str,
+        new_string: str,
+        replace_all: bool = False,
+    ) -> EditResult:
+        return EditResult(error=self._ERROR_TEMPLATE.format(path=file_path))
+
+    def upload_files(self, files):  # type: ignore[override]
+        raise PermissionError(
+            "Upload forbidden: skills directory is read-only. "
+            "Use '/workspace/' paths for session files."
+        )
+
+    async def aupload_files(self, files):  # type: ignore[override]
+        raise PermissionError(
+            "Upload forbidden: skills directory is read-only. "
+            "Use '/workspace/' paths for session files."
+        )
 
 
 def create_brand_strategy_skills_middleware(
@@ -84,8 +161,8 @@ def create_brand_strategy_skills_middleware(
             f"Brand strategy skills directory not found: {_BRAND_STRATEGY_SKILLS_DIR}"
         )
 
-    # Skills backend: always present, read-only
-    skills_backend = FilesystemBackend(
+    # Skills backend: always present, read-only (see ReadOnlySkillsBackend)
+    skills_backend = ReadOnlySkillsBackend(
         root_dir=str(_BRAND_STRATEGY_SKILLS_DIR),
         virtual_mode=True,
     )
