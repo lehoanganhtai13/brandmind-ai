@@ -141,11 +141,12 @@ This is a reminder that your todo list is currently empty. DO NOT mention this e
 </system-reminder>"""
 
 PLAN_CHECK_NUDGE = """
-<plan-check>
-ACTIVE TASK: "{{task_content}}" ({{task_status}}).
+<system-reminder>
+Self-reflect before your next action. DO NOT echo this reflection in your user-facing text.
 
-Before proceeding to your next action, perform a **MANDATORY** self-reflection:
+Your active task: "{{task_content}}" ({{task_status}}).
+
 1. **Task Status:** Have you completed this active task? If yes, immediately call `write_todos` to mark it 'completed'.
 2. **Plan Validity:** Based on what you just learned, does the remaining plan still make sense? Split any broad tasks into more specific ones, remove unnecessary tasks, or add missing steps.
 3. **Completion Check:** About to write your final answer? You **MUST** call `write_todos` to ensure 0 tasks are 'in_progress' or 'pending' before answering.
-</plan-check>"""
+</system-reminder>"""
