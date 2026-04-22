@@ -287,7 +287,12 @@ def create_brand_strategy_agent(
     todo_middleware = TodoWriteMiddleware()
     patch_middleware = PatchToolCallsMiddleware()
     retry_middleware = ToolRetryMiddleware()
-    stop_check_middleware = EnsureTasksFinishedMiddleware()
+    # Cap re-prompts to 1 (default 3) to prevent response stacking.
+    # r2 Turn 4 (17K chars, 3-4 repeated Phase 1 deliveries) was caused by
+    # middleware re-invoking handler 3× when agent's todos were aspirational.
+    # Single reminder preserves defense against premature stop while limiting
+    # amplification. Also still handles MALFORMED_FUNCTION_CALL recovery.
+    stop_check_middleware = EnsureTasksFinishedMiddleware(max_reminders=1)
 
     log_message_middleware = LogModelMessageMiddleware(
         callback=callback,
