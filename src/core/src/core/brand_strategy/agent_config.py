@@ -244,9 +244,14 @@ def create_brand_strategy_agent(
     )
     model_context_window = 262144  # 256K tokens
 
-    # ---- All Brand Strategy Tools ----
-    tools: list[Any] = [
-        # Research (existing + new)
+    # ---- Brand Strategy Tools ----
+    # Main agent tools: research + light creative + session tracking.
+    # Heavy generation tools (brand_key, document, presentation, spreadsheet)
+    # are sub-agent-only — forces delegation through creative-studio /
+    # document-generator sub-agents which have generate→evaluate→refine
+    # quality loops.
+    main_agent_tools: list[Any] = [
+        # Research
         search_knowledge_graph,
         search_document_library,
         search_web,
@@ -256,18 +261,27 @@ def create_brand_strategy_agent(
         # Analysis
         analyze_social_profile,
         get_search_autocomplete,
-        # Creative
+        # Light creative (quick iteration inline OK)
         generate_image,
         edit_image,
-        generate_brand_key,
-        # Document
-        generate_document,
-        generate_presentation,
-        generate_spreadsheet,
+        # Light export (inline markdown output)
         export_to_markdown,
         # Session tracking
         report_progress,
     ]
+
+    # Sub-agent-only: heavy generation tools. Main agent must delegate via
+    # `task(subagent_type="creative-studio" | "document-generator", ...)`.
+    subagent_only_tools: list[Any] = [
+        generate_brand_key,  # creative-studio only
+        generate_document,  # document-generator only
+        generate_presentation,  # document-generator only
+        generate_spreadsheet,  # document-generator only
+    ]
+
+    # Combined tools registry for sub-agent resolution — sub-agents resolve
+    # their tool lists from this registry via `_resolve_tools(names, registry)`.
+    tools: list[Any] = main_agent_tools + subagent_only_tools
 
     # ---- Middlewares ----
     todo_middleware = TodoWriteMiddleware()
@@ -321,9 +335,12 @@ def create_brand_strategy_agent(
     # Position: after context management, before tool_search.
     content_check_middleware = ContentCheckAdvanceMiddleware()
 
-    # ToolSearch middleware (Task 47)
+    # ToolSearch middleware (Task 47) — validates catalog names against
+    # main_agent_tools only, since main agent can only equip tools present
+    # in its create_agent tools list. Heavy sub-agent-only tools are resolved
+    # separately via tools_registry for sub-agent delegation.
     tool_search_middleware = create_tool_search_middleware(
-        all_tools=tools,
+        all_tools=main_agent_tools,
     )
 
     # Skills middleware + filesystem + workspace (Task 35 + Task 48)
@@ -346,7 +363,9 @@ def create_brand_strategy_agent(
         user_dir=user_dir,
     )
 
-    # Sub-agent middleware (Task 41)
+    # Sub-agent middleware (Task 41) — registry covers BOTH main + sub-agent-
+    # only tools so sub-agents can resolve their tool lists (creative-studio
+    # needs generate_brand_key, document-generator needs generate_document etc.)
     tools_registry = {
         getattr(tool, "name", getattr(tool, "__name__", str(tool))): tool
         for tool in tools
@@ -388,7 +407,7 @@ def create_brand_strategy_agent(
     # ---- Assemble Agent ----
     agent = create_agent(
         model=model,
-        tools=tools,
+        tools=main_agent_tools,
         system_prompt=system_prompt,
         middleware=[
             context_edit_middleware,

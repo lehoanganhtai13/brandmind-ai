@@ -566,86 +566,13 @@ BRAND_STRATEGY_TOOL_CATALOG: list[ToolMetadata] = [
         ),
         phases=("3", "5"),
     ),
-    ToolMetadata(
-        name="generate_brand_key",
-        description=(
-            "Generate Brand Key one-pager visual — the summary "
-            "infographic of the complete brand strategy (positioning, "
-            "personality, values, target audience)."
-        ),
-        category="image_generation",
-        keywords=(
-            "brand key",
-            "one-pager",
-            "infographic",
-            "brand summary",
-            "visual summary",
-            "brand key visual",
-        ),
-        phases=("5",),
-    ),
+    # NOTE: generate_brand_key, generate_document, generate_presentation,
+    # generate_spreadsheet are sub-agent-only tools (creative-studio and
+    # document-generator sub-agents). They are NOT in the main agent's
+    # tool list, so they cannot be equipped via load_tools. Main agent
+    # must delegate via task(subagent_type="creative-studio" |
+    # "document-generator") instead.
     # ---- Category: document_export ----
-    ToolMetadata(
-        name="generate_document",
-        description=(
-            "Generate brand strategy documents in PDF or DOCX format. "
-            "Professional formatting with cover page, table of "
-            "contents, and sections."
-        ),
-        category="document_export",
-        keywords=(
-            "document",
-            "PDF",
-            "DOCX",
-            "report",
-            "strategy document",
-            "brand book",
-            "generate document",
-            "create document",
-        ),
-        phases=("5",),
-    ),
-    ToolMetadata(
-        name="generate_presentation",
-        description=(
-            "Generate brand strategy presentations in PPTX format. "
-            "Executive pitch decks with branded slides."
-        ),
-        category="document_export",
-        keywords=(
-            "presentation",
-            "PPTX",
-            "PowerPoint",
-            "pitch deck",
-            "slides",
-            "executive summary",
-            "generate presentation",
-        ),
-        phases=("5",),
-    ),
-    ToolMetadata(
-        name="generate_spreadsheet",
-        description=(
-            "Generate brand strategy spreadsheets in XLSX format — "
-            "competitor analysis matrix, brand audit scorecard, "
-            "content calendar, KPI dashboard, budget plan. "
-            "Formula-driven with auto-calculations."
-        ),
-        category="document_export",
-        keywords=(
-            "spreadsheet",
-            "XLSX",
-            "Excel",
-            "matrix",
-            "scorecard",
-            "calendar",
-            "dashboard",
-            "budget",
-            "table",
-            "data",
-        ),
-        phases=("5",),
-    ),
     ToolMetadata(
         name="export_to_markdown",
         description=(
