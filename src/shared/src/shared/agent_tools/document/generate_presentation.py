@@ -66,9 +66,13 @@ def generate_presentation(
             images=images,
         )
         return (
-            f"Presentation generated successfully.\n"
+            f"Presentation FILE saved to disk.\n"
             f"Path: {result_path}\n"
-            f"Slides: {len(template.slides)}"
+            f"Slides: {len(template.slides)}\n\n"
+            f"⚠️ IMPORTANT: File on disk ≠ user delivery. List the slide "
+            f"structure (title + key point per slide) in your next "
+            f"user-facing response so user knows what was built — file path "
+            f"alone is not a delivery."
         )
     except Exception as e:
         logger.error(f"Presentation generation failed: {e}")

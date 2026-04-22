@@ -95,11 +95,16 @@ def generate_brand_key(
             {
                 "type": "text",
                 "text": (
-                    f"Brand Key saved to: {result.file_path}\n"
+                    f"Brand Key IMAGE FILE saved to disk: {result.file_path}\n"
                     f"Brand: {brand_name}\n"
-                    f"Essence: {brand_essence}\n"
-                    f"All 9 Brand Key sections rendered in infographic format.\n"
-                    f"To refine, use edit_image with "
+                    f"Essence: {brand_essence}\n\n"
+                    f"⚠️ IMPORTANT: File on disk ≠ user delivery. "
+                    f"To complete delivery, describe all 9 Brand Key components "
+                    f"(Root Strength, Competitive Environment, Target, Insight, "
+                    f"Benefits, Values & Personality, Reasons to Believe, "
+                    f"Discriminator, Brand Essence) in your next user-facing "
+                    f"response with actual brand-specific content.\n\n"
+                    f"To refine visual, use edit_image with "
                     f'image_path="{result.file_path}".'
                 ),
             },

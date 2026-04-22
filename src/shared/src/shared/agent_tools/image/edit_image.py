@@ -61,8 +61,12 @@ def edit_image(
             {
                 "type": "text",
                 "text": (
-                    f"Edited image saved to: {result.file_path}\n"
-                    f"Edit applied: {prompt[:100]}\n"
+                    f"Edited image FILE saved to disk: {result.file_path}\n"
+                    f"Edit applied: {prompt[:100]}\n\n"
+                    f"⚠️ IMPORTANT: File on disk ≠ user delivery. "
+                    f"Describe what changed in the edit (colors, composition, "
+                    f"elements added/removed) in your next user-facing "
+                    f"response so user understands the refinement.\n\n"
                     f"To refine further, use edit_image with "
                     f'image_path="{result.file_path}".'
                 ),

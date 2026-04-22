@@ -74,9 +74,13 @@ def generate_spreadsheet(
         )
         result_path = builder.save(output_path)
         return (
-            f"Spreadsheet generated successfully.\n"
+            f"Spreadsheet FILE saved to disk.\n"
             f"Template: {template}\n"
-            f"Path: {result_path}"
+            f"Path: {result_path}\n\n"
+            f"⚠️ IMPORTANT: File on disk ≠ user delivery. Describe the "
+            f"sheets included + key columns/metrics in your next user-facing "
+            f"response so user knows what was generated — file path alone "
+            f"is not a delivery."
         )
     except Exception as e:
         logger.error(f"Spreadsheet generation failed: {e}")

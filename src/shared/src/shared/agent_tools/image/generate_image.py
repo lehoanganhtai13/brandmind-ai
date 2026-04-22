@@ -95,7 +95,11 @@ def generate_image(
             {
                 "type": "text",
                 "text": (
-                    f"Image saved to: {result.file_path}\n"
+                    f"Image FILE saved to disk: {result.file_path}\n\n"
+                    f"⚠️ IMPORTANT: File on disk ≠ user delivery. "
+                    f"Describe the visual direction (colors, style, mood, "
+                    f"key imagery elements) in your next user-facing response "
+                    f"so the user understands what was generated.\n\n"
                     f"To refine this image, use edit_image with "
                     f'image_path="{result.file_path}" and your edit instructions.'
                 ),

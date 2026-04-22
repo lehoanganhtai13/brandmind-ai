@@ -82,9 +82,13 @@ def generate_document(
             images=images_dict,
         )
         return (
-            f"Document generated successfully.\n"
+            f"Document FILE saved to disk.\n"
             f"Format: {doc_format.upper()}\n"
-            f"Path: {result_path}"
+            f"Path: {result_path}\n\n"
+            f"⚠️ IMPORTANT: File on disk ≠ user delivery. Summarize the "
+            f"document's structure (sections included, key content per "
+            f"section) in your next user-facing response so user knows what "
+            f"was assembled — file path alone is not a delivery."
         )
     except Exception as e:
         logger.error(f"Document generation failed: {e}")
