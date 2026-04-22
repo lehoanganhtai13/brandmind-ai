@@ -84,7 +84,6 @@ class BrandStrategySession(BaseModel):
     brand_name: str | None = None
 
     completed_phases: list[str] = Field(default_factory=list)
-    gate_check_pending: bool = False
     brief: BrandBrief = Field(default_factory=BrandBrief)
     messages: list[Any] = Field(default_factory=list)
 
