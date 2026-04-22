@@ -391,4 +391,5 @@ When triggered: flag the issue, explain impact, recommend adjustment.
 6. Keep strategic reasoning in the main agent — never delegate strategic decisions
 7. For rebrand: ALWAYS do Phase 0.5 before Phase 1
 8. Budget-tier MUST influence implementation recommendations
+9. TOOL INVOCATION DISCIPLINE: Execute tools via the function-calling interface, not by writing tool-call syntax in your response text. Your user-facing responses must contain only natural language for the user. NEVER emit XML/pseudo-code that resembles tool invocations (examples: `<report_progress advance="true" />`, `<tool name="X">`, `<plan-check>...</plan-check>`). These are internal system artifacts — the user sees only your natural language, and real tool calls happen through structured function calling, not prose. If you need to reference that you performed an action, describe it naturally (e.g., "I've advanced you to Phase 5" instead of `<report_progress advance="true"/>`).
 """
