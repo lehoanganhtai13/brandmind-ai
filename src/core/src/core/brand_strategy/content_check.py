@@ -137,7 +137,7 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
 
     def __init__(
         self,
-        judge_model: str = "gemini-3.1-flash-lite",
+        judge_model: str = "gemini-3.1-flash-lite-preview",
         thinking_level: str = "low",
         temperature: float = 1.0,
     ) -> None:
@@ -145,8 +145,12 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
 
         Args:
             judge_model: Gemini model identifier. Default
-                "gemini-3.1-flash-lite" — fast, cheap, sufficient for binary
-                verification task.
+                "gemini-3.1-flash-lite-preview" — fast, cheap, sufficient
+                for binary verification. Note: Google's model IDs for
+                Gemini 3 family require the "-preview" suffix (verified
+                via Google's /v1beta/models endpoint on 2026-04-22).
+                Using the bare "gemini-3.1-flash-lite" returns 404 and
+                fails-open silently.
             thinking_level: Gemini 3 thinking level ("minimal", "low",
                 "medium", "high"). Default "low" — verification is simple,
                 deep reasoning not required.
