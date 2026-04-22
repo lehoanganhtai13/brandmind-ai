@@ -1,19 +1,19 @@
-"""ContentCheckAdvanceMiddleware — binding constraint C1 fix.
+"""Middleware that gates phase advancement on user-facing text content.
 
-Intercepts `report_progress(advance=True)` tool calls and verifies the
-agent's recent user-facing text contains the phase-specific deliverable
-content (skill-derived, not rubric-derived).
+Provides :class:`ContentCheckAdvanceMiddleware`, which intercepts
+``report_progress(advance=True)`` calls and asks an LLM judge to verify
+that the agent's recent user-facing messages contain the deliverable
+expected for the current phase.
 
-Uses Gemini 3.1 Flash Lite via GoogleAIClientLLM as an LLM judge for
-semantic verification — scalable to rubric/persona/model evolution,
-handles paraphrase/bilingual content, interpretable error messages.
-
-Fail-open on judge API errors: if the judge call fails, advance is
-allowed (logged as warning). Availability > strictness — we prefer
-not blocking real work over defending against transient API issues.
-
-Middleware position: register at stack position 4 (after context
-management, before tool_search) in agent_config.py.
+The judge reads the last few AI messages and compares them against a
+per-phase deliverable specification (see :data:`PHASE_DELIVERABLE_SPECS`).
+On PASS the tool call proceeds normally. On FAIL the middleware returns
+a :class:`ToolMessage` describing what content is missing so the agent
+can supply it in the next response and retry the advance. If the judge
+call itself fails (network, model error, malformed response) the
+middleware logs a warning and allows the advance — availability is
+prioritized over strict enforcement so a degraded judge does not stall
+an in-flight session.
 """
 
 from __future__ import annotations
@@ -35,18 +35,19 @@ from shared.model_clients.llm.google import (
     GoogleAIClientLLMConfig,
 )
 
-# =============================================================================
-# Skill-derived deliverable specs (NOT rubric-derived — anti-overfit)
-# =============================================================================
-# Each spec describes WHAT the agent should have presented in user-facing text
-# for that phase's deliverable, grounded in the phase's skill reference file.
-# The LLM judge uses these as evaluation criteria — content vs spec.
+# ---------------------------------------------------------------------------
+# Per-phase deliverable specifications
+# ---------------------------------------------------------------------------
+# Each entry is a natural-language specification passed to the LLM judge
+# describing the content the agent's user-facing text should contain
+# before advancing out of that phase. Phases not keyed here are not
+# gated by content-check (advance proceeds unconditionally for them).
 #
-# Sources:
-# - phase_0_5: brand-strategy-orchestrator/references/phase_0_5_equity_audit.md
-# - phase_2:   brand-positioning-identity/SKILL.md (Step 8 stress test)
-# - phase_5:   brand-communication-planning/references/deliverable_assembly.md
-# =============================================================================
+# Each specification mirrors the deliverables defined in the
+# corresponding skill reference file:
+#   - phase_0_5 -> brand-strategy-orchestrator/references/phase_0_5_equity_audit.md
+#   - phase_2   -> brand-positioning-identity/SKILL.md (Step 8 stress test)
+#   - phase_5   -> brand-communication-planning/references/deliverable_assembly.md
 
 PHASE_DELIVERABLE_SPECS: dict[str, str] = {
     "phase_0_5": (
@@ -85,19 +86,23 @@ PHASE_DELIVERABLE_SPECS: dict[str, str] = {
 }
 
 
-# =============================================================================
-# Verdict schema (structured LLM judge output)
-# =============================================================================
+# ---------------------------------------------------------------------------
+# LLM judge verdict schema
+# ---------------------------------------------------------------------------
 
 
 class ContentCheckVerdict(BaseModel):
-    """Structured output from LLM content-check judge.
+    """Structured verdict returned by the LLM content-check judge.
 
-    Fields:
-        passes: True if agent's recent text contains the deliverable.
-        missing: Description of missing components (bilingual agent output
-            means missing can be in Vietnamese).
-        reasoning: Brief one-sentence justification.
+    Attributes:
+        passes: ``True`` when the agent's recent user-facing text
+            contains the deliverable required by the phase specification.
+        missing: Human-readable description of the components or details
+            the judge could not find. Empty when ``passes`` is ``True``.
+            May be in the user's language (e.g. Vietnamese) when the
+            agent's text is in that language.
+        reasoning: One-sentence justification for the verdict, suitable
+            for surfacing back to the agent as retry guidance.
     """
 
     passes: bool = Field(
@@ -114,25 +119,33 @@ class ContentCheckVerdict(BaseModel):
     )
 
 
-# =============================================================================
+# ---------------------------------------------------------------------------
 # Middleware
-# =============================================================================
+# ---------------------------------------------------------------------------
 
 
 class ContentCheckAdvanceMiddleware(AgentMiddleware):
-    """Binding constraint C1 fix: gate phase advance on user-facing text content.
+    """Middleware that gates phase advancement on user-facing text content.
 
-    Workflow:
-    1. Intercept tool calls via wrap_tool_call / awrap_tool_call.
-    2. If tool is report_progress with advance=True AND current phase has a
-       deliverable spec → run LLM judge check.
-    3. LLM judge (Gemini 3.1 Flash Lite) evaluates last 3 AIMessages vs spec.
-    4. If PASS → proceed with handler (advance happens).
-    5. If FAIL → return ToolMessage with missing content + retry instruction.
-    6. If judge error (API fail, parse error) → fail-open, log, allow advance.
+    Wraps every tool call; when the call is ``report_progress`` with
+    ``advance=True`` and the session's current phase has a registered
+    deliverable specification in :data:`PHASE_DELIVERABLE_SPECS`, the
+    middleware invokes an LLM judge to compare the agent's recent
+    ``AIMessage`` text against that specification.
 
-    Scalability: new phases = new entry in PHASE_DELIVERABLE_SPECS. No code
-    change. Persona/language changes: Gemini handles bilingual natively.
+    Outcomes:
+
+    * **pass** — the ``handler`` runs normally and the phase advances.
+    * **fail** — a :class:`ToolMessage` is returned instead of running
+      the handler; the message lists the missing components and
+      instructs the agent to add them before retrying the advance.
+    * **judge error** — the exception is logged and the handler is
+      allowed to run (fail-open). This prioritizes session liveness
+      over strict enforcement when the judge backend is unavailable.
+
+    The judge is invoked per-advance only, so tool calls other than
+    ``report_progress``, and advances from phases without a
+    specification, incur no overhead.
     """
 
     def __init__(
@@ -141,21 +154,22 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         thinking_level: str = "low",
         temperature: float = 1.0,
     ) -> None:
-        """Initialize middleware.
+        """Configure the judge model used for content verification.
 
         Args:
-            judge_model: Gemini model identifier. Default
-                "gemini-3.1-flash-lite-preview" — fast, cheap, sufficient
-                for binary verification. Note: Google's model IDs for
-                Gemini 3 family require the "-preview" suffix (verified
-                via Google's /v1beta/models endpoint on 2026-04-22).
-                Using the bare "gemini-3.1-flash-lite" returns 404 and
-                fails-open silently.
-            thinking_level: Gemini 3 thinking level ("minimal", "low",
-                "medium", "high"). Default "low" — verification is simple,
-                deep reasoning not required.
-            temperature: Sampling temperature. Default 1.0 per Google's
-                recommendation for Gemini 3 reasoning models.
+            judge_model: Google Gemini model identifier used for judging.
+                Must match an ID returned by Google's ``/v1beta/models``
+                endpoint for the configured API key. Gemini 3 family IDs
+                carry a ``-preview`` suffix.
+            thinking_level: Reasoning budget for Gemini 3 models. One of
+                ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``. The
+                default keeps latency and cost low because the
+                verification task is a simple yes/no comparison.
+            temperature: Sampling temperature for the judge. ``1.0`` is
+                Google's recommended default for Gemini 3 reasoning
+                models and is preferred over lower values here because
+                the judge always produces structured output constrained
+                by :class:`ContentCheckVerdict`.
         """
         super().__init__()
         self._judge_model = judge_model
@@ -166,7 +180,12 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
     # ---- LLM client (lazy init) --------------------------------------------
 
     def _get_llm(self) -> GoogleAIClientLLM:
-        """Lazy-initialize the Google LLM client on first check."""
+        """Return the judge LLM client, instantiating it on first use.
+
+        Deferring instantiation keeps middleware construction cheap so
+        sessions that never reach a gated phase do not incur the cost
+        of creating a Google API client they will not use.
+        """
         if self._llm is None:
             self._llm = GoogleAIClientLLM(
                 config=GoogleAIClientLLMConfig(
@@ -185,18 +204,32 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
 
     @staticmethod
     def _is_advance_call(request: ToolCallRequest) -> bool:
-        """Check if the tool call is report_progress(advance=True)."""
+        """Return ``True`` when ``request`` calls ``report_progress`` with
+        ``advance=True``."""
         if request.tool_call.get("name") != "report_progress":
             return False
         return request.tool_call.get("args", {}).get("advance") is True
 
     @staticmethod
     def _extract_recent_ai_text(messages: list[Any], limit: int = 3) -> str:
-        """Concatenate the last N AIMessages' text content (user-facing only).
+        """Return the concatenated text of the most recent AI messages.
 
-        Walks the message list backward, collecting AIMessage text content.
-        Stops once `limit` AIMessages have been collected. Ignores non-text
-        parts (thinking blocks, tool_use blocks).
+        Walks ``messages`` in reverse and collects ``AIMessage`` content
+        until ``limit`` messages have been captured. Non-text content
+        parts (thinking blocks, tool-use blocks) are skipped so the
+        returned string contains only what the user would have read.
+
+        Args:
+            messages: The conversation history from the current
+                ``ToolCallRequest`` state.
+            limit: Maximum number of AI messages to include. The most
+                recent messages are prioritized; older ones are
+                discarded.
+
+        Returns:
+            Concatenated user-facing text, in chronological order, with
+            messages separated by ``"---"``. Empty string when no AI
+            messages have textual content.
         """
         ai_texts: list[str] = []
         for msg in reversed(messages):
@@ -218,7 +251,21 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         return "\n\n---\n\n".join(reversed(ai_texts))
 
     def _build_judge_prompt(self, phase: str, agent_text: str) -> str:
-        """Build the LLM judge prompt for a given phase + agent text."""
+        """Assemble the judge prompt for a given phase and agent text.
+
+        The prompt embeds the phase's deliverable specification and the
+        agent's recent user-facing text, then instructs the judge to
+        return a :class:`ContentCheckVerdict`-shaped JSON object.
+
+        Args:
+            phase: The current session phase identifier. Must be a key
+                present in :data:`PHASE_DELIVERABLE_SPECS`.
+            agent_text: Concatenated recent AI message text, typically
+                produced by :meth:`_extract_recent_ai_text`.
+
+        Returns:
+            The full judge prompt string.
+        """
         spec = PHASE_DELIVERABLE_SPECS[phase]
         return (
             "You are a content verification judge for BrandMind AI.\n\n"
@@ -244,7 +291,23 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
     def _rejection(
         phase: str, verdict: ContentCheckVerdict, request: ToolCallRequest
     ) -> ToolMessage:
-        """Build a ToolMessage rejecting the advance call with guidance."""
+        """Return a tool message that blocks the advance with retry guidance.
+
+        The message describes what content the judge found missing and
+        instructs the agent to present it in natural language before
+        calling ``report_progress(advance=True)`` again.
+
+        Args:
+            phase: The phase the agent is attempting to advance out of.
+            verdict: The judge's FAIL verdict supplying the ``missing``
+                and ``reasoning`` fields rendered into the message body.
+            request: The intercepted tool call whose ``tool_call_id`` is
+                used to address the returned ``ToolMessage``.
+
+        Returns:
+            A :class:`ToolMessage` that the framework surfaces back to
+            the agent in place of the tool's normal result.
+        """
         return ToolMessage(
             content=(
                 f"⚠️ Cannot advance from {phase}. Deliverable content not "
@@ -260,11 +323,24 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
 
     @staticmethod
     def _parse_verdict(raw_text: str) -> ContentCheckVerdict:
-        """Parse the LLM judge response into a ContentCheckVerdict.
+        """Parse the judge's raw response into a :class:`ContentCheckVerdict`.
+
+        First attempts a strict Pydantic JSON parse. When the judge
+        wraps the JSON in prose (e.g. code fences), falls back to
+        extracting the substring between the first ``{`` and last
+        ``}`` and parsing that.
+
+        Args:
+            raw_text: The judge's response text.
+
+        Returns:
+            The parsed verdict.
 
         Raises:
-            ValueError / pydantic ValidationError on parse failure (caller
-            catches and fails open).
+            ValueError: When neither the strict parse nor the
+                substring extraction yields valid JSON matching the
+                schema. The caller treats any raised exception as a
+                judge failure and falls open.
         """
         try:
             return ContentCheckVerdict.model_validate_json(raw_text)
@@ -285,7 +361,23 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         request: ToolCallRequest,
         handler: Callable[[ToolCallRequest], ToolMessage | Command],
     ) -> ToolMessage | Command:
-        """Sync path — server runs async primarily, this is fallback."""
+        """Gate a synchronous tool call on a content-check verdict.
+
+        See :class:`ContentCheckAdvanceMiddleware` for the full
+        decision flow. This synchronous variant exists for harnesses
+        that do not drive the middleware through its async path.
+
+        Args:
+            request: The intercepted tool call request.
+            handler: Downstream handler that executes the tool when
+                the advance is allowed.
+
+        Returns:
+            Either the handler's result (when the advance is allowed,
+            unrelated, or the judge has failed open) or a
+            :class:`ToolMessage` blocking the advance with retry
+            guidance when the judge returns a FAIL verdict.
+        """
         if not self._is_advance_call(request):
             return handler(request)
 
@@ -317,7 +409,22 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         request: ToolCallRequest,
         handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Command]],
     ) -> ToolMessage | Command:
-        """Async path — primary for FastAPI + SSE BrandMind server."""
+        """Gate an asynchronous tool call on a content-check verdict.
+
+        Asynchronous counterpart to :meth:`wrap_tool_call`. Uses the
+        LLM client's async interface so the event loop is not blocked
+        while the judge runs.
+
+        Args:
+            request: The intercepted tool call request.
+            handler: Downstream async handler that executes the tool
+                when the advance is allowed.
+
+        Returns:
+            Either the handler's awaited result or a blocking
+            :class:`ToolMessage` (see :meth:`wrap_tool_call` for the
+            decision flow).
+        """
         if not self._is_advance_call(request):
             return await handler(request)
 

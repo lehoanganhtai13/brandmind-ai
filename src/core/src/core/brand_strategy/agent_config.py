@@ -193,11 +193,14 @@ def create_brand_strategy_agent(
             updated.append(f"Next: Read /brand-strategy-orchestrator/{ref_file}")
             updated.append(f"Remaining: {remaining_str}")
 
-            # Workspace update + ref file hint (phase transition hook).
-            # Slimmed from 4-file cram to 2 explicit steps — reduces
-            # concerns-per-turn pressure while preserving workspace freshness
-            # for session resume. Detailed workspace section in system prompt
-            # + PreCompactNotesMiddleware provide redundant guidance.
+            # Two-step hint attached to every phase transition: preserve
+            # the phase-completion summary in workspace notes, then load
+            # the next phase's reference. The full workspace note
+            # protocol lives in the system prompt and
+            # :class:`PreCompactNotesMiddleware`; this hint is the
+            # transition-point reminder that keeps ``brand_brief.md``
+            # in sync with the session's phase progress so resumes and
+            # context-compaction cycles have fresh content to read.
             workspace_hint = (
                 f"\n\n**STEP 1**: Append Phase {old} SOAP summary to "
                 f"`/workspace/brand_brief.md` "
@@ -240,11 +243,15 @@ def create_brand_strategy_agent(
     model_context_window = 262144  # 256K tokens
 
     # ---- Brand Strategy Tools ----
-    # Main agent tools: research + light creative + session tracking.
-    # Heavy generation tools (brand_key, document, presentation, spreadsheet)
-    # are sub-agent-only — forces delegation through creative-studio /
-    # document-generator sub-agents which have generate→evaluate→refine
-    # quality loops.
+    # The tool set is split into two groups so delegation boundaries are
+    # enforced at registration rather than by prompt guidance alone.
+    # ``main_agent_tools`` carries research, analysis, light creative, and
+    # session-tracking tools that the orchestrator uses directly.
+    # Heavy generation tools (Brand Key visual, PDF/DOCX/PPTX/XLSX
+    # exporters) are kept out of that list so the orchestrator must
+    # reach them through ``task(subagent_type=...)``, which routes the
+    # call into the creative-studio / document-generator sub-agents
+    # where their generate→evaluate→refine quality loops live.
     main_agent_tools: list[Any] = [
         # Research
         search_knowledge_graph,
@@ -282,11 +289,13 @@ def create_brand_strategy_agent(
     todo_middleware = TodoWriteMiddleware()
     patch_middleware = PatchToolCallsMiddleware()
     retry_middleware = ToolRetryMiddleware()
-    # Cap re-prompts to 1 (default 3) to prevent response stacking.
-    # r2 Turn 4 (17K chars, 3-4 repeated Phase 1 deliveries) was caused by
-    # middleware re-invoking handler 3× when agent's todos were aspirational.
-    # Single reminder preserves defense against premature stop while limiting
-    # amplification. Also still handles MALFORMED_FUNCTION_CALL recovery.
+    # Allow a single premature-stop reminder. Each reminder re-invokes
+    # the downstream handler, which re-runs the model call, so higher
+    # values compound response length when the agent keeps an
+    # aspirational todo list open. One reminder preserves the defense
+    # against silent early exits while keeping the response count
+    # bounded. MALFORMED_FUNCTION_CALL recovery is controlled by a
+    # separate counter inside the middleware and remains unaffected.
     stop_check_middleware = EnsureTasksFinishedMiddleware(max_reminders=1)
 
     log_message_middleware = LogModelMessageMiddleware(
@@ -329,16 +338,23 @@ def create_brand_strategy_agent(
         trigger_ratio=0.65,
     )
 
-    # Content-check advance middleware (binding constraint C1 fix)
-    # Intercepts report_progress(advance=True) and verifies agent's recent
-    # user-facing text contains phase deliverable content via LLM judge.
-    # Position: after context management, before tool_search.
+    # Content-check advance middleware.
+    # Intercepts ``report_progress(advance=True)`` and defers to an LLM
+    # judge to confirm that the agent's recent user-facing text
+    # contains the deliverable expected for the current phase before
+    # letting the advance land. Registered after the context-management
+    # middlewares so it runs against the same message window the model
+    # just produced, and before ``tool_search_middleware`` so a blocked
+    # advance short-circuits the rest of the tool pipeline.
     content_check_middleware = ContentCheckAdvanceMiddleware()
 
-    # ToolSearch middleware (Task 47) — validates catalog names against
-    # main_agent_tools only, since main agent can only equip tools present
-    # in its create_agent tools list. Heavy sub-agent-only tools are resolved
-    # separately via tools_registry for sub-agent delegation.
+    # ToolSearch middleware.
+    # ``all_tools`` is the set whose names the middleware validates
+    # against its catalog. Only ``main_agent_tools`` is passed because
+    # those are the tools the main agent can equip via
+    # ``load_tools``; sub-agent-only tools live in ``tools_registry``
+    # and are resolved through the sub-agent path rather than the
+    # warehouse catalog.
     tool_search_middleware = create_tool_search_middleware(
         all_tools=main_agent_tools,
     )
@@ -363,9 +379,13 @@ def create_brand_strategy_agent(
         user_dir=user_dir,
     )
 
-    # Sub-agent middleware (Task 41) — registry covers BOTH main + sub-agent-
-    # only tools so sub-agents can resolve their tool lists (creative-studio
-    # needs generate_brand_key, document-generator needs generate_document etc.)
+    # Sub-agent middleware.
+    # The registry maps every tool name to its implementation across
+    # both ``main_agent_tools`` and ``subagent_only_tools`` so each
+    # sub-agent can resolve the tools named in its config (for
+    # example, creative-studio needs ``generate_brand_key`` while
+    # document-generator needs ``generate_document``), even though
+    # those tools are not exposed to the main agent directly.
     tools_registry = {
         getattr(tool, "name", getattr(tool, "__name__", str(tool))): tool
         for tool in tools
@@ -413,7 +433,7 @@ def create_brand_strategy_agent(
             context_edit_middleware,
             pre_compact_middleware,  # Task 50: remind at 65%
             msg_summary_middleware,  # Summarize at 80%
-            content_check_middleware,  # Binding constraint C1: verify text before advance
+            content_check_middleware,  # Verify agent text before allowing phase advance
             tool_search_middleware,
             fs_middleware,
             skills_middleware,

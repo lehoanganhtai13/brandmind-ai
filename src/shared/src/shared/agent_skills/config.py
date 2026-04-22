@@ -54,32 +54,36 @@ _AGENT_SKILLS_DIR = Path(__file__).parent
 _BRAND_STRATEGY_SKILLS_DIR = _AGENT_SKILLS_DIR / "brand_strategy"
 
 
-# ============================================================================
+# ---------------------------------------------------------------------------
 # Read-only skills backend
-# ============================================================================
-# The skills directory contains canonical SKILL.md + reference files that
-# define agent behavior. They must not be mutated at runtime. The upstream
-# FilesystemBackend has no read_only flag, so we subclass it to reject
-# write operations at the backend layer — regardless of how the path was
-# routed through CompositeBackend.
-#
-# Context: r3 Linh pilot (2026-04-22) leaked a `quality_gates.md` into the
-# skills directory. Agent wrote with path `/quality_gates.md` (no
-# `/workspace/` prefix); CompositeBackend routed to default (skills)
-# backend; FilesystemBackend.write() accepted silently; file committed to
-# git-tracked skills dir. With this wrapper, such writes return a
-# structured error so the agent sees "use /workspace/" guidance and the
-# skills directory stays clean.
+# ---------------------------------------------------------------------------
+# The skills directory holds canonical ``SKILL.md`` and reference files
+# that define agent behavior. These files are treated as configuration
+# artifacts: they are shipped with the codebase, version-controlled, and
+# must not be mutated at runtime. Upstream :class:`FilesystemBackend`
+# exposes a single class that permits writes, so this module defines a
+# subclass that rejects every mutation at the backend boundary — which
+# is the last chance to intervene regardless of how the path was routed
+# (e.g. via :class:`CompositeBackend` default fall-through).
 
 
 class ReadOnlySkillsBackend(FilesystemBackend):
-    """FilesystemBackend variant that rejects all mutation operations.
+    """Filesystem backend that rejects every mutation operation.
 
-    Reads (ls_info, read, grep_raw, glob_info, download_files) delegate to
-    the parent class unchanged. Writes (write, awrite, edit, aedit,
-    upload_files, aupload_files) return a structured error (or raise for
-    upload, which doesn't have a result type) describing why and what the
-    agent should do instead.
+    Read operations (``ls_info``, ``read``, ``grep_raw``, ``glob_info``,
+    ``download_files`` and their async counterparts) delegate to the
+    parent :class:`FilesystemBackend` unchanged.
+
+    Mutation operations return a structured error instead of modifying
+    disk:
+
+    * :meth:`write`, :meth:`awrite`, :meth:`edit`, :meth:`aedit` —
+      return a :class:`WriteResult` / :class:`EditResult` with ``error``
+      populated. The error text names the rejected path and points the
+      caller at the mutable ``/workspace/`` and ``/user/`` routes so
+      the agent can retry with a valid prefix.
+    * :meth:`upload_files`, :meth:`aupload_files` — have no result
+      type to carry an error, so they raise :class:`PermissionError`.
     """
 
     _ERROR_TEMPLATE = (
