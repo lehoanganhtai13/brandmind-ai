@@ -249,7 +249,7 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
                     api_key=SETTINGS.GEMINI_API_KEY,
                     temperature=self._temperature,
                     thinking_level=self._thinking_level,
-                    max_tokens=1000,
+                    max_tokens=4000,
                     response_mime_type="application/json",
                     response_schema=ContentCheckVerdict,
                 )
