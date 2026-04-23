@@ -46,8 +46,13 @@ from shared.model_clients.llm.google import (
 # Each specification mirrors the deliverables defined in the
 # corresponding skill reference file:
 #   - phase_0_5 -> brand-strategy-orchestrator/references/phase_0_5_equity_audit.md
+#   - phase_1   -> market-research/SKILL.md (Strategic Synthesis + Insight
+#                  Prioritization) and phase_1_research.md checklist
 #   - phase_2   -> brand-positioning-identity/SKILL.md (Step 8 stress test)
-#   - phase_5   -> brand-communication-planning/references/deliverable_assembly.md
+#   - phase_4   -> brand-communication-planning/SKILL.md (Phase 4 Quality Gate)
+#   - phase_5   -> brand-communication-planning/SKILL.md (Phase 5 KPI
+#                  Framework + Implementation Roadmap) combined with
+#                  deliverable_assembly.md (Brand Key 9 components)
 
 PHASE_DELIVERABLE_SPECS: dict[str, str] = {
     "phase_0_5": (
@@ -59,6 +64,25 @@ PHASE_DELIVERABLE_SPECS: dict[str, str] = {
         "3. Preserve-Discard Matrix — which brand assets to KEEP, EVOLVE, or DISCARD\n"
         "Require actual analysis with specifics, not just listing concept names."
     ),
+    "phase_1": (
+        "Market Intelligence deliverables per market-research SKILL.md. "
+        "Expected explicit treatment of ALL of:\n"
+        "1. Competitive landscape — 3-5 direct competitors with competitive gaps "
+        "named\n"
+        "2. Target audience — primary segment with jobs-to-be-done, pain points, "
+        "desires\n"
+        "3. Customer insights — at least 3 insight/evidence/implication triples\n"
+        "4. Strategic synthesis — SWOT plus a perceptual map with TWO explicit "
+        "axes and an identified white space\n"
+        "5. Prioritized insights — top 3-5 ranked by strategic value × "
+        "actionability × evidence strength\n"
+        "6. Sourcing discipline — research claims must either cite sources "
+        "(platform names, review quotes, URLs, document references) or be "
+        "explicitly framed as assumption / hypothesis / needs-validation. "
+        "Claims presented as verified findings without sourcing are treated as "
+        "fabrication.\n"
+        "Each item must contain brand-specific content, not just concept names."
+    ),
     "phase_2": (
         "Positioning Stress Test per brand-positioning-identity SKILL.md Step 8. "
         "Positioning must be evaluated against 5 criteria with specific analysis:\n"
@@ -69,9 +93,30 @@ PHASE_DELIVERABLE_SPECS: dict[str, str] = {
         "5. Sustainability/Budget feasibility\n"
         "Each criterion addressed with specific content, not just named."
     ),
+    "phase_4": (
+        "Communication framework deliverables per brand-communication-planning "
+        "SKILL.md Phase 4 Quality Gate. Expected ALL of:\n"
+        "1. Value proposition at 3 levels — one-liner, elevator pitch, full "
+        "story (2-3 paragraphs)\n"
+        "2. Messaging hierarchy — 3-5 key messages labelled by type "
+        "(functional / emotional / differentiating / credibility / community), "
+        "each with 2-3 proof points grounded in Phase 0 facts or Phase 1 research\n"
+        "3. Cialdini persuasion — at least 2 principles applied with concrete "
+        "F&B-specific mechanics, not just named\n"
+        "4. AIDA mapping — distinct message angle for each of "
+        "Attention / Interest / Desire / Action tied to specific channels or "
+        "content types\n"
+        "5. Channel strategy — prioritized channel list with operational detail "
+        "(posting frequency per channel, primary format per channel)\n"
+        "6. Content pillars — named pillars with percentage allocation and "
+        "example content concepts per pillar\n"
+        "7. Brand story draft — origin / conflict / resolution narrative\n"
+        "Frameworks named without brand-specific content do not satisfy the spec."
+    ),
     "phase_5": (
-        "Brand Key 9 components per deliverable_assembly.md. Expected ALL 9 "
-        "components described with brand-specific content:\n"
+        "Strategy plan deliverables per brand-communication-planning SKILL.md "
+        "Phase 5 combined with deliverable_assembly.md Brand Key.\n"
+        "Expected Brand Key — ALL 9 components with brand-specific content:\n"
         "1. Root Strength — core competency/heritage\n"
         "2. Competitive Environment — competitors + market context\n"
         "3. Target — target audience definition\n"
@@ -81,7 +126,18 @@ PHASE_DELIVERABLE_SPECS: dict[str, str] = {
         "7. Reasons to Believe (RTBs) — proof points\n"
         "8. Discriminator — key point of difference\n"
         "9. Brand Essence — core essence/mantra\n"
-        "Each component must contain actual content for THIS brand, not just label."
+        "Expected KPI Framework — at least 5 metrics spanning 3+ categories "
+        "(awareness / perception / engagement / behavior / loyalty / revenue / "
+        "distinctiveness). Each metric specifies measurement method, baseline "
+        "(current value or explicit 'no data'), target with timeframe, and "
+        "review frequency. Percentage targets without baselines do not satisfy.\n"
+        "Expected Implementation Roadmap — 3-horizon plan covering quick wins "
+        "(0-3 months), medium-term (3-6 months), long-term (6-12 months). "
+        "Within each horizon items are prioritized (e.g. must_do vs "
+        "nice_to_have, or explicit ordering) and adapted to the declared budget "
+        "tier.\n"
+        "Brand Key components named without content, KPIs without baselines, "
+        "or roadmap without prioritization do not satisfy the spec."
     ),
 }
 
