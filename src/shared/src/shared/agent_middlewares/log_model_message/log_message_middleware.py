@@ -49,6 +49,9 @@ class LogModelMessageMiddleware(AgentMiddleware):
     - Non-intrusive - does not modify agent behavior
     """
 
+    _DEBUG_TRUNCATE_ARG_VALUE = 1500
+    _DEBUG_TRUNCATE_RESULT = 1500
+
     def __init__(
         self,
         *,
@@ -62,6 +65,7 @@ class LogModelMessageMiddleware(AgentMiddleware):
         truncate_thinking: int = 0,  # 0 = no truncation
         truncate_tool_results: int = 500,  # Truncate tool results
         exclude_tools: list[str] | None = None,  # Tools to exclude from logging
+        debug_tool_calls: Optional[bool] = None,
     ):
         """
         Initialize the logging middleware.
@@ -80,6 +84,15 @@ class LogModelMessageMiddleware(AgentMiddleware):
             truncate_thinking: Max characters for thinking (0 = no limit)
             truncate_tool_results: Max characters for tool results
             exclude_tools: List of tool names to exclude from result logging
+            debug_tool_calls: When True, emit tool-call and tool-result
+                records to loguru on every invocation in addition to
+                any configured callback. Arg values are rendered
+                per-key and truncated at
+                ``_DEBUG_TRUNCATE_ARG_VALUE``; result text is
+                truncated at ``_DEBUG_TRUNCATE_RESULT``. When
+                ``None`` (default), the value is resolved from
+                ``SETTINGS.BRANDMIND_DEBUG_TOOLS`` (a strict
+                ``true``/``false`` env toggle).
         """
         super().__init__()
         self.callback = callback
@@ -92,6 +105,62 @@ class LogModelMessageMiddleware(AgentMiddleware):
         self.truncate_thinking = truncate_thinking
         self.truncate_tool_results = truncate_tool_results
         self.exclude_tools = exclude_tools or []
+
+        if debug_tool_calls is None:
+            from config.system_config import SETTINGS
+
+            debug_tool_calls = bool(SETTINGS.BRANDMIND_DEBUG_TOOLS)
+        self._debug_tool_calls = debug_tool_calls
+
+    def _emit_debug_tool_call(
+        self, tool_name: str, tool_args: dict
+    ) -> None:
+        """Emit a tool-call record to loguru.
+
+        Writes a header line identifying the tool, followed by one
+        line per argument in ``key=value`` form. String arguments are
+        rendered as-is; non-string arguments are rendered via
+        :func:`repr`. Each value is truncated at
+        ``_DEBUG_TRUNCATE_ARG_VALUE`` characters. When ``tool_args``
+        is empty, a single ``(no args)`` line is emitted.
+
+        Args:
+            tool_name: Name of the tool whose invocation is logged.
+            tool_args: Mapping of argument names to values as passed
+                to the tool.
+        """
+        logger.info(f"🔬 DEBUG TOOL_CALL [{tool_name}]")
+        if not tool_args:
+            logger.info("     └─ (no args)")
+            return
+        for key, value in tool_args.items():
+            val_str = repr(value) if not isinstance(value, str) else value
+            if len(val_str) > self._DEBUG_TRUNCATE_ARG_VALUE:
+                val_str = val_str[: self._DEBUG_TRUNCATE_ARG_VALUE] + "...<truncated>"
+            logger.info(f"     └─ {key}={val_str}")
+
+    def _emit_debug_tool_result(
+        self, tool_name: str, content: str | None
+    ) -> None:
+        """Emit a tool-result record to loguru.
+
+        Writes a single log entry with the tool name and the result
+        text. Text is truncated at ``_DEBUG_TRUNCATE_RESULT``
+        characters. When ``content`` is ``None`` or empty, a marker
+        line annotated ``(empty)`` is emitted.
+
+        Args:
+            tool_name: Name of the tool whose result is logged.
+            content: The tool's textual result, or ``None`` when the
+                tool produced no text output.
+        """
+        if not content:
+            logger.info(f"🔬 DEBUG TOOL_RESULT [{tool_name}] (empty)")
+            return
+        text = content
+        if len(text) > self._DEBUG_TRUNCATE_RESULT:
+            text = text[: self._DEBUG_TRUNCATE_RESULT] + "...<truncated>"
+        logger.info(f"🔬 DEBUG TOOL_RESULT [{tool_name}]\n{text}")
 
     def wrap_model_call(
         self,
@@ -172,6 +241,9 @@ class LogModelMessageMiddleware(AgentMiddleware):
         if tool_name in self.exclude_tools:
             return handler(request)
 
+        if self._debug_tool_calls:
+            self._emit_debug_tool_call(tool_name, tool_args)
+
         # Log tool call with arguments
         if self.log_tool_calls:
             logger.info(f"🔧 Tool Call: {tool_name}")
@@ -186,6 +258,9 @@ class LogModelMessageMiddleware(AgentMiddleware):
         try:
             # Execute tool
             result = handler(request)
+
+            if self._debug_tool_calls and hasattr(result, "text"):
+                self._emit_debug_tool_result(tool_name, result.text)
 
             # Log result
             if self.log_tool_results and hasattr(result, "text"):
@@ -229,6 +304,9 @@ class LogModelMessageMiddleware(AgentMiddleware):
         if tool_name in self.exclude_tools:
             return await handler(request)
 
+        if self._debug_tool_calls:
+            self._emit_debug_tool_call(tool_name, tool_args)
+
         # Emit tool_call event via callback
         if self.callback:
             # If this is write_todos, also emit TodoUpdateEvent
@@ -262,6 +340,9 @@ class LogModelMessageMiddleware(AgentMiddleware):
         try:
             # Execute tool - all nested calls can use context
             result = await handler(request)
+
+            if self._debug_tool_calls and hasattr(result, "text"):
+                self._emit_debug_tool_result(tool_name, result.text)
 
             # Emit tool_result event (Pydantic model)
             if self.callback and hasattr(result, "text"):

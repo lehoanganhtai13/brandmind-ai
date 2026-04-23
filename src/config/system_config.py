@@ -67,6 +67,9 @@ class Settings:
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
             "brandmind-output",
         )
+        self.BRANDMIND_DEBUG_TOOLS = (
+            os.getenv("BRANDMIND_DEBUG_TOOLS", "false").strip().lower() == "true"
+        )
 
         # Vector Database Collection Names
         self.COLLECTION_DOCUMENT_CHUNKS = os.getenv(
