@@ -28,6 +28,28 @@ def _hex_to_pptx_rgb(hex_color: str) -> RGBColor:
     )
 
 
+def _get_placeholder(slide: Any, idx: int) -> Any:
+    """Return the slide placeholder with the given index, or ``None``.
+
+    ``SlidePlaceholders`` from python-pptx is a sequence-like collection
+    indexed by placeholder ``idx`` (not list index). It supports
+    ``__getitem__`` but raises :class:`KeyError` when the placeholder is
+    missing and does not expose a ``.get()`` accessor. This helper
+    encapsulates that lookup so call sites can stay branch-free.
+
+    Args:
+        slide: A python-pptx slide instance.
+        idx: The placeholder ``idx`` to retrieve (e.g. ``1`` for body).
+
+    Returns:
+        The placeholder when present, otherwise ``None``.
+    """
+    try:
+        return slide.placeholders[idx]
+    except KeyError:
+        return None
+
+
 class BrandStrategyPPTXBuilder:
     """Builds professional branded PPTX pitch decks.
 
@@ -108,8 +130,9 @@ class BrandStrategyPPTXBuilder:
             run.font.color.rgb = self.primary_color
             run.font.size = Pt(44)
 
-        if slide.placeholders.get(1):
-            slide.placeholders[1].text = title
+        subtitle = _get_placeholder(slide, 1)
+        if subtitle is not None:
+            subtitle.text = title
 
     def _create_content_slide(
         self,
@@ -127,8 +150,8 @@ class BrandStrategyPPTXBuilder:
             run.font.color.rgb = self.primary_color
 
         bullets = self._extract_bullets(content)
-        body = slide.placeholders.get(1)
-        if body:
+        body = _get_placeholder(slide, 1)
+        if body is not None:
             tf = body.text_frame
             tf.clear()
             for i, bullet in enumerate(bullets[:10]):
@@ -158,8 +181,8 @@ class BrandStrategyPPTXBuilder:
             run.font.color.rgb = self.primary_color
 
         bullets = self._extract_bullets(content)
-        body = slide.placeholders.get(1)
-        if body:
+        body = _get_placeholder(slide, 1)
+        if body is not None:
             tf = body.text_frame
             tf.clear()
             for i, bullet in enumerate(bullets[:10]):
