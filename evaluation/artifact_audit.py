@@ -25,6 +25,7 @@ import re
 import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import Any
 
 DELIVERABLE_TOOLS = (
     "generate_brand_key",
@@ -107,6 +108,40 @@ class Tier1Health:
 
 
 @dataclass
+class SemanticCheck:
+    """Structural-quality assessment for a single artifact file.
+
+    The check looks beyond file existence: it parses the artifact with
+    its native parser and verifies that the structural depth expected
+    of a Phase 5 deliverable is present (e.g. the strategy DOCX
+    actually contains the eight phase sections, not just a title page).
+    Missing dependencies are recorded as ``skipped`` rather than
+    failures so the Tier 1 audit does not penalise environments where
+    a parser is unavailable.
+
+    Attributes:
+        artifact_type: One of ``brand_key_image``, ``strategy_document``,
+            ``presentation``, ``spreadsheet``.
+        artifact_path: Absolute path of the artifact under inspection.
+        passed: ``True`` when every required structural threshold is met.
+            ``True`` when the check is skipped (no penalty for missing
+            optional parsers).
+        skipped: ``True`` when the parser dependency is missing.
+        details: Free-form structural counts the check produced
+            (e.g. ``{"section_headings_found": 7}``).
+        reasons: Human-readable explanations for failed thresholds.
+            Empty when ``passed`` is ``True``.
+    """
+
+    artifact_type: str
+    artifact_path: str
+    passed: bool = True
+    skipped: bool = False
+    details: dict[str, Any] = field(default_factory=dict)
+    reasons: list[str] = field(default_factory=list)
+
+
+@dataclass
 class AuditReport:
     """Complete audit report for one session."""
 
@@ -121,6 +156,7 @@ class AuditReport:
     artifacts_on_disk: dict[str, list[str]]
     workspace_files: dict[str, WorkspaceFile]
     tier1_health: Tier1Health
+    semantic_checks: list[SemanticCheck]
     notes: list[str]
 
     def to_dict(self) -> dict:
@@ -320,7 +356,7 @@ def scan_artifacts_on_disk(
         except ValueError:
             cutoff = None
 
-    out = {
+    out: dict[str, list[str]] = {
         "brand_key_image": [],
         "strategy_document": [],
         "presentation": [],
@@ -410,11 +446,251 @@ def evaluate_tier1_health(
 
 
 # ---------------------------------------------------------------------------
+# Semantic structural checks
+# ---------------------------------------------------------------------------
+
+
+_BRAND_KEY_LABEL_PATTERNS: tuple[tuple[str, ...], ...] = (
+    ("root strength", "core strength", "heritage", "nguồn gốc"),
+    ("competitive environment", "competitor", "competitive", "cạnh tranh"),
+    ("target", "target audience", "đối tượng"),
+    ("insight", "consumer insight", "thấu hiểu"),
+    ("benefit", "functional benefit", "emotional benefit", "lợi ích"),
+    ("values", "personality", "tính cách"),
+    ("reason to believe", "rtb", "lý do tin"),
+    ("discriminator", "point of difference", "pod", "khác biệt"),
+    ("essence", "brand essence", "mantra", "cốt lõi"),
+)
+
+_STRATEGY_DOC_PHASE_PATTERNS: tuple[tuple[str, ...], ...] = (
+    ("executive summary", "tóm tắt"),
+    ("business context", "diagnosis", "problem statement", "bối cảnh"),
+    ("market intelligence", "research", "competitive landscape", "thị trường"),
+    ("brand positioning", "positioning statement", "định vị"),
+    ("brand identity", "personality", "visual", "nhận diện"),
+    ("communication framework", "messaging", "channel", "truyền thông"),
+    ("implementation roadmap", "execution", "lộ trình"),
+    ("kpi", "metric", "measurement", "đo lường"),
+)
+
+_PRESENTATION_TITLE_PATTERNS: tuple[tuple[str, ...], ...] = (
+    ("challenge", "problem", "diagnosis", "thách thức"),
+    ("position", "positioning", "định vị"),
+    ("identity", "brand personality", "nhận diện"),
+    ("communication", "messaging", "channel", "truyền thông"),
+    ("roadmap", "implementation", "timeline", "lộ trình"),
+    ("kpi", "metric", "measurement", "đo lường"),
+)
+
+_KPI_REQUIRED_HEADERS: tuple[tuple[str, ...], ...] = (
+    ("metric", "kpi", "chỉ số"),
+    ("measurement", "method", "phương pháp"),
+    ("target", "goal", "mục tiêu"),
+)
+
+
+def _matches_any(text_lower: str, patterns: tuple[tuple[str, ...], ...]) -> int:
+    """Return how many pattern groups have at least one term in ``text_lower``."""
+    return sum(
+        1 for group in patterns if any(term in text_lower for term in group)
+    )
+
+
+def _check_brand_key_semantic(path: Path) -> SemanticCheck:
+    """Verify the Brand Key image contains enough of the 9 components.
+
+    OCR via :mod:`pytesseract` is preferred when both the Python wheel
+    and the system ``tesseract`` binary are available. When OCR cannot
+    run, the check is recorded as skipped (passed without inspection)
+    so absent system dependencies do not invalidate Tier 1.
+
+    Args:
+        path: Absolute path of the Brand Key image.
+
+    Returns:
+        :class:`SemanticCheck` with structural details for the image.
+    """
+    check = SemanticCheck(artifact_type="brand_key_image", artifact_path=str(path))
+    try:
+        import pytesseract  # type: ignore
+        from PIL import Image  # type: ignore
+    except ImportError as exc:
+        check.skipped = True
+        check.details["skip_reason"] = f"OCR unavailable: {exc}"
+        return check
+    try:
+        text = pytesseract.image_to_string(Image.open(path), lang="eng+vie")
+    except Exception as exc:  # noqa: BLE001
+        check.skipped = True
+        check.details["skip_reason"] = f"OCR failed: {exc}"
+        return check
+    count = _matches_any(text.lower(), _BRAND_KEY_LABEL_PATTERNS)
+    check.details["component_labels_found"] = count
+    check.details["expected_minimum"] = 7
+    if count < 7:
+        check.passed = False
+        check.reasons.append(
+            f"Brand Key OCR found {count}/9 expected component labels "
+            "(threshold 7)."
+        )
+    return check
+
+
+def _check_strategy_doc_semantic(path: Path) -> SemanticCheck:
+    """Verify the strategy DOCX covers at least six of eight phase sections."""
+    check = SemanticCheck(artifact_type="strategy_document", artifact_path=str(path))
+    try:
+        import docx  # type: ignore
+    except ImportError as exc:
+        check.skipped = True
+        check.details["skip_reason"] = f"python-docx unavailable: {exc}"
+        return check
+    try:
+        document = docx.Document(str(path))
+    except Exception as exc:  # noqa: BLE001
+        check.passed = False
+        check.reasons.append(f"DOCX failed to open: {exc}")
+        return check
+    headings = [
+        p.text.lower().strip()
+        for p in document.paragraphs
+        if (p.style and "heading" in (p.style.name or "").lower())
+        or (p.text and len(p.text) < 100 and p.text.strip().endswith(":") is False)
+    ]
+    heading_text = " | ".join(headings)
+    matched = _matches_any(heading_text, _STRATEGY_DOC_PHASE_PATTERNS)
+    check.details["section_headings_matched"] = matched
+    check.details["expected_minimum"] = 6
+    check.details["heading_count"] = len(headings)
+    if matched < 6:
+        check.passed = False
+        check.reasons.append(
+            f"DOCX matched {matched}/8 expected phase sections (threshold 6)."
+        )
+    return check
+
+
+def _check_presentation_semantic(path: Path) -> SemanticCheck:
+    """Verify the PPTX has enough slides and title coverage of the deck flow."""
+    check = SemanticCheck(artifact_type="presentation", artifact_path=str(path))
+    try:
+        from pptx import Presentation  # type: ignore
+    except ImportError as exc:
+        check.skipped = True
+        check.details["skip_reason"] = f"python-pptx unavailable: {exc}"
+        return check
+    try:
+        deck = Presentation(str(path))
+    except Exception as exc:  # noqa: BLE001
+        check.passed = False
+        check.reasons.append(f"PPTX failed to open: {exc}")
+        return check
+    titles: list[str] = []
+    for slide in deck.slides:
+        if slide.shapes.title and slide.shapes.title.text:
+            titles.append(slide.shapes.title.text.lower())
+    slide_count = len(deck.slides)
+    title_text = " | ".join(titles)
+    matched = _matches_any(title_text, _PRESENTATION_TITLE_PATTERNS)
+    check.details["slide_count"] = slide_count
+    check.details["title_topics_matched"] = matched
+    check.details["expected_slide_minimum"] = 8
+    check.details["expected_topic_minimum"] = 4
+    if slide_count < 8:
+        check.passed = False
+        check.reasons.append(
+            f"PPTX has {slide_count} slides (threshold 8)."
+        )
+    if matched < 4:
+        check.passed = False
+        check.reasons.append(
+            f"PPTX titles matched {matched}/6 expected topics (threshold 4)."
+        )
+    return check
+
+
+def _check_kpi_xlsx_semantic(path: Path) -> SemanticCheck:
+    """Verify the KPI XLSX has at least five data rows and required columns."""
+    check = SemanticCheck(artifact_type="spreadsheet", artifact_path=str(path))
+    try:
+        from openpyxl import load_workbook  # type: ignore
+    except ImportError as exc:
+        check.skipped = True
+        check.details["skip_reason"] = f"openpyxl unavailable: {exc}"
+        return check
+    try:
+        workbook = load_workbook(str(path), read_only=True, data_only=True)
+    except Exception as exc:  # noqa: BLE001
+        check.passed = False
+        check.reasons.append(f"XLSX failed to open: {exc}")
+        return check
+    primary_sheet = workbook[workbook.sheetnames[0]]
+    rows = [
+        [str(cell).strip().lower() if cell is not None else "" for cell in row]
+        for row in primary_sheet.iter_rows(values_only=True)
+    ]
+    header_pool = " | ".join(" ".join(row) for row in rows[:3])
+    header_match = _matches_any(header_pool, _KPI_REQUIRED_HEADERS)
+    data_rows = [row for row in rows[1:] if any(cell for cell in row)]
+    check.details["sheet_count"] = len(workbook.sheetnames)
+    check.details["data_rows"] = len(data_rows)
+    check.details["header_topics_matched"] = header_match
+    check.details["expected_data_rows_minimum"] = 5
+    check.details["expected_header_topics_minimum"] = 3
+    if len(data_rows) < 5:
+        check.passed = False
+        check.reasons.append(
+            f"XLSX primary sheet has {len(data_rows)} data rows (threshold 5)."
+        )
+    if header_match < 3:
+        check.passed = False
+        check.reasons.append(
+            f"XLSX header topics matched {header_match}/3 expected categories."
+        )
+    return check
+
+
+def run_semantic_checks(
+    artifacts: dict[str, list[str]],
+) -> list[SemanticCheck]:
+    """Run a structural check per produced artifact and return the results.
+
+    Iterates through the four canonical artifact buckets emitted by
+    :func:`scan_artifacts_on_disk` and dispatches to the dedicated
+    checker for each. Buckets without an artifact are skipped silently;
+    their absence is already captured by Tier 1 health.
+
+    Args:
+        artifacts: Mapping returned by :func:`scan_artifacts_on_disk`.
+
+    Returns:
+        Ordered list of :class:`SemanticCheck` outcomes (one per
+        artifact found on disk).
+    """
+    results: list[SemanticCheck] = []
+    for path in artifacts.get("brand_key_image", []):
+        results.append(_check_brand_key_semantic(Path(path)))
+    for path in artifacts.get("strategy_document", []):
+        if path.lower().endswith(".docx"):
+            results.append(_check_strategy_doc_semantic(Path(path)))
+    for path in artifacts.get("presentation", []):
+        results.append(_check_presentation_semantic(Path(path)))
+    for path in artifacts.get("spreadsheet", []):
+        results.append(_check_kpi_xlsx_semantic(Path(path)))
+    return results
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
 
-def audit(session_dir: Path, brandmind_home: Path, output_root: Path) -> AuditReport:
+def audit(
+    session_dir: Path,
+    brandmind_home: Path,
+    output_root: Path,
+    semantic: bool = False,
+) -> AuditReport:
     """Run the full audit pipeline for one session directory.
 
     Args:
@@ -424,6 +700,10 @@ def audit(session_dir: Path, brandmind_home: Path, output_root: Path) -> AuditRe
             to resolve the workspace directory.
         output_root: Root of the BrandMind output tree where artifacts
             land on disk.
+        semantic: When ``True``, run :func:`run_semantic_checks` over
+            the produced artifacts and include the results on the
+            returned report. Defaults to ``False`` so the lightweight
+            existence check stays the default for the M-3 smoke path.
 
     Returns:
         A populated :class:`AuditReport` ready for serialisation.
@@ -449,6 +729,9 @@ def audit(session_dir: Path, brandmind_home: Path, output_root: Path) -> AuditRe
     health = evaluate_tier1_health(
         deliverable, artifacts, workspace_files, completed_phases
     )
+    semantic_checks: list[SemanticCheck] = (
+        run_semantic_checks(artifacts) if semantic else []
+    )
 
     return AuditReport(
         session_dir=str(session_dir),
@@ -462,6 +745,7 @@ def audit(session_dir: Path, brandmind_home: Path, output_root: Path) -> AuditRe
         artifacts_on_disk=artifacts,
         workspace_files=workspace_files,
         tier1_health=health,
+        semantic_checks=semantic_checks,
         notes=notes,
     )
 
@@ -490,6 +774,15 @@ def _build_argparser() -> argparse.ArgumentParser:
         "--pretty",
         action="store_true",
         help="Print a human-readable summary in addition to JSON.",
+    )
+    parser.add_argument(
+        "--semantic",
+        action="store_true",
+        help=(
+            "Run structural quality checks on each produced artifact "
+            "(parses DOCX/PPTX/XLSX, OCRs the Brand Key image when "
+            "pytesseract is available)."
+        ),
     )
     return parser
 
@@ -533,13 +826,33 @@ def _format_summary(report: AuditReport) -> str:
     lines.append("Sub-agent dispatch:")
     for name, count in report.subagent_dispatch.items():
         lines.append(f"  {name}: {count}")
+    if report.semantic_checks:
+        lines.append("Semantic checks:")
+        for sc in report.semantic_checks:
+            if sc.skipped:
+                status = "SKIP"
+            elif sc.passed:
+                status = "PASS"
+            else:
+                status = "FAIL"
+            lines.append(
+                f"  [{status}] {sc.artifact_type}: "
+                f"{Path(sc.artifact_path).name}  details={sc.details}"
+            )
+            for reason in sc.reasons:
+                lines.append(f"    - {reason}")
     return "\n".join(lines)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_argparser().parse_args(argv)
     try:
-        report = audit(args.session_dir, args.brandmind_home, args.output_root)
+        report = audit(
+            args.session_dir,
+            args.brandmind_home,
+            args.output_root,
+            semantic=args.semantic,
+        )
     except FileNotFoundError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

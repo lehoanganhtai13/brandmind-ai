@@ -210,6 +210,7 @@ def main(argv: list[str] | None = None) -> int:
         session_dir=session_dir,
         brandmind_home=args.brandmind_home,
         output_root=Path.cwd() / "brandmind-output",
+        semantic=True,
     )
     health = report.tier1_health
     print()
@@ -219,6 +220,24 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  kpi_xlsx_produced        = {health.kpi_xlsx_produced}")
     print(f"  presentation_produced    = {health.presentation_produced}")
     print(f"  workspace_brief_covers   = {health.workspace_brief_covers_all_phases}")
+
+    semantic_failures: list[str] = []
+    if report.semantic_checks:
+        print("Semantic structural checks:")
+        for sc in report.semantic_checks:
+            if sc.skipped:
+                print(
+                    f"  [SKIP] {sc.artifact_type}: "
+                    f"{sc.details.get('skip_reason', 'parser unavailable')}"
+                )
+                continue
+            status = "PASS" if sc.passed else "FAIL"
+            print(f"  [{status}] {sc.artifact_type}: details={sc.details}")
+            if not sc.passed:
+                for reason in sc.reasons:
+                    print(f"    - {reason}")
+                semantic_failures.append(sc.artifact_type)
+
     (session_dir / "smoke_audit.json").write_text(
         json.dumps(report.to_dict(), indent=2, ensure_ascii=False),
         encoding="utf-8",
@@ -230,6 +249,15 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 1
+    if semantic_failures:
+        # Tier 1 is defined as artifact-existence; structural depth is a
+        # separate quality dimension tracked by M-4 onwards. The smoke
+        # surfaces depth shortfalls so operators see them, but does not
+        # block the run on them.
+        print(
+            "\nWARN — semantic depth thresholds not met for: "
+            f"{', '.join(semantic_failures)} (informational only)"
+        )
     print(f"\nPASS — Tier 1 health {health.score} ≥ floor {args.health_floor}")
     return 0
 
