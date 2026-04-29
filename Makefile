@@ -127,6 +127,12 @@ test-unit: ## Run unit tests only
 eval-smoke: ## Run Tier 1 artifact-production regression smoke test (requires running server)
 	uv run python evaluation/smoke_test.py
 
+eval-content-judge: ## Score artifact content correctness for the most recent pilot session (M-6.5)
+	@latest=$$(ls -td brandmind-output/eval/*/ 2>/dev/null | head -1); \
+	if [ -z "$$latest" ]; then echo "no pilot session found"; exit 1; fi; \
+	echo "Judging $$latest"; \
+	uv run python evaluation/judge/artifact_judge.py --session-dir $$latest
+
 format: ## Format code with ruff
 	uv run ruff format src/
 
