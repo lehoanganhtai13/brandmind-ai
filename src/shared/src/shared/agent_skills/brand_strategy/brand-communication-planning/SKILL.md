@@ -137,9 +137,9 @@ Verify before advancing: value proposition at 3 levels, 3-5 key messages with pr
 Compile all phase outputs into professional deliverables.
 Read `references/deliverable_assembly.md` for the 10-section document structure, Brand Key one-pager format, and presentation assembly instructions.
 
-Delegate document generation to the **document-generator** sub-agent via `task(subagent_type="document-generator")`.
-Delegate Brand Key visual to the **creative-studio** sub-agent via `task(subagent_type="creative-studio")`.
-Use `generate_spreadsheet` for KPI tracking templates (XLSX).
+Delegate document generation (DOCX strategy doc, PPTX executive deck) to the **document-generator** sub-agent via `task(subagent_type="document-generator")`.
+Delegate the Brand Key one-pager visual to the **creative-studio** sub-agent via `task(subagent_type="creative-studio")`.
+Delegate KPI XLSX generation to the **document-generator** sub-agent — it owns `generate_spreadsheet`. The main agent does not have direct access to that tool.
 
 Search knowledge graph: `"brand guidelines document"`, `"brand key framework"`.
 

@@ -82,10 +82,14 @@ def create_brand_strategy_subagent_middleware(
         {
             "name": "market-research",
             "description": (
-                "Research agent for competitor analysis, local market mapping, "
-                "deep market research, review sentiment analysis, and search "
-                "trend discovery. Use for data-heavy research tasks requiring "
-                "multiple tool calls."
+                "Researches markets, competitors, audiences, and category "
+                "trends using web tools, knowledge graph, and document "
+                "library. Dispatch when fresh external data is needed: "
+                "competitor menu / pricing scrape, customer review sentiment, "
+                "consumer search trends, broad competitive landscape mapping. "
+                "Don't dispatch for analysis of strategy data already in this "
+                "conversation, for visual asset generation (creative-studio), "
+                "or for deliverable assembly (document-generator)."
             ),
             "system_prompt": MARKET_RESEARCH_SYSTEM_PROMPT,
             "model": models["market-research"],
@@ -95,9 +99,13 @@ def create_brand_strategy_subagent_middleware(
         {
             "name": "social-media-analyst",
             "description": (
-                "Analyzes F&B brand social media presence on Instagram, "
-                "Facebook, TikTok. Performs profile analysis, content audits, "
-                "brand voice assessment, and competitive social benchmarking."
+                "Audits F&B brand presence on Instagram, Facebook, and TikTok "
+                "at profile depth: follower mix, content cadence, brand-voice "
+                "tone, hashtag patterns. Dispatch for a focused look at one "
+                "specific competitor's social account or the user's own pages. "
+                "Don't dispatch for broad multi-channel competitive research "
+                "(market-research has wider scope), or for generating new "
+                "social content (creative-studio for visuals)."
             ),
             "system_prompt": SOCIAL_MEDIA_ANALYST_SYSTEM_PROMPT,
             "model": models["social-media-analyst"],
@@ -107,15 +115,15 @@ def create_brand_strategy_subagent_middleware(
         {
             "name": "creative-studio",
             "description": (
-                "Compiles brand visuals from finalized strategy data. "
-                "Primary deliverable: the Brand Key one-pager visual via "
-                "generate_brand_key — dispatch this when Phase 5 closes and "
-                "the orchestrator has the 9-component Brand Key text ready. "
-                "Also produces exploratory mood boards, logo concept "
-                "directions, and color palette visualizations via "
-                "generate_image / edit_image; those exploratory images are "
-                "direction drafts, while the Brand Key one-pager is a "
-                "deliverable artifact."
+                "Compiles brand visuals from finalized strategy data. Primary "
+                "deliverable: the Brand Key one-pager visual via "
+                "`generate_brand_key` — dispatch when Phase 5 closes and the "
+                "orchestrator has the 9-component Brand Key text ready. Also "
+                "produces exploratory mood boards, logo concept directions, "
+                "and color-palette visualizations via `generate_image` / "
+                "`edit_image` for early-phase brainstorming. Don't dispatch "
+                "for document, presentation, or spreadsheet generation "
+                "(document-generator), or for research / analysis tasks."
             ),
             "system_prompt": CREATIVE_STUDIO_SYSTEM_PROMPT,
             "model": models["creative-studio"],
@@ -125,9 +133,15 @@ def create_brand_strategy_subagent_middleware(
         {
             "name": "document-generator",
             "description": (
-                "Compiles brand strategy data into professional deliverables: "
-                "PDF/DOCX strategy documents, PPTX pitch decks, XLSX spreadsheets, "
-                "Markdown exports, and Brand Key one-pager compilation."
+                "Compiles brand strategy data into editable deliverables: "
+                "PDF / DOCX strategy documents via `generate_document`, PPTX "
+                "executive decks via `generate_presentation`, and XLSX "
+                "tracking spreadsheets via `generate_spreadsheet`. Dispatch "
+                "at Phase 5 closure when the orchestrator has the finalized "
+                "phase-by-phase strategy content ready for the boss meeting. "
+                "Don't dispatch for the Brand Key one-pager visual (that's "
+                "creative-studio's `generate_brand_key`), for image work, or "
+                "for fresh research."
             ),
             "system_prompt": DOCUMENT_GENERATOR_SYSTEM_PROMPT,
             "model": models["document-generator"],
