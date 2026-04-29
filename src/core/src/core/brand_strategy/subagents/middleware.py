@@ -107,9 +107,15 @@ def create_brand_strategy_subagent_middleware(
         {
             "name": "creative-studio",
             "description": (
-                "Generates brand visual assets — mood boards, logo concept "
-                "directions, color palette visualizations, packaging mockups, "
-                "and Brand Key one-pager visuals. Images are direction drafts."
+                "Compiles brand visuals from finalized strategy data. "
+                "Primary deliverable: the Brand Key one-pager visual via "
+                "generate_brand_key — dispatch this when Phase 5 closes and "
+                "the orchestrator has the 9-component Brand Key text ready. "
+                "Also produces exploratory mood boards, logo concept "
+                "directions, and color palette visualizations via "
+                "generate_image / edit_image; those exploratory images are "
+                "direction drafts, while the Brand Key one-pager is a "
+                "deliverable artifact."
             ),
             "system_prompt": CREATIVE_STUDIO_SYSTEM_PROMPT,
             "model": models["creative-studio"],
