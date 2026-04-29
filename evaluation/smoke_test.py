@@ -35,52 +35,93 @@ from artifact_audit import audit  # type: ignore  # noqa: E402
 DEFAULT_BASE_URL = "http://localhost:8000/api/v1"
 DEFAULT_HEALTH_FLOOR = 4
 
-# A minimal Linh-style script that drives the agent through Phase 0 → 5
-# in five turns. The content is intentionally compact and includes the
-# explicit "no web research" directive plus competitor data so the
-# canary does not depend on browser-use sub-agents (which are not part
-# of Tier 1 health). The final turn asks the agent to deliver the four
-# Phase 5 artifacts; the orchestrator must dispatch sub-agents itself
-# under M-2C's mandate — the script does not specify which.
-CANARY_TURNS: list[str] = [
-    (
+# Scope-specific opening turns. Each opener biases the agent toward
+# classifying the project as the target scope by varying how the brand
+# situation is described. Turn 0 only — the remaining four turns are
+# scope-agnostic and reuse the same compact pattern.
+_SCOPE_OPENERS: dict[str, str] = {
+    "repositioning": (
         "Xin chào, em là marketing executive của nhà hàng Chuyện Ba Bữa "
-        "Signature. Em mới vào nghề được 1 năm, sếp họp tuần sau và em cần "
-        "xây dựng brand strategy gấp để trình. Anh dùng knowledge graph + "
-        "document library có sẵn thôi, KHÔNG cần dispatch market-research "
-        "đi web research nha — em sẽ cung cấp data đối thủ trực tiếp."
+        "Signature. Em mới vào nghề được 1 năm, sếp họp tuần sau và em "
+        "cần xây dựng brand strategy gấp để trình. Anh dùng knowledge "
+        "graph + document library có sẵn thôi, KHÔNG cần dispatch "
+        "market-research đi web research — em sẽ cung cấp data đối thủ. "
+        "Signature là flagship cao cấp mới của thương hiệu mẹ Chuyện Ba "
+        "Bữa, đang bị nhầm với nhánh gốc và cần tái định vị thành brand "
+        "độc lập."
+    ),
+    "new_brand": (
+        "Xin chào, em là marketing executive cho 1 dự án restaurant mới "
+        "hoàn toàn, sếp em chuẩn bị mở quán Q1 HCMC tháng sau, chưa có "
+        "tên/logo/identity, hoàn toàn từ con số 0. Em cần xây dựng full "
+        "brand strategy từ đầu để pitch đầu tư + chuẩn bị mở. Anh dùng "
+        "knowledge graph có sẵn thôi, KHÔNG cần web research — em sẽ "
+        "cung cấp business context + competitor info trực tiếp."
+    ),
+    "refresh": (
+        "Xin chào, em là marketing executive của Chuyện Ba Bữa — chuỗi "
+        "Vietnamese casual dining đã hoạt động 5 năm, FB 50K follower, "
+        "doanh thu ổn định. Sếp muốn làm BRAND REFRESH cosmetic — chỉ "
+        "cập nhật logo modern hơn, social content tươi hơn, KHÔNG đổi "
+        "tệp khách / KHÔNG đổi định vị / KHÔNG đổi giá. Anh dùng "
+        "knowledge graph có sẵn — em sẽ cung cấp brand context."
+    ),
+    "full_rebrand": (
+        "Xin chào, em là marketing executive của Chuyện Ba Bữa Signature, "
+        "tình hình rất tệ — sau 6 tháng soft-open chỉ đạt 20% công suất, "
+        "review tệ, khách phản hồi tên dở + concept không rõ. Sếp quyết "
+        "định FULL REBRAND: thay tên hoàn toàn, thay logo, thay concept, "
+        "có thể giữ chỉ chef + không gian. Em cần strategy từ đầu cho "
+        "thương hiệu mới. Anh dùng KG có sẵn — em sẽ cung cấp learnings "
+        "từ Chuyện Ba Bữa Signature thất bại."
+    ),
+}
+
+# Compact follow-up turns shared across scopes. Phase progression and
+# Phase 5 closure happen identically once the scope is set.
+_SHARED_TURNS: list[str] = [
+    (
+        "Trả lời chi tiết: vị trí Q1 HCMC, premium Vietnamese cuisine, "
+        "ngân sách Starter 50-80M/tháng, target thêm corporate guests "
+        "T2-T5, dinner 400-900K, lunch 150-250K. 6 signal cho scope: "
+        "2/2/1/2/0/1. Đối thủ: Cục Gạch (heritage rustic, không menu "
+        "chuẩn), An Nhiên (modern chic, trùng tên chuỗi cơm chay), Quán "
+        "Bụi (casual scale, ồn, lunch giá rẻ)."
     ),
     (
-        "Trả lời 5 câu: (1) Saigonese Modern Cuisine premium, flagship của "
-        "Chuyện Ba Bữa, soft-open Dec 2024, Q1 HCMC, 3 tầng Indochine, "
-        "dinner 400-900K, lunch 150-250K. (2) Vắng T2-T5, sếp muốn tách "
-        "Signature thành brand độc lập với nhánh gốc. (3) Hiện gia đình + "
-        "du lịch cuối tuần; mục tiêu thêm office workers + corporate "
-        "hosting Q1. (4) Starter tier 50-80M VND/tháng. (5) Lo nhất là "
-        "thiếu bộ tài liệu chuẩn để sếp present hội đồng. "
-        "6 tín hiệu: 2/2/1/2/0/1. "
-        "Đối thủ: Cục Gạch (heritage rustic, không menu chuẩn), An Nhiên "
-        "(modern chic, trùng tên chuỗi cơm chay), Quán Bụi (casual scale, "
-        "ồn, lunch giá rẻ)."
-    ),
-    (
-        "Audit nhanh: Logo share 100% với nhánh gốc chỉ thêm chữ "
-        "'Signature'. Menu 30% trùng + 70% premium mới. Khách Corporate "
-        "ngần ngại vì tên gợi cảm giác cơm gia đình, menu chưa song ngữ, "
-        "social style ShopeeFood. Khen: phòng riêng tầng 2 (yên tĩnh), "
-        "Chả Cá Na Hang + Xôi Cua Cà Mau, bếp trưởng 15 năm fine-dining."
+        "Audit/research nhanh: bếp trưởng 15 năm fine-dining, không gian "
+        "3 tầng Indochine có phòng riêng tầng 2, signature dishes Chả "
+        "Cá Na Hang + Xôi Cua Cà Mau. Khách Corporate quan tâm sự riêng "
+        "tư + chuyên nghiệp + tốc độ phục vụ. White space: 'Modern "
+        "Saigonese Gastronomy' chuyên cho executive private dining."
     ),
     (
         "Em chọn Brand Mantra: Refined - Private - Distinguished (Quiet "
-        "Luxury). Brand Voice: The Discreet Host. Authority qua Chef "
-        "storytelling + Scarcity 'Executive Tuesday' (4 phòng riêng tầng "
-        "2). Mình qua Phase 5 đóng strategy được rồi anh."
+        "Luxury). Brand Voice: The Discreet Host. Cialdini Authority qua "
+        "Chef storytelling + Scarcity 'Executive Tuesday' (4 phòng riêng "
+        "tầng 2). Channels: Google Maps SEO + LinkedIn networking + IG "
+        "moody photography. Mình qua Phase 5 đóng strategy đi anh."
     ),
     (
         "Em cần đóng strategy + bộ tài liệu để trình sếp tuần sau. Cảm "
         "ơn anh đã đồng hành."
     ),
 ]
+
+
+def _canary_for_scope(scope: str) -> list[str]:
+    """Return the 5-turn canary message sequence for the given scope."""
+    if scope not in _SCOPE_OPENERS:
+        raise ValueError(
+            f"unknown scope '{scope}'. Choose one of "
+            f"{', '.join(sorted(_SCOPE_OPENERS.keys()))}."
+        )
+    return [_SCOPE_OPENERS[scope], *_SHARED_TURNS]
+
+
+# Default scope used when --scope is not specified — preserves the M-3
+# baseline behaviour for the smoke test.
+CANARY_TURNS: list[str] = _canary_for_scope("repositioning")
 
 
 def _send_turn(
@@ -174,14 +215,25 @@ def _build_argparser() -> argparse.ArgumentParser:
         default=Path.home() / ".brandmind",
         help="Brand strategy on-disk state root (forwarded to the audit).",
     )
+    parser.add_argument(
+        "--scope",
+        choices=sorted(_SCOPE_OPENERS.keys()),
+        default="repositioning",
+        help=(
+            "Brand-strategy scope to bias the canary toward. Repositioning "
+            "is the default M-3 baseline; the other choices drive M-5 "
+            "cross-scope validation."
+        ),
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_argparser().parse_args(argv)
     session_dir = args.session_out
+    canary_turns = _canary_for_scope(args.scope)
 
-    print(f"Smoke test starting → {session_dir}")
+    print(f"Smoke test starting → {session_dir} (scope={args.scope})")
     try:
         session_id = _create_session(args.base_url)
     except httpx.HTTPError as exc:
@@ -190,8 +242,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  session_id = {session_id}")
 
     turns: list[dict] = []
-    for i, message in enumerate(CANARY_TURNS, start=1):
-        print(f"  → Turn {i}/{len(CANARY_TURNS)}")
+    for i, message in enumerate(canary_turns, start=1):
+        print(f"  → Turn {i}/{len(canary_turns)}")
         agent_text, tools, elapsed = _send_turn(args.base_url, session_id, message)
         turns.append(
             {
