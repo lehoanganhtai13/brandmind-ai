@@ -124,6 +124,9 @@ test-watch: ## Run tests in watch mode
 test-unit: ## Run unit tests only
 	uv run pytest tests/unit/
 
+eval-smoke: ## Run Tier 1 artifact-production regression smoke test (requires running server)
+	uv run python evaluation/smoke_test.py
+
 format: ## Format code with ruff
 	uv run ruff format src/
 
