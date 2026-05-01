@@ -7,11 +7,11 @@ pitch decks using python-pptx.
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 
 from loguru import logger
 
+from ._output_path import resolve_output_path
 from .pptx_builder import BrandStrategyPPTXBuilder
 from .templates.brand_strategy import BrandStrategyDeckTemplate
 
@@ -114,17 +114,12 @@ def generate_presentation(
     colors = brand_colors or ["#1B365D", "#F5F0E8", "#D4A84B"]
     template = BrandStrategyDeckTemplate(brand_name=brand_name, brand_colors=colors)
 
-    if not output_path:
-        base_dir = os.environ.get(
-            "BRANDMIND_OUTPUT_DIR",
-            os.path.join(os.getcwd(), "brandmind-output"),
-        )
-        safe_name = brand_name.lower().replace(" ", "_")
-        output_path = os.path.join(
-            base_dir,
-            "presentations",
-            f"{safe_name}_strategy_deck.pptx",
-        )
+    safe_name = brand_name.lower().replace(" ", "_")
+    output_path = resolve_output_path(
+        output_path,
+        category="presentations",
+        default_filename=f"{safe_name}_strategy_deck.pptx",
+    )
 
     try:
         builder = BrandStrategyPPTXBuilder(template=template)

@@ -7,11 +7,11 @@ spreadsheets from templates with formulas and formatting.
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 
 from loguru import logger
 
+from ._output_path import resolve_output_path
 from .spreadsheet_templates import SPREADSHEET_TEMPLATES
 from .xlsx_builder import BrandStrategyXLSXBuilder
 
@@ -135,17 +135,12 @@ def generate_spreadsheet(
     except (json.JSONDecodeError, TypeError) as e:
         return f"Invalid content JSON: {e}"
 
-    if not output_path:
-        base_dir = os.environ.get(
-            "BRANDMIND_OUTPUT_DIR",
-            os.path.join(os.getcwd(), "brandmind-output"),
-        )
-        safe_name = brand_name.lower().replace(" ", "_")
-        output_path = os.path.join(
-            base_dir,
-            "spreadsheets",
-            f"{safe_name}_{template}.xlsx",
-        )
+    safe_name = brand_name.lower().replace(" ", "_")
+    output_path = resolve_output_path(
+        output_path,
+        category="spreadsheets",
+        default_filename=f"{safe_name}_{template}.xlsx",
+    )
 
     try:
         template_config = SPREADSHEET_TEMPLATES[template]

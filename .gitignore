@@ -232,3 +232,17 @@ CLAUDE.md
 # Gemini CLI Agent
 .gemini/
 .gitnexus
+
+# Defensive: catch artifact-tool leaks at the repo root.
+# All artifact generation must land under brandmind-output/ (already
+# ignored above) or under the directory pointed to by BRANDMIND_OUTPUT_DIR.
+# These root-level patterns guarantee that if a tool or sub-agent
+# accidentally writes an artifact to the repository root, it stays
+# untracked rather than polluting commits. They do not affect files
+# inside src/, tests/, docs/, etc.
+/*.docx
+/*.pptx
+/*.xlsx
+/*.pdf
+/*.jpeg
+/*.png

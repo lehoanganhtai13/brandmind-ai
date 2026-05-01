@@ -7,8 +7,9 @@ outputs to well-formatted Markdown with table of contents.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
+
+from ._output_path import resolve_output_path
 from typing import Any
 
 from loguru import logger
@@ -65,12 +66,11 @@ def export_to_markdown(
     if len(md) < _SHORT_CONTENT_THRESHOLD:
         return md
 
-    if not output_path:
-        base_dir = os.environ.get(
-            "BRANDMIND_OUTPUT_DIR",
-            os.path.join(os.getcwd(), "brandmind-output"),
-        )
-        output_path = os.path.join(base_dir, "documents", "brand_strategy_export.md")
+    output_path = resolve_output_path(
+        output_path,
+        category="documents",
+        default_filename="brand_strategy_export.md",
+    )
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     Path(output_path).write_text(md, encoding="utf-8")

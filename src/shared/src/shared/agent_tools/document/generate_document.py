@@ -7,11 +7,11 @@ based on doc_format parameter.
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 
 from loguru import logger
 
+from ._output_path import resolve_output_path
 from .docx_builder import BrandStrategyDOCXBuilder
 from .pdf_builder import BrandStrategyPDFBuilder
 from .templates.brand_strategy import BrandStrategyTemplate
@@ -118,16 +118,13 @@ def generate_document(
     colors = brand_colors or ["#1B365D", "#F5F0E8", "#D4A84B"]
     template = BrandStrategyTemplate(brand_name=brand_name, brand_colors=colors)
 
-    if not output_path:
-        base_dir = os.environ.get(
-            "BRANDMIND_OUTPUT_DIR",
-            os.path.join(os.getcwd(), "brandmind-output"),
-        )
-        safe_name = brand_name.lower().replace(" ", "_")
-        ext = "pdf" if doc_format == "pdf" else "docx"
-        output_path = os.path.join(
-            base_dir, "documents", f"{safe_name}_brand_strategy.{ext}"
-        )
+    safe_name = brand_name.lower().replace(" ", "_")
+    ext = "pdf" if doc_format == "pdf" else "docx"
+    output_path = resolve_output_path(
+        output_path,
+        category="documents",
+        default_filename=f"{safe_name}_brand_strategy.{ext}",
+    )
 
     try:
         if doc_format == "docx":
