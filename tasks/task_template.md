@@ -20,7 +20,7 @@
 - [ ] 🛠 [Solution Design](#-solution-design) — Architecture and technical approach
 - [ ] 🔬 [Pre-Implementation Research](#-pre-implementation-research) — Findings logged before coding
 - [ ] 🔄 [Implementation Plan](#-implementation-plan) — Phased execution plan confirmed with user
-- [ ] 📋 [Implementation Detail](#-implementation-detail) — Component-level specs with test cases
+- [ ] 📋 [Implementation Detail](#-implementation-detail) — Full ready-to-apply code for every Requirement (no placeholders), reviewed by user before any file is written
     - [ ] ⏳ [Component 1](#component-1) — Pending
     - [ ] ⏳ [Component 2](#component-2) — Pending
 - [ ] 🧪 [Test Execution Log](#-test-execution-log) — All tests run and results recorded
@@ -60,6 +60,16 @@ When encountering any of the following, **STOP and ask the user** before proceed
 - The scope of a change is larger than anticipated
 
 Format: State the issue clearly, present your options with pros/cons, and ask for a decision.
+
+### Rule 2.5 — Implementation Detail Is a Pre-Apply Review Artifact
+
+The Implementation Detail section is **the source of truth the user reviews BEFORE any file is touched**.
+
+1. Fill every Requirement's `Implementation` block with the **complete code** that will be written — full bodies, full docstrings, full type hints, real logic. No `pass`, no `...`, no "TODO", no prose substitutes.
+2. For `[MODIFY]` changes, include the surrounding context (≥3 lines before/after) so the user can locate the edit site without opening the file.
+3. **STOP after filling Implementation Detail and present it to the user for review.** Do NOT call Edit/Write tools to apply the code until the user confirms.
+4. If review surfaces refinements, update Implementation Detail in place — then re-present and wait for confirmation again.
+5. Only after explicit user approval may you apply the code. The applied code MUST match what was approved; if reality forces a deviation (e.g. an import doesn't exist), pause and update the task file before continuing.
 
 ### Rule 3 — Update Progress As You Go
 
@@ -218,6 +228,27 @@ Key requirements:
 
 > **📝 Coding Standards Reminder**: Apply the standards from Agent Protocol Rule 4 to every file.
 > Test specifications are written BEFORE implementation — follow TDD order within each requirement.
+>
+> **🔒 Full-Code Mandate (MANDATORY — no exceptions)**:
+> The `Implementation` block of every Requirement MUST contain the **complete, ready-to-apply source code** that will land in the file — exactly as it will be written, not a sketch, signature, or summary.
+>
+> This section is a **pre-apply review surface**: the user reads it, refines it, and only then is the code written to disk. If the code here drifts from what eventually lands in the codebase, the task has failed its review purpose.
+>
+> Each `Implementation` entry MUST include:
+> 1. **Target file path** — absolute or repo-relative, and whether it is `[NEW]` or `[MODIFY]`
+> 2. **Full code body** — every function, class, import, type alias, and constant, with full bodies (no `pass`, no `...`, no `# implementation here`)
+> 3. **For modifications** — show the exact `old_string` → `new_string` diff, OR the full replacement block with surrounding context (≥3 lines before/after the change site) so the user can locate it unambiguously
+> 4. **All docstrings, type hints, and inline comments** that will appear in the final file — written in full, not summarized
+> 5. **Cross-file changes** — if Requirement N touches multiple files, list each file as its own sub-block under the same Requirement
+>
+> **Forbidden in this section** (these indicate the section is incomplete and the task is NOT ready for review):
+> - `pass`, `...`, `# TODO`, `# implement later`, or any placeholder body
+> - "Brief description of approach" without accompanying code
+> - Pseudocode, prose, or bullet lists in place of actual Python/TS/etc.
+> - Function signatures without bodies
+> - "See file X for the pattern" — inline the actual code instead
+>
+> **Why this matters**: The user reviews this file BEFORE code is applied. If implementation details are missing, review cannot catch design bugs, naming conflicts, or interface mismatches early — and any post-apply bug fix becomes harder to scope.
 
 ### Component 1: [Component Name]
 
@@ -238,27 +269,42 @@ Key requirements:
   # Expected: [describe expected output or behavior]
   ```
 
-- **Implementation**:
-  - `path/to/file.py`
-  ```python
-  def example_function(param: ParamType) -> ReturnType:
-      """
-      [One-line summary of what this function does.]
+- **Implementation** *(FULL CODE — exactly what will land in the file)*:
+  - **File**: `path/to/file.py` `[NEW]` or `[MODIFY]`
+  - **Change kind**: New file / Add function / Modify function / Replace block / Delete
+  - **For `[MODIFY]` only — locate the change**:
+    ```python
+    # old_string (≥3 lines of context before + after the edit site):
+    <existing code exactly as it appears in the file today>
+    ```
+  - **Full code to write**:
+    ```python
+    # new_string (or full new file body):
+    def example_function(param: ParamType) -> ReturnType:
+        """
+        [One-line summary of what this function does.]
 
-      [Longer description of business purpose, data transformations,
-      and how this fits into the overall workflow.]
+        [Longer description of business purpose, data transformations,
+        and how this fits into the overall workflow.]
 
-      Args:
-          param (ParamType): [Description of the parameter]
+        Args:
+            param (ParamType): [Description of the parameter]
 
-      Returns:
-          result (ReturnType): [Description of the return value]
+        Returns:
+            result (ReturnType): [Description of the return value]
 
-      Raises:
-          ValueError: [When and why this is raised]
-      """
-      pass
-  ```
+        Raises:
+            ValueError: [When and why this is raised]
+        """
+        # Full body — every line that will exist in the final file.
+        # No `pass`, no `...`, no "implement later".
+        normalized = param.strip().lower()
+        if not normalized:
+            raise ValueError("param must not be empty")
+        return ReturnType(value=normalized)
+    ```
+  - **Other files touched by this Requirement** (repeat the block above for each):
+    - `path/to/another_file.py` `[MODIFY]` — [one-line summary, then full code block as above]
 
 - **Acceptance Criteria**:
   - [ ] [Measurable outcome — e.g., "function returns X given input Y"]
@@ -275,9 +321,14 @@ Key requirements:
   # Test case 2: [Error path]
   ```
 
-- **Implementation**:
-  - `path/to/file.py`
-  - [Brief description of approach — focus on business logic, not code syntax]
+- **Implementation** *(FULL CODE — same rules as Requirement 1)*:
+  - **File**: `path/to/file.py` `[NEW]` or `[MODIFY]`
+  - **Change kind**: [as above]
+  - **For `[MODIFY]`** — show `old_string` block with ≥3 lines context before/after.
+  - **Full code to write**:
+    ```python
+    # Full code body here — no placeholders, no prose substitutes.
+    ```
 
 - **Acceptance Criteria**:
   - [ ] [Measurable outcome 1]
@@ -297,9 +348,14 @@ Key requirements:
   # Test case 2: [Error path]
   ```
 
-- **Implementation**:
-  - `path/to/file.py`
-  - [Brief description of approach]
+- **Implementation** *(FULL CODE — same rules as Requirement 1)*:
+  - **File**: `path/to/file.py` `[NEW]` or `[MODIFY]`
+  - **Change kind**: [as above]
+  - **For `[MODIFY]`** — show `old_string` block with ≥3 lines context before/after.
+  - **Full code to write**:
+    ```python
+    # Full code body here — no placeholders, no prose substitutes.
+    ```
 
 - **Acceptance Criteria**:
   - [ ] [Measurable outcome 1]
