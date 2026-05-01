@@ -28,17 +28,76 @@ def generate_document(
     """Generate brand strategy documents in PDF or DOCX format.
 
     Professional formatting with cover page, table of contents,
-    and branded sections. Content should be a JSON string with
-    phase outputs from the brand strategy workflow.
+    and branded sections. Content is a JSON string parsed into a
+    dict; each section in the document is populated by looking up
+    a specific key in that dict. Missing keys render the literal
+    placeholder "(No content available)" — the section is not
+    silently dropped, so empty bodies indicate a key mismatch and
+    must be fixed at the call site.
 
     Args:
-        content: JSON string with phase outputs. Keys like
-            "phase_0_output", "phase_1_output", etc.
-        doc_format: Output format — "pdf" or "docx".
+        content: JSON string parsed into a dict. The dict MUST
+            contain the following top-level keys (any missing key
+            will produce a "(No content available)" placeholder
+            in its section):
+
+              - "cover": str, the cover-page tagline / sub-heading.
+              - "executive_summary": str OR list[str] bullets, the
+                1-page punchline summary.
+              - "phase_0_output": str / dict / list. Phase 0 problem
+                diagnosis. dict keys become subheadings; list[str]
+                becomes bullets; list[dict] becomes a table.
+              - "phase_0_5_output" (optional): same shape, brand
+                equity audit. Can be omitted for new_brand scope.
+              - "phase_1_output": same shape, market intelligence.
+              - "phase_2_output": same shape, brand strategy core
+                (positioning + POPs/PODs + essence).
+              - "phase_3_output": same shape, brand identity
+                (archetype + visual + verbal direction).
+              - "phase_4_output": same shape, communication
+                framework (messaging + Cialdini + AIDA + channels).
+              - "phase_5_output": **must be a dict** (not a string)
+                with TWO required nested keys; passing a single
+                string here leaves both Implementation Roadmap and
+                KPI Framework sections empty.
+                  - "roadmap": str / dict / list — the 3-horizon
+                    implementation plan (e.g. list[dict] like
+                    [{"Horizon": "0-3 mo", "Items": "...", "Investment": "..."}]
+                    renders as a table; list[str] renders as bullets).
+                  - "measurement": str / dict / list — the KPI
+                    framework + tracking plan (list[dict] preferred
+                    so the KPI table renders, e.g.
+                    [{"KPI": "...", "Target": "...", "Cadence": "..."}]).
+              - "appendices" (optional): str / dict / list, raw
+                source material the document should append.
+
+            Each value can be:
+              - str → rendered as one paragraph
+              - dict → rendered as nested headings + body
+              - list[str] → rendered as bullets
+              - list[dict] → rendered as a table
+
+            Minimal example (all required keys, brief content):
+              {
+                "cover": "Modern Saigonese Gastronomy",
+                "executive_summary": "Reposition Signature as ...",
+                "phase_0_output": {"Problem": "Brand dilution", "Scope": "Repositioning"},
+                "phase_1_output": {"SWOT": {...}, "White space": "..."},
+                "phase_2_output": {"Positioning statement": "...", "POD": [...]},
+                "phase_3_output": {"Archetype": "Caregiver", "Visual": "..."},
+                "phase_4_output": {"Messaging": [...], "Channels": [...]},
+                "phase_5_output": {
+                  "roadmap": [{"Horizon": "0-3 mo", "Items": "..."}, ...],
+                  "measurement": [{"KPI": "...", "Target": "...", "Cadence": "..."}, ...]
+                }
+              }
+
+        doc_format: Output format — "pdf" (default) or "docx".
         brand_name: Brand name for cover page and headers.
         brand_colors: List of 3 hex colors [primary, secondary, accent].
             Default: ["#1B365D", "#F5F0E8", "#D4A84B"].
-        images: JSON string mapping section_id to image file path.
+        images: JSON string mapping section_id to image file path
+            (e.g. {"brand_identity": "/path/to/mood_board.png"}).
         output_path: Custom output path. Default uses BRANDMIND_OUTPUT_DIR.
 
     Returns:

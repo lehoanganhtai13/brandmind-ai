@@ -26,13 +26,81 @@ def generate_presentation(
     """Generate brand strategy presentations in PPTX format.
 
     Executive pitch decks with branded slides, speaker notes,
-    and support for images, tables, and two-column layouts.
+    and support for images, tables, and two-column layouts. Content
+    is a JSON string parsed into a dict; each slide in the deck is
+    populated by looking up a specific key in that dict. Missing
+    keys silently produce an empty slide body (`required=False`
+    slides are skipped entirely) — so empty slides indicate a key
+    mismatch and must be fixed at the call site.
 
     Args:
-        content: JSON string with phase outputs.
+        content: JSON string parsed into a dict. The 12-slide
+            default deck pulls content from these keys (any missing
+            key leaves that slide empty):
+
+              - "cover": str, cover-slide tagline.
+              - "executive_summary": str / list[str], used for the
+                Executive Summary slide bullets.
+              - "phase_0_output": str / dict / list, Business Context
+                slide.
+              - "phase_1_output": str / dict / list, Market Intelligence
+                slide. Also REQUIRED to contain a nested key
+                "target_segments" (list[dict] preferred) for the
+                Target Audience two-column slide:
+                  phase_1_output.target_segments → list of segment
+                  dicts (e.g. [{"Segment": "Q1 executives", ...}]).
+              - "phase_2_output": str / dict / list, Brand Positioning slide.
+              - "phase_3_output": str / dict / list, Brand Identity
+                two-column slide.
+              - "phase_4_output": str / dict / list, Communication
+                Framework slide.
+              - "phase_5_output": **must be a dict** with two
+                nested keys; a string value here leaves both
+                Roadmap and KPIs slides empty.
+                  - "roadmap": list[dict] preferred (renders as a
+                    table on the Implementation Roadmap slide;
+                    e.g. [{"Horizon": "0-3 mo", "Items": "...", "Investment": "..."}]).
+                  - "measurement": list[dict] preferred (renders
+                    as a table on the KPIs & Measurement slide;
+                    e.g. [{"KPI": "...", "Target": "...", "Cadence": "..."}]).
+                    Include a row per metric even when a column is
+                    unknown — use "no data — measure pre-launch"
+                    rather than dropping the row.
+              - "images" (optional): dict with keys "mood_board" and
+                "brand_key" mapping to image file paths. Both slides
+                are `required=False`; if the key is absent the
+                corresponding slide is skipped.
+
+            Each value (other than `images`) can be:
+              - str → split into bullet lines on newline
+              - list[str] → bullets directly
+              - list[dict] → rendered as a table on table-layout
+                slides (Roadmap, KPIs)
+              - dict → rendered as "Label: value" bullets
+
+            Minimal example (covers every required slide):
+              {
+                "cover": "Modern Saigonese Gastronomy",
+                "executive_summary": ["Reposition Signature ...", "Win Q1 executives"],
+                "phase_0_output": {"Problem": "Brand dilution", "Scope": "Repositioning"},
+                "phase_1_output": {
+                  "Top finding": "...",
+                  "target_segments": [{"Segment": "Q1 executives", "JTBD": "..."}, ...]
+                },
+                "phase_2_output": {"Positioning statement": "...", "POD": [...]},
+                "phase_3_output": {"Archetype": "Caregiver", "Visual": "..."},
+                "phase_4_output": {"Messaging": [...], "Channels": [...]},
+                "phase_5_output": {
+                  "roadmap": [{"Horizon": "0-3 mo", "Items": "...", "Investment": "..."}, ...],
+                  "measurement": [{"KPI": "...", "Target": "...", "Cadence": "..."}, ...]
+                }
+              }
+
         brand_name: Brand name for title slide.
         brand_colors: List of 3 hex colors [primary, secondary, accent].
-        images: Dict mapping slide_id to image file path.
+        images: Optional dict mapping slide_id (e.g. "brand_key",
+            "mood_board") to image file path; embedded into the
+            corresponding image-layout slides.
         output_path: Custom output path. Default uses BRANDMIND_OUTPUT_DIR.
 
     Returns:

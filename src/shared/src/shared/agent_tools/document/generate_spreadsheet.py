@@ -26,15 +26,97 @@ def generate_spreadsheet(
     """Generate brand strategy spreadsheets in XLSX format.
 
     Formula-driven with auto-calculations, professional formatting,
-    and frozen header rows.
+    and frozen header rows. The output structure is governed by the
+    chosen `template`; each template defines specific sheet names
+    and column headers, and the `content` JSON must use those exact
+    sheet names as its top-level keys and those exact column names
+    as keys inside each row dict — otherwise the cells stay empty.
 
-    Available templates: competitor_analysis, brand_audit,
-    content_calendar, kpi_dashboard, budget_plan.
+    Pick the template that matches the task — the default
+    `competitor_analysis` is wrong for KPI tracking, content
+    planning, or budgets, and using it for those produces an empty
+    skeleton.
 
     Args:
-        content: JSON string mapping sheet names to list of row dicts.
-            Example: {"Overview": [{"Competitor": "A", "Rating": 4.5}]}
-        template: Template key from SPREADSHEET_TEMPLATES.
+        content: JSON string mapping sheet names to list of row
+            dicts. Sheet names and row column keys must match the
+            chosen `template` exactly.
+
+            Per-template required sheets and columns:
+
+              template="kpi_dashboard"
+                Use for: KPI tracking, performance scorecards,
+                  measurement plans.
+                Sheets:
+                  - "Dashboard": columns
+                      KPI, Category, Target, Current,
+                      "% Achievement" (auto-formula),
+                      "RAG Status" (auto-formula).
+                  - "Monthly Tracking": columns
+                      KPI, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug,
+                      Sep, Oct, Nov, Dec, "YTD Average" (auto).
+                Example:
+                  {
+                    "Dashboard": [
+                      {"KPI": "VIP Room Occupancy", "Category": "Operations",
+                       "Target": 70, "Current": 30},
+                      {"KPI": "Google Maps Top-3", "Category": "SEO",
+                       "Target": 1, "Current": 0}
+                    ],
+                    "Monthly Tracking": [
+                      {"KPI": "VIP Room Occupancy", "Jan": 30, "Feb": 35, ...}
+                    ]
+                  }
+
+              template="competitor_analysis" (default)
+                Use for: competitive landscape matrix.
+                Sheets:
+                  - "Overview": Competitor, Category, Rating,
+                    Review Count, Price Level, Strengths, Weaknesses,
+                    "Gap Analysis" (auto-formula).
+                  - "Detailed Comparison": Dimension, Our Brand,
+                    Competitor 1, Competitor 2, Competitor 3, Notes.
+
+              template="brand_audit"
+                Use for: brand equity scorecard.
+                Sheet "Scorecard": Dimension, Weight, Current Score,
+                  Target Score, "Gap" (auto), "Priority" (auto).
+
+              template="content_calendar"
+                Use for: monthly content + channel mix planning.
+                Sheets:
+                  - "Monthly Plan": Date, Channel, Content Type,
+                    Topic, Status, Notes.
+                  - "Channel Mix": Channel, Posts/Month,
+                    Avg Engagement, Frequency, Budget,
+                    "Cost per Engagement" (auto).
+
+              template="budget_plan"
+                Use for: marketing budget + ROI projections.
+                Sheets:
+                  - "Budget Overview": Category, Q1, Q2, Q3, Q4,
+                    "Annual Total" (auto), "% of Total" (auto).
+                  - "ROI Projections": Initiative, Investment,
+                    Expected Revenue, "Projected ROI" (auto).
+
+            Auto-formula columns are filled by the builder — leave
+            them out of the row dicts; supplying a value is
+            harmless but ignored.
+
+            **Emit a row for every metric the brief mentions, even
+            when fields are unknown.** When a column value is not
+            yet measured (e.g. "Current" before launch), use a
+            placeholder string like "no data — measure pre-launch"
+            or 0 rather than omitting the row. A sheet that ends
+            up with only headers and zero data rows is read by the
+            judge as a failed deliverable, so partial data is
+            always better than skipping the row entirely.
+
+        template: Template key. One of "competitor_analysis"
+            (default), "brand_audit", "content_calendar",
+            "kpi_dashboard", "budget_plan". Choose by task —
+            "kpi_dashboard" for KPI tracking, "budget_plan" for
+            budget+ROI, etc.
         brand_name: Brand name for title rows.
         brand_colors: List of hex colors (reserved for future use).
         output_path: Custom output path. Default uses BRANDMIND_OUTPUT_DIR.
