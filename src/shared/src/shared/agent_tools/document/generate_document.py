@@ -11,7 +11,7 @@ from typing import Any
 
 from loguru import logger
 
-from ._output_path import resolve_output_path
+from ._output_path import append_manifest, resolve_output_path
 from .docx_builder import BrandStrategyDOCXBuilder
 from .pdf_builder import BrandStrategyPDFBuilder
 from .templates.brand_strategy import BrandStrategyTemplate
@@ -25,15 +25,19 @@ def generate_document(
     images: str | None = None,
     output_path: str | None = None,
 ) -> str:
-    """Generate brand strategy documents in PDF or DOCX format.
+    """Build a long-form branded PDF or DOCX deliverable from phase content.
 
-    Professional formatting with cover page, table of contents,
-    and branded sections. Content is a JSON string parsed into a
-    dict; each section in the document is populated by looking up
-    a specific key in that dict. Missing keys render the literal
-    placeholder "(No content available)" — the section is not
-    silently dropped, so empty bodies indicate a key mismatch and
-    must be fixed at the call site.
+    Renders a professionally formatted document with cover page, table of
+    contents, and per-section narrative — driven by ``content`` (a JSON
+    string parsed into a dict whose keys map to template sections; missing
+    keys yield a literal "(No content available)" placeholder so empty
+    bodies surface a key mismatch instead of being silently dropped).
+
+    Use when the user needs a strategy document, brand guidelines, or any
+    formal long-form stakeholder report. Do NOT use when the deliverable
+    is a slide deck (use ``generate_presentation``), a tabular dashboard
+    (use ``generate_spreadsheet``), or a quick lightweight share (use
+    ``export_to_markdown``).
 
     Args:
         content: JSON string parsed into a dict. The dict MUST
@@ -81,14 +85,35 @@ def generate_document(
               {
                 "cover": "Modern Saigonese Gastronomy",
                 "executive_summary": "Reposition Signature as ...",
-                "phase_0_output": {"Problem": "Brand dilution", "Scope": "Repositioning"},
-                "phase_1_output": {"SWOT": {...}, "White space": "..."},
-                "phase_2_output": {"Positioning statement": "...", "POD": [...]},
-                "phase_3_output": {"Archetype": "Caregiver", "Visual": "..."},
-                "phase_4_output": {"Messaging": [...], "Channels": [...]},
+                "phase_0_output": {
+                  "Problem": "Brand dilution",
+                  "Scope": "Repositioning"
+                },
+                "phase_1_output": {
+                  "SWOT": {...},
+                  "White space": "..."
+                },
+                "phase_2_output": {
+                  "Positioning statement": "...",
+                  "POD": [...]
+                },
+                "phase_3_output": {
+                  "Archetype": "Caregiver",
+                  "Visual": "..."
+                },
+                "phase_4_output": {
+                  "Messaging": [...],
+                  "Channels": [...]
+                },
                 "phase_5_output": {
-                  "roadmap": [{"Horizon": "0-3 mo", "Items": "..."}, ...],
-                  "measurement": [{"KPI": "...", "Target": "...", "Cadence": "..."}, ...]
+                  "roadmap": [
+                    {"Horizon": "0-3 mo", "Items": "..."},
+                    ...
+                  ],
+                  "measurement": [
+                    {"KPI": "...", "Target": "...", "Cadence": "..."},
+                    ...
+                  ]
                 }
               }
 
@@ -98,7 +123,14 @@ def generate_document(
             Default: ["#1B365D", "#F5F0E8", "#D4A84B"].
         images: JSON string mapping section_id to image file path
             (e.g. {"brand_identity": "/path/to/mood_board.png"}).
-        output_path: Custom output path. Default uses BRANDMIND_OUTPUT_DIR.
+        output_path: Optional override. **Leave None in normal use** —
+            the tool anchors output under
+            ``$BRANDMIND_OUTPUT_DIR/documents/<brand-slug>/<timestamp>_brand_strategy.<ext>``
+            automatically so concurrent or repeated runs never overwrite
+            each other. Provide a value only when you specifically need
+            to control the filename; bare filenames or paths outside
+            the configured base are redirected back into the
+            per-brand subdir for safety.
 
     Returns:
         Message with path to generated document file.
@@ -118,12 +150,12 @@ def generate_document(
     colors = brand_colors or ["#1B365D", "#F5F0E8", "#D4A84B"]
     template = BrandStrategyTemplate(brand_name=brand_name, brand_colors=colors)
 
-    safe_name = brand_name.lower().replace(" ", "_")
     ext = "pdf" if doc_format == "pdf" else "docx"
     output_path = resolve_output_path(
         output_path,
         category="documents",
-        default_filename=f"{safe_name}_brand_strategy.{ext}",
+        brand_name=brand_name,
+        default_filename=f"brand_strategy.{ext}",
     )
 
     try:
@@ -136,6 +168,12 @@ def generate_document(
             content=content_dict,
             output_path=output_path,
             images=images_dict,
+        )
+        append_manifest(
+            brand_name=brand_name,
+            category="documents",
+            tool="generate_document",
+            path=result_path,
         )
         return (
             f"Document FILE saved to disk.\n"

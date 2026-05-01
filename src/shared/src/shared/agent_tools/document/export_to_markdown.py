@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-
-from ._output_path import resolve_output_path
 from typing import Any
 
 from loguru import logger
+
+from ._output_path import append_manifest, resolve_output_path
 
 # Phase key → readable title mapping
 _PHASE_TITLES: dict[str, str] = {
@@ -35,18 +35,34 @@ _SHORT_CONTENT_THRESHOLD = 2000
 def export_to_markdown(
     content: str,
     sections: list[str] | None = None,
+    brand_name: str = "Brand",
     output_path: str | None = None,
 ) -> str:
-    """Export brand strategy content to well-formatted Markdown.
+    """Render brand strategy content as well-formatted Markdown.
 
-    Clean text export for documentation, README files, or wikis.
-    Short exports are returned directly; longer ones are written
-    to a file.
+    Returns the markdown inline when content is short (≤2000 chars), and
+    writes a ``.md`` file under ``/output/documents/`` when longer so the
+    full text stays addressable via ``read_file`` instead of bloating
+    chat. Optional ``sections`` filter narrows the export to specific
+    phase keys.
+
+    Use when the user wants a lightweight copy-pasteable text version,
+    a wiki/Notion-friendly export, or a quick share. Do NOT use when the
+    user expects a polished PDF/DOCX deliverable (use
+    ``generate_document``) or a slide deck (use ``generate_presentation``).
 
     Args:
         content: JSON string with phase outputs.
         sections: Specific section keys to export, or None for all.
-        output_path: Custom output path (for file output).
+        brand_name: Brand identifier used to derive the per-brand
+            output subdirectory (only relevant when the markdown is
+            long enough to be written to disk).
+        output_path: Optional override. **Leave None in normal use**.
+            Long content is written under
+            ``$BRANDMIND_OUTPUT_DIR/documents/<brand-slug>/<timestamp>_brand_strategy_export.md``
+            automatically. Bare filenames or paths outside the
+            configured base are redirected back into the per-brand
+            subdir for safety.
 
     Returns:
         Markdown content directly (if short) or path to exported file.
@@ -69,12 +85,19 @@ def export_to_markdown(
     output_path = resolve_output_path(
         output_path,
         category="documents",
+        brand_name=brand_name,
         default_filename="brand_strategy_export.md",
     )
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     Path(output_path).write_text(md, encoding="utf-8")
     logger.info(f"Markdown exported: {output_path}")
+    append_manifest(
+        brand_name=brand_name,
+        category="documents",
+        tool="export_to_markdown",
+        path=output_path,
+    )
     return f"Markdown exported to: {output_path}\n({len(md)} characters)"
 
 

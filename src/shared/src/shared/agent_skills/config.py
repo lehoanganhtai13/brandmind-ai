@@ -140,19 +140,21 @@ def create_brand_strategy_skills_middleware(
 ) -> tuple[SkillsMiddleware, FilesystemMiddleware]:
     """Create SkillsMiddleware + FilesystemMiddleware for brand strategy agent.
 
-    When workspace_dir and user_dir are provided, creates a CompositeBackend
-    that routes paths to three separate backends:
-    - Default (no prefix): skills directory (read-only)
-    - "/workspace/": project workspace notes (read-write)
-    - "/user/": global user profile (read-write)
+    When workspace_dir and user_dir are provided, creates a
+    CompositeBackend that routes paths to separate backends:
 
-    When not provided, falls back to skills-only backend (backward compatible).
+    - Default (no prefix): skills directory (read-only)
+    - ``/workspace/``: project workspace notes (read-write)
+    - ``/user/``: global user profile (read-write)
+
+    When workspace_dir + user_dir are not provided, falls back to a
+    skills-only backend (backward compatible).
 
     Args:
         workspace_dir: Path to project workspace directory on disk.
-            When provided, enables read-write access via "/workspace/" prefix.
+            When provided, enables read-write access via ``/workspace/``.
         user_dir: Path to global user profile directory on disk.
-            When provided, enables read-write access via "/user/" prefix.
+            When provided, enables read-write access via ``/user/``.
 
     Returns:
         Tuple of (SkillsMiddleware, FilesystemMiddleware).

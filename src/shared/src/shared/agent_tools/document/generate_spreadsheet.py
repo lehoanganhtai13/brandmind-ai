@@ -11,7 +11,7 @@ from typing import Any
 
 from loguru import logger
 
-from ._output_path import resolve_output_path
+from ._output_path import append_manifest, resolve_output_path
 from .spreadsheet_templates import SPREADSHEET_TEMPLATES
 from .xlsx_builder import BrandStrategyXLSXBuilder
 
@@ -23,19 +23,19 @@ def generate_spreadsheet(
     brand_colors: list[str] | None = None,
     output_path: str | None = None,
 ) -> str:
-    """Generate brand strategy spreadsheets in XLSX format.
+    """Build a formula-driven branded XLSX dashboard from one of five templates.
 
-    Formula-driven with auto-calculations, professional formatting,
-    and frozen header rows. The output structure is governed by the
-    chosen `template`; each template defines specific sheet names
-    and column headers, and the `content` JSON must use those exact
-    sheet names as its top-level keys and those exact column names
-    as keys inside each row dict — otherwise the cells stay empty.
+    Renders a frozen-header XLSX with auto-calculated columns. Templates:
+    ``competitor_analysis``, ``brand_audit``, ``content_calendar``,
+    ``kpi_dashboard``, ``budget_plan``. Each template defines specific
+    sheet names + column headers; ``content`` (JSON parsed to dict) must
+    use those exact keys, otherwise the cells stay empty — pick the
+    template matching the task or the artifact comes back as a skeleton.
 
-    Pick the template that matches the task — the default
-    `competitor_analysis` is wrong for KPI tracking, content
-    planning, or budgets, and using it for those produces an empty
-    skeleton.
+    Use when the deliverable is tabular metric tracking, comparison
+    matrices, content calendars, or budget projections. Do NOT use when
+    the user needs prose narrative (route to ``generate_document``) or a
+    visual presentation (route to ``generate_presentation``).
 
     Args:
         content: JSON string mapping sheet names to list of row
@@ -119,7 +119,14 @@ def generate_spreadsheet(
             budget+ROI, etc.
         brand_name: Brand name for title rows.
         brand_colors: List of hex colors (reserved for future use).
-        output_path: Custom output path. Default uses BRANDMIND_OUTPUT_DIR.
+        output_path: Optional override. **Leave None in normal use** —
+            the tool anchors output under
+            ``$BRANDMIND_OUTPUT_DIR/spreadsheets/<brand-slug>/<timestamp>_<template>.xlsx``
+            automatically so concurrent or repeated runs never
+            overwrite each other. Provide a value only when you
+            specifically need to control the filename; bare filenames
+            or paths outside the configured base are redirected back
+            into the per-brand subdir for safety.
 
     Returns:
         Message with path to generated XLSX file.
@@ -135,11 +142,11 @@ def generate_spreadsheet(
     except (json.JSONDecodeError, TypeError) as e:
         return f"Invalid content JSON: {e}"
 
-    safe_name = brand_name.lower().replace(" ", "_")
     output_path = resolve_output_path(
         output_path,
         category="spreadsheets",
-        default_filename=f"{safe_name}_{template}.xlsx",
+        brand_name=brand_name,
+        default_filename=f"{template}.xlsx",
     )
 
     try:
@@ -150,6 +157,12 @@ def generate_spreadsheet(
             data=data,
         )
         result_path = builder.save(output_path)
+        append_manifest(
+            brand_name=brand_name,
+            category="spreadsheets",
+            tool="generate_spreadsheet",
+            path=result_path,
+        )
         return (
             f"Spreadsheet FILE saved to disk.\n"
             f"Template: {template}\n"

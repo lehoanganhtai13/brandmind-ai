@@ -126,7 +126,7 @@ PHASE_DELIVERABLE_SPECS: dict[str, str] = {
         "distinctiveness). Each metric MUST be rendered as one self-contained "
         "line in the form:\n"
         "  '<Metric name>: current = <value or \"no data — measure before "
-        "launch\">, target = <value> by <date>, review = <weekly | monthly | "
+        'launch">, target = <value> by <date>, review = <weekly | monthly | '
         "quarterly>'.\n"
         "All four anchors (metric / current / target+date / cadence) must "
         "appear together for that metric to count. Percentage-only targets "

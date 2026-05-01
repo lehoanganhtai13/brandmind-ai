@@ -112,9 +112,7 @@ class LogModelMessageMiddleware(AgentMiddleware):
             debug_tool_calls = bool(SETTINGS.BRANDMIND_DEBUG_TOOLS)
         self._debug_tool_calls = debug_tool_calls
 
-    def _emit_debug_tool_call(
-        self, tool_name: str, tool_args: dict
-    ) -> None:
+    def _emit_debug_tool_call(self, tool_name: str, tool_args: dict) -> None:
         """Emit a tool-call record to loguru.
 
         Writes a header line identifying the tool, followed by one
@@ -139,9 +137,7 @@ class LogModelMessageMiddleware(AgentMiddleware):
                 val_str = val_str[: self._DEBUG_TRUNCATE_ARG_VALUE] + "...<truncated>"
             logger.info(f"     └─ {key}={val_str}")
 
-    def _emit_debug_tool_result(
-        self, tool_name: str, content: str | None
-    ) -> None:
+    def _emit_debug_tool_result(self, tool_name: str, content: str | None) -> None:
         """Emit a tool-result record to loguru.
 
         Writes a single log entry with the tool name and the result

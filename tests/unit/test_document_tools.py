@@ -12,6 +12,12 @@ from typing import Any
 
 import pytest
 
+from shared.agent_tools.document._output_path import (
+    _manifest_path,
+    _slugify_brand,
+    append_manifest,
+    resolve_output_path,
+)
 from shared.agent_tools.document.export_to_markdown import (
     _PHASE_TITLES,
     _render_value,
@@ -19,6 +25,7 @@ from shared.agent_tools.document.export_to_markdown import (
     _format_full_document,
     export_to_markdown,
 )
+from shared.agent_tools.document.list_artifacts import list_artifacts
 from shared.agent_tools.document.spreadsheet_templates import SPREADSHEET_TEMPLATES
 
 
@@ -315,7 +322,18 @@ class TestExportToMarkdown:
         assert "Refs" in result
         assert "Summary" not in result
 
-    def test_long_content_writes_to_file(self, tmp_path: Path):
+    def test_long_content_writes_to_file(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Long content is written to disk under the configured output dir.
+
+        The sandbox in :mod:`_output_path` anchors writes under
+        ``$BRANDMIND_OUTPUT_DIR``. Pinning the env var to ``tmp_path``
+        makes ``tmp_path`` the configured base, so a path supplied
+        under it is honoured by the sandbox as-is. The result message
+        reports the absolute filesystem path the user can open.
+        """
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
         # Build content large enough to exceed _SHORT_CONTENT_THRESHOLD (2000)
         large_text = "A" * 2500
         content = json.dumps({"cover": large_text})
@@ -330,8 +348,15 @@ class TestExportToMarkdown:
         assert "# Brand Strategy" in file_content
         assert large_text in file_content
 
-    def test_long_content_creates_parent_dirs(self, tmp_path: Path):
+    def test_long_content_creates_parent_dirs(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Sandbox creates the category subdirectory when it does not exist."""
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
         content = json.dumps({"cover": "X" * 2500})
+        # Provide a nested path under the configured base; the sandbox
+        # only redirects when the path escapes the base, so a nested
+        # sub-path under tmp_path is honoured.
         output_file = tmp_path / "nested" / "deep" / "export.md"
 
         result = export_to_markdown(content, output_path=str(output_file))
@@ -339,13 +364,43 @@ class TestExportToMarkdown:
         assert output_file.exists()
         assert "Markdown exported to:" in result
 
-    def test_long_content_reports_char_count(self, tmp_path: Path):
+    def test_long_content_reports_char_count(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Result message reports the character count regardless of write location."""
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
         content = json.dumps({"cover": "B" * 2500})
         output_file = tmp_path / "export.md"
 
         result = export_to_markdown(content, output_path=str(output_file))
 
         assert "characters" in result
+
+    def test_long_content_default_path_uses_brand_subdir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Without output_path, file lands in <base>/documents/<brand-slug>/<timestamp>_*.md."""
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        content = json.dumps({"cover": "C" * 2500})
+
+        result = export_to_markdown(
+            content,
+            brand_name="Chuyện Ba Bữa Signature",
+        )
+
+        documents_dir = tmp_path / "documents"
+        # Per-brand subdir uses slugified form (Vietnamese diacritics → hyphens)
+        assert documents_dir.exists()
+        brand_subdirs = list(documents_dir.iterdir())
+        assert len(brand_subdirs) == 1
+        # Slugifier collapses diacritics + spaces into hyphens
+        assert "-" in brand_subdirs[0].name
+        # Filename has timestamp prefix
+        produced_files = list(brand_subdirs[0].iterdir())
+        assert len(produced_files) == 1
+        assert produced_files[0].name.endswith("brand_strategy_export.md")
+        # Result message contains the absolute path the user can open
+        assert str(produced_files[0]) in result
 
     def test_empty_sections_filter_returns_full_doc(self):
         content = json.dumps({"cover": "Brand X", "appendices": "Refs"})
@@ -458,3 +513,292 @@ class TestSpreadsheetTemplates:
         assert "Green" in dashboard["formulas"]["RAG Status"]
         assert "Amber" in dashboard["formulas"]["RAG Status"]
         assert "Red" in dashboard["formulas"]["RAG Status"]
+
+
+# ===== resolve_output_path =====
+
+
+class TestSlugifyBrand:
+    """Brand slug normalisation for per-brand subdirectory naming."""
+
+    def test_lowercases_and_replaces_spaces(self) -> None:
+        assert _slugify_brand("Brand Name") == "brand-name"
+
+    def test_collapses_runs_of_special_chars(self) -> None:
+        assert _slugify_brand("Brand   ---   Name!!!") == "brand-name"
+
+    def test_strips_leading_trailing_hyphens(self) -> None:
+        assert _slugify_brand("---Brand---") == "brand"
+
+    def test_diacritics_collapse_to_hyphen(self) -> None:
+        # Vietnamese diacritics are not ASCII alphanumerics — collapse
+        # to hyphens to keep the directory name filesystem-safe.
+        result = _slugify_brand("Chuyện Ba Bữa")
+        assert result.startswith("chuy")
+        assert "-" in result
+
+    def test_empty_falls_back_to_brand(self) -> None:
+        assert _slugify_brand("") == "brand"
+        assert _slugify_brand("   ") == "brand"
+
+    def test_pure_alphanumeric_passes_through(self) -> None:
+        assert _slugify_brand("Acme123") == "acme123"
+
+
+class TestResolveOutputPath:
+    """Sandbox places artifacts under <base>/<category>/<brand-slug>/<timestamp>_*."""
+
+    def test_none_provided_creates_per_brand_timestamp_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        path = resolve_output_path(
+            None,
+            category="documents",
+            brand_name="Acme Corp",
+            default_filename="brand_strategy.docx",
+        )
+        # <tmp>/documents/acme-corp/<timestamp>_brand_strategy.docx
+        assert (tmp_path / "documents" / "acme-corp").exists()
+        parts = Path(path).parts
+        assert "documents" in parts
+        assert "acme-corp" in parts
+        assert Path(path).name.endswith("brand_strategy.docx")
+        # Timestamp prefix YYYYMMDD_HHMMSS
+        prefix = Path(path).name.split("_brand_strategy")[0]
+        assert len(prefix) == 15  # 8 date digits + "_" + 6 time digits
+
+    def test_path_under_base_is_honoured_as_is(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        provided = tmp_path / "custom" / "explicit.docx"
+        path = resolve_output_path(
+            str(provided),
+            category="documents",
+            brand_name="Acme",
+            default_filename="brand_strategy.docx",
+        )
+        assert Path(path) == provided
+        # Parent directory was created
+        assert provided.parent.exists()
+
+    def test_path_outside_base_redirected_with_timestamp(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        path = resolve_output_path(
+            "/etc/evil.docx",
+            category="documents",
+            brand_name="Acme",
+            default_filename="brand_strategy.docx",
+        )
+        # Redirected under per-brand subdir; basename preserved with
+        # timestamp prefix.
+        assert str(tmp_path) in path
+        assert "documents" in Path(path).parts
+        assert "acme" in Path(path).parts
+        assert Path(path).name.endswith("evil.docx")
+
+    def test_relative_path_redirected(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        path = resolve_output_path(
+            "stray.docx",
+            category="documents",
+            brand_name="Acme",
+            default_filename="brand_strategy.docx",
+        )
+        # `os.path.abspath("stray.docx")` resolves under cwd, which is
+        # outside tmp_path, so the sandbox redirects.
+        assert str(tmp_path) in path
+        assert Path(path).name.endswith("stray.docx")
+
+    def test_different_brands_get_different_subdirs(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        p1 = resolve_output_path(
+            None, category="documents", brand_name="Brand A",
+            default_filename="x.docx",
+        )
+        p2 = resolve_output_path(
+            None, category="documents", brand_name="Brand B",
+            default_filename="x.docx",
+        )
+        assert Path(p1).parent != Path(p2).parent
+        assert "brand-a" in Path(p1).parts
+        assert "brand-b" in Path(p2).parts
+
+
+# ===== append_manifest =====
+
+
+class TestAppendManifest:
+    """JSONL manifest writer used by the artifact tools."""
+
+    def test_appends_single_jsonl_line(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        artifact_path = tmp_path / "documents" / "acme" / "20260501_x.docx"
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        artifact_path.write_bytes(b"hello world")
+
+        append_manifest(
+            brand_name="Acme",
+            category="documents",
+            tool="generate_document",
+            path=str(artifact_path),
+        )
+
+        manifest = Path(_manifest_path())
+        assert manifest.exists()
+        lines = manifest.read_text(encoding="utf-8").splitlines()
+        assert len(lines) == 1
+        record = json.loads(lines[0])
+        assert record["brand_name"] == "Acme"
+        assert record["category"] == "documents"
+        assert record["tool"] == "generate_document"
+        assert record["filename"] == "20260501_x.docx"
+        assert record["path"] == str(artifact_path)
+        assert record["size_bytes"] == 11
+        # No active session in unit tests → "unbound" sentinel
+        assert record["session_id"] == "unbound"
+        assert "generated_at" in record
+
+    def test_multiple_appends_preserve_order(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        for i in range(3):
+            f = tmp_path / f"f{i}.docx"
+            f.write_text("x")
+            append_manifest(
+                brand_name="Acme",
+                category="documents",
+                tool="generate_document",
+                path=str(f),
+            )
+        lines = Path(_manifest_path()).read_text(encoding="utf-8").splitlines()
+        assert len(lines) == 3
+        for i, line in enumerate(lines):
+            record = json.loads(line)
+            assert record["filename"] == f"f{i}.docx"
+
+    def test_missing_file_records_zero_size(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        append_manifest(
+            brand_name="Acme",
+            category="documents",
+            tool="generate_document",
+            path=str(tmp_path / "does_not_exist.docx"),
+        )
+        record = json.loads(
+            Path(_manifest_path()).read_text(encoding="utf-8").splitlines()[0]
+        )
+        assert record["size_bytes"] == 0
+
+
+# ===== list_artifacts =====
+
+
+class TestListArtifacts:
+    """Manifest-backed query tool used by the orchestrator."""
+
+    def _seed_manifest(self, base: Path, records: list[dict[str, Any]]) -> None:
+        """Write a minimal manifest by hand so tests don't depend on
+        append_manifest under specific session contexts."""
+        base.mkdir(parents=True, exist_ok=True)
+        manifest = base / ".manifest.jsonl"
+        with manifest.open("a", encoding="utf-8") as f:
+            for record in records:
+                f.write(json.dumps(record) + "\n")
+
+    def test_no_manifest_returns_empty(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        result = list_artifacts(scope="all")
+        assert "No artifacts found" in result
+
+    def test_all_scope_returns_every_record(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        self._seed_manifest(tmp_path, [
+            {
+                "session_id": "s1", "brand_name": "Brand A",
+                "category": "documents", "tool": "generate_document",
+                "filename": "a.docx", "path": "/x/a.docx",
+                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
+            },
+            {
+                "session_id": "s2", "brand_name": "Brand B",
+                "category": "spreadsheets", "tool": "generate_spreadsheet",
+                "filename": "b.xlsx", "path": "/x/b.xlsx",
+                "size_bytes": 200, "generated_at": "2026-05-01T11:00:00+07:00",
+            },
+        ])
+        result = list_artifacts(scope="all")
+        assert "a.docx" in result
+        assert "b.xlsx" in result
+        assert "Found 2 artifact(s)" in result
+
+    def test_category_filter(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        self._seed_manifest(tmp_path, [
+            {
+                "session_id": "s1", "brand_name": "A",
+                "category": "documents", "tool": "generate_document",
+                "filename": "a.docx", "path": "/x/a.docx",
+                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
+            },
+            {
+                "session_id": "s1", "brand_name": "A",
+                "category": "spreadsheets", "tool": "generate_spreadsheet",
+                "filename": "b.xlsx", "path": "/x/b.xlsx",
+                "size_bytes": 200, "generated_at": "2026-05-01T11:00:00+07:00",
+            },
+        ])
+        result = list_artifacts(scope="all", category="documents")
+        assert "a.docx" in result
+        assert "b.xlsx" not in result
+
+    def test_current_session_without_session_returns_helpful_message(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        # Seed a manifest so the tool reaches the scope check rather
+        # than the empty-manifest early return.
+        self._seed_manifest(tmp_path, [
+            {
+                "session_id": "s1", "brand_name": "A",
+                "category": "documents", "tool": "generate_document",
+                "filename": "a.docx", "path": "/x/a.docx",
+                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
+            },
+        ])
+        result = list_artifacts(scope="current_session")
+        # No active session in unit tests → tool tells caller to switch
+        # scope rather than silently returning empty.
+        assert "No active brand strategy session" in result
+
+    def test_invalid_scope_returns_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        result = list_artifacts(scope="bogus")  # type: ignore[arg-type]
+        assert "Invalid scope" in result
+
+    def test_invalid_category_returns_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        result = list_artifacts(scope="all", category="bogus")  # type: ignore[arg-type]
+        assert "Invalid category" in result

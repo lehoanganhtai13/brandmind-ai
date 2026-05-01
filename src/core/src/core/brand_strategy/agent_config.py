@@ -77,6 +77,7 @@ def create_brand_strategy_agent(
         generate_document,
         generate_presentation,
         generate_spreadsheet,
+        list_artifacts,
     )
     from shared.agent_tools.image import (
         edit_image,
@@ -268,6 +269,10 @@ def create_brand_strategy_agent(
         edit_image,
         # Light export (inline markdown output)
         export_to_markdown,
+        # Artifact verification — read-only manifest query the
+        # orchestrator uses at Phase 5 closure to confirm what the
+        # current session has produced before declaring done.
+        list_artifacts,
         # Session tracking
         report_progress,
     ]
@@ -359,7 +364,7 @@ def create_brand_strategy_agent(
         all_tools=main_agent_tools,
     )
 
-    # Skills middleware + filesystem + workspace (Task 35 + Task 48)
+    # Skills middleware + filesystem + workspace (Task 35 + 48)
     workspace_dir: str | None = None
     user_dir: str | None = None
     session = get_active_session()
