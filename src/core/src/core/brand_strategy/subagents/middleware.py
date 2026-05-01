@@ -21,6 +21,7 @@ from prompts.brand_strategy.subagents import (
     MARKET_RESEARCH_SYSTEM_PROMPT,
     SOCIAL_MEDIA_ANALYST_SYSTEM_PROMPT,
 )
+from shared.agent_middlewares import WorkspaceInjectionMiddleware
 
 from .configs import (
     CREATIVE_STUDIO_TOOLS,
@@ -30,10 +31,21 @@ from .configs import (
     create_subagent_models,
 )
 
-# Each sub-agent gets PatchToolCallsMiddleware to fix Gemini tool call
-# format issues. SummarizationMiddleware is NOT needed since sub-agents
-# are ephemeral (context resets per task delegation).
+# Default middleware for every sub-agent: PatchToolCallsMiddleware
+# normalises Gemini tool-call formatting. SummarizationMiddleware is
+# unnecessary because sub-agent contexts are ephemeral (one task call).
 _SUBAGENT_MIDDLEWARE = [PatchToolCallsMiddleware()]
+
+# Sub-agents that produce brand-strategy artifacts also receive
+# WorkspaceInjectionMiddleware so brand_brief.md and quality_gates.md
+# arrive in their first turn regardless of how thin the orchestrator's
+# dispatch description ended up. market-research and social-media-analyst
+# operate on web data, not workspace state, so they keep the lean
+# default chain.
+_ARTIFACT_SUBAGENT_MIDDLEWARE = [
+    *_SUBAGENT_MIDDLEWARE,
+    WorkspaceInjectionMiddleware(),
+]
 
 
 def _resolve_tools(
@@ -128,7 +140,7 @@ def create_brand_strategy_subagent_middleware(
             "system_prompt": CREATIVE_STUDIO_SYSTEM_PROMPT,
             "model": models["creative-studio"],
             "tools": _resolve_tools(CREATIVE_STUDIO_TOOLS, tools_registry),
-            "middleware": _SUBAGENT_MIDDLEWARE,
+            "middleware": _ARTIFACT_SUBAGENT_MIDDLEWARE,
         },
         {
             "name": "document-generator",
@@ -146,7 +158,7 @@ def create_brand_strategy_subagent_middleware(
             "system_prompt": DOCUMENT_GENERATOR_SYSTEM_PROMPT,
             "model": models["document-generator"],
             "tools": _resolve_tools(DOCUMENT_GENERATOR_TOOLS, tools_registry),
-            "middleware": _SUBAGENT_MIDDLEWARE,
+            "middleware": _ARTIFACT_SUBAGENT_MIDDLEWARE,
         },
     ]
 
