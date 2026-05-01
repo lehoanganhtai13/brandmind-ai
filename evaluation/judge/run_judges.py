@@ -175,6 +175,13 @@ def _build_batch_prompt(
         "- NO narrative outside JSON\n"
         "- Start with { and end with }\n"
         f"- Evaluate ONLY the criteria in THIS batch ({batch_label}), not others\n"
+        "- Emit one entry in the `criteria` array for EVERY criterion ID "
+        "listed in the rubric section above. Walk every phase block in "
+        "order (e.g. for Quality: Q0 → Q05 → Q1 → Q2 → Q3 → Q4 → Q5 → "
+        "QX) and do not stop after the early phases. Use CANNOT_ASSESS "
+        "when the transcript provides no evidence for a criterion, "
+        "rather than omitting it. The `criteria` array length must "
+        "match the criterion count in the rubric section.\n"
     )
 
     if is_ap:
