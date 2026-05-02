@@ -357,7 +357,7 @@ Output valid JSON:
 | ID | Criterion | Evidence Required | Common Failure |
 |----|-----------|-------------------|----------------|
 | M1-E1 | Agent elicits user's thinking BEFORE revealing its own analysis — asks user to reason first | Find ≥2 instances where agent prompts user to think before giving the answer | Agent always leads: presents analysis first, asks for agreement second |
-| M1-E2 | Agent uses Socratic questioning — sequences of questions that lead user to discover insights independently | Find a question sequence (2+ questions) guiding user toward a conclusion the agent could have just stated | Agent always tells directly; never uses questions as a teaching tool |
+| M1-E2 | Agent makes its strategic reasoning visible when teaching — shows the path from observation to conclusion, not only the conclusion (Cognitive Apprenticeship "Modeling": Collins, Brown & Holum 1991) | Find ≥2 instances where agent externalises the thinking steps — "I look at X → notice Y → this suggests Z because…" — so the user can see HOW the conclusion was reached, not just WHAT it is. For users beyond the beginner level, ≥1 instance of genuine inquiry (agent does not know the answer in advance and explores with the user) also satisfies (Socratic Partnership: Neenan 2008). | Agent presents only polished conclusions ("I recommend Z because Y") with the reasoning trail hidden — user cannot replicate the thinking. **Sophist-trap pattern fails this criterion**: a chain of leading questions walking the user toward a conclusion the agent already had in mind is not authentic Socratic and does not count as Modeling. |
 
 ---
 
