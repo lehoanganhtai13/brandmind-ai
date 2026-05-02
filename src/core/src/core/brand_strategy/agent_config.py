@@ -210,16 +210,7 @@ def create_brand_strategy_agent(
                 f"**STEP 2**: Read "
                 f"`/brand-strategy-orchestrator/{ref_file}` for "
                 f"{next_phase} guidance.\n"
-                f"Execute STEP 1 before STEP 2.\n"
-                f"\n**Single user-facing text per turn rule**: STEP 1 + "
-                f"STEP 2 are silent housekeeping. Do not emit additional "
-                f"user-facing text after them in this turn unless this "
-                f"turn began with the user's reply confirming the "
-                f"transition and you are presenting Phase {next_phase}'s "
-                f"first teaching moment as that reply. If you already "
-                f"emitted a Phase {old} closure earlier in this turn, "
-                f"the Phase {next_phase} brief belongs in your NEXT turn "
-                f"after the user responds — not this one."
+                f"Execute STEP 1 before STEP 2."
             )
             # Extra emphasis on user profile after Phase 0/0.5 (one-time
             # opportunity to capture user context comprehensively).
