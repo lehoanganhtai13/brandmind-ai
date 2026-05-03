@@ -483,16 +483,25 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
         return False
 
     def _is_agent_stopping(self, response: ModelResponse) -> bool:
-        """
-        Determine if the agent is attempting to stop.
+        """Detect whether the terminal AIMessage represents a premature stop.
+
+        A stopping message has neither user-visible text content nor
+        outstanding tool calls. The middleware uses this signal to decide
+        whether to inject a re-prompt that prevents the agent from yielding
+        the turn with empty user-facing output. Both modern ``tool_calls``
+        attribute and legacy ``additional_kwargs["function_call"]`` slot
+        are consulted; a non-empty ``text`` block in a multi-part content
+        list counts as user-visible.
 
         Args:
-            response: The model response to check
+            response (ModelResponse): The model response wrapping the latest
+                AIMessage in ``response.result``.
 
         Returns:
-            bool: True if agent is stopping, False otherwise
+            bool: ``True`` if the terminal AIMessage has no visible text and
+                no tool calls; ``False`` otherwise (also when the response
+                is malformed or the result list is empty).
         """
-        # Get the last AIMessage from the response
         if not hasattr(response, "result"):
             return False
 
@@ -502,22 +511,20 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
 
         last_ai_message = result[-1]
         if not last_ai_message:
-            # No message found, cannot determine stopping
             logger.warning("No message found in response")
             return False
 
         if last_ai_message.content is not None:
-            # Check string content
             if (
                 isinstance(last_ai_message.content, str)
                 and last_ai_message.content.strip() != ""
             ):
-                return False  # Has text content, not stopping
+                return False
 
-            # Check list content - iterate ALL items to find text
-            # Thinking models put thinking blocks before text blocks,
-            # so we must check all items, not just content[0]
             if isinstance(last_ai_message.content, list):
+                # Scan multi-part content (Gemini thinking-mode interleaves
+                # thinking blocks with text blocks); only a non-empty text
+                # block satisfies the "user-visible" criterion.
                 for part in last_ai_message.content:
                     if (
                         isinstance(part, dict)
@@ -525,24 +532,19 @@ class EnsureTasksFinishedMiddleware(AgentMiddleware):
                         and isinstance(part.get("text"), str)
                         and part["text"].strip() != ""
                     ):
-                        return False  # Has text content, not stopping
+                        return False
 
-        # Check for function calls
+        modern_tool_calls = getattr(last_ai_message, "tool_calls", None)
+        if modern_tool_calls:
+            return False
+
         if (
             last_ai_message.additional_kwargs is not None
             and "function_call" in last_ai_message.additional_kwargs
         ):
-            return False  # Has function call, not stopping
+            return False
 
-        # No content and no function call - check finish reason
-        if last_ai_message.response_metadata is not None:
-            metadata = last_ai_message.response_metadata
-            if metadata.get("finish_reason") == "STOP":
-                # Model indicated stopping
-                return True
-
-        # Default case: not stopping
-        return False
+        return True
 
     def _get_incomplete_tasks(self, todos: List[TodoItem]) -> Dict[str, List[TodoItem]]:
         """
