@@ -348,11 +348,14 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
     def _rejection(
         phase: str, verdict: ContentCheckVerdict, request: ToolCallRequest
     ) -> ToolMessage:
-        """Return a tool message that blocks the advance with retry guidance.
+        """Return a tool message that blocks the advance with additive-delta guidance.
 
-        The message describes what content the judge found missing and
-        instructs the agent to present it in natural language before
-        calling ``report_progress(advance=True)`` again.
+        The message frames the next response as an additive delta on top
+        of the agent's previous reply: continue from where the previous
+        reply left off and add only the gap items as new chat content.
+        Together the previous reply plus the delta complete the
+        deliverable as the user reads it, so the agent does not bundle a
+        full re-narration into a second user-facing pass.
 
         Args:
             phase: The phase the agent is attempting to advance out of.
@@ -367,13 +370,10 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         """
         return ToolMessage(
             content=(
-                f"⚠️ Cannot advance from {phase}. Deliverable content not "
-                f"sufficiently present in your recent responses.\n\n"
+                f"⚠️ Cannot advance from {phase}. The judge found gaps in the user-facing chat content for this phase deliverable.\n\n"  # noqa: E501
                 f"**Missing**: {verdict.missing}\n\n"
                 f"**Reasoning**: {verdict.reasoning}\n\n"
-                f"Present the missing content in your next response (natural "
-                f"language to the user, not tool calls), then retry "
-                f"`report_progress(advance=True)`."
+                f"Continue from where your previous reply left off and add only the gap items above as new chat content for the user. Your previous reply plus this additive delta together complete the deliverable as the user reads it — re-narrating parts you already covered is redundant and bundles the response unnecessarily. Once the gap items are in chat, retry `report_progress(advance=True)`."  # noqa: E501
             ),
             tool_call_id=request.tool_call["id"],
         )
