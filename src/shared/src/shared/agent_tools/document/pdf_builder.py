@@ -35,12 +35,13 @@ class BrandStrategyPDF(FPDF):
     primary_color: tuple[int, int, int] = (27, 54, 93)
     accent_color: tuple[int, int, int] = (212, 168, 75)
     _skip_header: bool = False
+    _font_family: str = "Times"
 
     def header(self) -> None:
         """Branded header on all pages except page 1."""
         if self._skip_header or self.page_no() == 1:
             return
-        self.set_font("NotoSans", "", 8)
+        self.set_font(self._font_family, "", 8)
         self.set_text_color(*self.primary_color)
         self.cell(0, 8, self.brand_name, align="L")
         self.cell(
@@ -54,7 +55,7 @@ class BrandStrategyPDF(FPDF):
     def footer(self) -> None:
         """Page number footer."""
         self.set_y(-15)
-        self.set_font("NotoSans", "", 8)
+        self.set_font(self._font_family, "", 8)
         self.set_text_color(128, 128, 128)
         self.cell(0, 10, f"Page {self.page_no()}", align="C")
 
@@ -62,8 +63,9 @@ class BrandStrategyPDF(FPDF):
 class BrandStrategyPDFBuilder:
     """Builds professional branded PDF documents.
 
-    Uses fpdf2 with NotoSans Unicode fonts for Vietnamese support.
-    Falls back to Helvetica if font files are missing.
+    Uses fpdf2 with NotoSans Unicode fonts for Vietnamese support. Falls back
+    to the built-in Times core font (Vietnam-conventional Times New Roman
+    family) when NotoSans .ttf files are not bundled.
     """
 
     def __init__(self, template: BrandStrategyTemplate | None = None) -> None:
@@ -127,8 +129,20 @@ class BrandStrategyPDFBuilder:
         logger.info(f"PDF generated: {output_path}")
         return output_path
 
-    def _register_fonts(self, pdf: FPDF) -> None:
-        """Register NotoSans Unicode fonts, fallback to Helvetica."""
+    def _register_fonts(self, pdf: BrandStrategyPDF) -> None:
+        """Register NotoSans Unicode fonts, otherwise use the built-in Times.
+
+        fpdf2 v2.5.3+ rejects ``add_font()`` calls whose ``fname`` is not a valid
+        font file path. The prior fallback called
+        ``add_font("NotoSans", "", "Helvetica")`` which crashed with a misleading
+        ``.pkl`` deprecation message. Times is a built-in core font and does not
+        need ``add_font`` — leave ``pdf._font_family`` at its default ``"Times"``
+        (Times New Roman is the conventional choice for Vietnamese business
+        documents in Word/Office) and let every ``set_font`` callsite read from
+        that attribute. Built-in core fonts only cover Latin-1, so Vietnamese
+        diacritics may rasterize imperfectly without NotoSans .ttf bundled — the
+        warning below makes that trade-off explicit.
+        """
         regular = _FONTS_DIR / "NotoSans-Regular.ttf"
         bold = _FONTS_DIR / "NotoSans-Bold.ttf"
 
@@ -138,13 +152,14 @@ class BrandStrategyPDFBuilder:
                 pdf.add_font("NotoSans", "B", str(bold))
             else:
                 pdf.add_font("NotoSans", "B", str(regular))
+            pdf._font_family = "NotoSans"
         else:
             logger.warning(
                 f"NotoSans fonts not found in {_FONTS_DIR}. "
-                "Falling back to Helvetica (poor Vietnamese support)."
+                "Falling back to Times core font (Vietnamese diacritics may "
+                "rasterize imperfectly — bundle NotoSans-Regular.ttf and "
+                "NotoSans-Bold.ttf for full Unicode coverage)."
             )
-            pdf.add_font("NotoSans", "", "Helvetica")
-            pdf.add_font("NotoSans", "B", "Helvetica")
 
     def _render_cover_page(self, pdf: BrandStrategyPDF) -> None:
         """Render branded cover page."""
@@ -155,13 +170,13 @@ class BrandStrategyPDFBuilder:
         pdf.rect(0, 0, pdf.w, 100, "F")
 
         pdf.set_y(35)
-        pdf.set_font("NotoSans", "B", 28)
+        pdf.set_font(pdf._font_family, "B", 28)
         pdf.set_text_color(255, 255, 255)
         pdf.cell(
             0, 15, self.template.brand_name, align="C", new_x="LMARGIN", new_y="NEXT"
         )
 
-        pdf.set_font("NotoSans", "", 16)
+        pdf.set_font(pdf._font_family, "", 16)
         pdf.cell(
             0, 10, "Brand Strategy Document", align="C", new_x="LMARGIN", new_y="NEXT"
         )
@@ -176,12 +191,12 @@ class BrandStrategyPDFBuilder:
     def _render_toc(self, pdf: BrandStrategyPDF, content: dict[str, Any]) -> None:
         """Render table of contents."""
         pdf.add_page()
-        pdf.set_font("NotoSans", "B", 18)
+        pdf.set_font(pdf._font_family, "B", 18)
         pdf.set_text_color(*self.colors["primary"])
         pdf.cell(0, 12, "Table of Contents", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(5)
 
-        pdf.set_font("NotoSans", "", 11)
+        pdf.set_font(pdf._font_family, "", 11)
         pdf.set_text_color(60, 60, 60)
 
         for i, section in enumerate(self.template.sections, 1):
@@ -200,12 +215,12 @@ class BrandStrategyPDFBuilder:
         content: Any,
     ) -> None:
         """Render a document section with title and content."""
-        pdf.set_font("NotoSans", "B", 16)
+        pdf.set_font(pdf._font_family, "B", 16)
         pdf.set_text_color(*self.colors["primary"])
         pdf.cell(0, 12, title, new_x="LMARGIN", new_y="NEXT")
 
         if subtitle:
-            pdf.set_font("NotoSans", "", 10)
+            pdf.set_font(pdf._font_family, "", 10)
             pdf.set_text_color(128, 128, 128)
             pdf.cell(0, 6, subtitle, new_x="LMARGIN", new_y="NEXT")
 
@@ -215,11 +230,11 @@ class BrandStrategyPDFBuilder:
         pdf.ln(8)
 
         if content is None:
-            pdf.set_font("NotoSans", "", 11)
+            pdf.set_font(pdf._font_family, "", 11)
             pdf.set_text_color(128, 128, 128)
             pdf.cell(0, 8, "(No content available)", new_x="LMARGIN", new_y="NEXT")
         elif isinstance(content, str):
-            pdf.set_font("NotoSans", "", 11)
+            pdf.set_font(pdf._font_family, "", 11)
             pdf.set_text_color(60, 60, 60)
             pdf.multi_cell(0, 6, content)
         elif isinstance(content, dict):
@@ -229,7 +244,7 @@ class BrandStrategyPDFBuilder:
                 self._render_table(pdf, content)
             else:
                 for item in content:
-                    pdf.set_font("NotoSans", "", 11)
+                    pdf.set_font(pdf._font_family, "", 11)
                     pdf.set_text_color(60, 60, 60)
                     pdf.cell(6, 6, "•")
                     pdf.multi_cell(0, 6, str(item))
@@ -243,13 +258,13 @@ class BrandStrategyPDFBuilder:
             indent = level * 5
 
             pdf.set_x(10 + indent)
-            pdf.set_font("NotoSans", "B", 11)
+            pdf.set_font(pdf._font_family, "B", 11)
             pdf.set_text_color(*self.colors["primary"])
             pdf.cell(0, 7, label, new_x="LMARGIN", new_y="NEXT")
 
             if isinstance(value, str):
                 pdf.set_x(10 + indent)
-                pdf.set_font("NotoSans", "", 11)
+                pdf.set_font(pdf._font_family, "", 11)
                 pdf.set_text_color(60, 60, 60)
                 pdf.multi_cell(0, 6, value)
                 pdf.ln(2)
@@ -258,7 +273,7 @@ class BrandStrategyPDFBuilder:
             elif isinstance(value, list):
                 for item in value:
                     pdf.set_x(10 + indent + 5)
-                    pdf.set_font("NotoSans", "", 11)
+                    pdf.set_font(pdf._font_family, "", 11)
                     pdf.set_text_color(60, 60, 60)
                     pdf.cell(5, 6, "•")
                     pdf.multi_cell(0, 6, str(item))
@@ -271,7 +286,7 @@ class BrandStrategyPDFBuilder:
         headers = list(data[0].keys())
         col_width = (pdf.w - 20) / len(headers)
 
-        pdf.set_font("NotoSans", "B", 9)
+        pdf.set_font(pdf._font_family, "B", 9)
         pdf.set_fill_color(*self.colors["primary"])
         pdf.set_text_color(255, 255, 255)
         for header in headers:
@@ -279,7 +294,7 @@ class BrandStrategyPDFBuilder:
             pdf.cell(col_width, 7, label, border=1, fill=True, align="C")
         pdf.ln()
 
-        pdf.set_font("NotoSans", "", 9)
+        pdf.set_font(pdf._font_family, "", 9)
         pdf.set_text_color(60, 60, 60)
         for row in data:
             for header in headers:
