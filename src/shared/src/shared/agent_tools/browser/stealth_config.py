@@ -101,9 +101,21 @@ class StealthConfig(BaseModel):
         ),
     )
     browser_args: List[str] = Field(
-        default=["--disable-blink-features=AutomationControlled"],
+        default=[
+            "--disable-blink-features=AutomationControlled",
+            "--password-store=basic",
+            "--use-mock-keychain",
+        ],
         description=(
             "Additional Chromium command-line flags. "
-            "'--disable-blink-features=AutomationControlled' hides automation mode."
+            "'--disable-blink-features=AutomationControlled' hides automation mode. "
+            "'--password-store=basic' makes Chromium store passwords in a plaintext "
+            "file instead of the macOS Keychain, so the agent's Chrome subprocess "
+            "never triggers the Keychain access prompt that hangs startup. "
+            "'--use-mock-keychain' replaces the Keychain backend with an in-memory "
+            "mock, completing the Keychain bypass — both flags together eliminate "
+            "the BrowserStartEvent 30s timeout we observed when the encrypted "
+            "Cookies/Login Data SQLite stores in ~/.brandmind/browser_data/Default "
+            "could not be decrypted by the new spawning context."
         ),
     )
