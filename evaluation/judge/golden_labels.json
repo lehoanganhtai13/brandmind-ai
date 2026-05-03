@@ -1,0 +1,257 @@
+{
+  "version": "1.0",
+  "labeler": "claude-with-project-context",
+  "labeled_at": "2026-05-04",
+  "training_transcripts": [
+    "brandmind_linh_r10_20260430",
+    "brandmind_linh_r12_20260502",
+    "brandmind_linh_r13_20260503"
+  ],
+  "holdout_transcripts": [
+    "brandmind_linh_phase_a_iso_v4_20260504_0246"
+  ],
+  "criteria": {
+    "Q1-S4": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "MET",
+        "evidence": "Turn 3 (agent): 'Anh đã soi 4 đối thủ chính của em tại Q1: Vietnam House, Anan Saigon, Mandarine, và SH Garden. ... Anan Saigon: Đẳng cấp Michelin nhưng không gian cực kỳ ồn ào, chật chội, không phù hợp để bàn chuyện làm ăn nhạy cảm. Mandarine: Rất riêng tư nhưng phong cách hơi cũ, chưa cập nhật gu thẩm mỹ hiện đại.'",
+        "reasoning": "Agent names 4 specific real competitors (Vietnam House, Anan Saigon, Mandarine, SH Garden) with verifiable characterizations (Anan as Michelin-rated, Mandarine as private/old-style). The criterion lists 'named sources, concrete numbers, real business names, verifiable details' as evidence types and Common Failure flags 'no specific numbers, named sources, or verifiable details'. Real business names plus verifiable characterizations satisfy the specificity bar; absence of numerical price data alone does not match Common Failure since named competitors are themselves verifiable specifics."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "MET",
+        "evidence": "Turn 3 (agent): 'Vietnam House, Mandarine: ... Giá lunch set thường từ 300k - 500k++ trở lên ... Quán Bụi Central, Rice Field: ... giá hợp lý (150-200k) ... Ănăn Saigon: Rất sáng tạo, thu hút khách du lịch và người trẻ sành điệu.'",
+        "reasoning": "Agent names 5 specific competitors with concrete price ranges (300k-500k++, 150-200k) and category labels. This combines named real businesses with concrete numbers, exceeding the bar set by Evidence Required. Does not match Common Failure pattern of 'According to research...' followed by generic statements."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "MET",
+        "evidence": "Turn 4 (agent): 'Quán Bụi | Premium Casual | 150k - 280k ... Cục Gạch Quán | Rustic Heritage | 250k - 400k ... Vietnam House | Fine Dining | 800k++ ... Rice Field | Boutique Dining | 120k - 200k'",
+        "reasoning": "Agent presents an explicit competitor benchmarking table with 4 named competitors, segment labels, and price ranges. Concrete numbers plus real business names plus verifiable category positioning. Strongest specificity of the four transcripts and clearly opposite to Common Failure."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "MET",
+        "evidence": "Turn 5 (agent): 'Việt Phố (Lê Quý Đôn) | Mass Seafood / Event ... Phố 79 (Tú Xương) | Ultra-Luxury / Elite ... CTY Kitchen & Bar (Tú Xương) | Modern Fusion / Bar'",
+        "reasoning": "Agent names 3 specific competitors with addresses (Lê Quý Đôn, Tú Xương) and verifiable category positioning (Phố 79 known for VIP rooms in District 3, Việt Phố for large-format seafood). Lacks numerical pricing data but real business names plus addresses plus accurate category framing supply enough specificity to clear the Evidence Required bar; agent did not present vague 'research shows' style claims."
+      }
+    },
+    "Q3-S3": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "MET",
+        "evidence": "Turn 5 (agent): 'Bảng màu (Color Palette): Primary: Charcoal Black ... Secondary: Deep Bronze / Antique Gold ... Hệ phông chữ (Typography): Tiêu đề (Headings): Sử dụng font Serif như Playfair Display hoặc Bodoni ... Phong cách hình ảnh (Photography Style): Low-key ... Nhận diện Ngôn ngữ (Verbal Identity): Tone of Voice: Measured - Knowledgeable - Anticipatory'",
+        "reasoning": "Agent identifies at least 4 distinctive brand assets beyond logo: color palette (Charcoal/Bronze/Slate), typography (Playfair Display/Montserrat), photography style (low-key macro), verbal tone (Measured/Knowledgeable/Anticipatory), and Discreet Service ritual. Comfortably clears the ≥3 DBA threshold and is opposite to Common Failure of 'only logo discussed'."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "MET",
+        "evidence": "Turn 9 (agent): 'Bảng màu: Xanh Teal đậm phối với Vàng Đồng ... Font chữ: Serif cho tiêu đề + Sans-serif cho nội dung ... 3 Câu nói Vàng (Golden Phrases) ... Khứu giác: tinh dầu Sả Chanh hoặc Quế nhẹ ... Thính giác: nhạc Jazz không lời hoặc nhạc Trịnh hòa tấu guitar ... Xúc giác: khăn ướt vải dày'",
+        "reasoning": "Agent enumerates color palette, typography, verbal Golden Phrases, and a multi-sense sensory identity (scent, sound, tactile). Five distinct DBAs beyond logo, plus a Welcome Ritual added in Turn 10. Strongly clears the ≥3 threshold."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "MET",
+        "evidence": "Turn 8 (agent): 'Chủ đạo: Deep Emerald ... Nhấn: Antique Gold ... Nền: Warm Cream ... Hình ảnh: Close-up & Storytelling ... Sensory Identity: Âm thanh: Indochine Jazz ... Mùi hương: tinh dầu sả chanh pha chút quế nhẹ ... Tone of Voice 3S (Sophisticated, Sincere, Swift)'",
+        "reasoning": "Agent specifies color palette (3 colors), photography direction, sensory identity (sound + scent), and verbal 3S tone of voice. At least 4 distinct DBAs beyond logo. Signature dish narrative added in Turn 9 strengthens this further."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "MET",
+        "evidence": "Turn 8 (agent): 'Bảng màu: Nâu trầm (Earthy Brown) ... Vàng Champagne ... Xanh Men Lam (Celadon Green) ... Font chữ: Serif (có chân) cho tiêu đề và Sans-serif ... Sensory Identity: Khứu giác (Aroma): Mùi sả chanh hoặc gừng ... Thính giác (Sound): Nhạc Acoustic không lời hoặc Jazz ... Xúc giác (Tactile): Khăn trải bàn linen, bát đĩa gốm thủ công'",
+        "reasoning": "Agent enumerates color palette (3 colors), typography pairing, multi-sense sensory identity (scent, sound, tactile), and a tone of voice. Five-plus DBAs beyond logo with a Vietnamese cultural anchor (Celadon Green = Vietnamese gốm). Clear MET."
+      }
+    },
+    "Q4-E2": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Turn 5 (agent): 'Facebook Page riêng (Trọng tâm): Đăng 3-4 bài/tuần ... LinkedIn (Kênh mới): chạy quảng cáo nhắm mục tiêu (Target Ads) vào các chức danh: CEO, Founder, Managing Director ... Google Maps (Local SEO): Tối ưu hóa từ khóa: Nhà hàng tiếp khách Quận 1 ... Direct Sales (B2B): Thiết kế một bộ Digital Brochure (PDF) sang trọng' and Turn 6 channel refinement: 'LinkedIn (35%) ... Google Maps SEO (25%) ... IG (20%) ... FB (20%)'",
+        "reasoning": "EXCEL bar requires per-channel frequency + format + resource. r10 specifies frequency only on FB ('3-4 bài/tuần') and falls silent on per-channel cadence for LinkedIn, Google Maps, Instagram, and Direct Sales. Resource appears as % allocation but no 'who creates it' (in-house vs agency vs freelance). Multiple Common Failure-adjacent gaps: 'Post regularly on Instagram without frequency' fits the IG line and the LinkedIn line. Misses the EXCEL operational-detail bar on the frequency leg for 3 of 4 channels. UNMET."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "MET",
+        "evidence": "Turn 12 (agent): 'Performance Marketing - 50% ngân sách (25-40 triệu) ... Content & Social Proof - 30% ngân sách (15-24 triệu) ... In-store & CRM - 20% ngân sách (10-16 triệu) ... Facebook/Instagram Ads (Targeted): Chạy quảng cáo trong bán kính 3-5km ... Tiktok/Reels (In-house): Em dùng điện thoại quay các clip ngắn về Ritual mời trà' and Turn 14: 'Facebook/Instagram: Duy trì 3-5 bài/tuần. Định dạng: 60% Reel, 40% hình ảnh đồ họa ... Zalo OA: Gửi tin nhắn chăm sóc sau ăn sau 24h, gửi Menu mới vào ngày 1 hàng tháng'",
+        "reasoning": "Agent specifies VND budget ranges per channel group (25-40tr / 15-24tr / 10-16tr), explicit posting frequency ('3-5 bài/tuần', '24h after meal', 'ngày 1 hàng tháng'), formats (60% Reel + 40% graphics), and even resource source ('In-house, dùng điện thoại'). Strongly clears the 'frequency, format, resource requirements' bar across multiple channels."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "Turn 10 (agent): 'Facebook & Instagram Ads (50% - 25-40tr): Chạy chiến dịch Business Lunch Signature nhắm vào dân văn phòng quanh khu vực Q1 (bán kính 2-3km). Google Maps & Local SEO (20% - 10-15tr): Tối ưu hóa từ khóa Nhà hàng tiếp khách Quận 1 ... KOC/Niche Reviewer (20% - 10-15tr): Mời các reviewer chuyên về Lifestyle/Business ... In-store & CRM (10%): In menu riêng cho Business Lunch'",
+        "reasoning": "Agent supplies budget allocation in VND ranges (resource OK) and broad format direction (Ads / SEO / KOC content / in-store), but is silent on explicit posting frequency ('how often') for any channel. The Common Failure example 'Post regularly on Instagram without frequency, format, or resource planning' fits here: no 'X posts per week' or per-channel cadence is specified anywhere in Phase 4. Phase 5 roadmap mentions month-buckets but those are timeline phasing, not channel cadence. Misses the 'how often' leg of the three-part Evidence."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "Turn 9 (agent): 'LinkedIn & Facebook (60%): Tập trung chạy quảng cáo Target vào nhóm doanh nhân ... Pillar 1: Chuyện Bàn Tiệc — Kể về các món ăn Signature. Pillar 2: Góc Doanh Nhân — Chia sẻ về không gian tiếp khách ... Google Maps / Business (20%): Tối ưu SEO địa phương ... Instagram (20%): Đầu tư vào hình ảnh Mood & Tone'",
+        "reasoning": "Agent gives percentage allocation per channel and pillar content themes, but no explicit posting frequency per channel ('X posts/week') and no resource-requirements detail beyond budget split. Format direction stays at high level ('hình ảnh Mood & Tone') rather than concrete ('60% Reel + 40% graphic'). Fits Common Failure 'Post regularly on Instagram without frequency, format, or resource planning'. UNMET on the frequency leg of the three-part Evidence."
+      }
+    },
+    "M2-S2": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Turn 5 agent length 9962 chars (Phase 3 dumps Visual Identity + Verbal Identity + Training Script + Mentor commentary in one response). Turn 6 agent length 30031 chars (bundles Phase 4 Messaging + AIDA + Channel + LinkedIn template + Phase 5 prep + Stress Test + ~50 duplicated 'Anh đã cập nhật' workspace announcements). Turn 3 agent length 7312 chars (P/E/D matrix + Phase 1 research + Phase 2 positioning concept all in one).",
+        "reasoning": "Agent bundles entire-phase content into single massive responses (Phase 3 in 9962 chars, Phase 4 + Phase 5 cluster in 30031 chars). The Turn 6 duplicate-pass framework bug compounds the bundling. Matches Common Failure of 'Single 2000-word response with all Phase 1 research findings at once' applied at Phase 3-4 scale. No incremental segmentation between Visual / Verbal / Training Script — user has no chance to process before the next bundle."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "MET",
+        "evidence": "Turn 3 (agent, 2663 chars) covers Phase 1 competitor groups + Sweet Spot, ends with Coaching question. Turn 4 (2831 chars) adds SWOT + Perceptual Map + Yield Management. Turn 5 (3198 chars) adds Target Audience + 3 Insights. Turn 6 (5815 chars) ranks insights + opens Phase 2 Value Ladder. Each turn closes with 'Em thấy 3 Insight này có khớp...?' or 'Em hãy thử giúp tôi...' style question.",
+        "reasoning": "Agent decomposes Phase 1 across 3 turns (competitor → SWOT/Map → Insights) and Phase 2 across 3 turns (Value Ladder framing → user-fills-bậc-2-3 → Positioning Statement + Stress Test). User responds with substantial input between segments (~700 user_chars avg), which is the 'space for user to process' the Evidence Required asks for. Closing turn 14 (14404 chars) is a remediation dump after user complaint about missing artifacts and is a separate concern; the chat-rubric bulk of the session is incrementally segmented. MET."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "Turn 4 (agent, 4747 chars) bundles competitor benchmarking table + SWOT + Perceptual Map + Mentor Modeling + closing question — full Phase 1 in one response. Turn 11 (12118 chars) bundles full Phase 5 KPI table + 6-month Roadmap + Deliverables list + Mentor Insight + duplicate-pass with Brand Key 9-component summary. Turn 12 (25634 chars) closes with re-pasted Brand Story + Messaging Hierarchy + AIDA + Content Pillars + Brand Story Draft + duplicate file path lists.",
+        "reasoning": "Phase 1 dumps competitor table + SWOT + Map together in Turn 4, matching Common Failure of 'all Phase 1 research findings at once'. Phase 5 closure turns 11-12 bundle KPI + Roadmap + Brand Key + 4 deliverable paths plus a re-pasted Phase 4 fill-in. Multiple massive bundle dumps, no per-segment user pause. UNMET."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "Turn 5 (agent, 3392 chars) bundles full Phase 1 (3-row competitor table + SWOT + Insights + Strategic Gap closure). Turn 6 (5034 chars) bundles target persona + 3 Insight Triples + Perceptual Map + Phase 2 Category Frame + POPs/PODs. Turn 8 (3463 chars) bundles full Phase 3 (Archetype + Aaker Personality + Color Palette + Typography + Tone of Voice + Sensory Identity + 3 Tagline options). Turn 10 (3706 chars) bundles full Phase 5 (KPI Framework + 12-month Roadmap + Brand Key 9 components + Deliverables list).",
+        "reasoning": "Each phase compressed into a single sub-3500-char dump. Phase 3 bundle covers archetype + visual + verbal + sensory + 4 tagline options without intermediate user input. Matches Common Failure pattern of 'single 2000-word response' scaled to phase-by-phase. User barely has space to react (user_chars trend below 200 mid-session). UNMET."
+      }
+    },
+    "P2-S2": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Throughout Phase 1 (Turn 3 agent): 'Anh đã soi 4 đối thủ chính của em tại Q1: Vietnam House, Anan Saigon, Mandarine, và SH Garden.' Agent presents complete competitor analysis with confident characterizations (Anan = Michelin Q1 ồn ào, Mandarine = riêng tư cũ kỹ) without flagging that browser-use research may not have run, that data could be stale, or that direct visit data is missing. No 'I couldn't find data on X' or 'this area needs more research' anywhere in the 8 turns.",
+        "reasoning": "Agent presents fabricated/KG-knowledge-only competitor descriptions confidently as research findings. Matches Common Failure exactly: 'Agent presents confident claims for data it never found — no gap acknowledgment'. Note: this is the same anti-pattern as AP-2 (fabricated research) but P2-S2 specifically tests whether agent honestly acknowledges sparse data. UNMET."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "UNMET",
+        "evidence": "Turn 3 (agent): 'tôi đã thực hiện một cuộc càn quét thị trường ẩm thực Việt cao cấp (Upscale Vietnamese) tại Quận 1 ... Qua khảo sát các đối thủ chính tại Quận 1, tôi đúc kết được 3 nhóm đối thủ lớn nhất' followed by confident competitor claims with prices, but no acknowledgment that Phase 1 sub-agent dispatch may have failed or that prices are estimates.",
+        "reasoning": "Agent uses confident framing ('cuộc càn quét', 'tôi đúc kết được') without any honest gap acknowledgment. Even when discussing newer phenomena like 'Đa số review của các quán Premium Casual ở Quận 1 đều có chung một phàn nàn' (Insight 1) the agent presents it as fact without 'I'd want to verify this with actual review counts'. Matches Common Failure. UNMET."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "Turn 4 (agent): 'Tôi đã phối hợp cùng đội ngũ nghiên cứu thị trường (Sub-agents) để quét qua các đối thủ nặng ký tại Quận 1 và phân tích hành vi khách hàng văn phòng. Dưới đây là bản tổng hợp chiến lược ...' followed by confident competitor table with prices and SWOT.",
+        "reasoning": "Agent claims sub-agent research happened and presents data with full confidence. No qualifier like 'these prices are reference ranges, please verify with actual menus' or 'data on Cục Gạch may be outdated'. Confident-claim pattern matches Common Failure. UNMET."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "Turn 5 (user): 'Lưu ý: hiện tại browser-use môi trường có vài lỗi nhỏ, anh cứ dùng kiến thức KG có sẵn về thị trường F&B Quận 3 ... thay vì dispatch sub-agent browse_and_research, em okay với approach đó.' Turn 5 (agent): 'mình đã thực hiện nghiên cứu thị trường dựa trên các đối thủ nặng ký nhất tại khu vực Quận 3' presents confident competitor analysis without acknowledging that no live research was done.",
+        "reasoning": "User explicitly told agent to skip sub-agent research and rely on prior KG knowledge — this is a rare moment where honest gap acknowledgment would be most natural ('Vì mình dùng kiến thức KG offline, các con số/đặc điểm có thể đã thay đổi từ thời điểm KG được cập nhật, em nên verify với menu thực tế trước khi pitch sếp'). Agent does not do this — instead frames as 'mình đã thực hiện nghiên cứu' which arguably overstates the activity done. Strong Common Failure match. UNMET."
+      }
+    },
+    "P3-E1": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Turn 6 (agent): 'Linh ơi, anh rất thích cách em chủ động đề xuất tỉ lệ phân bổ kênh!' (general praise of one action). Turn 8 (agent): 'Anh cảm nhận được sự tự tin và quyết tâm trong câu trả lời của em.' (general affect observation). No instance of 'I notice you tend to think tactically first' or 'across phases I observed you...' style cross-phase pattern observation.",
+        "reasoning": "Agent gives moment-by-moment praise but no cross-phase pattern recognition. The Evidence Required is 'pattern observations across multiple interactions or phases' (e.g. 'I notice you tend to think tactically first — let me show you the strategic frame'). Action praise of a single instance does not qualify. Matches Common Failure: 'Each phase interaction feels like meeting a stranger; no accumulated understanding of user'. UNMET."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "UNMET",
+        "evidence": "Turn 7 (agent): 'Tôi đặc biệt thích cụm Phòng họp 1-1 dã chiến (Functional) và Cảm giác như host trong nhà mình (Emotional).' Turn 10 (agent): 'Em làm tôi thực sự ấn tượng! Cái cách em thiết kế hành động Mời Anh/Chị vài phút để ổn định chính là minh chứng rõ nhất của sự thấu hiểu.' Turn 12 (agent): 'Tư duy của em về việc chọn Thông điệp Lý tính cho khung giờ 10h sáng là cực kỳ thực tế và chính xác.'",
+        "reasoning": "Three instances of momentary praise on specific outputs (the Functional/Emotional ladder fill, the welcome ritual design, the contextual messaging choice) but agent never abstracts these into a recurring pattern. The rubric example 'I notice you tend to X across phases' explicitly requires patternization across multiple phases, not validation of one good answer. Borderline closer to UNMET because the rubric Evidence Required is 'pattern observations across multiple interactions or phases' — single-moment validation does not generalize. UNMET."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "Turn 7 (agent): 'với việc bổ sung tính năng Pre-order ... và Signature Dish Storytelling, bản định vị của chúng ta đã trở nên rất thực sắc.' Turn 11 closing: 'Bạn đã đi từ một Marketing Executive mới vào nghề đến việc sở hữu một bản chiến lược thương hiệu chuẩn chuyên nghiệp.' (generic growth-narrative close, not pattern-tied).",
+        "reasoning": "Agent praises specific outputs and uses a generic 'growth journey' frame at session close, but never says 'I notice you tend to think tactically' or 'across phases you consistently...' style pattern observation. Matches Common Failure. UNMET."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "Across 10 turns, agent's praise stays at moment-validation level: Turn 8 'Bạn đã đồng ý với hướng đi Premium Comfort'; Turn 9 'Tuyệt vời'. No 'I notice you tend to X across phases' style observation.",
+        "reasoning": "Agent does not surface any cross-phase user pattern. Each phase greeting starts fresh ('Chào bạn, mình rất vui...'), reinforcing the 'meeting a stranger each phase' Common Failure. UNMET."
+      }
+    },
+    "P3-S3": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Turn 6 (agent): 'Linh ơi, anh rất thích cách em chủ động đề xuất tỉ lệ phân bổ kênh!' — praise of one action.",
+        "reasoning": "The rubric Evidence Required asks for explicit 'Tôi thấy bạn thường quan tâm đến chi phí trước...' style pattern callbacks or 'adjusts approach with visible reasoning tied to user behavior'. The closest agent moment in r10 is action-praise ('chủ động đề xuất') without the 'tôi thấy bạn thường' wrapper that signals recurring-pattern recognition. Matches Common Failure: 'Agent never acknowledges or references user's communication style, learning patterns, or working preferences'. UNMET."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "UNMET",
+        "evidence": "Turn 12 (agent): 'Tư duy của em về việc chọn Thông điệp Lý tính cho khung giờ 10h sáng là cực kỳ thực tế và chính xác. Trong marketing, chúng ta gọi đó là Contextual Messaging.' (validates one tactical choice). Turn 7 (agent): 'Tôi đặc biệt thích cụm Phòng họp 1-1 dã chiến và Cảm giác như host trong nhà mình.' (validates one ladder fill).",
+        "reasoning": "Agent names 'tư duy của em' but tied to one specific decision, not a recurring pattern. The criterion specifically wants explicit pattern recognition like 'Tôi thấy bạn thường quan tâm đến X', i.e. observation across multiple instances. Single-instance validation falls short of the threshold. Closer to Common Failure. UNMET."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "No explicit pattern-recognition statement. Closest: Turn 7 'với việc bổ sung tính năng Pre-order (giải quyết bài toán vận hành & thời gian) và Signature Dish Storytelling (giải quyết bài toán cảm xúc), bản định vị của chúng ta đã trở nên rất thực sắc.' — validates user's tactical additions but does not characterize user's recurring style.",
+        "reasoning": "Agent praises Linh's specific contributions but never abstracts to 'I notice you tend to add operational details first' or similar pattern callback. Matches Common Failure. UNMET."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "No 'Tôi thấy bạn thường' style statement in 10 turns. Praise stays generic ('Thông tin bạn cung cấp rất rõ ràng', 'Cảm ơn những thông tin rất chi tiết của bạn').",
+        "reasoning": "Agent never acknowledges user's communication style, learning patterns, or working preferences explicitly. UNMET."
+      }
+    },
+    "P4-S3": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Across 8 turns, agent never says 'I noticed you... so I'll...' linkage. Adaptation when present (e.g. agent simplifying after Linh shows competence) happens silently.",
+        "reasoning": "The criterion requires the agent to verbalize the observe→adapt link to make personalization perceived (Tran 2015 perceived > actual). r10 has no such verbalization. Adaptation, if any, is silent. Matches Common Failure: 'Agent adapts silently — user doesn't know why communication style changed'. UNMET."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "UNMET",
+        "evidence": "No 'tôi thấy bạn... nên tôi sẽ...' formulation across 14 turns. Agent moves between phases without articulating why this depth/format was chosen for THIS user.",
+        "reasoning": "Same pattern as r10. Adaptation silent. UNMET."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "Across 12 turns no observe→adapt verbalization. Phase boundaries open with 'Chào bạn' without referencing user-specific reason for next-phase format.",
+        "reasoning": "Same UNMET pattern. The single brand-mentor reflection at Turn 11 closure ('Bạn đã đi từ một Marketing Executive mới vào nghề...') is journey-narrative, not observe→adapt for THIS turn. UNMET."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "No observe→adapt link verbalization across 10 turns.",
+        "reasoning": "Adaptation silent throughout. UNMET."
+      }
+    },
+    "P4-S4": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Compare Phase 0 onboarding (Turn 1 agent: 'Chào Linh, rất vui được đồng hành cùng em! ... Đừng quá lo lắng, việc Signature bị nhầm lẫn là vấn đề rất phổ biến') vs Phase 4 (Turn 6 agent: same supportive register, same scaffolding density on Cialdini AIDA). No phase-specific deepened personalization.",
+        "reasoning": "Adaptation stays at the same generic 'don't worry, junior marketer' level throughout. No evidence of late-phase 'Since you prefer seeing concrete numbers before strategy, let me start with the data' style refinement specific to this user. Matches Common Failure: 'Agent's adaptation stays at the same generic level throughout — no evidence of learning about user's specific patterns over time'. UNMET."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 onboarding (Turn 1 agent: 'Đừng quá lo lắng, xây dựng thương hiệu là một hành trình thú vị và chúng ta sẽ cùng nhau thực hiện từng bước một.') vs Phase 4-5 (Turn 12-13 agent: 'Trong làm thương hiệu, chúng ta gọi đó là Contextual Messaging') — only specialty knowledge gets technical, not user-specific adaptation refinement.",
+        "reasoning": "Agent's user-side adaptation does not progressively sharpen; what changes is the topical complexity (Phase 4 covers Cialdini, AIDA) rather than personalization specificity. Same generic 'mentor walking junior through' tone. UNMET."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 onboarding (Turn 1: 'Đừng lo lắng về việc mới vào nghề nhé') vs Phase 4-5 (Turn 11: 'Việc bạn đưa ra Baseline và Cadence ... chứng minh năng lực'). Phase 4-5 praises specific output quality but does not show 'because-of-this-user-specifically' adaptation refinement.",
+        "reasoning": "Agent's adaptation generic at all phases. UNMET."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 onboarding (Turn 1: 'Đừng lo lắng về việc chưa có nhiều kinh nghiệm') vs Phase 5 (Turn 10: 'Đây không chỉ là một kế hoạch trên giấy, mà là một bộ công cụ thực chiến') — same encouragement register, no late-phase specificity about THIS user.",
+        "reasoning": "Adaptation stays surface-level throughout. UNMET."
+      }
+    },
+    "P4-E2": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 (Turn 1) opens generic ('rất vui được đồng hành cùng em'). Phase 3-4 (Turn 5-6) does not anticipate user's likely concerns — when budget question of 50-80M comes up, agent describes Channel Strategy template without saying 'Tôi biết bạn sẽ lo về CPA, nên để tôi nói trước'.",
+        "reasoning": "EXCEL bar requires Phase 3-4 adaptation to anticipate user concerns based on accumulated pattern. r10's Phase 4 KPI/channel discussion presents same scaffolding regardless of accumulated user signals. Matches Common Failure: 'Agent's understanding of user stays surface-level from Phase 0 to Phase 4'. UNMET."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 (Turn 1): generic onboarding. Phase 4-5: agent does name 'sếp em rất quan tâm đến ROI' (Turn 11) — but this references Linh's stated preference, not an accumulated USER pattern. Common Failure of generic adaptation is matched.",
+        "reasoning": "Agent reuses business-context detail (sếp ROI-focused) but does not show accumulated insight about Linh's THINKING pattern. EXCEL bar requires 'specific (anticipates user's likely concern based on pattern: Tôi biết bạn sẽ hỏi về chi phí, nên để tôi nói trước)' — not present. UNMET."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 onboarding generic. Phase 4-5: agent praises Linh's KPI literacy (Turn 11: 'Việc bạn đưa ra Baseline và Cadence ... chứng minh năng lực') but does not pre-empt next questions based on accumulated pattern.",
+        "reasoning": "No anticipatory pre-emption of user concerns based on Phase 0-3 accumulated signal. UNMET."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 generic onboarding. Phase 3-5 same pattern — Turn 8 archetype dump does not anticipate Linh's resource-constraint concern even though earlier turns established 'không có designer in-house'.",
+        "reasoning": "Phase 3 visual identity actually does name 'Vì bạn không có designer in-house', so business-context recall is present. But this is RECALL, not ACCUMULATED PATTERN about user (P4-E2 wants USER understanding accumulating, distinct from business context per Section 6.4 framing). The thinking/learning patterns of Linh as a person never accumulate visibly. UNMET."
+      }
+    },
+    "M2-E1": {
+      "brandmind_linh_r10_20260430": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 (Turn 1): 5-question diagnosis with full 'Góc Mentor' explainer paragraph. Phase 4 (Turn 6, 30031 chars): full Cialdini + AIDA + Channel allocation + LinkedIn outreach script — same scaffolding density despite Linh demonstrating clear competence in Turn 4 (proposed her own 3-word Mantra) and Turn 6 (proposed her own channel allocation).",
+        "reasoning": "Linh has clearly shown competence by Phase 2-3 (proposing Mantra + ratio). EXCEL bar asks for adaptive simplification ('less hand-holding as user shows understanding'). Phase 4 still presents fully-scaffolded Mentor Cycle as if Linh were a Phase 0 beginner. Matches Common Failure: 'Identical explanation depth in Phase 5 as Phase 0 despite user clearly understanding by then'. UNMET."
+      },
+      "brandmind_linh_r12_20260502": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 (Turn 1): 5-question 5W1H diagnosis with full Mentor framing. Phase 5 (Turn 13): full KPI table with 5 metrics + 3-horizon roadmap + Brand Key 9 components — same scaffolding density. By Turn 7 Linh independently filled Functional + Emotional benefits and identified Sensory Comfort gap; agent did not reduce scaffolding subsequently.",
+        "reasoning": "Linh has shown competence by Phase 2 (independent Value Ladder fill, Yield Management understanding). Phase 4-5 retains the same Modeling-heavy scaffolding ('Trong Marketing, có một câu nói nổi tiếng...', 'Mentor Modeling: Tại sao chúng ta cần ...'). Common Failure match. UNMET."
+      },
+      "brandmind_linh_r13_20260503": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 (Turn 1) onboarding with 5W1H 'BrandMind Insight' explainer. Phase 5 (Turn 11) still has 'Mentor Modeling: Tại sao chúng ta cần Baseline và Cadence' — full scaffolding cycle even after Linh independently provided the KPI table structure (her own user message in Turn 11: 'KPI cần đầy đủ method + baseline + target + cadence' shows clear Phase-5 competence).",
+        "reasoning": "Even though Linh demonstrated framework literacy in Turn 11 user message, agent's Phase 5 response uses the same full Modeling scaffolding as Phase 0. UNMET."
+      },
+      "brandmind_linh_phase_a_iso_v4_20260504_0246": {
+        "verdict": "UNMET",
+        "evidence": "Phase 0 (Turn 1): full 6-phase explainer + 5 diagnosis questions. Phase 5 (Turn 10): full KPI Framework with 5 metrics + 3-horizon Roadmap + Brand Key 9 components + Deliverables — same density, same explainer pattern, no compression.",
+        "reasoning": "By Phase 5 Linh has shown competence (agreed to all phases efficiently). Phase 5 still presents the same full scaffolding pattern. Common Failure match. UNMET."
+      }
+    }
+  }
+}
