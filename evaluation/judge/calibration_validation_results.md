@@ -56,13 +56,24 @@ hold-out and compared verdicts vs the golden hold-out labels.
 | r12 pre-anchoring | 0.351 | Fair |
 | r12 post-failed-anchoring | 0.319 | Fair (slight regression — failed Step 4) |
 | **iso v4 hold-out post-calibration** | **0.592** | **Moderate** |
+| iso v4 + M2-S2 iteration 1 (mechanical count) | 0.592 | Moderate — no movement |
+| iso v4 + M2-S2 iteration 2 (sub-finding granularity) | 0.592 | Moderate — no movement |
 
 The post-calibration Kappa of 0.592 sits in the upper Moderate band,
 0.018 below the 0.61 Substantial threshold typically cited as
-research-grade for LLM-as-judge panels. The single residual deviation
-(Gemini lenient on M2-S2, 1/11) is what holds the Kappa below
-Substantial; Phase 3 iteration targeting M2-S2 specifically is the
-recommended next step if research-grade Kappa is required.
+research-grade for LLM-as-judge panels. Two iterations of M2-S2
+wording tightening (mechanical-count anchor; explicit sub-finding
+granularity) produced ZERO movement in Gemini's verdict or reasoning
+text. The single residual deviation (Gemini lenient on M2-S2, 1/11)
+is structurally interpretation-architectural rather than threshold-
+elastic, so the iteration was reverted; the calibrated baseline holds
+at 0.592 Moderate. Per `north_star_principles_2026_05_03.md` honest-
+measurement principle, this Kappa is accepted as the reliable cross-
+judge agreement floor for thesis claims; the 0.018 gap is documented
+in `calibration_changelog.md` Pattern 4 iteration block as a known
+single-criterion limitation (Mentor dimension only) and does not
+invalidate Quality / Personalization dimension signals which align
+3/3 with golden on hold-out.
 
 ## Hold-out per-judge dimension scores (post-calibration honest reading)
 
@@ -93,12 +104,16 @@ failure mode.
 
 ## Residual + open work
 
-- Gemini lenient on M2-S2 (1/11). Recommended Phase 3 iteration:
-  tighten the M2-S2 wording so single-turn formatted long content does
-  not satisfy "incremental" even when visually segmented. Expected
-  effect: Gemini flips M2-S2 to UNMET on hold-out, alignment becomes
-  11/11 across all three judges, cross-judge Kappa crosses 0.61
-  Substantial threshold.
+- Gemini lenient on M2-S2 (1/11). Two wording iterations attempted
+  (mechanical-count anchor; explicit sub-finding granularity) — both
+  failed to move Gemini's verdict or reasoning text; the deviation is
+  structurally interpretation-architectural, not threshold-elastic.
+  Iterations reverted per `calibration_changelog.md` Pattern 4
+  iteration block. Future paths if Substantial Kappa is required:
+  Path C (structured-output count-based M2-S2 — judge counts sub-
+  findings per turn, derives verdict deterministically) or drop M2-S2
+  from cross-judge averaging and rely on per-judge alignment-to-golden
+  rate as the trust metric for Mentor dimension.
 - Sub-agent labeler used paraphrase rather than verbatim evidence
   quotes. Verdicts are sound (keyword spot-check + reasoning audit
   confirmed); future iteration should re-label with strict verbatim
