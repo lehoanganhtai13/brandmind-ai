@@ -70,9 +70,9 @@ The verdict scale is SOLVES / PARTIALLY_SOLVES / DOES_NOT_SOLVE (distinct from B
 
 ### 4.3 Anchoring per criterion
 
-Every B-criterion and every C-criterion in the rubric files carries one COHERENT/SOLVES anchor and one INCOHERENT/DOES_NOT_SOLVE anchor as concrete short examples. The anchors are constructed from synthetic-style content (not real pilot transcripts) to avoid answer-key leakage and to keep the threshold visible to the judge across diverse domains. Each anchor is one or two sentences, sufficient to specify the threshold without bloating the prompt.
+Every B-criterion and every C-criterion in the rubric files carries concrete short anchor examples. Most criteria have two anchors (one COHERENT/SOLVES + one INCOHERENT/DOES_NOT_SOLVE), forming a contrastive pair that specifies the threshold. B6, B7, B8, and B9 — the artifact-design rationale visibility tier — carry three anchors each: COHERENT (rationale visible AND fits brand promise), INCOHERENT-absent (rationale missing entirely), and INCOHERENT-unfit (rationale visible with explicit WHY but the stated choices contradict the brand promise + audience). The third anchor type was added on 2026-05-04 evening after a user observation that B Tier 2 measures the design brief that informs artifact creation, so the judge needs to evaluate not only whether a brief was articulated but also whether the choices in the brief would produce work suitable for the strategy — a brief that names neon Y2K aesthetic for premium executive C-suite produces unsuitable visual identity regardless of how confidently the brief is stated. Tier 1 and Integration-tier criteria continue to carry two-anchor pairs because their failure modes are well-captured without a third anchor type.
 
-The anchoring discipline mirrors `prompt-engineering-patterns` reference principle 10 (few-shot diversity > quantity) — two examples per criterion, contrastive pair, recency-weighted last (the criterion is read top-down so the INCOHERENT/DOES_NOT_SOLVE anchor sits visually adjacent to the verdict-decision moment). Per `claude-techniques.md` and the prompt-bearing-files convention in `CLAUDE.md`, each criterion's prose body is written as continuous lines without soft-wrapping mid-paragraph, so the model parses each criterion as one coherent unit.
+The anchors are constructed from synthetic-style content (not real pilot transcripts) to avoid answer-key leakage and to keep the threshold visible to the judge across diverse domains. Each anchor is one or two sentences, sufficient to specify the threshold without bloating the prompt. The anchoring discipline mirrors `prompt-engineering-patterns` reference principle 10 (few-shot diversity > quantity) — two-or-three examples per criterion, contrastive set, recency-weighted last (the criterion is read top-down so the strictest INCOHERENT/DOES_NOT_SOLVE anchor sits visually adjacent to the verdict-decision moment). Per `claude-techniques.md` and the prompt-bearing-files convention in `CLAUDE.md`, each criterion's prose body is written as continuous lines without soft-wrapping mid-paragraph, so the model parses each criterion as one coherent unit.
 
 ## 5. Synthetic Test Set Design
 
@@ -128,7 +128,7 @@ The kill gate per judge is two-component: alignment-to-golden ≥ 80% AND eviden
 
 ### 7.1 B coherence judge isolation test
 
-Run on 2026-05-04 with judge `gemini-3.1-pro-preview` thinking_level medium against the 5-sample test set. Result: 50 / 60 = 83.3% alignment, kill gate PASS at +3.3 pp margin.
+Run on 2026-05-04 with judge `gemini-3.1-pro-preview` thinking_level medium against the 5-sample test set. Initial result: 50 / 60 = 83.3% alignment. After B6/B7/B8/B9 anchoring strengthening (2026-05-04 evening — added third anchor type explicitly covering the "rationale visible but unfit for brand strategy" failure mode), final result: 51 / 60 = 85.0% alignment, kill gate PASS at +5.0 pp margin.
 
 | Sample | Aligned | Notes |
 |---|---|---|

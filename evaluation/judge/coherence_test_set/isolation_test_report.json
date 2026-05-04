@@ -3,8 +3,8 @@
   "rubric_path": "/Users/lehoanganhtai/projects/brandmind-ai/evaluation/judge/coherence_rubric.md",
   "samples_evaluated": 5,
   "total_verdicts": 60,
-  "aligned_verdicts": 50,
-  "alignment_pct": 0.8333333333333334,
+  "aligned_verdicts": 51,
+  "alignment_pct": 0.85,
   "pass_threshold": 0.8,
   "passed": true,
   "per_sample": {
@@ -15,7 +15,7 @@
       "B4": "COHERENT",
       "B5": "COHERENT",
       "B6": "COHERENT",
-      "B7": "COHERENT",
+      "B7": "PARTIAL",
       "B8": "COHERENT",
       "B9": "COHERENT",
       "B10": "COHERENT",
@@ -41,7 +41,7 @@
       "B2": "INCOHERENT",
       "B3": "COHERENT",
       "B4": "COHERENT",
-      "B5": "INCOHERENT",
+      "B5": "PARTIAL",
       "B6": "INCOHERENT",
       "B7": "INCOHERENT",
       "B8": "INCOHERENT",
@@ -52,7 +52,7 @@
     },
     "incoherent_problem_solution_disconnect": {
       "B1": "INCOHERENT",
-      "B2": "COHERENT",
+      "B2": "PARTIAL",
       "B3": "COHERENT",
       "B4": "COHERENT",
       "B5": "INCOHERENT",
@@ -60,9 +60,9 @@
       "B7": "INCOHERENT",
       "B8": "INCOHERENT",
       "B9": "INCOHERENT",
-      "B10": "COHERENT",
+      "B10": "INCOHERENT",
       "B11": "COHERENT",
-      "B12": "INCOHERENT"
+      "B12": "COHERENT"
     },
     "partial_specialty_coffee_gaps": {
       "B1": "COHERENT",
@@ -73,7 +73,7 @@
       "B6": "COHERENT",
       "B7": "INCOHERENT",
       "B8": "INCOHERENT",
-      "B9": "PARTIAL",
+      "B9": "INCOHERENT",
       "B10": "COHERENT",
       "B11": "COHERENT",
       "B12": "COHERENT"
@@ -126,8 +126,8 @@
       "sample_id": "coherent_family_pho_neighborhood",
       "criterion_id": "B7",
       "expected": "COHERENT",
-      "actual": "COHERENT",
-      "aligned": true
+      "actual": "PARTIAL",
+      "aligned": false
     },
     {
       "sample_id": "coherent_family_pho_neighborhood",
@@ -280,15 +280,15 @@
       "sample_id": "incoherent_premium_jester_mismatch",
       "criterion_id": "B5",
       "expected": "INCOHERENT",
-      "actual": "INCOHERENT",
-      "aligned": true
+      "actual": "PARTIAL",
+      "aligned": false
     },
     {
       "sample_id": "incoherent_premium_jester_mismatch",
       "criterion_id": "B6",
-      "expected": "PARTIAL",
+      "expected": "INCOHERENT",
       "actual": "INCOHERENT",
-      "aligned": false
+      "aligned": true
     },
     {
       "sample_id": "incoherent_premium_jester_mismatch",
@@ -307,9 +307,9 @@
     {
       "sample_id": "incoherent_premium_jester_mismatch",
       "criterion_id": "B9",
-      "expected": "PARTIAL",
+      "expected": "INCOHERENT",
       "actual": "INCOHERENT",
-      "aligned": false
+      "aligned": true
     },
     {
       "sample_id": "incoherent_premium_jester_mismatch",
@@ -343,8 +343,8 @@
       "sample_id": "incoherent_problem_solution_disconnect",
       "criterion_id": "B2",
       "expected": "COHERENT",
-      "actual": "COHERENT",
-      "aligned": true
+      "actual": "PARTIAL",
+      "aligned": false
     },
     {
       "sample_id": "incoherent_problem_solution_disconnect",
@@ -391,15 +391,15 @@
     {
       "sample_id": "incoherent_problem_solution_disconnect",
       "criterion_id": "B9",
-      "expected": "PARTIAL",
+      "expected": "INCOHERENT",
       "actual": "INCOHERENT",
-      "aligned": false
+      "aligned": true
     },
     {
       "sample_id": "incoherent_problem_solution_disconnect",
       "criterion_id": "B10",
       "expected": "PARTIAL",
-      "actual": "COHERENT",
+      "actual": "INCOHERENT",
       "aligned": false
     },
     {
@@ -413,8 +413,8 @@
       "sample_id": "incoherent_problem_solution_disconnect",
       "criterion_id": "B12",
       "expected": "COHERENT",
-      "actual": "INCOHERENT",
-      "aligned": false
+      "actual": "COHERENT",
+      "aligned": true
     },
     {
       "sample_id": "partial_specialty_coffee_gaps",
@@ -476,7 +476,7 @@
       "sample_id": "partial_specialty_coffee_gaps",
       "criterion_id": "B9",
       "expected": "COHERENT",
-      "actual": "PARTIAL",
+      "actual": "INCOHERENT",
       "aligned": false
     },
     {

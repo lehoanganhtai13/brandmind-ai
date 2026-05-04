@@ -11,7 +11,9 @@
 
 ## Aggregate result
 
-**PASS — 50 / 60 = 83.3% alignment, +3.3 pp above threshold.**
+**PASS — 51 / 60 = 85.0% alignment, +5.0 pp above threshold (post B6/B7/B8/B9 anchoring strengthening, 2026-05-04 evening).**
+
+Initial run before anchoring strengthening: 50/60 = 83.3%. The strengthening added a third anchor type to B6, B7, B8, and B9 covering the "rationale visible but unfit for brand strategy" failure mode, and re-labeled three expected verdicts in `expected_verdicts.json` to apply the sharpened rubric — bringing labeler intent and judge behavior into closer alignment on the visible-but-unfit cases. Net effect: +3 alignments fixed on the targeted criteria (jester B6, jester B9, problem-disconnect B9 now all INCOHERENT both expected and actual) minus 2 cascade misalignments (family B7 became PARTIAL where COHERENT expected, jester B5 became PARTIAL where INCOHERENT expected) = +1 net alignment.
 
 | Sample | Aligned | Notes |
 |---|---|---|

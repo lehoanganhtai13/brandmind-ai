@@ -59,31 +59,35 @@ These criteria measure whether the agent narrates design intent BEFORE dispatchi
 
 ### B6 — Visual design rationale
 
-Before creative-studio dispatch (Brand Key visual), the agent narrates color palette + symbol/composition + typography choices with strategic reasoning linking each to the brand promise + audience. Why: visual identity is the most stakeholder-facing artifact; design choices without rationale are indefensible.
+Before creative-studio dispatch (Brand Key visual), the agent narrates color palette + symbol/composition + typography choices with strategic reasoning linking each to the brand promise + audience. The verdict requires both layers: (a) choices stated with explicit WHY AND (b) the stated choices fit the brand promise + audience reasonably. A visible-but-unfit rationale fails the linkage check just as completely as missing rationale — the design brief is what would inform a designer's work, and a brief that names choices unsuitable for the brand will produce unsuitable output regardless of how confidently the brief is stated. Why: visual identity is the most stakeholder-facing artifact; design choices that look defended on paper but contradict brand promise are indefensible at first stakeholder review.
 
-- COHERENT anchor: Agent says "earth tones (warm beige + soft terracotta + deep green) — restorative not clinical; gold accent — premium nhưng restraint không show-off; serif headers gợi cổ điển + sans-serif body cho modern duality" + WHY each.
-- INCOHERENT anchor: Agent says "I'll create a beautiful Brand Key visual" or dispatches creative-studio with no design choices stated.
+- COHERENT anchor: Agent says "earth tones (warm beige + soft terracotta + deep green) — restorative not clinical; gold accent — premium nhưng restraint không show-off; serif headers gợi cổ điển + sans-serif body cho modern duality" + WHY each — choices stated AND fit premium business retreat brand promise.
+- INCOHERENT anchor (rationale absent): Agent says "I'll create a beautiful Brand Key visual" or dispatches creative-studio with no design choices stated.
+- INCOHERENT anchor (rationale visible but unfit): Agent says "neon pink + electric yellow + black palette — for energy and disruption from corporate boredom; graffiti display typography — for breaking conventions" stated for Phase 2 positioning "premium executive cocktail bar for C-suite discreet meeting venue" — choices articulated with WHY, but the chosen aesthetic targets Gen Z disruption while the brand promises premium executive discretion; linkage to brand promise broken even though the brief looks complete on the page.
 
 ### B7 — DOCX section structure intent
 
-Before document-generator DOCX dispatch, the agent narrates each section's strategic argument or at minimum the section flow rationale (why this order, what each section does for the reader). Why: the strategy doc is the primary deliverable; section flow is a strategic choice that determines how the boss reads the strategy.
+Before document-generator DOCX dispatch, the agent narrates each section's strategic argument or at minimum the section flow rationale (why this order, what each section does for the reader). The verdict requires both visibility (sections + reasoning stated) and fitness (sections operationalize the strategy story for the intended reader) — a section structure that is articulated but does not carry the strategy fails the rationale check the same as no structure at all. Why: the strategy doc is the primary deliverable; section flow is a strategic choice that determines how the boss reads the strategy, and a structure that tells a different story than the strategy needs is indefensible.
 
 - COHERENT anchor: Agent says "section 1 Executive Summary cho sếp đọc nhanh; section 2 Business Context (5W1H output); section 3 Market Intelligence (white space + competition map)..." with flow logic stated.
-- INCOHERENT anchor: Agent says "Mình dispatch document-generator để build strategy document" with no section structure narration.
+- INCOHERENT anchor (intent absent): Agent says "Mình dispatch document-generator để build strategy document" with no section structure narration.
+- INCOHERENT anchor (intent stated but unfit): Agent says "section 1 Brand History; section 2 Founder Bio; section 3 Photo Gallery; section 4 Full Menu" with reasoning "show heritage and product range to leadership" — sections articulated with WHY, but the strategy document is for a repositioning pilot whose deliverable is the positioning argument plus roadmap; the proposed sections tell a brand-story narrative rather than a repositioning-strategy narrative, missing the Phase 0 problem framing and the Phase 5 KPI roadmap that leadership needs to act on.
 
 ### B8 — PPTX slide arc rationale
 
-Before document-generator PPTX dispatch, the agent narrates slide narrative arc (Hook → Problem → Insight → Solution → Why → How → KPI → Roadmap → Closing or equivalent). Why: presentation arc shapes how the strategy is told to leadership; without arc rationale the deck risks being a data dump.
+Before document-generator PPTX dispatch, the agent narrates slide narrative arc (Hook → Problem → Insight → Solution → Why → How → KPI → Roadmap → Closing or equivalent). The verdict requires both visibility (arc stated with reasoning) and fitness (arc tells the story leadership needs for the decision the strategy is asking for) — a stated arc that does not serve the leadership story fails the rationale check the same as a generic dispatch. Why: presentation arc shapes how the strategy is told to leadership; an arc that delivers the wrong narrative beats arrives at leadership with the wrong call to action regardless of how complete the slide list looks.
 
 - COHERENT anchor: Agent says "PPTX 12 slides theo arc Hook (4 quán mới mở rồi sao em vẫn unique) → Problem (mất share) → Insight → Solution → Why (Sage fit) → How → KPIs → Roadmap" with arc logic.
-- INCOHERENT anchor: Agent says "PPTX flow theo strategy" generic, or no arc narration before dispatch.
+- INCOHERENT anchor (arc absent): Agent says "PPTX flow theo strategy" generic, or no arc narration before dispatch.
+- INCOHERENT anchor (arc stated but unfit): Agent says "Slide 1 Logo + Welcome; Slide 2-5 Each signature menu item with photo and origin story; Slide 6 Thank you" with reasoning "showcase product range and aesthetic for visual impact" — arc articulated with WHY, but the deck is for a brand repositioning pilot asking leadership to approve a 6-month budget; the arc tells a product-catalogue story rather than a problem-solution-investment story, leaving leadership without the narrative it needs to make the approve / reject decision the strategy requires.
 
 ### B9 — KPI design methodology
 
-KPIs are presented with measurement method + baseline (current value) + target + cadence + linkage to the diagnosed problem or positioning success. Why: a KPI without baseline cannot show progress; a KPI without problem-linkage measures the wrong thing; both fail the leadership defense.
+KPIs are presented with measurement method + baseline (current value) + target + cadence + linkage to the diagnosed problem or positioning success. The verdict requires both methodology completeness (all five elements stated) and fitness (the KPI actually measures the diagnosed problem, not a vanity proxy that scores well without moving the business outcome) — a fully specified KPI that measures the wrong thing fails the leadership defense the same as a KPI missing baseline or cadence. Why: a KPI is the implicit theory of how the strategy works; the wrong KPI fully specified can hit while the actual problem regresses, which is the failure mode senior leadership treats as worse than missing data.
 
 - COHERENT anchor: "Weekday lunch occupancy: current 35-40%, target 65% by month 6, đo daily POS, review weekly" + linkage to Phase 0 weekday gap stated.
-- INCOHERENT anchor: "Brand awareness survey: target 40% recognition by month 12" — no baseline, no link to specific channel or problem component.
+- INCOHERENT anchor (methodology incomplete): "Brand awareness survey: target 40% recognition by month 12" — no baseline, no link to specific channel or problem component.
+- INCOHERENT anchor (methodology complete but unfit): "Instagram follower growth: current 0, target 5000 by month 6, measured via IG analytics, reviewed weekly, linked to brand visibility" stated for a Phase 0 problem 'weekday lunch occupancy at 35% with 2 named competitors stealing lunch share' — the KPI has all five methodology elements but tracks social-channel vanity rather than the diagnosed weekday-occupancy problem; the KPI can hit while the lunch revenue continues declining.
 
 ## Integration tier (B10–B12)
 
