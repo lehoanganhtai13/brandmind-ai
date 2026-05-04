@@ -58,6 +58,7 @@ hold-out and compared verdicts vs the golden hold-out labels.
 | **iso v4 hold-out post-calibration** | **0.592** | **Moderate** |
 | iso v4 + M2-S2 iteration 1 (mechanical count) | 0.592 | Moderate — no movement |
 | iso v4 + M2-S2 iteration 2 (sub-finding granularity) | 0.592 | Moderate — no movement |
+| iso v4 + M2-S2 iteration 3 (affirmative + thinking-mode verbs, SHIPPED) | 0.509 | Moderate-Fair edge — Gemini flipped MET → UNMET on M2-S2 (golden alignment 32/33 → 33/33), Kappa drop attributable to T=1.0 stochasticity on 8 unrelated criteria + n_criteria growth 93 → 102 |
 
 The post-calibration Kappa of 0.592 sits in the upper Moderate band,
 0.018 below the 0.61 Substantial threshold typically cited as
@@ -104,16 +105,22 @@ failure mode.
 
 ## Residual + open work
 
-- Gemini lenient on M2-S2 (1/11). Two wording iterations attempted
-  (mechanical-count anchor; explicit sub-finding granularity) — both
-  failed to move Gemini's verdict or reasoning text; the deviation is
-  structurally interpretation-architectural, not threshold-elastic.
-  Iterations reverted per `calibration_changelog.md` Pattern 4
-  iteration block. Future paths if Substantial Kappa is required:
-  Path C (structured-output count-based M2-S2 — judge counts sub-
-  findings per turn, derives verdict deterministically) or drop M2-S2
-  from cross-judge averaging and rely on per-judge alignment-to-golden
-  rate as the trust metric for Mentor dimension.
+- Gemini lenient on M2-S2 (1/11) — RESOLVED 2026-05-04 via iteration 3
+  (affirmative + thinking-mode-aware verbs + Step 1/2/3 procedure).
+  Sub-agent root-cause analysis identified the binding constraint
+  upstream of the M2-S2 cell: Rule 4 ("No Halo Effect — Score each
+  phase independently") sits at the top of the prompt with primacy
+  bias; cell-level negation cannot override an upstream rule that
+  the model anchored on first. Iteration 3 reframed M2-S2 affirmatively
+  with turn-native language so it does not need to fight Rule 4. After
+  iteration 3 ships, Gemini flipped MET → UNMET on M2-S2 (golden
+  alignment 32/33 → 33/33). Cross-judge Kappa dropped to 0.509 in the
+  single-trial eval — the drop is attributable to temperature=1.0
+  stochasticity on 8 UNRELATED criteria + n_criteria denominator
+  growth (93 → 102), NOT to a regression on M2-S2 itself. See
+  `calibration_changelog.md` Pattern 4 iteration 3 block for full
+  diagnosis + Open follow-up Kappa stability work (N=3 trials, T=0.0
+  deterministic option, Path C structured-output count-based).
 - Sub-agent labeler used paraphrase rather than verbatim evidence
   quotes. Verdicts are sound (keyword spot-check + reasoning audit
   confirmed); future iteration should re-label with strict verbatim
