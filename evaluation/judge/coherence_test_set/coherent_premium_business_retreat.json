@@ -1,0 +1,53 @@
+{
+  "id": "coherent_premium_business_retreat",
+  "label": "COHERENT",
+  "scope": "repositioning",
+  "design_note": "Strategy hangs together end-to-end. Phase 0 problem (weekday lunch slow + audience confused office/freelancer) maps to Phase 2 positioning (Premium Business Retreat for office workers seeking weekday refresh) maps to Phase 3 archetype (Caregiver — restorative, professional warmth) maps to Phase 4 channels (FB office-radius targeting + LinkedIn thought leadership + Google Maps Local SEO) maps to Phase 5 KPIs (weekday lunch occupancy +30%, return visit rate, FB office-zone reach). Phase A artifact-design rationale narrated explicitly before each dispatch (visual palette + DOCX section intent + PPTX slide arc).",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em là marketing executive nhà hàng Refresh Business Lunch ở Q1, mới vào nghề 1 năm. Quán cao cấp segment 250-400k/người, vị trí gần các tòa văn phòng. Hiện tại ngày trong tuần giờ trưa khá vắng (chỉ 35-40% capacity), cuối tuần thì OK. Khách đa dạng quá — vừa freelancer ngồi cả buổi, vừa office worker tới ăn trưa nhanh, vừa khách gia đình cuối tuần. Em không biết brand mình đang nhắm ai, sếp giục build lại brand strategy.",
+      "agent": "Chào em. Vấn đề em mô tả có hai thread cần tách: (1) audience confusion — quán đang serve 3 nhóm với nhu cầu xung đột (freelancer cần không gian dài, office cần nhanh, gia đình cần cuối tuần), và (2) pattern vắng weekday lunch cụ thể — đây là window doanh thu mất, không phải vắng cả tuần. Hai thread này liên kết: vì audience không clear nên communication không reach đúng nhóm tạo doanh thu weekday. Phase 0 mình lock problem statement: 'Refresh Business Lunch đang loãng định vị — cần chọn 1 audience primary để fix weekday lunch occupancy gap'. Em confirm khung này hợp với gì sếp giục không?"
+    },
+    {
+      "turn": 2,
+      "user": "Đúng ạ, sếp cũng nói 'mình không thể làm hài lòng cả 3 nhóm'. Em nghĩ office worker là nhóm em muốn nhắm vì họ ở ngay tòa nhà cạnh quán, nhưng chưa chắc chắn.",
+      "agent": "Em chọn đúng hướng. Mình confirm bằng evidence trước khi commit. Phase 1 research: trong 3 tòa văn phòng bán kính 300m, có ~2,800 office workers, peak lunch 11:30-13:00, average ticket họ chi cho lunch 200-350k. Competition giờ trưa: 4 quán nhanh (cơm văn phòng <150k) và 2 quán mid (200k buffet). White space rõ: premium business retreat segment — office worker không chỉ ăn lunch mà cần 45-60 phút lùi nhịp deadline, không gian quiet, service đủ professional để host khách. Đây là gap không ai serve. Insight chính: weekday lunch không phải về 'ăn nhanh', mà về 'mental restoration giữa workday'. Em thấy framing này có giải thích được vì sao quán mình đang vắng weekday không?"
+    },
+    {
+      "turn": 3,
+      "user": "Có ạ, em hiểu rồi — quán mình positioning chưa rõ là retreat space nên office worker không nghĩ tới mình.",
+      "agent": "Đúng. Phase 2 positioning statement em propose: 'Refresh Business Lunch là premium business retreat duy nhất ở Q1 dành cho office workers cần lùi nhịp deadline giữa workday — nơi 45-60 phút quiet restoration với service đủ professional để host khách quan trọng.' POPs (table stakes — ngon, sạch, đúng giờ). PODs (differentiating): quiet acoustics + private booth available + service paced cho 45-60 min không hối, không phải fast-lunch model. Stress test: nếu chỉ 'ngon premium' — competition đã có; nếu chỉ 'quiet' — coffee shop có; PODs combo = retreat + business-ready là white space thực. Em nghe positioning này, có thấy thuyết phục mình focus office worker không?"
+    },
+    {
+      "turn": 4,
+      "user": "Em đồng ý. Vậy bước tiếp theo là gì?",
+      "agent": "Phase 3 identity. Archetype em recommend là Caregiver — không phải Hero (mạnh mẽ, cạnh tranh) cũng không phải Sage (giáo dục, expert). Caregiver fit vì core promise của retreat là 'chăm sóc mental state của khách giữa workday'. Visual rationale: palette earth tones (warm beige + soft terracotta + deep green) — restorative, không clinical; gold accent — premium nhưng restraint, không show-off. Typography: serif headers gợi cổ điển + sans-serif body cho modern duality (matching office worker aesthetic). Voice principles: warm-professional, không quá thân mật như family casual. Em okay framework này trước khi mình dispatch creative-studio để generate Brand Key visual không?"
+    },
+    {
+      "turn": 5,
+      "user": "Em đồng ý ạ.",
+      "agent": "Trước khi dispatch creative-studio, em note design choice rõ để em defend với sếp: (a) earth tones thay vì black/gold luxury vì office worker cần cảm giác warm restoration không phải cold luxury, (b) serif+sans-serif duality phản ánh chính tension mà brand serve — cổ điển retreat trong workday hiện đại, (c) Caregiver archetype quyết định voice không cạnh tranh boastful. Mình dispatch generate Brand Key giờ — sub-agent sẽ render 9 components theo framework này."
+    },
+    {
+      "turn": 6,
+      "user": "Okay tiếp tục đi anh.",
+      "agent": "Phase 4 communication. Messaging hierarchy (theo AIDA): Awareness 'Lunch không cần vội — Refresh Business Lunch'; Interest demo quiet booth + 45-60 min ritual; Desire testimonial từ office worker thực; Action booking link Google Maps. Channels: (1) FB ads radius 300m bao 3 tòa văn phòng — targeting office worker 25-40, peak ad time 10:30-11:30 (right before lunch decision); (2) LinkedIn thought leadership — bài viết về 'workday mental restoration' từ founder, reach senior office worker; (3) Google Maps Local SEO — review keyword 'quiet lunch Q1', 'business lunch private booth'. Content pillars: workday stories (40%), space + service detail (30%), menu (30%). Em thấy 3 channel này coherent với positioning không?"
+    },
+    {
+      "turn": 7,
+      "user": "Có ạ, đều xoay quanh office worker và workday context.",
+      "agent": "Phase 5 KPIs. Mình design KPI để measure đúng vấn đề Phase 0 — không generic brand awareness. (1) Weekday lunch occupancy: current 35-40%, target 65% by month 6, đo daily POS, review weekly. (2) Repeat visit rate trong office worker segment: current chưa có data, baseline measure month 1, target 30% repeat by month 6, đo qua loyalty card, review monthly. (3) FB ad reach trong office-zone audience: target 80% reach 3 tòa văn phòng monthly, đo FB Ads Manager, review weekly. (4) LinkedIn engagement từ senior office worker (manager+): target 100 qualified engagement/quarter, review quarterly. KPI cadence weekly cho operational, monthly cho strategic, quarterly cho leadership. Em thấy KPI có trace lại Phase 0 problem (weekday + office worker) không?"
+    },
+    {
+      "turn": 8,
+      "user": "Có ạ, từng metric đều liên quan đến weekday office worker.",
+      "agent": "Trước khi dispatch document-generator để build strategy doc và executive presentation, em note design intent rõ. DOCX 8 sections: section 1 Executive Summary (problem + solution 1 page cho sếp đọc nhanh); section 2 Business Context (5W1H output); section 3 Market Intelligence (white space + competition map); section 4 Brand Positioning (statement + POPs/PODs + stress test); section 5 Brand Identity (Caregiver + visual + voice); section 6 Communication Framework (channels + messaging + AIDA); section 7 Implementation Roadmap (3 horizon); section 8 KPI Framework. Logic: section flow follow journey từ diagnosis → strategy → execution. PPTX 12 slides theo arc Hook → Problem (weekday gap) → Insight (mental restoration framing) → Solution (positioning + POD) → Why (Caregiver fit) → How (channels + content) → KPIs → Roadmap → Closing ask. Em okay framework để mình dispatch không?"
+    },
+    {
+      "turn": 9,
+      "user": "Em okay anh.",
+      "agent": "Mình dispatch document-generator giờ. Trong 1-2 phút sẽ có 4 file: Brand Key visual, strategy_document.docx, executive_presentation.pptx, kpi_tracker.xlsx. Em test mở đọc, nếu có chỗ chưa khớp với strategy mình thảo luận thì em report — mình điều chỉnh trước khi em present sếp."
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "id": "incoherent_premium_jester_mismatch",
+  "label": "INCOHERENT",
+  "scope": "new_brand",
+  "design_note": "Deliberate Phase 2-Phase 3 mismatch + cascade INCOHERENCE downstream. Phase 0 problem (premium F&B for executives needing business meeting space) maps reasonably to Phase 2 positioning (executive premium retreat). But Phase 3 archetype is Jester (playful disruption, irreverent fun) — fundamentally incompatible with executive premium. Phase 4 channels then pivot to TikTok virality + meme content (matching Jester but contradicting executive premium audience). Phase 5 KPIs measure TikTok views + meme engagement, missing executive booking conversion. Cross-artifact contradictions inevitable. Expected INCOHERENT verdicts on B2 (positioning-identity), B3 (identity-communication), B4 (communication-KPI), B11 (domain language), B12 (internal contradictions). B1 may be COHERENT (Phase 0-2 still link), B5 PARTIAL.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em mở quán cocktail bar cao cấp ở Q1 cho executives, mức 800k-1.5tr/người, vị trí tầng cao tòa văn phòng. Khách target là CEO + senior manager cần không gian host khách quan trọng + meeting after-hours. Em cần build brand từ đầu.",
+      "agent": "Phase 0 lock: 'Brand mới premium executive cocktail bar — serve C-suite + senior management cần executive retreat / discreet meeting venue ở Q1, segment 800k-1.5tr/người.' Em confirm framing phù hợp business model không?"
+    },
+    {
+      "turn": 2,
+      "user": "Đúng ạ.",
+      "agent": "Phase 1 research: trong Q1, có ~120 tòa văn phòng grade A, executive density cao. Competition existing: 3 cocktail bar premium hiện có nhưng đa số 'vibe' nightlife trẻ, không executive-grade. Insight: white space rõ — executive cần venue có discretion, sang trọng nhưng không show-off, service đủ professional cho discuss deal. Em thấy framing này đúng?"
+    },
+    {
+      "turn": 3,
+      "user": "Đúng ạ.",
+      "agent": "Phase 2 positioning: 'Premium executive cocktail bar duy nhất ở Q1 dành cho C-suite + senior management cần discreet, sophisticated venue host khách + after-hours meeting.' POPs (cocktail chất lượng, view đẹp). PODs: discretion + executive-grade service + private booth. Stress test pass — không ai serve đúng segment này."
+    },
+    {
+      "turn": 4,
+      "user": "Tiếp đi anh.",
+      "agent": "Phase 3 identity. Archetype em chọn là Jester — playful disruption, irreverent humor. Visual: neon pink + electric yellow + black, phong cách Y2K nostalgic, typography graffiti display. Voice principles: cheeky, meme-aware, breaking conventions, không formal. Đây là archetype giúp brand stand out trong sea of corporate-bland. Em okay không?"
+    },
+    {
+      "turn": 5,
+      "user": "Em okay ạ.",
+      "agent": "Mình dispatch creative-studio để generate Brand Key visual với palette neon Y2K + Jester voice."
+    },
+    {
+      "turn": 6,
+      "user": "Tiếp ạ.",
+      "agent": "Phase 4 communication. Channels: (1) TikTok content viral — short-form meme + comedy skit về 'bar life' với Jester voice; (2) Instagram aesthetic neon Y2K + reel funny; (3) Influencer Gen Z micro-creator 18-24 partnership cho UGC. Messaging: 'Bored của bar boring? — đây là spot cho người dare to be different'. Content pillars: meme bar culture (50%), Y2K nostalgia (30%), drinks (20%). Em okay channel mix?"
+    },
+    {
+      "turn": 7,
+      "user": "Em okay ạ.",
+      "agent": "Phase 5 KPIs. (1) TikTok video views per month: target 500K. (2) Instagram reel engagement rate: target 8%. (3) Meme content shares: target 2K shares/quarter. (4) Influencer collab content reach: target 1M monthly. KPI cadence weekly via social analytics dashboard."
+    },
+    {
+      "turn": 8,
+      "user": "Em okay ạ.",
+      "agent": "Mình dispatch document-generator để build strategy document + executive presentation + KPI tracker theo strategy này."
+    }
+  ]
+}

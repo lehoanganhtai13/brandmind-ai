@@ -1,0 +1,48 @@
+{
+  "id": "incoherent_problem_solution_disconnect",
+  "label": "INCOHERENT",
+  "scope": "repositioning",
+  "design_note": "Deliberate Phase 0 problem to Phase 2 positioning disconnect. Phase 0 problem is specific: weekday lunch slow + competition from new venues. But Phase 2 positioning addresses generic brand awareness, not the weekday gap. Phase 3-5 cascade keeps building on the wrong frame. Phase 5 KPIs measure 'brand awareness survey' + 'follower count' — none of which measure weekday lunch occupancy or competitive positioning. Expected INCOHERENT on B1 (problem-positioning), B4 (communication-KPI — KPIs do not measure problem), B5 (cross-phase reasoning visibility — Phase 5 doesn't cite Phase 0). Phase 2-3-4 internal chains may stay COHERENT (positioning-identity-communication aligned with each other) but the whole strategy doesn't solve the diagnosed problem. Phase A artifact rationale weak / generic — judge should mark B6/B7/B8 PARTIAL or INCOHERENT.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em là marketing manager nhà hàng ABC Bistro ở Q3, mở 4 năm. Vấn đề chính: 6 tháng gần đây weekday lunch giảm từ 70% xuống 40% occupancy vì có 2 quán mới mở cạnh tranh trực tiếp segment lunch. Cuối tuần và tối vẫn OK. Em cần fix weekday lunch.",
+      "agent": "Phase 0 lock: 'ABC Bistro cần xây dựng brand strategy để tăng nhận diện thương hiệu và khác biệt hóa trong thị trường F&B Q3.' Em confirm khung này không?"
+    },
+    {
+      "turn": 2,
+      "user": "Em okay ạ.",
+      "agent": "Phase 1 research: thị trường F&B Q3 có khoảng 200 nhà hàng, customer demographic đa dạng. Insight: brand awareness trong khu vực còn thấp, social media presence hạn chế. White space: cần build brand recognition mạnh hơn."
+    },
+    {
+      "turn": 3,
+      "user": "Tiếp đi anh.",
+      "agent": "Phase 2 positioning: 'ABC Bistro là điểm đến ẩm thực Q3 cho khách hàng tìm kiếm trải nghiệm chất lượng.' POPs: ngon, sạch, service tốt. PODs: vị trí Q3 + không gian ấm cúng + menu đa dạng. Em okay positioning này không?"
+    },
+    {
+      "turn": 4,
+      "user": "Em okay ạ.",
+      "agent": "Phase 3 identity. Archetype Lover — passion + indulgence + sensory pleasure. Visual: warm red + cream + gold, romantic candlelight aesthetic. Voice: warm, inviting, sensory-rich. Hợp với F&B premium trải nghiệm."
+    },
+    {
+      "turn": 5,
+      "user": "Tiếp đi anh.",
+      "agent": "Mình dispatch creative-studio để generate Brand Key visual cho em."
+    },
+    {
+      "turn": 6,
+      "user": "Tiếp ạ.",
+      "agent": "Phase 4 communication. Channels: (1) Instagram aesthetic content — food photography + ambience; (2) Facebook brand story + community; (3) Google Business listing optimize. Messaging: 'ABC Bistro — nơi mỗi bữa ăn là trải nghiệm đáng nhớ'. Content pillars: food (40%), space (30%), story (30%). Em okay không?"
+    },
+    {
+      "turn": 7,
+      "user": "Em okay ạ.",
+      "agent": "Phase 5 KPIs. (1) Brand awareness survey Q3 area: current chưa đo, target 40% recognition by month 12. (2) Instagram follower growth: target +5,000 by month 12. (3) Facebook page engagement rate: target 3%. (4) Google review average rating: target 4.5+. KPI cadence quarterly via brand audit + monthly social analytics."
+    },
+    {
+      "turn": 8,
+      "user": "Em okay ạ.",
+      "agent": "Mình dispatch document-generator để build full deliverables theo strategy."
+    }
+  ]
+}

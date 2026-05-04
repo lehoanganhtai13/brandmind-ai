@@ -1,0 +1,53 @@
+{
+  "id": "coherent_family_pho_neighborhood",
+  "label": "COHERENT",
+  "scope": "refresh",
+  "design_note": "Different domain (mid-tier neighborhood pho shop) confirms judge generalizes beyond premium F&B. Phase 0 problem (new urban district + competition increasing + weak family identity) maps to Phase 2 positioning (Northern traditional pho for modern families) maps to Phase 3 Sage archetype (wisdom of tradition + family warmth) maps to Phase 4 channels (local FB community + Zalo OA neighborhood + lễ Tết campaigns) maps to Phase 5 KPIs (family booking 4+ pax, weekend dine-in occupancy, Zalo OA list growth). Phase A artifact rationale present.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em là chủ quán phở Hai Hương ở khu đô thị Vinhomes Grand Park, Q9. Mở 3 năm rồi, doanh thu OK nhưng gần đây 6 tháng có 4 quán phở mới mở trong bán kính 1km, doanh thu giảm 15%. Em muốn refresh brand để khác biệt nhưng không biết làm gì. Quán em phở Bắc truyền thống, công thức 30 năm của bà ngoại em.",
+      "agent": "Chào em. Vấn đề em mô tả là refresh tình huống — brand đã chạy 3 năm có equity (công thức bà ngoại 30 năm là asset), nhưng competition mới làm dilute differentiation. Phase 0 problem cần lock: 'Phở Hai Hương đang mất share do 4 competitors mới — cần re-articulate differentiation dựa trên equity sẵn có (di sản công thức + chất lượng truyền thống), không phải tạo brand mới'. Trước khi đi tiếp, em confirm: trong 4 competitors mới, họ position kiểu gì? Có ai claim 'phở truyền thống' không hay họ đa số là phở fusion / phở nhanh?"
+    },
+    {
+      "turn": 2,
+      "user": "4 quán mới: 2 quán phở chain hiện đại (decor sáng, menu đa dạng có cả mì), 1 quán phở fusion (phở bò Wagyu), 1 quán phở take-away. Không ai claim truyền thống ạ.",
+      "agent": "Đây là white space rõ. Phase 1 research insight: trong khu đô thị này có 4,500 hộ gia đình, demographic chính là gia đình trẻ 30-45 tuổi có con — thế hệ này nhớ phở truyền thống ăn từ tuổi thơ nhưng đang sống trong môi trường modern. Họ muốn cho con biết hương vị truyền thống nhưng không có thời gian / kỹ năng nấu. Competition map: phở chain = generic modern, phở fusion = trendy nhưng không 'authentic', phở take-away = utility ăn nhanh. Không ai serve nhu cầu 'gia đình hiện đại muốn truyền thống cho con'. Em thấy framing này đúng với khách thực của em đang tới quán không?"
+    },
+    {
+      "turn": 3,
+      "user": "Đúng quá ạ, khách em đa số là cặp vợ chồng đưa con tới ăn cuối tuần.",
+      "agent": "Phase 2 positioning statement: 'Phở Hai Hương là quán phở Bắc truyền thống duy nhất ở Vinhomes Grand Park giữ nguyên công thức 3 thế hệ — nơi gia đình hiện đại trao lại hương vị quê hương cho thế hệ sau.' POPs: ngon, sạch, phục vụ đủ nhanh. PODs: di sản 30 năm công thức (provable, không ai copy được), không gian gia đình thân mật (không phải chain hiện đại lạnh), menu tập trung phở Bắc thuần (không đa dạng kiểu chain). Stress test: có thể em nghĩ 'mất khách trẻ thích modern' — nhưng trong khu đô thị này, 4 chain hiện đại đã serve nhóm đó; em không cần fight ở đó. Em thấy positioning này có giúp em defend lại differentiation với sếp / nhà đầu tư không?"
+    },
+    {
+      "turn": 4,
+      "user": "Có ạ, em hiểu rõ vì sao mình không cần modernize theo chain.",
+      "agent": "Phase 3 identity. Archetype Sage — 'người giữ wisdom of tradition'. Visual rationale: palette warm wood tones (nâu gỗ cũ + vàng đèn ấm + đỏ son trầm) — gợi không gian quê truyền thống không cần sang trọng giả tạo; tránh black-gold luxury (sai brand) hoặc neon-pastel modern (sai brand). Typography: serif Vietnamese (giống Báo Sài Gòn xưa) cho heading + script Vietnam handwriting subtle cho accent — ký ức tuổi thơ. Voice: ấm áp, kể chuyện, không khoe khoang — như bà kể chuyện. Em okay framework để mình dispatch creative-studio generate Brand Key không?"
+    },
+    {
+      "turn": 5,
+      "user": "Okay anh.",
+      "agent": "Em note design intent: (a) wood tones thay vì red-yellow Việt cliche vì brand không phải 'Việt Nam show off' mà là 'wisdom truyền thống' — wood gợi tuổi thơ thật; (b) Sage archetype quyết định voice 'kể chuyện' không 'bán hàng'; (c) tránh modernize vì brand value chính là 30 năm công thức không đổi — modernize sẽ phá equity. Dispatch creative-studio."
+    },
+    {
+      "turn": 6,
+      "user": "Tiếp ạ.",
+      "agent": "Phase 4 communication. Messaging: Awareness 'Phở Hai Hương — 30 năm công thức không đổi, cho gia đình em'; Interest story bà ngoại + công thức không thay đổi qua 3 thế hệ; Desire video gia đình ngồi ăn quây quần; Action mở Google Maps tới quán. Channels: (1) FB community group 'Cư dân Vinhomes Grand Park' — post weekly câu chuyện gia đình + công thức; (2) Zalo OA — broadcast lễ Tết menu + family combo; (3) Lễ Tết campaign offline — Tết Trung Thu + Giỗ Tổ + Tết Nguyên Đán activate lại di sản. Content pillars: di sản công thức (40%), gia đình + ký ức (30%), món + space (30%). Em okay channel mix tập trung local + lễ Tết không?"
+    },
+    {
+      "turn": 7,
+      "user": "Em okay ạ, đúng với khách em hiện tại.",
+      "agent": "Phase 5 KPIs anchored vào Phase 0 problem (mất share + family segment). (1) Family booking ≥4 pax: current ~30/tháng, target 50/tháng by month 6, đo qua POS booking system, review weekly. (2) Weekend dine-in occupancy: current 65%, target 85% by month 6, đo daily, review weekly. (3) Zalo OA subscriber list trong cư dân Vinhomes Grand Park: current 0, target 800 by month 6, đo Zalo dashboard, review monthly. (4) Repeat customer rate gia đình: target 50% within 90 days, đo qua loyalty stamp + Zalo, review monthly. KPI cadence: weekly operational + monthly strategic. Em thấy KPI có giải thích được nếu sếp hỏi 'sao biết refresh thành công?' không?"
+    },
+    {
+      "turn": 8,
+      "user": "Có ạ, từng metric trace về vấn đề mất share + family.",
+      "agent": "Trước dispatch document-generator: DOCX 8 sections theo flow chuẩn (Executive Summary cho sếp đọc nhanh + 7 sections phase output). PPTX 12 slides theo arc Hook (4 quán mới mở rồi sao em vẫn unique) → Problem (mất share) → Insight (white space gia đình hiện đại + truyền thống) → Solution (positioning di sản) → Why (Sage fit) → How (local + Tết) → KPIs → Roadmap. KPI XLSX 4 metrics × cột measurement/baseline/target/cadence/review. Em okay dispatch?"
+    },
+    {
+      "turn": 9,
+      "user": "Em okay ạ.",
+      "agent": "Mình dispatch giờ. Em test 4 file ra, nếu chỗ nào chưa đúng tinh thần di sản — đặc biệt visual không nên rơi vào red-yellow Việt cliche — em flag, mình tinh chỉnh trước khi present."
+    }
+  ]
+}

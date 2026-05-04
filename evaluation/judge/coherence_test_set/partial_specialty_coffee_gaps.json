@@ -1,0 +1,48 @@
+{
+  "id": "partial_specialty_coffee_gaps",
+  "label": "PARTIAL",
+  "scope": "new_brand",
+  "design_note": "Strategy is internally consistent on Phase 2-3-4 (positioning-identity-communication chain aligned around Sage archetype + craft expertise) but has gaps. Phase 0 problem identified two threads (competition + brand confusion) — Phase 2 positioning addresses 'brand confusion' via clear specialty positioning but does NOT explicitly address 'competition cao' (no white space identification, no POD that differentiates from named competitors). Phase 5 KPIs cover brand awareness + engagement but miss competitive positioning measurement and Q1-specific reach. Phase A artifact rationale is partial — visual narrated with reasoning but PPTX slide arc generic. Expected verdicts: B1 PARTIAL (positioning hits 1 of 2 problem components), B2/B3 COHERENT (Sage to craft to expertise content all chain), B4 PARTIAL (channels match identity, KPIs miss competition lens), B5 PARTIAL (cross-phase reasoning visible some places not others), B6 COHERENT (visual narrated), B7 PARTIAL (DOCX intent stated but generic), B8 PARTIAL (PPTX arc generic), B9 COHERENT (KPI methodology stated). Overall PARTIAL — internally aligned but doesn't fully address Phase 0 problem.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em mở quán specialty coffee mới ở Q1, mức 80-150k/ly. Chưa khai trương. Cạnh tranh khu này cao — có 5 specialty coffee shops trong bán kính 500m, mỗi quán đều claim chất lượng và origin direct. Em không biết position thế nào để khác biệt + customer hiện tại đang confused giữa specialty với café thông thường.",
+      "agent": "Phase 0 lock: 'Brand mới specialty coffee Q1 — cần positioning rõ trong segment specialty (không bị nhầm với café thường) + khác biệt hóa với 5 competitors hiện có cùng mức giá.' Hai thread: (1) brand confusion specialty vs regular, (2) competition cao trong segment. Em confirm framing không?"
+    },
+    {
+      "turn": 2,
+      "user": "Đúng ạ.",
+      "agent": "Phase 1 research: Q1 có demographic 25-40 tuổi quan tâm specialty coffee tăng 30% YoY. Customer profile: urban professional, willing to pay premium nếu hiểu story. Insight chính: nhóm khách specialty muốn không chỉ uống ngon mà còn muốn LEARN về origin, brewing — họ là 'curious connoisseurs'."
+    },
+    {
+      "turn": 3,
+      "user": "Tiếp đi anh.",
+      "agent": "Phase 2 positioning: 'Specialty coffee shop cho urban professionals discerning về craft — nơi mỗi ly là một câu chuyện về origin + brewing technique được giải thích rõ.' POPs: bean quality, brewing skill. PODs: educational experience + barista expertise visible + transparency về origin. Em okay không?"
+    },
+    {
+      "turn": 4,
+      "user": "Em okay ạ.",
+      "agent": "Phase 3 identity. Archetype Sage — wisdom of craft, sharing knowledge. Visual rationale: palette earth tones (raw bean brown + cream + deep green) — phản ánh material craft, không neon trendy. Typography serif + sans duality cho 'learned but accessible'. Voice: knowledgeable but không gatekeeping, share story origin. Em okay không?"
+    },
+    {
+      "turn": 5,
+      "user": "Em okay ạ.",
+      "agent": "Em note design intent: earth tones thay vì pastel-aesthetic vì brand value là craft truthfulness, không phải Instagram-aesthetic. Sage archetype quyết định voice 'teacher' không 'influencer'. Dispatch creative-studio."
+    },
+    {
+      "turn": 6,
+      "user": "Tiếp ạ.",
+      "agent": "Phase 4 communication. Channels: (1) Instagram content barista expertise + origin story; (2) YouTube short video brewing technique; (3) workshop offline cuối tuần. Messaging: 'Mỗi ly cà phê là câu chuyện'. Content pillars: origin (40%), craft (30%), community (30%)."
+    },
+    {
+      "turn": 7,
+      "user": "Em okay ạ.",
+      "agent": "Phase 5 KPIs. (1) Brand awareness specialty coffee Q1: current 0, target 25% recognition by month 12, đo qua survey. (2) Instagram follower trong target demographic 25-40: target +3000 by month 6. (3) Workshop attendance: target 30 người/tháng by month 6. (4) Customer retention rate: target 40% within 90 days. KPI cadence weekly + monthly + quarterly."
+    },
+    {
+      "turn": 8,
+      "user": "Em okay ạ.",
+      "agent": "Mình dispatch document-generator. DOCX gồm các sections theo phase output. PPTX flow theo strategy. KPI XLSX theo metrics đã design."
+    }
+  ]
+}

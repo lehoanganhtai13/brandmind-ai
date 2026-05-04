@@ -1,0 +1,79 @@
+{
+  "_metadata": {
+    "rubric_version": "B-rubric Phase B Step 2 draft 2026-05-04",
+    "verdict_scale": ["COHERENT", "PARTIAL", "INCOHERENT"],
+    "alignment_threshold": 0.80,
+    "scoring_rule": "judge verdict is aligned when it matches expected exactly; PARTIAL is treated as a separate category, not a partial credit between COHERENT and INCOHERENT",
+    "design_notes": "Each sample's expected verdicts are anchored to the specific evidence in its transcript. Reasoning fields cite the turn / phrase the judge should ground the verdict in. The aim is unambiguous expected verdicts so judge alignment is fairly measurable."
+  },
+  "coherent_premium_business_retreat": {
+    "B1": {"verdict": "COHERENT", "reasoning": "Phase 0 problem (weekday lunch slow + audience confusion office/freelancer) maps to Phase 2 positioning (premium business retreat for office workers needing weekday refresh) — both threads addressed."},
+    "B2": {"verdict": "COHERENT", "reasoning": "Premium business retreat positioning + Caregiver archetype (restorative warm professional) align — Caregiver is appropriate for restoration-of-mental-state core promise."},
+    "B3": {"verdict": "COHERENT", "reasoning": "Caregiver voice (warm-professional) maps to Phase 4 messaging tone (workday stories, professional warmth, not boastful); content pillars match."},
+    "B4": {"verdict": "COHERENT", "reasoning": "Channels (FB office-radius, LinkedIn senior office worker, Google Maps Local SEO) measured by KPIs (FB office-zone reach, LinkedIn qualified engagement, weekday lunch occupancy via Google) — channel-KPI match."},
+    "B5": {"verdict": "COHERENT", "reasoning": "Phase 2 cites Phase 1 white space; Phase 5 KPIs explicitly trace Phase 0 problem (weekday + office worker) per agent's own framing 'mình design KPI để measure đúng vấn đề Phase 0'."},
+    "B6": {"verdict": "COHERENT", "reasoning": "Agent narrates visual rationale before creative-studio dispatch: earth tones (warm beige + soft terracotta + deep green) + gold accent + serif/sans-serif duality + WHY each choice (restorative not clinical, restraint not show-off, modern duality)."},
+    "B7": {"verdict": "COHERENT", "reasoning": "Agent narrates 8 DOCX sections with strategic argument before document-generator dispatch: section flow follows journey diagnosis to strategy to execution."},
+    "B8": {"verdict": "COHERENT", "reasoning": "Agent narrates 12 PPTX slide arc explicitly: Hook to Problem (weekday gap) to Insight (mental restoration framing) to Solution to Why (Caregiver fit) to How to KPIs to Roadmap to Closing ask."},
+    "B9": {"verdict": "COHERENT", "reasoning": "Each KPI has measurement method + baseline + target + cadence + linkage to Phase 0 problem (e.g. weekday lunch occupancy current 35-40 percent target 65 percent measured daily POS reviewed weekly)."},
+    "B10": {"verdict": "COHERENT", "reasoning": "Caregiver archetype + premium business retreat + warm-professional voice are consistent across positioning, identity, communication, and KPI framing — no contradictions across agent's statements about each artifact."},
+    "B11": {"verdict": "COHERENT", "reasoning": "Vietnamese F&B + office worker context language used correctly throughout (Q1, business retreat, workday); no inappropriate Western framing."},
+    "B12": {"verdict": "COHERENT", "reasoning": "No internal contradictions: premium business retreat consistently maintained across positioning + identity + channels + KPIs."}
+  },
+  "coherent_family_pho_neighborhood": {
+    "B1": {"verdict": "COHERENT", "reasoning": "Phase 0 problem (4 new competitors + weak family identity differentiation) maps to Phase 2 positioning (di sản truyền thống for gia đình hiện đại) — addresses both share loss and family differentiation."},
+    "B2": {"verdict": "COHERENT", "reasoning": "Di sản truyền thống positioning + Sage archetype (wisdom of tradition + family warmth) align — Sage is appropriate for 30-year recipe heritage."},
+    "B3": {"verdict": "COHERENT", "reasoning": "Sage voice (kể chuyện, không khoe khoang) maps to Phase 4 messaging tone (story-telling, family memories, lễ Tết warmth)."},
+    "B4": {"verdict": "COHERENT", "reasoning": "Channels (FB community Vinhomes Grand Park, Zalo OA, lễ Tết offline) measured by KPIs (Zalo subscriber growth, family booking 4-pax, weekend dine-in) — channel-KPI match."},
+    "B5": {"verdict": "COHERENT", "reasoning": "Phase 5 KPIs explicitly anchor to Phase 0 problem (mất share + family); agent says 'mình design KPI để measure đúng vấn đề Phase 0'."},
+    "B6": {"verdict": "COHERENT", "reasoning": "Agent narrates visual rationale: wood tones + serif Vietnamese + script handwriting + WHY each (gợi tuổi thơ thật, tránh red-yellow Việt cliche)."},
+    "B7": {"verdict": "COHERENT", "reasoning": "Agent narrates DOCX 8 sections with flow rationale before dispatch."},
+    "B8": {"verdict": "COHERENT", "reasoning": "Agent narrates PPTX 12-slide arc: Hook to Problem (4 quán mới mở) to Insight to Solution to Why (Sage fit) to How to KPIs to Roadmap."},
+    "B9": {"verdict": "COHERENT", "reasoning": "KPIs include current baseline + target + measurement + cadence (e.g. family booking current 30/tháng target 50/tháng đo qua POS booking review weekly)."},
+    "B10": {"verdict": "COHERENT", "reasoning": "Sage archetype + di sản + family theme consistent across positioning, identity, communication, KPI."},
+    "B11": {"verdict": "COHERENT", "reasoning": "Vietnamese F&B + lễ Tết + di sản language correct; demographic framing (gia đình hiện đại, urban district) accurate to context."},
+    "B12": {"verdict": "COHERENT", "reasoning": "No internal contradictions across phases."}
+  },
+  "incoherent_premium_jester_mismatch": {
+    "B1": {"verdict": "COHERENT", "reasoning": "Phase 0 (premium executive cocktail bar for C-suite) maps to Phase 2 positioning (premium executive cocktail bar discreet venue) — narrow chain holds."},
+    "B2": {"verdict": "INCOHERENT", "reasoning": "Phase 2 positioning (premium executive discreet venue for C-suite host khách quan trọng) directly contradicts Phase 3 archetype (Jester — irreverent humor + neon Y2K + breaking conventions). Executive premium audience does not align with Jester brand voice — fundamental archetype mismatch."},
+    "B3": {"verdict": "COHERENT", "reasoning": "Within the Jester frame, Phase 4 channels (TikTok meme + Instagram Y2K reel + Gen Z micro-creator) match Jester voice — narrow archetype-to-communication chain holds even though the archetype itself is wrong upstream."},
+    "B4": {"verdict": "COHERENT", "reasoning": "Phase 5 KPIs (TikTok views + IG engagement + meme shares + influencer reach) measure the Phase 4 channels (TikTok + IG + influencer) — narrow channel-KPI match holds."},
+    "B5": {"verdict": "INCOHERENT", "reasoning": "Agent introduces Phase 3 Jester archetype with no reference to Phase 0 customer (C-suite + senior management) or Phase 1 white space (executive discreet venue). Phase 5 KPIs do not cite Phase 0 problem (executive booking conversion). Cross-phase reasoning chain absent."},
+    "B6": {"verdict": "PARTIAL", "reasoning": "Visual choices stated (neon pink + electric yellow + black + Y2K + graffiti typography) but reasoning thin — no WHY linking to brand promise or audience need. Conflicts upstream with executive premium positioning."},
+    "B7": {"verdict": "INCOHERENT", "reasoning": "Agent dispatches document-generator without narrating any DOCX section structure or strategic argument flow."},
+    "B8": {"verdict": "INCOHERENT", "reasoning": "Agent dispatches document-generator without narrating PPTX slide arc."},
+    "B9": {"verdict": "PARTIAL", "reasoning": "KPIs have target and weekly cadence but no baseline + no linkage to Phase 0 problem (executive booking + meeting venue conversion); KPIs measure social vanity metrics not problem solution."},
+    "B10": {"verdict": "INCOHERENT", "reasoning": "Phase 2 declares premium executive discreet venue while Phase 3 declares Y2K Jester and Phase 5 measures meme shares — three different brand identities across artifacts; cross-artifact contradiction."},
+    "B11": {"verdict": "INCOHERENT", "reasoning": "Executive premium F&B for C-suite host khách quan trọng requires sophisticated register; Gen Z meme TikTok language register fundamentally mismatched with stated audience."},
+    "B12": {"verdict": "INCOHERENT", "reasoning": "Direct internal contradiction: Phase 2 says discreet sophisticated venue for executives + Phase 3-4-5 says irreverent meme TikTok Jester for Gen Z; cannot both be true for same brand."}
+  },
+  "incoherent_problem_solution_disconnect": {
+    "B1": {"verdict": "INCOHERENT", "reasoning": "Phase 0 problem is specific (weekday lunch slow + 2 new competitors stealing lunch share). Agent reframes Phase 0 as 'build brand strategy for awareness + differentiation in F&B Q3' which drops both the weekday timing component and the named-competitor component. Phase 2 positioning (điểm đến ẩm thực Q3 cho khách hàng tìm kiếm trải nghiệm chất lượng) addresses neither weekday gap nor competition — generic premium framing not linked to problem."},
+    "B2": {"verdict": "COHERENT", "reasoning": "Within the generic premium frame, Lover archetype (passion + indulgence) does match the positioning (trải nghiệm chất lượng đáng nhớ); narrow internal chain holds."},
+    "B3": {"verdict": "COHERENT", "reasoning": "Lover voice (warm sensory inviting) matches Phase 4 messaging (mỗi bữa ăn là trải nghiệm đáng nhớ + Instagram aesthetic food photography); narrow chain holds."},
+    "B4": {"verdict": "PARTIAL", "reasoning": "3 of 4 KPIs measure their respective channels (IG followers ↔ IG, FB engagement ↔ FB, Google review ↔ Google Business) but 'brand awareness survey' KPI is not tied to a specific channel; chain is mostly aligned but weak."},
+    "B5": {"verdict": "INCOHERENT", "reasoning": "Phase 5 KPIs do not cite Phase 0 weekday lunch problem at all; Phase 2 positioning does not cite Phase 1 findings. Cross-phase reasoning chain to problem-of-record absent."},
+    "B6": {"verdict": "INCOHERENT", "reasoning": "Agent presents Phase 3 archetype + visual ('warm red + cream + gold, romantic candlelight') without narrating WHY before dispatch; no design rationale visible."},
+    "B7": {"verdict": "INCOHERENT", "reasoning": "Agent dispatches document-generator with no DOCX section structure narration."},
+    "B8": {"verdict": "INCOHERENT", "reasoning": "Agent dispatches document-generator with no PPTX slide arc narration."},
+    "B9": {"verdict": "PARTIAL", "reasoning": "KPIs have target + cadence but most missing baseline (only Google review baseline absent stated) + no linkage to Phase 0 problem."},
+    "B10": {"verdict": "PARTIAL", "reasoning": "Lover + premium quality brand voice consistent within strategy across positioning + identity + KPIs. However the artifacts describe a strategy disconnected from Phase 0 problem — not a contradiction within strategy itself but artifacts will not solve user's stated problem."},
+    "B11": {"verdict": "COHERENT", "reasoning": "Vietnamese F&B language used correctly (Q3, bistro, ẩm thực, trải nghiệm đáng nhớ); register appropriate for premium segment."},
+    "B12": {"verdict": "COHERENT", "reasoning": "No internal contradictions within the stated strategy frame; the issue is orthogonality to Phase 0 problem (covered by B1) not internal contradiction."}
+  },
+  "partial_specialty_coffee_gaps": {
+    "B1": {"verdict": "PARTIAL", "reasoning": "Phase 0 has two threads: (1) brand confusion specialty vs regular café, (2) competition cao with 5 named competitors. Phase 2 positioning addresses thread 1 (specialty positioning rõ ràng cho discerning urban professionals) but does NOT address thread 2 — no white space identification, no POD that differentiates from the 5 named competitors, no competitive positioning."},
+    "B2": {"verdict": "COHERENT", "reasoning": "Specialty craft positioning + Sage archetype (wisdom of craft + share knowledge) align — Sage is appropriate for educational specialty positioning."},
+    "B3": {"verdict": "COHERENT", "reasoning": "Sage voice (knowledgeable but not gatekeeping, share story origin) maps to Phase 4 messaging (mỗi ly là câu chuyện) + content pillars (origin 40 + craft 30 + community 30) — chain aligned."},
+    "B4": {"verdict": "PARTIAL", "reasoning": "KPIs (brand awareness, IG follower, workshop attendance, retention) match Phase 4 channels (IG + YouTube + workshop offline) on the channel side, but missing competitive positioning measurement (no KPI for 'differentiation vs 5 named competitors')."},
+    "B5": {"verdict": "PARTIAL", "reasoning": "Phase 2-3-4 chain visible (positioning cites craft, identity cites positioning, channels cite identity) but Phase 5 KPIs do not explicitly cite Phase 0 competition thread — the dropped problem component cascades through cross-phase reasoning."},
+    "B6": {"verdict": "COHERENT", "reasoning": "Agent narrates visual rationale before creative-studio dispatch: earth tones (raw bean brown + cream + deep green) + serif/sans duality + WHY (craft truthfulness not Instagram-aesthetic, learned but accessible)."},
+    "B7": {"verdict": "PARTIAL", "reasoning": "Agent says 'DOCX gồm các sections theo phase output' — generic, no narration of section flow rationale or strategic argument per section."},
+    "B8": {"verdict": "PARTIAL", "reasoning": "Agent says 'PPTX flow theo strategy' — generic, no narration of slide arc (Hook → Problem → Insight → Solution structure)."},
+    "B9": {"verdict": "COHERENT", "reasoning": "Each KPI has baseline (current 0 / current 0 noted) + target + cadence + measurement method (survey, IG analytics, workshop attendance count, retention tracking)."},
+    "B10": {"verdict": "COHERENT", "reasoning": "Sage + specialty + craft consistent across positioning + identity + communication + KPIs (within the gaps noted)."},
+    "B11": {"verdict": "COHERENT", "reasoning": "Specialty coffee + Q1 + Vietnamese F&B language correct; urban professional register matches stated audience."},
+    "B12": {"verdict": "COHERENT", "reasoning": "No internal contradictions across phases within the stated strategy frame."}
+  }
+}

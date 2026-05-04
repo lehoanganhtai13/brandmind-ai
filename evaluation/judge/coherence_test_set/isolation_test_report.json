@@ -1,0 +1,504 @@
+{
+  "judge_model": "gemini-3.1-pro-preview",
+  "rubric_path": "/Users/lehoanganhtai/projects/brandmind-ai/evaluation/judge/coherence_rubric.md",
+  "samples_evaluated": 5,
+  "total_verdicts": 60,
+  "aligned_verdicts": 50,
+  "alignment_pct": 0.8333333333333334,
+  "pass_threshold": 0.8,
+  "passed": true,
+  "per_sample": {
+    "coherent_family_pho_neighborhood": {
+      "B1": "COHERENT",
+      "B2": "COHERENT",
+      "B3": "COHERENT",
+      "B4": "COHERENT",
+      "B5": "COHERENT",
+      "B6": "COHERENT",
+      "B7": "COHERENT",
+      "B8": "COHERENT",
+      "B9": "COHERENT",
+      "B10": "COHERENT",
+      "B11": "COHERENT",
+      "B12": "COHERENT"
+    },
+    "coherent_premium_business_retreat": {
+      "B1": "COHERENT",
+      "B2": "COHERENT",
+      "B3": "COHERENT",
+      "B4": "COHERENT",
+      "B5": "COHERENT",
+      "B6": "COHERENT",
+      "B7": "COHERENT",
+      "B8": "COHERENT",
+      "B9": "COHERENT",
+      "B10": "COHERENT",
+      "B11": "COHERENT",
+      "B12": "COHERENT"
+    },
+    "incoherent_premium_jester_mismatch": {
+      "B1": "COHERENT",
+      "B2": "INCOHERENT",
+      "B3": "COHERENT",
+      "B4": "COHERENT",
+      "B5": "INCOHERENT",
+      "B6": "INCOHERENT",
+      "B7": "INCOHERENT",
+      "B8": "INCOHERENT",
+      "B9": "INCOHERENT",
+      "B10": "INCOHERENT",
+      "B11": "INCOHERENT",
+      "B12": "INCOHERENT"
+    },
+    "incoherent_problem_solution_disconnect": {
+      "B1": "INCOHERENT",
+      "B2": "COHERENT",
+      "B3": "COHERENT",
+      "B4": "COHERENT",
+      "B5": "INCOHERENT",
+      "B6": "INCOHERENT",
+      "B7": "INCOHERENT",
+      "B8": "INCOHERENT",
+      "B9": "INCOHERENT",
+      "B10": "COHERENT",
+      "B11": "COHERENT",
+      "B12": "INCOHERENT"
+    },
+    "partial_specialty_coffee_gaps": {
+      "B1": "COHERENT",
+      "B2": "COHERENT",
+      "B3": "COHERENT",
+      "B4": "PARTIAL",
+      "B5": "PARTIAL",
+      "B6": "COHERENT",
+      "B7": "INCOHERENT",
+      "B8": "INCOHERENT",
+      "B9": "PARTIAL",
+      "B10": "COHERENT",
+      "B11": "COHERENT",
+      "B12": "COHERENT"
+    }
+  },
+  "rows": [
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B1",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B2",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B3",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B4",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B5",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B6",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B7",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B8",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B9",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B10",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B11",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_family_pho_neighborhood",
+      "criterion_id": "B12",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B1",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B2",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B3",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B4",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B5",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B6",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B7",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B8",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B9",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B10",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B11",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "coherent_premium_business_retreat",
+      "criterion_id": "B12",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B1",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B2",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B3",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B4",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B5",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B6",
+      "expected": "PARTIAL",
+      "actual": "INCOHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B7",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B8",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B9",
+      "expected": "PARTIAL",
+      "actual": "INCOHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B10",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B11",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_premium_jester_mismatch",
+      "criterion_id": "B12",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B1",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B2",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B3",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B4",
+      "expected": "PARTIAL",
+      "actual": "COHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B5",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B6",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B7",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B8",
+      "expected": "INCOHERENT",
+      "actual": "INCOHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B9",
+      "expected": "PARTIAL",
+      "actual": "INCOHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B10",
+      "expected": "PARTIAL",
+      "actual": "COHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B11",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "incoherent_problem_solution_disconnect",
+      "criterion_id": "B12",
+      "expected": "COHERENT",
+      "actual": "INCOHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B1",
+      "expected": "PARTIAL",
+      "actual": "COHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B2",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B3",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B4",
+      "expected": "PARTIAL",
+      "actual": "PARTIAL",
+      "aligned": true
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B5",
+      "expected": "PARTIAL",
+      "actual": "PARTIAL",
+      "aligned": true
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B6",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B7",
+      "expected": "PARTIAL",
+      "actual": "INCOHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B8",
+      "expected": "PARTIAL",
+      "actual": "INCOHERENT",
+      "aligned": false
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B9",
+      "expected": "COHERENT",
+      "actual": "PARTIAL",
+      "aligned": false
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B10",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B11",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    },
+    {
+      "sample_id": "partial_specialty_coffee_gaps",
+      "criterion_id": "B12",
+      "expected": "COHERENT",
+      "actual": "COHERENT",
+      "aligned": true
+    }
+  ]
+}
