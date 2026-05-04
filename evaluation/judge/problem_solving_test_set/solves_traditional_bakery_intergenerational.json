@@ -1,0 +1,48 @@
+{
+  "id": "solves_traditional_bakery_intergenerational",
+  "label": "SOLVES",
+  "scope": "refresh",
+  "design_note": "Different domain (25-year family bakery) confirms judge generalizes. Phase 0 problem (declining footfall + younger gen not buying + modern bakery chain entered) + constraints (30M VND/month + 1-person family-owned + 12-month transformation). Strategy: di sản truyền thống positioning + Sage archetype + Zalo OA + lễ Tết campaigns + intergenerational story content. Risk: core older customers feel alienated by modernization → mitigation = signature heirloom items unchanged. ROI: footfall projection + average ticket + month 12 break-even math. Time: month 1-3 social presence, month 4-6 lễ Tết, month 7-12 family event programming. Stakeholder Q&A: gia đình hỏi sao thay đổi sau 25 năm + answer with specific data. Expected C1-C10 SOLVES.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em là cháu chủ tiệm bánh mì Bảy Hiệp ở Q5 — gia đình mở 25 năm, signature là bánh mì pate truyền thống công thức ông nội. Vấn đề: 18 tháng qua footfall giảm dần, từ 350 khách/ngày xuống 220 khách/ngày. Khách hàng cũ trung thành (40+ tuổi) vẫn đến nhưng generation trẻ Q5 (20-35 tuổi đa số gia đình mới chuyển vào căn hộ mới) không biết tới quán. Tháng trước có chain bánh mì hiện đại 'Banh Mi Saigon' mở cách 200m — họ marketing rầm rộ, lấy mất 1 phần khách trẻ. Em vừa tiếp quản marketing được 1 tháng. Ngân sách gia đình duyệt 30M VND/tháng, em là 1 người làm full-time + ba mẹ làm tiệm. Family hội đồng cho em 12 tháng để chứng minh, không thì shut down quán hoặc bán sang nhà khác.",
+      "agent": "Phase 0 lock: 'Bánh mì Bảy Hiệp Q5 footfall declining 37% trong 18 tháng (350 → 220 khách/ngày) vì (1) generation trẻ Q5 mới chuyển vào không biết tới quán, (2) chain hiện đại Banh Mi Saigon entry cách 200m lấy mất khách trẻ — cần refresh để reach gen mới mà KHÔNG mất khách core 40+, trong constraints 30M VND/tháng + 1-người marketing full-time + 12-tháng family deadline.' Em confirm 3 thread (footfall decline + gen-new gap + immediate competitor entry) + constraint context + family deadline?"
+    },
+    {
+      "turn": 2,
+      "user": "Đúng ạ. Mà em sợ nhất là lỡ làm 'modern hóa' khách cũ phật lòng bỏ quán luôn.",
+      "agent": "Em raise risk đúng — đây sẽ là explicit constraint cho strategy. Phase 1 research: trong khu căn hộ mới Q5 có ~3,500 hộ gia đình trẻ (25-40 tuổi), nhiều gia đình có con nhỏ. Behavior demographic: thế hệ này nhớ bánh mì pate truyền thống ăn từ tuổi thơ NHƯNG đang ăn 'Banh Mi Saigon' modern vì tiện + Instagram-able. Insight chính: họ MUỐN truyền thống cho con nếm — chỉ là không biết Bảy Hiệp tồn tại. Banh Mi Saigon position 'modern Vietnamese fast-casual' không thể claim '25 năm di sản' — đó là white space của em. Competitive positioning: em không chiến trên 'modern' (mất), không chiến trên 'rẻ' (sai brand). Em chiến trên 'di sản công thức 25 năm cho gia đình hiện đại'."
+    },
+    {
+      "turn": 3,
+      "user": "Em hiểu rồi.",
+      "agent": "Phase 2 positioning: 'Bánh mì Bảy Hiệp là tiệm bánh mì duy nhất Q5 giữ nguyên công thức pate ông nội 25 năm — nơi gia đình hiện đại trao lại hương vị quê hương cho con.' POPs: ngon, sạch, tiện. PODs: di sản 25 năm provable (chỉ có 1 lưu chữ ảnh 1999 trong tiệm + công thức không thay đổi), không gian gia đình thân mật, signature pate ông nội. Stress test: khách cũ 40+ KHÔNG bị xa lạ vì brand essence + signature pate + không gian không thay đổi; khách trẻ mới được giới thiệu tới brand qua câu chuyện 'di sản cho con em'. Em note: messaging cho khách cũ KHÔNG thay đổi (tránh 'làm mới' kích phật lòng); messaging cho khách trẻ là 'discovery story', không phải 're-launch'."
+    },
+    {
+      "turn": 4,
+      "user": "Em okay ạ.",
+      "agent": "Phase 3 identity. Archetype Sage — wisdom of tradition. KHÔNG phải Hero (cạnh tranh modern) hay Lover (lifestyle aesthetic) — Sage giữ continuity với khách cũ. Visual: KHÔNG redesign tiệm (tránh phật lòng), CHỈ tạo digital presence mới với palette wood-tone + đèn vàng + photo signature pate trong tay 3 thế hệ. Typography serif Việt giống báo Sài Gòn xưa cho heading + sans-serif body. Voice: kể chuyện ấm áp, không khoe khoang, không 'modern hóa' tone. Em okay framework — em note đặc biệt: visual digital và physical tách bạch, physical KHÔNG đụng để giữ trust khách cũ."
+    },
+    {
+      "turn": 5,
+      "user": "Em okay ạ, đó là điều em nghĩ tới.",
+      "agent": "Phase 4 communication (constraint 30M VND/tháng): (1) 12M VND Zalo OA — broadcast lễ Tết menu + family combo + story content cho cư dân Q5 căn hộ mới (target 1500 OA subscribers by month 6); (2) 8M VND FB community group 'Cư dân Q5 căn hộ mới' — post weekly story di sản + công thức + family memory; (3) 6M VND lễ Tết campaign offline (Trung Thu + Giỗ Tổ + Tết Nguyên Đán) — combo hộp quà cho gia đình + handwritten note ông nội signature; (4) 4M VND content-creator (1 micro-influencer mom-blogger Q5 có con nhỏ, 2 posts/tháng). Messaging: 'Bánh mì pate ông nội — cho gia đình em', không 'cập nhật' / 'làm mới'. Content pillars: di sản 40%, gia đình + ký ức 30%, signature món 30%. Em thấy mix budget có defend với gia đình hội đồng?"
+    },
+    {
+      "turn": 6,
+      "user": "Có ạ.",
+      "agent": "Phase 5 KPIs anchored vào family deadline 12-tháng. (1) Footfall daily: current 220, target 320 by month 12 (+45% recovery), đo daily counter, review weekly. (2) Gen-new customer share (25-40 tuổi): current ~10% (estimate), target 35% by month 12, đo via Zalo OA + survey at counter, review monthly. (3) Repeat rate gia đình: target 50% within 90 days, đo qua loyalty stamp card (giá 0 chỉ 1 stamp tape) + Zalo OA, review monthly. (4) Average ticket: current 65K, target 75K (combo gia đình lớn hơn) by month 12, đo POS, review weekly. Roadmap 3-horizon: month 1-3 social presence build (Zalo OA + FB community + content cadence); month 4-6 lễ Tết campaign first cycle (Trung Thu Sept + Giỗ Tổ Oct + Tết Feb); month 7-12 family event programming (Sunday family workshop + monthly heritage story event). ROI math: incremental ~100 khách/ngày × 75K avg × 30 ngày × 50% repeat × 12 tháng = ~135M cumulative incremental gross. Marketing 30M × 12 = 360M total spend. Break-even at month 9 with conservative assumption — defend với hội đồng tháng 9 review interim."
+    },
+    {
+      "turn": 7,
+      "user": "Lỡ khách cũ vẫn cảm thấy 'modern hóa' rồi bỏ quán thì sao?",
+      "agent": "Risk highest priority. Mitigation explicit: (a) physical store ZERO change — biển hiệu cũ giữ, layout giữ, signature pate ông nội giữ nguyên công thức (cho khách cũ trust signal); (b) communication tách kênh — Zalo OA + FB community group only reach digital-active demographic, KHÔNG reach khách cũ 40+ (họ vẫn vào tiệm như bình thường, không thấy 'change'); (c) một-tháng interim survey trên 30 khách cũ tháng 3, hỏi 'có thấy gì khác?' — nếu họ phản ánh 'có' nghĩa là leak, em pause communication 2-tháng để diagnose. Em sẽ note explicit risk trong DOCX: 'Strategy này thiết kế để invisible đối với khách cũ — chỉ gen-new thấy.' Sếp gia đình hội đồng có thể hỏi 'sao biết hiệu quả?' (footfall recovery + gen-new share KPI), 'khi nào ra kết quả?' (interim tháng 3 + 6 + 9 → final tháng 12), 'bao nhiêu tiền?' (30M × 12 = 360M, break-even month 9), 'lỡ thất bại?' (nếu interim tháng 6 footfall < 250 → pivot signature menu + offline event focus, drop digital scaling). Em okay defend?"
+    },
+    {
+      "turn": 8,
+      "user": "Em okay ạ.",
+      "agent": "Trước dispatch document-generator: DOCX 8 sections (Executive Summary 1 trang cho gia đình hội đồng + Risk + Mitigation explicit + 7 sections phase output). PPTX 12 slides arc Hook (chain hiện đại entry 200m) → Problem (footfall -37% + gen-new gap) → Insight (white space di sản cho gia đình hiện đại) → Solution (positioning + Sage) → Why (Sage giữ continuity khách cũ) → How (Zalo OA + FB community + lễ Tết, budget 30M fit) → KPIs (footfall + gen-new + repeat) → Risk + Mitigation (physical store unchanged) → Roadmap → Closing ask family approve 12-tháng. KPI XLSX 4 metrics × cột measurement/baseline/target/cadence/review/owner. Em okay dispatch?"
+    }
+  ]
+}

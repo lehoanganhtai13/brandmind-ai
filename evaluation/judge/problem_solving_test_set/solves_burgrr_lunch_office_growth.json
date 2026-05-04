@@ -1,0 +1,48 @@
+{
+  "id": "solves_burgrr_lunch_office_growth",
+  "label": "SOLVES",
+  "scope": "repositioning",
+  "design_note": "Strategy directly solves stated problem within stated constraints with explicit risk fallback + ROI math + time-phased roadmap + stakeholder Q&A. Phase 0 names problem (stagnant lunch revenue + competitor saturation in district) AND constraints (80M VND/month budget + 2-person marketing team + 6-month HQ proof window). Strategy: lunch-bowl premium positioning for office workers + FB office-radius + Google Maps + delivery boost. KPIs measure problem (lunch occupancy + delivery volume + repeat rate). Risk: FB CAC threshold + HQ veto contingency. ROI: CAC 50K + LTV 600K with capacity math. Time: month 1-2 quick wins (delivery + FB) → month 3-4 office channel build → month 5-6 measure for HQ. Sếp Q&A: bao nhiêu tiền, khi nào kết quả, sao biết hiệu quả, lỡ thất bại — all answered with specific data. Expected C1-C10 all SOLVES.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em là marketing manager chuỗi Burgrr Bistro — fast-casual burger 4 chi nhánh ở SG. Flagship Q1 doanh thu lunch 6 tháng đứng yên không tăng dù các chi nhánh khác tăng 15-20%. Khu Q1 cạnh tranh quá — 8 quán fast-casual mới mở cùng segment, đa số là lunch box văn phòng giá 80-130k. HQ cho em 80M VND/tháng marketing + 2 người (em + 1 designer part-time) + 6 tháng để chứng minh; nếu không tăng được lunch revenue 30% thì HQ veto kế hoạch mở thêm 2 chi nhánh nữa.",
+      "agent": "Phase 0 lock: 'Burgrr Bistro flagship Q1 lunch revenue stagnant 6 tháng vì lost share trong segment lunch box văn phòng 80-130k đối với 8 competitors mới — cần repositioning lunch offering trong constraints 80M VND/tháng + 2-người team + 6-tháng HQ proof window.' Em confirm 3 thread này (revenue stagnation + competitive pressure + HQ deadline) là khung em muốn lock không?"
+    },
+    {
+      "turn": 2,
+      "user": "Đúng ạ.",
+      "agent": "Phase 1 research: trong 8 competitors, đa số position 'cơm văn phòng nhanh-tiện-rẻ' với menu khô (cơm tấm, mì xào). Burger là gap rõ — segment 100-150k mid-tier không ai serve trong khu này. Insight: office worker Q1 sau 12 tháng work-from-office trở lại đang thèm 'lunch indulgence' — họ chấp nhận giá cao hơn 20-30% nếu cảm giác 'reward' giữa workday. Burgrr có equity là chuỗi (4 chi nhánh = trust signal) + concept burger (premium feel) — em không cần build từ zero. Em okay framing này?"
+    },
+    {
+      "turn": 3,
+      "user": "Đúng ạ, customer mình hiện tại đa số office worker.",
+      "agent": "Phase 2 positioning: 'Burgrr Bistro Q1 là lunch indulgence cho office workers — burger premium 100-130k mid-tier, ăn 30-40 phút giữa workday để reward sau morning meeting.' POPs (ngon, nhanh, sạch). PODs: mid-tier indulgence (gap competitors miss), chuỗi trust (delivery reliable), portion fit lunch hour. Stress test: nếu chỉ 'burger' — competitors có; nếu chỉ 'cheap & fast' — competitors win. PODs combo (premium + fast + reward) là white space. Em thấy có defend được với HQ?"
+    },
+    {
+      "turn": 4,
+      "user": "Có ạ.",
+      "agent": "Phase 3 identity. Archetype Hero — không phải Caregiver (quá warm cho fast-casual) cũng không Sage (giáo dục không fit lunch). Hero fit 'reward giữa workday' — energetic confidence. Visual: warm orange + black + white, bold typography, không đối lập với chuỗi current. Voice: confident + concise (lunch hour limited time). Em note design intent trước khi dispatch creative-studio: orange thay vì red vì red đã là 4 competitor + black-white để professional fit office worker, không gen-Z aesthetic."
+    },
+    {
+      "turn": 5,
+      "user": "Em okay anh.",
+      "agent": "Phase 4 communication. Channels (constraint 80M VND/tháng): (1) 50M VND FB ads office-radius 500m bao 6 tòa văn phòng + targeting 25-40 office worker, peak ad 10:30-11:30 (ngay trước lunch decision); (2) 15M VND Google Maps Local SEO + paid pin Q1 keyword 'lunch Q1', 'burger Q1'; (3) 10M VND delivery app (GrabFood, Baemin, ShopeeFood) — boost ranking + 2-3 promoted slots peak hours; (4) 5M VND content-creator (1 micro-influencer Q1 office worker community, 4 posts/tháng). Messaging: 'Lunch xứng đáng hơn cơm hộp — Burgrr Q1'. Content pillars: lunch indulgence story 40%, burger detail 30%, office worker testimonial 30%. Em okay channel mix fit budget?"
+    },
+    {
+      "turn": 6,
+      "user": "Em okay ạ.",
+      "agent": "Phase 5 KPIs anchored vào HQ proof requirement (lunch revenue +30% trong 6 tháng). (1) Lunch occupancy flagship Q1: current ~45% (avg POS lunch 11:30-13:30 6 tháng qua), target 70% by month 6, đo daily POS, review weekly. (2) Lunch revenue: current ~150M/tháng, target 200M/tháng (+33% — 3 pp safety margin so HQ +30% gate), đo monthly P&L, review monthly. (3) Delivery order volume Q1: current 20/ngày, target 60/ngày by month 4, đo via 3 app dashboards, review weekly. (4) Repeat rate office worker (loyalty card): target 35% trong 90 ngày by month 6, đo qua loyalty system. Roadmap 3-horizon: month 1-2 quick wins (delivery boost + FB ads launch — hai cái cho conversion sớm); month 3-4 office channel build (FB scaling + Google Maps + content cadence); month 5-6 lock-in measure cho HQ review (loyalty launch + repeat rate stabilize). Em thấy HQ defend được không?"
+    },
+    {
+      "turn": 7,
+      "user": "Có ạ. Nhưng nếu lỡ FB ads CAC quá cao thì sao?",
+      "agent": "Hợp lý em hỏi — em design fallback explicit. Risk monitoring: nếu FB ad CAC vượt 80K (target 50K = LTV 600K / 12 tháng × 35% repeat = ratio 12:1 healthy), pause FB tăng-spend từ tháng 3, redirect 30M sang delivery app boost (CAC delivery thấp hơn ~30K vì commission đã built-in). Risk #2: nếu HQ quyết định Q2 thêm competitor entry (rumor), em có ammunition là 4-tháng pilot data + delivery channel ổn định không phụ thuộc dine-in. Sếp có thể hỏi 'lỡ thất bại?' — answer: tháng 3 review interim, nếu CAC > 80K hoặc lunch occupancy < 55% thì pivot delivery-focus thay vì dine-in expansion. Em sẽ note ROI math vào executive summary: CAC 50K target × volume 60/ngày delivery + 40 dine-in incremental = 100 incremental customer/ngày × 30 ngày × LTV 600K × 35% repeat = ~6.3M VND/tháng incremental gross profit, trong 6 tháng = 38M cumulative — đủ defend 80M × 6 = 480M marketing investment với break-even cumulative customer base scaling."
+    },
+    {
+      "turn": 8,
+      "user": "Em okay anh.",
+      "agent": "Trước dispatch document-generator: DOCX 8 sections (Executive Summary 1 trang cho HQ + 7 sections phase output). PPTX 12 slides arc Hook (lunch revenue stagnant 6 tháng) → Problem (8 competitors mới) → Insight (lunch indulgence gap) → Solution (mid-tier reward positioning) → Why (Hero fit office worker) → How (4-channel mix fit 80M budget) → KPIs (HQ +30% gate + delivery + repeat) → Risk + Fallback → Roadmap 3-horizon → Closing ask HQ approve 6-tháng pilot. KPI XLSX 4 metrics × measurement/baseline/target/cadence/review/owner. Em okay framework dispatch?"
+    }
+  ]
+}

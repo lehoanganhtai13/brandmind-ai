@@ -1,0 +1,43 @@
+{
+  "id": "partially_solves_addresses_some_problem_components",
+  "label": "PARTIALLY_SOLVES",
+  "scope": "repositioning",
+  "design_note": "Strategy addresses 2 of 3 stated problem components within constraints + acknowledges 1 risk explicitly + provides ROI math. Phase 0 has 3 threads: (1) weekday lunch slow, (2) brand identity weak vs new chain, (3) competitive pressure from 2 named competitors. Strategy addresses brand identity well (clear Sage-craft positioning) and competitive pressure reasonably (white space identification) but does NOT address weekday-specific channel/messaging/KPI. Time-phased roadmap exists. Stakeholder Q&A partial. Expected: C1 PARTIALLY_SOLVES (2 of 3 components), C2 PARTIALLY_SOLVES (audience reach OK for brand identity not for weekday-specific reach), C3 SOLVES, C4 PARTIALLY_SOLVES (KPIs measure brand identity + repeat but miss weekday occupancy), C5 SOLVES, C6 PARTIALLY_SOLVES, C7 SOLVES, C8 SOLVES, C9 PARTIALLY_SOLVES, C10 SOLVES.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em là chủ quán phở Bà Tám ở Q10 — mở 8 năm. Vấn đề 3 thread cùng lúc: (1) ngày trong tuần giờ trưa vắng dần (occupancy 40% giờ trưa weekday), (2) brand identity yếu so với chain hiện đại 'Pho Saigon' và 'Pho Now Express' mới mở Q10 6 tháng trước (cách 300m mỗi quán), (3) khách hàng cũ 40+ vẫn trung thành nhưng gen trẻ 25-35 không biết tới quán em. Ngân sách 40M VND/tháng + em + 1 manager part-time. Em cần 9 tháng để doanh thu recovery 25%, nếu không thì phải close.",
+      "agent": "Phase 0 lock: 'Phở Bà Tám Q10 cần repositioning đối với 2 chain entry (Pho Saigon + Pho Now Express) cách 300m + reach gen trẻ 25-35 chưa biết tới quán + revenue +25% trong 9 tháng — constraints 40M/tháng + 1.5-người team + 9-tháng deadline.' Em confirm 3 thread + constraint?"
+    },
+    {
+      "turn": 2,
+      "user": "Đúng ạ.",
+      "agent": "Phase 1 research: trong 2 chain mới, Pho Saigon position 'Vietnamese fusion modern' (decor sáng, menu đa dạng), Pho Now Express position 'fast-casual phở take-away' (utility nhanh). Insight: cả 2 đều KHÔNG claim 'phở truyền thống Bắc' — đây là white space gốc rễ của em. Demographic Q10: cư dân ổn định 8 năm + gia đình trẻ chuyển vào căn hộ mới 3 năm gần đây. Behavior gen trẻ 25-35: nhớ phở Bắc tuổi thơ, đang ăn Pho Saigon vì biết, không biết Bà Tám tồn tại. Em okay framing?"
+    },
+    {
+      "turn": 3,
+      "user": "Đúng ạ.",
+      "agent": "Phase 2 positioning: 'Phở Bà Tám là quán phở Bắc truyền thống duy nhất Q10 — 8 năm công thức không đổi, cho thế hệ trẻ nếm phở quê.' POPs: ngon, sạch, đủ portion. PODs: di sản 8 năm provable, không gian gia đình thân mật, signature nước dùng nấu lâu (tránh fast-casual model). Stress test: KHÔNG chiến trên 'modern' (mất với Pho Saigon), KHÔNG chiến trên 'rẻ + nhanh' (mất với Pho Now). Chiến trên 'truyền thống Bắc + 8-năm di sản' — gap không ai claim. Em note: physical store giữ nguyên (khách cũ trust), digital-only refresh."
+    },
+    {
+      "turn": 4,
+      "user": "Em okay ạ.",
+      "agent": "Phase 3 identity. Archetype Sage. Visual: wood-tone + đèn vàng ấm + photo nồi nước dùng + family. Typography serif Việt + sans-serif body. Voice: kể chuyện ấm áp. Em note design intent: physical store unchanged + digital tách bạch."
+    },
+    {
+      "turn": 5,
+      "user": "Em okay ạ.",
+      "agent": "Phase 4 communication (40M VND/tháng): (1) 18M VND Zalo OA + FB community Q10 — broadcast story di sản 8-năm + signature nước dùng + family content (target 1200 OA subscribers by month 9); (2) 12M VND content production (2 video story/tháng + 8 photo post/tháng); (3) 6M VND lễ Tết campaign (Trung Thu + Tết Nguyên Đán); (4) 4M VND micro-influencer mom-blogger Q10. Messaging: 'Phở Bắc 8 năm — cho gia đình em'. Content pillars: di sản + signature 50%, family memory 30%, món + space 20%."
+    },
+    {
+      "turn": 6,
+      "user": "Em okay ạ.",
+      "agent": "Phase 5 KPIs anchored vào 9-tháng deadline. (1) Brand awareness gen trẻ 25-35 Q10 căn hộ mới: target 30% recognition by month 9, đo qua survey at counter + Zalo OA poll. (2) Zalo OA subscriber: target 1,200 by month 9. (3) Repeat customer rate gia đình: target 45% within 90 days, đo qua loyalty stamp. (4) Average ticket gia đình combo: current 180K (combo 4 pax), target 220K by month 9, đo POS. Roadmap 3-horizon: month 1-3 social presence build (Zalo OA + content cadence + lễ Tết Trung Thu Sept); month 4-6 community engagement (FB community + workshop family event); month 7-9 measure + lock-in cho final review. ROI math: incremental ~50 khách gen-trẻ/ngày × 80K avg × 30 ngày × 45% repeat × 9 tháng = ~48.6M cumulative incremental gross. Marketing 40M × 9 = 360M total. Break-even at month 11 với conservative assumption (sau deadline 9-tháng). Risk awareness: nếu interim tháng 6 brand awareness < 20% → pivot tăng influencer + paid PR."
+    },
+    {
+      "turn": 7,
+      "user": "Em okay ạ.",
+      "agent": "Trước dispatch: DOCX 8 sections + Risk + Mitigation. PPTX 12 slides arc Hook (2 chain entry 300m) → Problem (3 thread) → Insight (white space truyền thống Bắc) → Solution (Sage di sản) → Why → How (Zalo + community + lễ Tết, 40M fit) → KPIs → Risk → Roadmap → Closing. Em okay dispatch?"
+    }
+  ]
+}

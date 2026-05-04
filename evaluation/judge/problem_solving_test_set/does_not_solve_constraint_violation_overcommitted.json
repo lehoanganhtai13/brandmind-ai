@@ -1,0 +1,43 @@
+{
+  "id": "does_not_solve_constraint_violation_overcommitted",
+  "label": "DOES_NOT_SOLVE",
+  "scope": "new_brand",
+  "design_note": "Phase 0 problem framing is OK + target audience identified, but strategy violates stated constraints in multiple ways. Stated budget 25M VND/month, 1-person team, 6-month break-even window. Agent proposes 5-channel mix with influencer micro-creator program + production studio + paid PR + agency-managed campaigns + workshop programming totaling ~150M VND/month execution cost AND requiring at least 4-person team (paid media manager + content lead + community manager + ops). ROI projections do not reconcile with capacity. Time horizon mismatch (12-month roadmap vs 6-month deadline). No risk awareness or contingency fallback. Stakeholder defensibility weak — investor questions about budget/timeline unanswerable. Expected: C1 SOLVES (problem framing OK), C2 SOLVES (audience reach OK on paper), C3 DOES_NOT_SOLVE (constraint violation), C4 PARTIALLY_SOLVES (some KPIs trace), C5 SOLVES, C6 DOES_NOT_SOLVE, C7 DOES_NOT_SOLVE, C8 DOES_NOT_SOLVE, C9 DOES_NOT_SOLVE, C10 PARTIALLY_SOLVES.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em sắp mở thương hiệu trà sữa craft cao cấp 'Trà Kiến Cồ' ở Q1 — concept trà sữa đặc sản Bảo Lộc + topping nhà làm + giá 60-90k/ly mid-tier. Investor cho em 25M VND/tháng marketing budget + em 1 người làm full-time + 6 tháng phải break-even (150M revenue/tháng) nếu không investor pull funding. Customer target: gen Z + millennials Q1 25-32 tuổi quan tâm specialty + Instagram-able experience. Cạnh tranh hard — Q1 có Phúc Long, Gong Cha, ToCoToco, KOI Thé, plus 3 brands craft mới (Tea Loft, Brewd, Komorebi) trong segment 50-90k.",
+      "agent": "Phase 0 lock: 'Trà Kiến Cồ launch mới Q1 segment trà sữa craft cao cấp 60-90k/ly — cần positioning rõ trong 6 brands competitor cùng segment + reach gen Z + millennials Q1, target 150M revenue/tháng (break-even) trong 6-tháng investor window, constraint 25M marketing/tháng + 1-người team.' Em confirm framing?"
+    },
+    {
+      "turn": 2,
+      "user": "Đúng ạ.",
+      "agent": "Phase 1 research: trong 6 competitors hiện có, đa số position 'lifestyle aesthetic' (Phúc Long thuần Việt, KOI Thé Đài Loan trendy, 3 craft mới style minimalist Korean). Insight: 'specialty Bảo Lộc' là white space — không ai claim authentic Vietnamese tea origin. Customer gen Z + millennials Q1 quan tâm 'authentic story' bên cạnh aesthetic. Em okay framing?"
+    },
+    {
+      "turn": 3,
+      "user": "Đúng.",
+      "agent": "Phase 2 positioning: 'Trà Kiến Cồ là trà sữa craft duy nhất Q1 sourcing trực tiếp từ vùng Bảo Lộc — câu chuyện trà Việt thật cho thế hệ trẻ.' POPs: ngon, ngẫu hứng topping, decor đẹp Instagram. PODs: source Bảo Lộc traceable, công thức đặc sản (trà sen + trà ô long), founder story (Bảo Lộc gốc 3 đời trồng trà). Em okay positioning?"
+    },
+    {
+      "turn": 4,
+      "user": "Em okay anh.",
+      "agent": "Phase 3 identity. Archetype Sage — wisdom of authentic origin. Visual: palette earth tone (xanh lá trà tươi + nâu gỗ + cream) + photo founder ở vườn trà Bảo Lộc. Typography: serif Việt cho heading + handwriting accent. Voice: kể chuyện vùng đất + craft pride. Em note design intent: tránh aesthetic minimalist Korean (3 craft mới đã chiếm), khẳng định authentic Vietnam origin."
+    },
+    {
+      "turn": 5,
+      "user": "Em okay ạ.",
+      "agent": "Phase 4 communication. Channels comprehensive cho launch impact: (1) 50M VND/tháng Instagram + reels content production (4 reels/tuần ×1.5M production cost + ad boost 30M); (2) 35M VND/tháng TikTok content + influencer collaboration (5 micro-creator gen Z 50-200K follower, mỗi creator 7M/tháng); (3) 25M VND/tháng paid PR + media coverage (3 magazine + 2 lifestyle blog cover story); (4) 20M VND/tháng workshop programming + tasting events offline (2 events/tháng × 10M including venue + producer); (5) 15M VND/tháng community management agency cho FB + IG + TikTok comment respond + DM convert; (6) 10M VND/tháng Google Ads + Spotify audio ads cho gen Z reach. Total channel mix ~155M/tháng cho aggressive launch coverage. Messaging: 'Trà Kiến Cồ — vị Bảo Lộc thật cho thế hệ trẻ'. Content pillars: founder + Bảo Lộc story 30%, sản phẩm + topping 30%, customer + community 25%, lifestyle aesthetic 15%."
+    },
+    {
+      "turn": 6,
+      "user": "Em okay ạ.",
+      "agent": "Phase 5 KPIs. (1) Revenue/tháng: target 150M by month 6 (break-even gate), đo POS + delivery, review weekly. (2) Instagram follower: target 50,000 by month 6, đo IG analytics, review weekly. (3) TikTok views: target 2M total by month 6, đo TikTok analytics. (4) PR coverage: target 5 publication mention by month 6. (5) Workshop attendance: target 30 người/event × 2 event/tháng = 360 người by month 6. (6) Email + Zalo OA list: target 8,000 subscriber by month 6. Roadmap 12-tháng: month 1-3 awareness build (PR + influencer + Instagram launch), month 4-6 conversion build (TikTok scaling + workshop scaling), month 7-12 community building (loyalty + repeat program)."
+    },
+    {
+      "turn": 7,
+      "user": "Em okay ạ.",
+      "agent": "Mình dispatch document-generator để build full strategy document + executive presentation + KPI tracker theo strategy này. Em present investor khi có file để approve launch budget."
+    }
+  ]
+}

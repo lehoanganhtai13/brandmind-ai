@@ -1,0 +1,69 @@
+{
+  "_metadata": {
+    "rubric_version": "C-rubric Phase B Step 3 draft 2026-05-04",
+    "verdict_scale": ["SOLVES", "PARTIALLY_SOLVES", "DOES_NOT_SOLVE"],
+    "alignment_threshold": 0.80,
+    "scoring_rule": "judge verdict is aligned when it matches expected exactly; PARTIALLY_SOLVES is a separate category, not a partial credit between SOLVES and DOES_NOT_SOLVE",
+    "design_notes": "Each sample's expected verdicts are anchored to the specific evidence in its transcript (problem statement + constraint + risk + ROI + time-horizon + sếp Q&A coverage). Samples explicitly test C3/C6/C7/C8 dimensions that B coherence rubric does not cover."
+  },
+  "solves_burgrr_lunch_office_growth": {
+    "C1": {"verdict": "SOLVES", "reasoning": "Phase 5 KPIs explicitly trace Phase 0 problem: lunch occupancy + lunch revenue +30% target matches HQ +30% gate, delivery volume + repeat rate measure each problem thread."},
+    "C2": {"verdict": "SOLVES", "reasoning": "Office worker target maps to channels: FB office-radius 500m bao 6 tòa văn phòng + Google Maps Q1 keyword + delivery apps reach office workers at lunch decision moment."},
+    "C3": {"verdict": "SOLVES", "reasoning": "80M VND/tháng budget split 50+15+10+5 = 80M fit; 2-person team (em + designer part-time) executable per channel mix."},
+    "C4": {"verdict": "SOLVES", "reasoning": "KPIs measure problem: lunch occupancy + lunch revenue (not vanity follower counts) + delivery volume + repeat rate — each metric ties to revenue gate."},
+    "C5": {"verdict": "SOLVES", "reasoning": "8 competitors named in Phase 0; Phase 1 identifies competition position 'cơm văn phòng nhanh-tiện-rẻ' and white space 'mid-tier lunch indulgence' as defendable PODs."},
+    "C6": {"verdict": "SOLVES", "reasoning": "Risk explicit: CAC threshold 80K trigger, competitor Q2 entry rumor contingency, interim tháng 3 review with pivot to delivery-focus if CAC > 80K or occupancy < 55%."},
+    "C7": {"verdict": "SOLVES", "reasoning": "3-horizon roadmap matches 6-month deadline: month 1-2 quick wins (delivery + FB conversion) → 3-4 channel build → 5-6 lock-in measure for HQ review."},
+    "C8": {"verdict": "SOLVES", "reasoning": "ROI math explicit: CAC 50K target × LTV 600K = 12:1 ratio, 100 incremental customer/ngày × 35% repeat = 6.3M/tháng incremental gross, 38M cumulative over 6 months defensible vs 480M marketing spend with scaling base."},
+    "C9": {"verdict": "SOLVES", "reasoning": "HQ Q&A answered with specific data: bao nhiêu (80M × 6 = 480M), khi nào (month 6 HQ review), sao biết hiệu quả (lunch occupancy KPI + revenue gate), lỡ thất bại (interim tháng 3 pivot delivery-focus)."},
+    "C10": {"verdict": "SOLVES", "reasoning": "Vietnamese F&B + Q1 + lunch hour reality reflected (office worker + chuỗi trust + delivery app penetration); fast-casual segment language correct."}
+  },
+  "solves_traditional_bakery_intergenerational": {
+    "C1": {"verdict": "SOLVES", "reasoning": "Phase 5 KPIs trace Phase 0 problem: footfall recovery + gen-new share + repeat rate map to each declining-footfall + gen-new-gap + competitor-entry thread."},
+    "C2": {"verdict": "SOLVES", "reasoning": "Gen-new target (25-40 tuổi căn hộ mới Q5) maps to channels: Zalo OA + FB community 'Cư dân Q5 căn hộ mới' + mom-blogger micro-influencer reach exactly stated demographic."},
+    "C3": {"verdict": "SOLVES", "reasoning": "30M VND/tháng budget split 12+8+6+4 = 30M fit; 1-person marketing full-time + family operations match team constraint."},
+    "C4": {"verdict": "SOLVES", "reasoning": "KPIs measure problem: footfall daily + gen-new share + repeat rate (not vanity follower counts) directly tie to footfall-recovery and gen-new-gap problems."},
+    "C5": {"verdict": "SOLVES", "reasoning": "Banh Mi Saigon entry named in Phase 0; Phase 2 identifies 'modern Vietnamese fast-casual' as competitor position and 'di sản 25 năm cho gia đình hiện đại' as white space."},
+    "C6": {"verdict": "SOLVES", "reasoning": "Risk explicit: alienation of core 40+ customers — mitigation = physical store unchanged + digital channel separation + interim tháng 3 survey + pause communication if leak detected."},
+    "C7": {"verdict": "SOLVES", "reasoning": "3-horizon roadmap matches 12-month deadline: month 1-3 social presence → 4-6 lễ Tết campaign → 7-12 family event programming."},
+    "C8": {"verdict": "SOLVES", "reasoning": "ROI math: 100 incremental customer/ngày × 75K avg × 50% repeat × 12 tháng = 135M cumulative incremental gross; 360M total marketing spend; break-even month 9 with conservative assumption."},
+    "C9": {"verdict": "SOLVES", "reasoning": "Family hội đồng Q&A answered: bao nhiêu (30M × 12 = 360M), khi nào (interim tháng 3/6/9 + final tháng 12), sao biết (footfall + gen-new share KPIs), lỡ thất bại (pivot signature menu + offline event focus)."},
+    "C10": {"verdict": "SOLVES", "reasoning": "Vietnamese bánh mì + Q5 + di sản 25-năm + lễ Tết reality reflected; family-owned shop register correct."}
+  },
+  "does_not_solve_weekday_problem_addressed_with_brand_awareness": {
+    "C1": {"verdict": "DOES_NOT_SOLVE", "reasoning": "Phase 0 problem is specific (weekday lunch 35% + Saigon Bowl entry 150m + 4-month deadline). Agent reframes as 'tăng nhận diện thương hiệu' generic — drops weekday + drops named competitor + drops timeline. Strategy does not solve the diagnosed problem."},
+    "C2": {"verdict": "PARTIALLY_SOLVES", "reasoning": "Channels (IG + FB + Google) reach urban professionals 25-45 aspirationally, but no weekday-lunch-time targeting; office-radius reach absent."},
+    "C3": {"verdict": "PARTIALLY_SOLVES", "reasoning": "60M budget split 30+20+10 = 60M fit numerically; 1-person team executable but plan vague on cadence + execution capacity."},
+    "C4": {"verdict": "DOES_NOT_SOLVE", "reasoning": "KPIs measure brand awareness survey + Instagram follower + FB engagement + Google review — none measure weekday occupancy or lunch revenue. Vanity metrics replace problem metrics."},
+    "C5": {"verdict": "DOES_NOT_SOLVE", "reasoning": "Saigon Bowl named in Phase 0 problem but Phase 1 research generic ('demographic đa dạng + brand awareness thấp'); no white space identification, no PODs differentiating from named competitor."},
+    "C6": {"verdict": "DOES_NOT_SOLVE", "reasoning": "No risk awareness, no fallback, no contingency for 4-month deadline pressure or competitor escalation."},
+    "C7": {"verdict": "DOES_NOT_SOLVE", "reasoning": "KPI horizon 12-month + monthly cadence vs boss deadline 4-month — fundamental mismatch; no quick-win front-loading for 4-month proof."},
+    "C8": {"verdict": "DOES_NOT_SOLVE", "reasoning": "No ROI math, no CAC, no break-even calculation, no link from marketing spend to lunch revenue recovery."},
+    "C9": {"verdict": "DOES_NOT_SOLVE", "reasoning": "Boss can ask 'lỡ tháng 4 không kịp recovery 65%?' — no answer in strategy. KPIs cannot answer 'sao biết hiệu quả' for the actual problem (weekday lunch)."},
+    "C10": {"verdict": "SOLVES", "reasoning": "Vietnamese F&B + Q3 fusion mid-tier + urban professional language register OK within the (wrong) frame."}
+  },
+  "does_not_solve_constraint_violation_overcommitted": {
+    "C1": {"verdict": "SOLVES", "reasoning": "Problem framing locked correctly (launch new + 6 competitors named + 6-month break-even + gen Z millennial Q1 audience + 25M budget + 1-person team) — agent's lock matches user statement."},
+    "C2": {"verdict": "SOLVES", "reasoning": "Target gen Z + millennial Q1 25-32 maps to channels (IG + TikTok + influencer + workshop + PR) reach demographic on paper."},
+    "C3": {"verdict": "DOES_NOT_SOLVE", "reasoning": "Stated 25M VND/tháng budget; channel mix totals 50+35+25+20+15+10 = 155M/tháng = 6.2x over budget. Stated 1-person team; plan implicitly requires paid media manager + content lead + community manager + events ops = 4+ person execution capacity. Constraint violation on both budget and team."},
+    "C4": {"verdict": "PARTIALLY_SOLVES", "reasoning": "Revenue/tháng KPI 150M traces break-even gate; remaining KPIs (IG follower + TikTok views + PR mentions + workshop attendance + email list) are vanity / channel-output metrics, not break-even-causal."},
+    "C5": {"verdict": "SOLVES", "reasoning": "6 competitors named and positioning categorized; white space 'authentic Bảo Lộc origin' identified vs minimalist Korean trend competitors."},
+    "C6": {"verdict": "DOES_NOT_SOLVE", "reasoning": "No risk awareness — no fallback for 'lỡ chưa đủ traction tháng 4', no contingency for influencer non-performance, no pivot plan if launch slow."},
+    "C7": {"verdict": "DOES_NOT_SOLVE", "reasoning": "12-month roadmap vs 6-month investor break-even deadline; month 7-12 'community building' phase falls beyond investor pull-funding window. Quick-win front-loading for 6-month break-even absent."},
+    "C8": {"verdict": "DOES_NOT_SOLVE", "reasoning": "No CAC math, no break-even calculation, no link from 155M monthly spend to 150M monthly revenue target. Plan would lose money even if all KPIs hit (spend > revenue)."},
+    "C9": {"verdict": "DOES_NOT_SOLVE", "reasoning": "Investor would immediately ask 'sao 155M/tháng channel spend với 25M budget cấp?' or 'lỡ tháng 6 chưa break-even?' — strategy has no answer; constraint violation indefensible at first finance review."},
+    "C10": {"verdict": "PARTIALLY_SOLVES", "reasoning": "Bảo Lộc origin + authentic Vietnamese tea context registers correctly, but 6-channel aggressive launch register clashes with stated startup small-budget reality (typical Vietnamese F&B startup launches lean, not 6-channel saturation)."}
+  },
+  "partially_solves_addresses_some_problem_components": {
+    "C1": {"verdict": "PARTIALLY_SOLVES", "reasoning": "Phase 0 has 3 threads (weekday slow + brand identity weak + competition). Strategy addresses 2 (brand identity via Sage truyền thống positioning + competition via white space identification) but does NOT address weekday-specific dimension at any phase."},
+    "C2": {"verdict": "PARTIALLY_SOLVES", "reasoning": "Gen trẻ 25-35 reach OK via Zalo OA + FB community Q10 + mom-blogger; weekday-lunch-hour-specific reach absent (no time-of-day targeting)."},
+    "C3": {"verdict": "SOLVES", "reasoning": "40M VND/tháng budget split 18+12+6+4 = 40M fit; 1.5-person team (em + manager part-time) executable per channel cadence."},
+    "C4": {"verdict": "PARTIALLY_SOLVES", "reasoning": "KPIs measure brand awareness gen trẻ + Zalo OA growth + repeat rate + ticket — addresses 2 of 3 problem threads but no weekday occupancy KPI for the weekday-specific problem."},
+    "C5": {"verdict": "SOLVES", "reasoning": "Pho Saigon + Pho Now Express named in Phase 0; Phase 1 categorizes positions and identifies 'truyền thống Bắc 8-năm di sản' as defendable white space."},
+    "C6": {"verdict": "PARTIALLY_SOLVES", "reasoning": "Risk awareness present for brand awareness threshold (interim tháng 6 < 20% pivot to influencer + paid PR) but does not address weekday-gap mitigation."},
+    "C7": {"verdict": "SOLVES", "reasoning": "3-horizon roadmap matches 9-month deadline: month 1-3 social presence → 4-6 community engagement → 7-9 measure + lock-in."},
+    "C8": {"verdict": "SOLVES", "reasoning": "ROI math: 50 incremental gen-trẻ/ngày × 80K avg × 45% repeat × 9 tháng = 48.6M cumulative incremental gross; 360M total marketing spend; break-even month 11 with conservative assumption (post 9-month deadline noted)."},
+    "C9": {"verdict": "PARTIALLY_SOLVES", "reasoning": "Stakeholder Q&A partial — defensible on brand identity + competition + ROI but boss could ask 'sao weekday vẫn vắng?' — strategy has no answer for that thread."},
+    "C10": {"verdict": "SOLVES", "reasoning": "Vietnamese phở + Q10 + di sản 8-năm + family register correct; physical store unchanged digital tách bạch reflects realistic family-owned shop discipline."}
+  }
+}

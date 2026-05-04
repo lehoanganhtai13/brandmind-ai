@@ -1,0 +1,48 @@
+{
+  "id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+  "label": "DOES_NOT_SOLVE",
+  "scope": "repositioning",
+  "design_note": "Phase 0 problem is specific (weekday lunch occupancy at 35% + named competitor entry + 4-month boss deadline) but agent's strategy treats it as generic brand awareness problem. Strategy: high-level 'premium experience' positioning + Instagram aesthetic + brand awareness survey KPI. Channels do not target weekday lunch hour or office worker location. KPIs measure follower counts and brand recall, not weekday occupancy. ROI math absent. Risk awareness absent. Time horizon mismatched (12-month roadmap vs 4-month boss deadline). Stakeholder defensibility weak (no answer to 'lỡ tháng 4 không kịp?'). Expected: C1 DOES_NOT_SOLVE, C2 PARTIALLY_SOLVES, C3 PARTIALLY_SOLVES, C4 DOES_NOT_SOLVE, C5 DOES_NOT_SOLVE, C6 DOES_NOT_SOLVE, C7 DOES_NOT_SOLVE, C8 DOES_NOT_SOLVE, C9 DOES_NOT_SOLVE, C10 SOLVES.",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Em là marketing executive nhà hàng Tropical Garden ở Q3 — Vietnamese fusion mid-tier 250-350k/người. Vấn đề cấp bách: weekday lunch occupancy 35% (tệ nhất cùng kỳ 3 năm), tháng trước có 'Saigon Bowl' mở cách 150m, là chain Q1 expanding xuống Q3, marketing rầm rộ steal mất rõ ràng khách lunch. Sếp em cho em 4 tháng, ngân sách 60M VND/tháng + em 1 người marketing. Nếu lunch không recovery 65% trong 4 tháng thì em mất việc, sếp tính outsource marketing.",
+      "agent": "Phase 0 lock: 'Tropical Garden cần xây dựng brand strategy để tăng nhận diện thương hiệu và khác biệt hóa trong thị trường F&B Q3 cạnh tranh.' Em confirm khung này không?"
+    },
+    {
+      "turn": 2,
+      "user": "Em okay ạ.",
+      "agent": "Phase 1 research: thị trường F&B Q3 đa dạng, customer demographic mid-tier urban professionals 25-45 tuổi. Insight: brand awareness Q3 area còn thấp với Tropical Garden, social media presence chưa mạnh. White space: cần build brand recognition rộng hơn để dominate Q3 area mid-tier."
+    },
+    {
+      "turn": 3,
+      "user": "Tiếp đi anh.",
+      "agent": "Phase 2 positioning: 'Tropical Garden là điểm đến ẩm thực Vietnamese fusion premium Q3 — trải nghiệm chất lượng cho urban professionals discerning.' POPs: ngon, sạch, service tốt. PODs: vị trí Q3 + không gian ấm cúng + menu fusion sáng tạo. Em okay?"
+    },
+    {
+      "turn": 4,
+      "user": "Em okay ạ.",
+      "agent": "Phase 3 identity. Archetype Lover — passion + sensory pleasure + indulgence. Visual: warm red + cream + gold romantic candlelight aesthetic. Voice: warm, inviting, sensory-rich. Hợp với Vietnamese fusion premium experience."
+    },
+    {
+      "turn": 5,
+      "user": "Tiếp ạ.",
+      "agent": "Mình dispatch creative-studio để generate Brand Key visual cho em với palette Lover romantic."
+    },
+    {
+      "turn": 6,
+      "user": "Tiếp đi anh.",
+      "agent": "Phase 4 communication. Channels (60M VND/tháng): (1) 30M VND Instagram aesthetic content food photography + ambience; (2) 20M VND Facebook brand story page + community engagement; (3) 10M VND Google Business listing optimize + paid search Vietnamese fusion Q3. Messaging: 'Tropical Garden — nơi mỗi bữa ăn là trải nghiệm đáng nhớ'. Content pillars: food aesthetic 40%, ambience 30%, story 30%."
+    },
+    {
+      "turn": 7,
+      "user": "Em okay ạ.",
+      "agent": "Phase 5 KPIs. (1) Brand awareness Q3 area: target 40% recognition by month 12, đo qua brand audit survey. (2) Instagram follower growth: target +5,000 follower by month 12. (3) Facebook page engagement rate: target 3% by month 6. (4) Google review average rating: target 4.5+ by month 12. KPI cadence quarterly via brand audit + monthly social analytics."
+    },
+    {
+      "turn": 8,
+      "user": "Em okay ạ.",
+      "agent": "Mình dispatch document-generator để build full strategy document + executive presentation + KPI tracker theo strategy này. Em present sếp khi có file."
+    }
+  ]
+}

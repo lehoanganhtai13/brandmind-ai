@@ -1,0 +1,424 @@
+{
+  "judge_model": "gemini-3.1-pro-preview",
+  "rubric_path": "/Users/lehoanganhtai/projects/brandmind-ai/evaluation/judge/problem_solving_rubric.md",
+  "samples_evaluated": 5,
+  "total_verdicts": 50,
+  "aligned_verdicts": 41,
+  "alignment_pct": 0.82,
+  "pass_threshold": 0.8,
+  "passed": true,
+  "per_sample": {
+    "does_not_solve_constraint_violation_overcommitted": {
+      "C1": "SOLVES",
+      "C2": "SOLVES",
+      "C3": "DOES_NOT_SOLVE",
+      "C4": "PARTIALLY_SOLVES",
+      "C5": "SOLVES",
+      "C6": "DOES_NOT_SOLVE",
+      "C7": "DOES_NOT_SOLVE",
+      "C8": "DOES_NOT_SOLVE",
+      "C9": "DOES_NOT_SOLVE",
+      "C10": "SOLVES"
+    },
+    "does_not_solve_weekday_problem_addressed_with_brand_awareness": {
+      "C1": "DOES_NOT_SOLVE",
+      "C2": "PARTIALLY_SOLVES",
+      "C3": "DOES_NOT_SOLVE",
+      "C4": "DOES_NOT_SOLVE",
+      "C5": "DOES_NOT_SOLVE",
+      "C6": "DOES_NOT_SOLVE",
+      "C7": "DOES_NOT_SOLVE",
+      "C8": "DOES_NOT_SOLVE",
+      "C9": "DOES_NOT_SOLVE",
+      "C10": "PARTIALLY_SOLVES"
+    },
+    "partially_solves_addresses_some_problem_components": {
+      "C1": "PARTIALLY_SOLVES",
+      "C2": "SOLVES",
+      "C3": "SOLVES",
+      "C4": "PARTIALLY_SOLVES",
+      "C5": "SOLVES",
+      "C6": "SOLVES",
+      "C7": "DOES_NOT_SOLVE",
+      "C8": "DOES_NOT_SOLVE",
+      "C9": "DOES_NOT_SOLVE",
+      "C10": "SOLVES"
+    },
+    "solves_burgrr_lunch_office_growth": {
+      "C1": "SOLVES",
+      "C2": "SOLVES",
+      "C3": "SOLVES",
+      "C4": "SOLVES",
+      "C5": "SOLVES",
+      "C6": "SOLVES",
+      "C7": "SOLVES",
+      "C8": "SOLVES",
+      "C9": "SOLVES",
+      "C10": "SOLVES"
+    },
+    "solves_traditional_bakery_intergenerational": {
+      "C1": "SOLVES",
+      "C2": "SOLVES",
+      "C3": "SOLVES",
+      "C4": "SOLVES",
+      "C5": "SOLVES",
+      "C6": "SOLVES",
+      "C7": "SOLVES",
+      "C8": "DOES_NOT_SOLVE",
+      "C9": "SOLVES",
+      "C10": "SOLVES"
+    }
+  },
+  "rows": [
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C1",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C2",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C3",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C4",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "PARTIALLY_SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C5",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C6",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C7",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C8",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C9",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_constraint_violation_overcommitted",
+      "criterion_id": "C10",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "SOLVES",
+      "aligned": false
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C1",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C2",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "PARTIALLY_SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C3",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": false
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C4",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C5",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C6",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C7",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C8",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C9",
+      "expected": "DOES_NOT_SOLVE",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": true
+    },
+    {
+      "sample_id": "does_not_solve_weekday_problem_addressed_with_brand_awareness",
+      "criterion_id": "C10",
+      "expected": "SOLVES",
+      "actual": "PARTIALLY_SOLVES",
+      "aligned": false
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C1",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "PARTIALLY_SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C2",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "SOLVES",
+      "aligned": false
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C3",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C4",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "PARTIALLY_SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C5",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C6",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "SOLVES",
+      "aligned": false
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C7",
+      "expected": "SOLVES",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": false
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C8",
+      "expected": "SOLVES",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": false
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C9",
+      "expected": "PARTIALLY_SOLVES",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": false
+    },
+    {
+      "sample_id": "partially_solves_addresses_some_problem_components",
+      "criterion_id": "C10",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C1",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C2",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C3",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C4",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C5",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C6",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C7",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C8",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C9",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_burgrr_lunch_office_growth",
+      "criterion_id": "C10",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C1",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C2",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C3",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C4",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C5",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C6",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C7",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C8",
+      "expected": "SOLVES",
+      "actual": "DOES_NOT_SOLVE",
+      "aligned": false
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C9",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    },
+    {
+      "sample_id": "solves_traditional_bakery_intergenerational",
+      "criterion_id": "C10",
+      "expected": "SOLVES",
+      "actual": "SOLVES",
+      "aligned": true
+    }
+  ]
+}
