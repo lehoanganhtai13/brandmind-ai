@@ -246,3 +246,6 @@ CLAUDE.md
 /*.pdf
 /*.jpeg
 /*.png
+
+# Thesis reports
+/thesis_reports/
