@@ -92,7 +92,7 @@ After each session, save to the output directory:
    - Only `turn`, `user`, `agent` — no tool calls, no internal metadata
    - Judges evaluate conversation content as the user experiences it
 
-2. **self_eval.json** — Answer questions from `evaluation/self_eval.md` (immediately after session, still in character)
+2. **self_eval.json** — Answer questions from `evaluation/self_eval.md` (immediately after session, still in character). **Mandatory step, not optional** — pilot is "done" only when this file exists and parses to a non-zero average via `evaluation/judge/run_methodology_overhaul.py:_load_self_eval_avg`. Skipping self-eval at driving time leaves the combined-score formula 0.10 short for that pilot; the Claude Code project guide (`CLAUDE.md` § Eval Pilot Driving Discipline) elaborates the full four-artefact "pilot done" definition and the no-back-fill rule.
 
 3. **metadata.json** — Session info:
    ```json
