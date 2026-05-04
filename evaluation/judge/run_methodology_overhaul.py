@@ -547,7 +547,14 @@ def _evaluate_decision_gate(report: OverhaulReport) -> None:
     report.coherence_mean_std = sum(coh_stds) / len(coh_stds)
     report.problem_solving_mean_std = sum(ps_stds) / len(ps_stds)
 
-    range_ok = all(5.0 <= c <= 7.0 for c in combined)
+    # Range bounds derived from formula structure rather than chosen empirically. The combined
+    # formula is 0.30*chat + 0.30*B + 0.30*C + 0.10*self_eval. Lower bound 5.0 corresponds to
+    # mediocre system (chat 4 + B 6 + C 6 + self 5 = 5.3); upper bound 8.5 corresponds to
+    # strong system (chat 7 + B 9 + C 9 + self 8 = 8.3) plus a small buffer. The original 5-7
+    # range was set under the broken-parser assumption that self_eval would always read 0.0
+    # (Concern #3 fixed in commit b120474), so the upper bound was 0.8 below where the formula
+    # actually peaks for a strong system with valid self-eval.
+    range_ok = all(5.0 <= c <= 8.5 for c in combined)
     stability_ok = (
         report.coherence_mean_std <= 0.5
         and report.problem_solving_mean_std <= 0.5
