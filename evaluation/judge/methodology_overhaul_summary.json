@@ -1,0 +1,170 @@
+{
+  "pilots": [
+    {
+      "pilot_id": "brandmind_linh_r10_20260430",
+      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r10_20260430",
+      "chat_process_avg": 5.453333333333333,
+      "chat_process_pre_calibration": 5.453333333333333,
+      "coherence": {
+        "n_trials": 3,
+        "scores": [
+          8.125,
+          8.875,
+          8.5
+        ],
+        "mean": 8.5,
+        "std": 0.375,
+        "min": 8.125,
+        "max": 8.875,
+        "errors": []
+      },
+      "problem_solving": {
+        "n_trials": 3,
+        "scores": [
+          8.0,
+          7.5,
+          8.0
+        ],
+        "mean": 7.833333333333333,
+        "std": 0.28867513459481287,
+        "min": 7.5,
+        "max": 8.0,
+        "errors": []
+      },
+      "self_eval_avg": 0.0,
+      "combined_score": 6.536,
+      "notes": [
+        "pre-calibration result preserved as backup",
+        "calibrated chat rubric run completed",
+        "no self_eval.json present"
+      ]
+    },
+    {
+      "pilot_id": "brandmind_linh_r11_20260502",
+      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r11_20260502",
+      "chat_process_avg": 4.27,
+      "chat_process_pre_calibration": 4.27,
+      "coherence": {
+        "n_trials": 3,
+        "scores": [
+          8.0,
+          7.625,
+          7.75
+        ],
+        "mean": 7.791666666666667,
+        "std": 0.19094065395649334,
+        "min": 7.625,
+        "max": 8.0,
+        "errors": []
+      },
+      "problem_solving": {
+        "n_trials": 3,
+        "scores": [
+          9.5,
+          9.5,
+          9.5
+        ],
+        "mean": 9.5,
+        "std": 0.0,
+        "min": 9.5,
+        "max": 9.5,
+        "errors": []
+      },
+      "self_eval_avg": 0.0,
+      "combined_score": 6.468500000000001,
+      "notes": [
+        "pre-calibration result preserved as backup",
+        "calibrated chat rubric run completed",
+        "self_eval.json present but no usable score field found"
+      ]
+    },
+    {
+      "pilot_id": "brandmind_linh_r12_20260502",
+      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r12_20260502",
+      "chat_process_avg": 4.956666666666666,
+      "chat_process_pre_calibration": 4.956666666666666,
+      "coherence": {
+        "n_trials": 3,
+        "scores": [
+          7.75,
+          8.13,
+          8.125
+        ],
+        "mean": 8.001666666666667,
+        "std": 0.2179640643164222,
+        "min": 7.75,
+        "max": 8.13,
+        "errors": []
+      },
+      "problem_solving": {
+        "n_trials": 3,
+        "scores": [
+          9.5,
+          9.5,
+          9.5
+        ],
+        "mean": 9.5,
+        "std": 0.0,
+        "min": 9.5,
+        "max": 9.5,
+        "errors": []
+      },
+      "self_eval_avg": 0.0,
+      "combined_score": 6.737500000000001,
+      "notes": [
+        "pre-calibration result preserved as backup",
+        "calibrated chat rubric run completed",
+        "self_eval.json present but no usable score field found"
+      ]
+    },
+    {
+      "pilot_id": "brandmind_linh_r13_20260503",
+      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r13_20260503",
+      "chat_process_avg": 5.05,
+      "chat_process_pre_calibration": 5.05,
+      "coherence": {
+        "n_trials": 3,
+        "scores": [
+          8.5,
+          8.5,
+          8.5
+        ],
+        "mean": 8.5,
+        "std": 0.0,
+        "min": 8.5,
+        "max": 8.5,
+        "errors": []
+      },
+      "problem_solving": {
+        "n_trials": 3,
+        "scores": [
+          8.0,
+          8.0,
+          8.0
+        ],
+        "mean": 8.0,
+        "std": 0.0,
+        "min": 8.0,
+        "max": 8.0,
+        "errors": []
+      },
+      "self_eval_avg": 0.0,
+      "combined_score": 6.465,
+      "notes": [
+        "pre-calibration backup already in place",
+        "calibrated chat rubric run completed",
+        "no self_eval.json present"
+      ]
+    }
+  ],
+  "coherence_cluster_spread": 0.708333333333333,
+  "problem_solving_cluster_spread": 1.666666666666667,
+  "coherence_mean_std": 0.19597617956822888,
+  "problem_solving_mean_std": 0.07216878364870322,
+  "decision_gate_passed": false,
+  "decision_notes": [
+    "B cluster spread 0.71, C cluster spread 1.67 (cluster_ok=False)",
+    "combined score range 6.46-6.74 (range_ok=True)",
+    "B mean trial std 0.20, C mean trial std 0.07 (stability_ok=True)"
+  ]
+}
