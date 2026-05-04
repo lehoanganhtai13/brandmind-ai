@@ -168,23 +168,75 @@ def _extract_chat_overall(data: dict[str, Any]) -> float:
 # ---------------------------------------------------------------------------
 
 
+def _invalidate_chat_judge_cache(session_dir: Path) -> list[str]:
+    """Delete cached judge artefacts so the next subprocess run is fresh.
+
+    The chat-rubric runner ``run_judges.py`` resumes from per-judge
+    checkpoint files when they exist; each checkpoint records which
+    rubric batches have already been judged for that pilot. When the
+    judge prompt is updated (e.g. after Step 4-bis calibration) the
+    pilot-side checkpoints are still on disk from the previous run,
+    so the resume logic skips every batch and the new prompt is
+    never actually evaluated against the transcript. This helper
+    invalidates the cache before re-runs that need the new prompt's
+    verdicts to land. The pre-calibration ``evaluation_results.json``
+    is assumed to have been backed up by the caller before this is
+    invoked, so deleting it here is non-destructive.
+
+    Args:
+        session_dir (Path): Pilot session directory containing the
+            chat-rubric runner output files for one pilot.
+
+    Returns:
+        deleted (list[str]): Names of files removed from the session
+            directory, for inclusion in the orchestration audit trail.
+    """
+    deleted: list[str] = []
+    target_names = [
+        "evaluation_results.json",
+        "judge_openai-claude-sonnet-4_6.json",
+        "judge_openai-claude-sonnet-4_6_checkpoint.json",
+        "judge_gemini-gemini-3_1-pro-preview.json",
+        "judge_gemini-gemini-3_1-pro-preview_checkpoint.json",
+        "judge_openai-gpt-5_4.json",
+        "judge_openai-gpt-5_4_checkpoint.json",
+    ]
+    for name in target_names:
+        candidate = session_dir / name
+        if candidate.is_file():
+            candidate.unlink()
+            deleted.append(name)
+    return deleted
+
+
 def _run_calibrated_chat_rubric(
     session_dir: Path, env_file: Path | None
 ) -> tuple[float, str]:
-    """Invoke run_judges.py with the calibrated prompt.
+    """Invoke ``run_judges.py`` with the calibrated chat-rubric prompt.
 
-    Uses subprocess to keep the chat rubric runner's own scoring logic
-    intact rather than re-implementing it. The calibrated result lands
-    at ``<session_dir>/evaluation_results.json``; this function returns
-    the resulting overall score.
+    The chat-rubric runner is kept as a subprocess so its scoring
+    logic stays single-sourced. Before invoking it, this function
+    invalidates the pilot's cached judge files so the calibrated
+    prompt is actually evaluated end-to-end rather than short-
+    circuited via the runner's resume-from-checkpoint behaviour.
+    The calibrated verdicts land at
+    ``<session_dir>/evaluation_results.json`` and the per-judge
+    intermediates are recreated alongside.
 
     Args:
-        session_dir: Pilot session directory.
-        env_file: Optional ``.env`` path passed to ``uv run --env-file``.
+        session_dir (Path): Pilot session directory the chat rubric
+            should re-score.
+        env_file (Path | None): Optional ``.env`` path forwarded to
+            ``uv run --env-file`` so the subprocess inherits the
+            same model API credentials as the orchestrator.
 
     Returns:
-        ``(overall_score, status_note)``.
+        result (tuple[float, str]): ``(overall_score, status_note)``
+            where ``overall_score`` is the calibrated cross-judge
+            overall and ``status_note`` summarises the invocation
+            outcome for the orchestrator audit trail.
     """
+    deleted = _invalidate_chat_judge_cache(session_dir)
     cmd: list[str] = ["uv", "run"]
     if env_file is not None:
         cmd.extend(["--env-file", str(env_file)])
@@ -202,11 +254,11 @@ def _run_calibrated_chat_rubric(
             cwd=_REPO_ROOT,
             capture_output=True,
             text=True,
-            timeout=900,
+            timeout=1800,
             check=False,
         )
     except subprocess.TimeoutExpired:
-        return 0.0, "chat rubric subprocess timed out (15 min)"
+        return 0.0, "chat rubric subprocess timed out (30 min)"
     if result.returncode != 0:
         return (
             0.0,
@@ -217,7 +269,13 @@ def _run_calibrated_chat_rubric(
     if not fresh_path.is_file():
         return 0.0, "chat rubric subprocess succeeded but no result file"
     data = json.loads(fresh_path.read_text(encoding="utf-8"))
-    return _extract_chat_overall(data), "calibrated chat rubric run completed"
+    cache_note = (
+        f" (invalidated cache: {', '.join(deleted)})" if deleted else ""
+    )
+    return (
+        _extract_chat_overall(data),
+        f"calibrated chat rubric run completed{cache_note}",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -296,26 +354,65 @@ async def _run_judge_n_trials(
 
 
 def _load_self_eval_avg(session_dir: Path) -> tuple[float, str]:
-    """Return the self-eval overall average from ``self_eval.json`` if present."""
+    """Return the per-pilot self-eval average for the combined-score formula.
+
+    The pilot driver records its first-hand assessment of the session
+    in ``self_eval.json``. Three schemas have appeared on disk during
+    eval-pipeline iteration: a ``scores_1_to_10`` dimension dict (the
+    canonical schema produced by recent pilots), an ``overall`` /
+    ``dimensions`` shape (parser-internal expectation that no pilot
+    actually wrote), and the original 12-question 1-5 template. The
+    parser accepts each shape so legacy pilots remain readable while
+    new pilots write the canonical schema documented in
+    ``evaluation/self_eval.md``.
+
+    Args:
+        session_dir (Path): Pilot session directory possibly holding
+            a ``self_eval.json`` file.
+
+    Returns:
+        result (tuple[float, str]): ``(self_eval_avg, status_note)``
+            where ``self_eval_avg`` is 0.0 when no usable scores were
+            found and ``status_note`` explains which schema branch
+            matched (or why nothing matched).
+    """
     path = session_dir / "self_eval.json"
     if not path.is_file():
         return 0.0, "no self_eval.json present"
     data = json.loads(path.read_text(encoding="utf-8"))
     candidates: list[float] = []
+    branches_matched: list[str] = []
+
+    scores_1_to_10 = data.get("scores_1_to_10", {}) or {}
+    if isinstance(scores_1_to_10, dict):
+        for value in scores_1_to_10.values():
+            if isinstance(value, (int, float)):
+                candidates.append(float(value))
+        if scores_1_to_10:
+            branches_matched.append("scores_1_to_10")
+
     overall_node = data.get("overall")
     if isinstance(overall_node, dict):
         score = overall_node.get("score")
         if isinstance(score, (int, float)):
             candidates.append(float(score))
+            branches_matched.append("overall.score")
     elif isinstance(overall_node, (int, float)):
         candidates.append(float(overall_node))
+        branches_matched.append("overall")
+
     dims = data.get("dimensions", {}) or {}
-    for dim in dims.values():
-        if isinstance(dim, dict) and isinstance(dim.get("score"), (int, float)):
-            candidates.append(float(dim["score"]))
+    if isinstance(dims, dict):
+        for dim in dims.values():
+            if isinstance(dim, dict) and isinstance(dim.get("score"), (int, float)):
+                candidates.append(float(dim["score"]))
+        if dims:
+            branches_matched.append("dimensions")
+
     if not candidates:
         return 0.0, "self_eval.json present but no usable score field found"
-    return sum(candidates) / len(candidates), "self-eval averaged across fields"
+    averaged = sum(candidates) / len(candidates)
+    return averaged, f"self-eval averaged across fields ({'+'.join(branches_matched)})"
 
 
 # ---------------------------------------------------------------------------

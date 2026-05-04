@@ -45,18 +45,25 @@
 
 ## Output Format
 
-Save as JSON in the session output directory:
+Save as JSON in the session output directory under filename `self_eval.json`. The canonical schema below is what the methodology-overhaul parser (`evaluation/judge/run_methodology_overhaul.py`) reads to produce the combined-score formula's `self_eval_avg` term. The qualitative fields capture the same content as Q10–Q12 in the questionnaire above; the per-question 1-5 scores are aggregated into the three `_overall` 1-10 dimension scores so the parser sees a single canonical scale aligned with B and C judge outputs.
 
+```json
 {
+  "self_evaluator": "[claude_session_id_or_human_name]",
+  "session": "[session_dir_name]",
   "persona": "[persona_id]",
   "system": "[system_name]",
-  "q1": { "score": 4, "explanation": "..." },
-  "q2": { "score": 3, "explanation": "..." },
-  ...
-  "q10": "...",
-  "q11": "...",
-  "q12": "...",
-  "perceived_strategy_quality_avg": 4.0,
-  "perceived_personalization_avg": 3.5,
-  "perceived_mentoring_avg": 4.0
+  "scores_1_to_10": {
+    "strategy_quality_overall": 7.5,
+    "mentoring_overall": 7.0,
+    "personalization_overall": 8.5
+  },
+  "experience_summary": "1-2 paragraphs in character — what the session felt like as the persona",
+  "what_worked": "specific moments and behaviors that delivered value",
+  "what_didnt_work": "specific moments and behaviors that frustrated or confused",
+  "specific_moments": "verbatim or near-verbatim turns worth flagging for downstream analysis",
+  "vs_baseline_qualitative": "comparison to prior session of same persona on same system, if any"
 }
+```
+
+The three `*_overall` scores are derived by averaging the 1-5 questionnaire scores within each dimension and then mapping to a 0-10 scale (multiply by 2). For example, perceived_strategy_quality_avg = 4.0 (mean of Q1, Q2, Q3 on 1-5) maps to `strategy_quality_overall` = 8.0. This keeps the questionnaire interpretable for the persona while exposing a parser-friendly numerical surface.
