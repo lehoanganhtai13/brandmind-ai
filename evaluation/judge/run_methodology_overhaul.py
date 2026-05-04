@@ -117,22 +117,17 @@ class OverhaulReport:
 
 
 def _backup_pre_calibration_chat_result(session_dir: Path) -> tuple[float, str]:
-    """Preserve any pre-calibration chat-rubric result + return its score.
+    """Preserve the pre-calibration chat-rubric result before a calibrated re-run overwrites it.
 
-    Looks for an existing ``evaluation_results.json`` from the original
-    pilot driving (pre-calibration era). If present, copies it once to
-    ``evaluation_results_pre_calibration.json`` so the calibrated re-run
-    that follows can write a fresh ``evaluation_results.json`` without
-    overwriting the audit trail. Idempotent: subsequent invocations
-    with the backup already in place leave both files untouched.
+    Maintains the audit comparison surface for pre vs post calibration verdicts on the same
+    transcript. Idempotent across re-invocations on the same pilot directory.
 
     Args:
-        session_dir: Pilot session directory.
+        session_dir (Path): Pilot session directory.
 
     Returns:
-        ``(pre_calibration_overall, status_note)`` — the overall score
-        from the pre-calibration result if recoverable, otherwise 0.0
-        with an explanatory note.
+        result (tuple[float, str]): ``(pre_calibration_overall, status_note)`` — the overall
+            score from the preserved pre-calibration result, or 0.0 with an explanatory note.
     """
     src = session_dir / "evaluation_results.json"
     backup = session_dir / "evaluation_results_pre_calibration.json"
@@ -169,27 +164,18 @@ def _extract_chat_overall(data: dict[str, Any]) -> float:
 
 
 def _invalidate_chat_judge_cache(session_dir: Path) -> list[str]:
-    """Delete cached judge artefacts so the next subprocess run is fresh.
+    """Clear the chat-rubric runner's cached output so the next invocation re-judges from scratch.
 
-    The chat-rubric runner ``run_judges.py`` resumes from per-judge
-    checkpoint files when they exist; each checkpoint records which
-    rubric batches have already been judged for that pilot. When the
-    judge prompt is updated (e.g. after Step 4-bis calibration) the
-    pilot-side checkpoints are still on disk from the previous run,
-    so the resume logic skips every batch and the new prompt is
-    never actually evaluated against the transcript. This helper
-    invalidates the cache before re-runs that need the new prompt's
-    verdicts to land. The pre-calibration ``evaluation_results.json``
-    is assumed to have been backed up by the caller before this is
-    invoked, so deleting it here is non-destructive.
+    The runner reuses checkpoint state when present, which is desirable for resumability but
+    defeats re-runs that intend to apply an updated judge prompt. Caller is responsible for
+    backing up any prior result needed for audit before invoking this helper.
 
     Args:
-        session_dir (Path): Pilot session directory containing the
-            chat-rubric runner output files for one pilot.
+        session_dir (Path): Pilot session directory containing the runner's output files.
 
     Returns:
-        deleted (list[str]): Names of files removed from the session
-            directory, for inclusion in the orchestration audit trail.
+        deleted (list[str]): Names of files removed from the session directory, for the
+            orchestration audit trail.
     """
     deleted: list[str] = []
     target_names = [
@@ -354,27 +340,20 @@ async def _run_judge_n_trials(
 
 
 def _load_self_eval_avg(session_dir: Path) -> tuple[float, str]:
-    """Return the per-pilot self-eval average for the combined-score formula.
+    """Return the self-eval average that contributes the 0.10 weight in the combined formula.
 
-    The pilot driver records its first-hand assessment of the session
-    in ``self_eval.json``. Three schemas have appeared on disk during
-    eval-pipeline iteration: a ``scores_1_to_10`` dimension dict (the
-    canonical schema produced by recent pilots), an ``overall`` /
-    ``dimensions`` shape (parser-internal expectation that no pilot
-    actually wrote), and the original 12-question 1-5 template. The
-    parser accepts each shape so legacy pilots remain readable while
-    new pilots write the canonical schema documented in
-    ``evaluation/self_eval.md``.
+    Accepts three input schemas so legacy and canonical pilot output both score: the
+    ``scores_1_to_10`` dimension dict documented in ``evaluation/self_eval.md``, an ``overall``
+    + ``dimensions`` shape, and a per-question ``score`` shape. Pilots missing the file or
+    holding no readable score fields contribute 0.0 to the formula.
 
     Args:
-        session_dir (Path): Pilot session directory possibly holding
-            a ``self_eval.json`` file.
+        session_dir (Path): Pilot session directory possibly holding a ``self_eval.json``.
 
     Returns:
-        result (tuple[float, str]): ``(self_eval_avg, status_note)``
-            where ``self_eval_avg`` is 0.0 when no usable scores were
-            found and ``status_note`` explains which schema branch
-            matched (or why nothing matched).
+        result (tuple[float, str]): ``(self_eval_avg, status_note)`` where ``self_eval_avg`` is
+            0.0 when no usable scores were found and ``status_note`` records which schema
+            branch matched (or why none did).
     """
     path = session_dir / "self_eval.json"
     if not path.is_file():
@@ -547,13 +526,8 @@ def _evaluate_decision_gate(report: OverhaulReport) -> None:
     report.coherence_mean_std = sum(coh_stds) / len(coh_stds)
     report.problem_solving_mean_std = sum(ps_stds) / len(ps_stds)
 
-    # Range bounds derived from formula structure rather than chosen empirically. The combined
-    # formula is 0.30*chat + 0.30*B + 0.30*C + 0.10*self_eval. Lower bound 5.0 corresponds to
-    # mediocre system (chat 4 + B 6 + C 6 + self 5 = 5.3); upper bound 8.5 corresponds to
-    # strong system (chat 7 + B 9 + C 9 + self 8 = 8.3) plus a small buffer. The original 5-7
-    # range was set under the broken-parser assumption that self_eval would always read 0.0
-    # (Concern #3 fixed in commit b120474), so the upper bound was 0.8 below where the formula
-    # actually peaks for a strong system with valid self-eval.
+    # Bounds match the combined formula's realistic span: ~5.3 for a mediocre system,
+    # ~8.3 for a strong one (rounded to 5.0-8.5 with buffer).
     range_ok = all(5.0 <= c <= 8.5 for c in combined)
     stability_ok = (
         report.coherence_mean_std <= 0.5
