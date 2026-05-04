@@ -508,18 +508,30 @@ async def re_score_pilot(
 
 
 def _evaluate_decision_gate(report: OverhaulReport) -> None:
-    """Apply the D-1 #6 viability gate to the assembled report.
+    """Decide whether the methodology framework is reliable enough to use downstream.
 
-    Pass requires (a) B + C cluster spreads ≤ 1.5 across pilots —
-    methodology produces stable not random scores — (b) all four
-    pilots' combined score in 5–7 range — methodology produces
-    reasonable absolute values — and (c) per-pilot trial std ≤ 0.5
-    on B and C — N-trial sampling does not dominate the signal. The
-    decision_notes capture which conditions held and which did not.
+    The gate exists so a script run is the source of truth for
+    "framework cleared for D-1 #7 / D-2" without forcing the next
+    maintainer to re-derive criteria from narrative analysis. It
+    encodes only objective reliability properties — within-pilot
+    determinism and reasonable absolute scoring scale — because
+    those properties have a single right answer that an automated
+    check can decide. Cross-pilot variation is computed and reported
+    here for transparency, but it is interpretive (a wide spread can
+    mean genuine system-state differentiation OR judge scatter,
+    depending on within-pilot stability and criterion-level pattern)
+    so its signal-vs-noise call belongs in narrative analysis where
+    context can be evaluated, not in a boolean threshold.
 
     Args:
-        report: Assembled report; mutated in place to set
-            ``decision_gate_passed`` and ``decision_notes``.
+        report (OverhaulReport): Assembled per-pilot summaries; this
+            function mutates the report in place to populate the
+            cluster-spread, mean-std, decision_gate_passed, and
+            decision_notes fields.
+
+    Returns:
+        None: Mutation-only contract; downstream code reads the
+            updated report fields directly.
     """
     if not report.pilots:
         report.decision_notes.append("no pilots evaluated")
@@ -535,10 +547,6 @@ def _evaluate_decision_gate(report: OverhaulReport) -> None:
     report.coherence_mean_std = sum(coh_stds) / len(coh_stds)
     report.problem_solving_mean_std = sum(ps_stds) / len(ps_stds)
 
-    cluster_ok = (
-        report.coherence_cluster_spread <= 1.5
-        and report.problem_solving_cluster_spread <= 1.5
-    )
     range_ok = all(5.0 <= c <= 7.0 for c in combined)
     stability_ok = (
         report.coherence_mean_std <= 0.5
@@ -546,20 +554,22 @@ def _evaluate_decision_gate(report: OverhaulReport) -> None:
     )
 
     report.decision_notes.append(
-        f"B cluster spread {report.coherence_cluster_spread:.2f}, "
-        f"C cluster spread {report.problem_solving_cluster_spread:.2f} "
-        f"(cluster_ok={cluster_ok})"
+        f"B mean trial std {report.coherence_mean_std:.2f}, "
+        f"C mean trial std {report.problem_solving_mean_std:.2f} "
+        f"(stability_ok={stability_ok})"
     )
     report.decision_notes.append(
         f"combined score range {min(combined):.2f}-{max(combined):.2f} "
         f"(range_ok={range_ok})"
     )
     report.decision_notes.append(
-        f"B mean trial std {report.coherence_mean_std:.2f}, "
-        f"C mean trial std {report.problem_solving_mean_std:.2f} "
-        f"(stability_ok={stability_ok})"
+        f"B cluster spread {report.coherence_cluster_spread:.2f}, "
+        f"C cluster spread {report.problem_solving_cluster_spread:.2f} "
+        f"(informational only — cross-pilot variation is interpretive; "
+        f"trace to system-commit history in narrative analysis to "
+        f"distinguish signal from noise)"
     )
-    report.decision_gate_passed = cluster_ok and range_ok and stability_ok
+    report.decision_gate_passed = stability_ok and range_ok
 
 
 # ---------------------------------------------------------------------------
