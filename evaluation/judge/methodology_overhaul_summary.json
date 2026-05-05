@@ -1,21 +1,21 @@
 {
   "pilots": [
     {
-      "pilot_id": "brandmind_linh_r10_20260430",
-      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r10_20260430",
-      "chat_process_avg": 5.246666666666667,
-      "chat_process_pre_calibration": 5.453333333333333,
+      "pilot_id": "brandmind_linh_r15_phase_a_v2_2026_05_05",
+      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r15_phase_a_v2_2026_05_05",
+      "chat_process_avg": 4.420000000000001,
+      "chat_process_pre_calibration": 0.0,
       "coherence": {
         "n_trials": 3,
         "scores": [
-          8.875,
-          8.5,
-          8.5
+          9.25,
+          9.25,
+          9.25
         ],
-        "mean": 8.625,
-        "std": 0.21650635094610965,
-        "min": 8.5,
-        "max": 8.875,
+        "mean": 9.25,
+        "std": 0.0,
+        "min": 9.25,
+        "max": 9.25,
         "errors": []
       },
       "problem_solving": {
@@ -23,148 +23,31 @@
         "scores": [
           7.5,
           8.0,
-          8.5
+          7.5
         ],
-        "mean": 8.0,
-        "std": 0.5,
+        "mean": 7.666666666666667,
+        "std": 0.28867513459481287,
         "min": 7.5,
-        "max": 8.5,
-        "errors": []
-      },
-      "self_eval_avg": 0.0,
-      "combined_score": 6.5615000000000006,
-      "notes": [
-        "pre-calibration backup already in place",
-        "calibrated chat rubric run completed (invalidated cache: evaluation_results.json, judge_openai-claude-sonnet-4_6.json, judge_openai-claude-sonnet-4_6_checkpoint.json, judge_gemini-gemini-3_1-pro-preview.json, judge_gemini-gemini-3_1-pro-preview_checkpoint.json, judge_openai-gpt-5_4.json, judge_openai-gpt-5_4_checkpoint.json)",
-        "no self_eval.json present"
-      ]
-    },
-    {
-      "pilot_id": "brandmind_linh_r11_20260502",
-      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r11_20260502",
-      "chat_process_avg": 3.9966666666666666,
-      "chat_process_pre_calibration": 4.27,
-      "coherence": {
-        "n_trials": 3,
-        "scores": [
-          8.125,
-          8.125,
-          8.375
-        ],
-        "mean": 8.208333333333334,
-        "std": 0.14433756729740643,
-        "min": 8.125,
-        "max": 8.375,
-        "errors": []
-      },
-      "problem_solving": {
-        "n_trials": 3,
-        "scores": [
-          9.5,
-          9.5,
-          9.5
-        ],
-        "mean": 9.5,
-        "std": 0.0,
-        "min": 9.5,
-        "max": 9.5,
-        "errors": []
-      },
-      "self_eval_avg": 7.5,
-      "combined_score": 7.2615,
-      "notes": [
-        "pre-calibration backup already in place",
-        "calibrated chat rubric run completed (invalidated cache: evaluation_results.json, judge_openai-claude-sonnet-4_6.json, judge_openai-claude-sonnet-4_6_checkpoint.json, judge_gemini-gemini-3_1-pro-preview.json, judge_gemini-gemini-3_1-pro-preview_checkpoint.json, judge_openai-gpt-5_4.json, judge_openai-gpt-5_4_checkpoint.json)",
-        "self-eval averaged across fields (scores_1_to_10)"
-      ]
-    },
-    {
-      "pilot_id": "brandmind_linh_r12_20260502",
-      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r12_20260502",
-      "chat_process_avg": 5.543333333333333,
-      "chat_process_pre_calibration": 4.956666666666666,
-      "coherence": {
-        "n_trials": 3,
-        "scores": [
-          8.125,
-          8.125,
-          8.125
-        ],
-        "mean": 8.125,
-        "std": 0.0,
-        "min": 8.125,
-        "max": 8.125,
-        "errors": []
-      },
-      "problem_solving": {
-        "n_trials": 3,
-        "scores": [
-          9.0,
-          8.0,
-          9.5
-        ],
-        "mean": 8.833333333333334,
-        "std": 0.7637626158259734,
-        "min": 8.0,
-        "max": 9.5,
-        "errors": []
-      },
-      "self_eval_avg": 8.0,
-      "combined_score": 7.5505,
-      "notes": [
-        "pre-calibration backup already in place",
-        "calibrated chat rubric run completed (invalidated cache: evaluation_results.json, judge_openai-claude-sonnet-4_6.json, judge_openai-claude-sonnet-4_6_checkpoint.json, judge_gemini-gemini-3_1-pro-preview.json, judge_gemini-gemini-3_1-pro-preview_checkpoint.json, judge_openai-gpt-5_4.json, judge_openai-gpt-5_4_checkpoint.json)",
-        "self-eval averaged across fields (scores_1_to_10)"
-      ]
-    },
-    {
-      "pilot_id": "brandmind_linh_r13_20260503",
-      "pilot_dir": "/Users/lehoanganhtai/projects/brandmind-ai/brandmind-output/eval/brandmind_linh_r13_20260503",
-      "chat_process_avg": 6.53,
-      "chat_process_pre_calibration": 5.05,
-      "coherence": {
-        "n_trials": 3,
-        "scores": [
-          8.5,
-          8.5,
-          8.5
-        ],
-        "mean": 8.5,
-        "std": 0.0,
-        "min": 8.5,
-        "max": 8.5,
-        "errors": []
-      },
-      "problem_solving": {
-        "n_trials": 3,
-        "scores": [
-          8.0,
-          8.0,
-          8.0
-        ],
-        "mean": 8.0,
-        "std": 0.0,
-        "min": 8.0,
         "max": 8.0,
         "errors": []
       },
-      "self_eval_avg": 0.0,
-      "combined_score": 6.909000000000001,
+      "self_eval_avg": 7.8,
+      "combined_score": 7.181,
       "notes": [
-        "pre-calibration backup already in place",
-        "calibrated chat rubric run completed (invalidated cache: evaluation_results.json, judge_openai-claude-sonnet-4_6.json, judge_openai-claude-sonnet-4_6_checkpoint.json, judge_gemini-gemini-3_1-pro-preview.json, judge_gemini-gemini-3_1-pro-preview_checkpoint.json, judge_openai-gpt-5_4.json, judge_openai-gpt-5_4_checkpoint.json)",
-        "no self_eval.json present"
+        "no pre-calibration evaluation_results.json found",
+        "calibrated chat rubric run completed",
+        "self-eval averaged across fields (scores_1_to_10)"
       ]
     }
   ],
-  "coherence_cluster_spread": 0.5,
-  "problem_solving_cluster_spread": 1.5,
-  "coherence_mean_std": 0.09021097956087902,
-  "problem_solving_mean_std": 0.31594065395649334,
+  "coherence_cluster_spread": 0.0,
+  "problem_solving_cluster_spread": 0.0,
+  "coherence_mean_std": 0.0,
+  "problem_solving_mean_std": 0.28867513459481287,
   "decision_gate_passed": true,
   "decision_notes": [
-    "B mean trial std 0.09, C mean trial std 0.32 (stability_ok=True)",
-    "combined score range 6.56-7.55 (range_ok=True)",
-    "B cluster spread 0.50, C cluster spread 1.50 (informational only — cross-pilot variation is interpretive; trace to system-commit history in narrative analysis to distinguish signal from noise)"
+    "B mean trial std 0.00, C mean trial std 0.29 (stability_ok=True)",
+    "combined score range 7.18-7.18 (range_ok=True)",
+    "B cluster spread 0.00, C cluster spread 0.00 (informational only — cross-pilot variation is interpretive; trace to system-commit history in narrative analysis to distinguish signal from noise)"
   ]
 }

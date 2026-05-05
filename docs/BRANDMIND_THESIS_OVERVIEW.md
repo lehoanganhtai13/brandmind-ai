@@ -6,6 +6,51 @@
 
 ---
 
+## Update 2026-05-05 — current state pointer
+
+Tài liệu này được khởi tạo 2026-04-05 và cập nhật điểm đến 2026-05-05. Phần lớn các chương về **Bối cảnh, Vấn đề, Câu hỏi nghiên cứu, Đề xuất giải pháp, và Core Components** vẫn phản ánh đúng kiến trúc và triết lý sản phẩm hiện tại. Tuy nhiên các phần **Evaluation methodology** và **Empirical findings** đã được nâng cấp đáng kể trong giai đoạn Eval Methodology Overhaul (2026-05-03 → 2026-05-05) và sẽ được trình bày chi tiết hơn ở các tài liệu chuyên đề.
+
+**Đọc các tài liệu chuyên đề sau (research-paper style) để có dữ liệu định lượng và phát hiện thực nghiệm cập nhật**:
+
+- **`docs/THESIS_FINDINGS.md`** — 3 phát hiện thực nghiệm chính trình bày theo kiểu research paper:
+  1. Layer separation in prompt design — identity surface vs action surface — empirically validated (Phase A v1 vs Phase A v2 trên 7 pilot Linh)
+  2. Action-surface restatement at on-demand skill is load-bearing reinforcement (bisect r14 vs r14b chứng minh -0.53 combined regression khi removed)
+  3. Persona-driver methodology contamination biases personalization rubrics upward (disciplined script discipline được promote vào canonical surface)
+
+- **`docs/THESIS_RESULTS.md`** — bảng điểm 7 pilot Linh đầy đủ, B7/B8 verdict comparison, criterion-level analysis B + C dimensions, defendable thesis claims (3 ✅ verified + 1 ⚠️ honest-negative + 1 ❓ pending), trade-offs và limitations
+
+- **`docs/thesis_evaluation_summary.md`** — eval methodology summary cập nhật: 3-judge cross-judge calibrated chat rubric + B (Strategic Coherence single-LLM) + C (Strategic Problem-Solving single-LLM) + self-eval triangulation + N=3 trial protocol + combined formula `0.30·chat + 0.30·B + 0.30·C + 0.10·self_eval`
+
+- **`docs/B_C_JUDGE_METHODOLOGY.md`** — B và C judge design (criteria, anchors, isolation tests)
+
+- **`docs/JUDGE_CALIBRATION_METHODOLOGY.md`** — chat rubric calibration với golden-anchor methodology (Kappa 0.319 → 0.592 Fair → Moderate)
+
+- **`docs/CROSS_SYSTEM_PILOT_PROCEDURE.md`** — cross-system fairness commitment (Phase C natural-user-scenario rule, anti-elicitation pattern)
+
+### Headline finding (anchor cho thesis defense)
+
+Phase A v2 surgical edit at the Phase 5 dispatch surface (commit `7a66d50`) lifted **B7** (DOCX dispatch design rationale visible in chat) from FLAT-INCOHERENT × 6 prior pilots to PARTIAL × 3 trials, và **B8** (PPTX dispatch design rationale visible in chat) from FLAT-INCOHERENT × 6 to FULL COHERENT × 3 trials, on the r15 v2 disciplined-script Linh pilot. Combined score r15 v2 = 7.18 (best disciplined methodology). B mean 9.25 = highest of any pilot in the series.
+
+Empirically validates layer separation principle: identity-level edit (Phase A v1) at top of system prompt was insufficient × 6 pilots; action-surface edit (Phase A v2) directly before each `task()` dispatch achieved the lift.
+
+### What's still open (post-thesis-overview update)
+
+- **Cross-persona generalization** (Task #82) — pilots Minh / Thảo / Hải / Hương trên Phase A v2 stack chưa drive
+- **Cross-system vanilla baselines** (Task #83) — ChatGPT + Gemini comparison via Playwright, **thesis-critical**
+- **C-dimension lift** (C6 risk / C8 ROI math / C9 stakeholder defensibility) — Phase A v2 không touched, future work
+
+### Updated thesis claims (replaces older quantitative aspirations)
+
+| # | Claim | Status |
+|---|---|---|
+| 1 | "BrandMind narrates per-artifact design rationale at the Phase 5 dispatch surface" | ✅ verified (B7/B8 lift) |
+| 2 | "Layer separation in prompt design — identity vs action surface — empirically validated" | ✅ verified (Phase A v1 vs v2) |
+| 3 | "Action-surface restatement at on-demand skill is load-bearing reinforcement, not redundant duplication" | ✅ verified (bisect r14 vs r14b) |
+| 4 | "Combined Overall ≥ 7.5 cross-judge" | ⚠️ NOT achieved on disciplined methodology (r15 v2 = 7.18). Per north-star honest-measurement update, fair-measured 6.0–6.5 acceptable; thesis pivots to B/C dimension lift + cross-system delta |
+| 5 | "BrandMind delivers strategic substance vanilla LLMs cannot" | ❓ untested (vanilla baselines pending Task #83) |
+
+---
+
 ## 1. Bối cảnh & Vấn đề
 
 Ngành F&B Việt Nam có hơn 540,000 cơ sở nhưng tỷ lệ đóng cửa trong 2 năm đầu lên đến 60%. Một nguyên nhân chính: doanh nghiệp vừa và nhỏ thiếu chiến lược thương hiệu bài bản.
