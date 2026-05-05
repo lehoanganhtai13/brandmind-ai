@@ -105,17 +105,15 @@ Score ranges -> recommended scope:
 
 ## PHASE TRANSITION PROTOCOL
 
-When transitioning to a new phase:
-1. Verify the current phase's quality gate passes
-2. Call `report_progress(advance=True)` — the tool will move you to the **next phase in sequence** and tell you which reference file to read
-3. Read the reference file indicated by the tool response
-4. Load the relevant sub-skill if the phase delegates:
+The two-turn handshake, gate-before-advance, and pause-for-user-confirm behavior is defined in the system prompt. This section covers only the operational mechanics:
+
+1. After the user has confirmed Phase N's deliverable, call `report_progress(advance=True)` — the tool returns the next phase's reference file path.
+2. Read that reference file.
+3. Load the relevant sub-skill where the phase delegates:
    - Phase 1 -> `market-research`
    - Phase 2-3 -> `brand-positioning-identity`
    - Phase 4-5 -> `brand-communication-planning`
-5. Brief the user on what comes next and what you need from them
-
-**You do NOT choose which phase comes next** — `report_progress` handles the sequence based on scope. This ensures no phase is accidentally skipped.
+4. Brief the user on Phase N+1 and what you need from them.
 
 Also call `report_progress` when you:
 - Classify the project scope in Phase 0: `report_progress(scope="new_brand")`
