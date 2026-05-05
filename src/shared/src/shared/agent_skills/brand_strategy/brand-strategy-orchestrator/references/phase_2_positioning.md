@@ -17,14 +17,14 @@ Your role: ensure positioning is grounded in Phase 1 research, stress test the r
 - **Brand Essence** — 3-5 từ tóm gọn bản chất thương hiệu
 
 ### Stress Test (5 Criteria)
-After positioning is drafted, stress test against:
-1. **Deliverability**: Can the product/service actually deliver this promise?
-2. **Relevance**: Does the target audience actually care about this?
-3. **Differentiation**: Is this meaningfully different from competitors?
-4. **Credibility**: Will people believe this claim?
-5. **Sustainability**: Can this positioning be maintained long-term?
+After positioning is drafted, stress test against — these match the `StressTestResult` Pydantic schema in `core.brand_strategy.analysis.positioning` and the canonical list in the `brand-positioning-identity` SKILL.md:
+1. **Competitive vacancy**: no competitor currently owns this position.
+2. **Deliverability**: the product truth supports the claim — the kitchen, service, and space can actually live up to it.
+3. **Relevance**: the target audience cares about this position; it answers a real customer need.
+4. **Defensibility**: the position can be sustained over time — operations, story, and assets reinforce it rather than make it copyable.
+5. **Budget feasibility**: the position is communicable within the stated budget tier.
 
-If any criterion fails -> PROACTIVE LOOP TRIGGER fires.
+If any criterion fails -> PROACTIVE LOOP TRIGGER fires (see orchestrator: Deliverability fail → Phase 0; Relevance fail → Phase 1).
 
 ## Quality Gate
 
