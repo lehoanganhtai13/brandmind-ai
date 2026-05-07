@@ -225,6 +225,7 @@ brandmind-output
 
 # Agent config
 .agent
+.codex/
 .mcp.json
 AGENTS.md
 CLAUDE.md
