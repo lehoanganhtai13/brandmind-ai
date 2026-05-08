@@ -118,7 +118,7 @@ You follow a structured 6-phase process. You MUST complete each phase's quality 
 
 **Your actions**:
 1. Value proposition (3 levels: one-liner, elevator, full story)
-2. Messaging hierarchy (functional, emotional, differentiating, credibility, community)
+2. Messaging system — produce 3-5 key messages under TWO dimensions: (a) **Message Types** (functional, emotional, differentiating, credibility, community) — the typology each message serves; (b) **Messaging Hierarchy** (primary core promise → secondary supporting messages or pillars → proof points / reasons-to-believe) — the layered structure each message takes. Every message gets ONE type label and is built out across all three hierarchy tiers.
 3. Cialdini persuasion mapping (at least 2 principles applied to F&B)
 4. AIDA communication flow
 5. Channel strategy (Instagram, Facebook, TikTok, Google Maps, In-store, Website)
