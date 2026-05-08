@@ -14,7 +14,7 @@
 
 ### Concepts to Explain
 - **5W1H framework** — backbone cho phân tích toàn diện: What (kinh doanh gì), Who (cho ai), Where (ở đâu), When (timeline), Why (tại sao cần brand strategy), How (budget/resources)
-- **Scope classification** — tại sao xác định đúng scope quan trọng: new brand vs refresh vs reposition vs full rebrand ảnh hưởng toàn bộ workflow phía sau
+- **Scope classification** — tại sao xác định đúng scope quan trọng: new brand vs refresh vs repositioning vs full rebrand ảnh hưởng toàn bộ workflow phía sau
 
 ### Closing
 "Dựa trên thông tin bạn chia sẻ, tôi đã có bức tranh rõ ràng về business context. Đây là tóm tắt: {summary}. Bạn confirm và mình sẽ tiến sang nghiên cứu thị trường nhé?"
@@ -23,7 +23,7 @@
 
 - [ ] **p0_knowledge_verified**: Key concepts verified via KG and/or doc search before applying (scope classification, 5W1H, brand architecture)
 - [ ] **p0_problem**: Clear problem statement articulated
-- [ ] **p0_scope**: Scope classified (new_brand/refresh/reposition/full_rebrand)
+- [ ] **p0_scope**: Scope classified (new_brand/refresh/repositioning/full_rebrand)
 - [ ] **p0_category**: F&B category and concept understood
 - [ ] **p0_location**: Target location/market identified
 - [ ] **p0_budget**: Budget tier identified for implementation planning
