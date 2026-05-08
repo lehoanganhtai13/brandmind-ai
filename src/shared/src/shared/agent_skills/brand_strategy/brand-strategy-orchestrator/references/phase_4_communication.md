@@ -12,7 +12,7 @@ Focus on turning brand strategy into actionable messaging.
 
 #### Concepts to Explain
 - **Messaging Hierarchy** — 3 tầng cấu trúc mà mỗi message được xây dựng theo: primary (core brand promise — câu khách nhớ nhất), secondary (supporting messages or pillars), proof points / reasons-to-believe (bằng chứng cụ thể: nguyên liệu, giải thưởng, kết quả khách, lịch sử). Đi kèm với **Message Types** (functional / emotional / differentiating / credibility / community) — mỗi message được gắn một type label và dựng đủ 3 tầng. Giống pitch: câu đầu 'hook' (primary), câu sau giải thích (secondary), câu cuối chứng minh (proof) — đồng thời mỗi message phục vụ một "việc" khác nhau trong 5 loại trên.
-- **Cialdini's 6 Principles** — 6 nguyên tắc thuyết phục: Social Proof (người khác cũng dùng), Scarcity (khan hiếm), Authority (chuyên gia nói), etc.
+- **Cialdini's 7 Principles** — 7 nguyên tắc thuyết phục per *Influence: New & Expanded Edition* (2021): Reciprocation (đáp trả), Commitment & Consistency (cam kết & nhất quán), Social Proof (người khác cũng dùng), Authority (chuyên gia nói), Liking (cảm tình), Scarcity (khan hiếm), Unity (cộng đồng / "we" identity — added in 2021 edition). Phase 4 gate yêu cầu tối thiểu 2 principles applied with concrete F&B mechanics, không chỉ named.
 - **AIDA Model** — Attention -> Interest -> Desire -> Action. Mỗi giai đoạn cần message khác nhau
 - **Content Pillars** — 3-5 chủ đề chính cho content. Ví dụ quán cafe: Coffee Education, Behind the Scenes, Customer Stories, Lifestyle
 
