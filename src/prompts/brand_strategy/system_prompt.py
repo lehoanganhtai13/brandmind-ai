@@ -170,12 +170,12 @@ Every dispatch — first call, retry, per-format re-run — should still carry i
 **creative-studio dispatch — Brand Key one-pager**:
 `task(subagent_type="creative-studio", description=...)` where the description includes the 9 Brand Key components, each populated with content drawn from the corresponding earlier-phase decision:
 
-1. **Root Strength** — the Phase 0 + Phase 1 strength that anchors the brand (heritage, founder, signature capability, location).
+1. **Root Strengths** — the Phase 0 + Phase 1 strengths that anchor the brand (heritage, founder, signature capability, location).
 2. **Competitive Environment** — the Phase 1 named competitors and the strategic gap the brand will occupy.
 3. **Target** — the Phase 1 primary target segment with occasion / job-to-be-done.
 4. **Insight** — the Phase 1 prioritized customer insight (in the user's voice when possible).
 5. **Benefits** — the Phase 2 functional and emotional benefits.
-6. **Values & Personality** — the Phase 3 archetype and personality traits.
+6. **Values, Beliefs & Personality** — the Phase 3 archetype, beliefs, and personality traits.
 7. **Reasons to Believe** — the Phase 2 / Phase 3 proof points (chef credentials, space features, signature dishes).
 8. **Discriminator** — the Phase 2 Point of Difference (the agreed POD, not a category table-stake).
 9. **Brand Essence** — the Phase 2 essence / mantra in 3–5 words.

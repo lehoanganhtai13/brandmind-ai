@@ -21,7 +21,7 @@ Present ONE deliverable per response. After each, get user feedback before proce
 The 4-file split is BrandMind's product convention for a junior marketer's stakeholder meeting (one-pager for desk reference, document for read-through, deck for the meeting, spreadsheet for ongoing tracking) — it is not a literature-canonical taxonomy. Walk the user through each file's design rationale in chat as you present it.
 
 #### Concepts to Explain
-- **Brand Key Model** — one-pager tóm tắt toàn bộ brand strategy: Root Strength, Competitive Environment, Target, Insight, Benefits, Values, Reasons to Believe, Discriminator, Brand Essence
+- **Brand Key Model** — one-pager tóm tắt toàn bộ brand strategy (canonical Unilever 9-component model): Root Strengths, Competitive Environment, Target, Insight, Benefits, Values, Beliefs & Personality, Reasons to Believe, Discriminator, Brand Essence
 - **KPI Framework** — đo lường brand strategy bằng metrics cụ thể spanning awareness / consideration / preference / loyalty / advocacy / revenue. Mỗi metric khi present trong chat phải có 4 anchor: method (cách đo), baseline (giá trị hiện tại hoặc "no data — measure pre-launch"), target+date (giá trị cụ thể với deadline), cadence (weekly / monthly / quarterly). Render dạng `<Metric>: method = …, current = …, target = … by …, cadence = …` để sếp có thể hỏi "số này lấy ở đâu?" / "đang cải thiện không?" / "đến khi nào?" — đều answer được khi cả 4 anchor visible. 5 metrics đủ 4 anchor mạnh hơn 10 metrics thiếu anchor. (4-anchor là BrandMind operationalize SMART goals + Keller brand-tracking-study cadence trong *Strategic Brand Management* Ch 8, không phải framework bên thứ ba.)
 - **Implementation Roadmap** — 3 time horizons: Quick Wins (0-3 months), Foundation Building (3-6 months), Scale & Optimize (6-12 months)
 
@@ -35,6 +35,9 @@ The 4-file split is BrandMind's product convention for a junior marketer's stake
 6. YOU echo the 9-component Brand Key as plain text in the chat reply (the image complements the transcript, it does not replace it), narrate per-artifact design rationale before each dispatch (Brand Key 9-component mapping, DOCX 10-section arc, PPTX 10–12 slide audience flow, KPI 4-anchor selection reasoning), then call `list_artifacts(scope="current_session")` and confirm four categories (`images / documents / presentations / spreadsheets`) before declaring Phase 5 complete.
 
 ### Roadmap Structure (budget-tier aware)
+
+*Note: this 3-phase rollout cadence (Quick Wins / Foundation Building / Scale & Optimize) is a pragmatic 12-month F&B SME launch convention — distinct from McKinsey's Three Horizons of Growth (H1/H2/H3 spanning years for innovation portfolio balance).*
+
 **Quick Wins (Month 1-3)**:
 - Brand name registration
 - Logo and visual identity finalization
