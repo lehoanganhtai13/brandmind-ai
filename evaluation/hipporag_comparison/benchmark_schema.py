@@ -1,0 +1,145 @@
+"""Schema for the source-grounded HippoRAG comparison benchmark.
+
+The curated benchmark dataset is intentionally separate from runtime result
+files. It stores only stable question definitions and gold labels. Retrieval
+outputs, latency, reader answers, and judge scores belong in runner result
+files created by later benchmark tasks.
+"""
+
+from __future__ import annotations
+
+from collections import Counter
+from enum import Enum
+
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+
+class BookScope(str, Enum):
+    """Allowed source scopes for benchmark items."""
+
+    HOW_BRANDS_GROW = "how_brands_grow_what_marketers_dont_know"
+    INFLUENCE = "influence_new_and_expanded_the_psychology_of_persuasion"
+    KOTLER = "kotler_and_armstrong_principles_of_marketing"
+    POSITIONING = "positioning_the_battle_for_your_mind"
+    STRATEGIC_BRAND_MANAGEMENT = "strategic_brand_management"
+    CROSS_BOOK = "cross_book"
+
+
+class QuestionType(str, Enum):
+    """Question categories used for dataset diversity diagnostics."""
+
+    DEFINITION = "definition"
+    MECHANISM = "mechanism"
+    COMPARE_CONTRAST = "compare_contrast"
+    APPLICATION = "application"
+    SYNTHESIS = "synthesis"
+    DIAGNOSIS = "diagnosis"
+
+
+class Difficulty(str, Enum):
+    """Difficulty bands for benchmark stratification."""
+
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
+
+
+class BenchmarkItem(BaseModel):
+    """One source-grounded benchmark question.
+
+    Args:
+        id: Stable benchmark item ID.
+        question: User-facing question text.
+        gold_answer: Reference answer grounded in the required source chunks.
+        answer_key_facts: Atomic facts expected in a correct answer.
+        required_sources: Stable source IDs in ``book_slug::chunk_id`` format.
+        book_scope: Single-book or cross-book scope.
+        question_type: Evaluation category used for diversity tracking.
+        difficulty: Difficulty band.
+        evidence_digest: Short human-readable summary of why the sources support
+            the gold answer.
+    """
+
+    id: str = Field(min_length=3, pattern=r"^BM5B-[A-Z0-9-]+$")
+    question: str = Field(min_length=20)
+    gold_answer: str = Field(min_length=80)
+    answer_key_facts: list[str] = Field(min_length=2)
+    required_sources: list[str] = Field(min_length=1)
+    book_scope: BookScope
+    question_type: QuestionType
+    difficulty: Difficulty
+    evidence_digest: str = Field(min_length=40)
+
+    @field_validator("question", "gold_answer", "evidence_digest")
+    @classmethod
+    def strip_text(cls, value: str) -> str:
+        """Normalize boundary strings without changing their meaning."""
+
+        return value.strip()
+
+    @field_validator("answer_key_facts", "required_sources")
+    @classmethod
+    def reject_empty_or_duplicate_values(cls, values: list[str]) -> list[str]:
+        """Reject empty and duplicate list values while preserving order."""
+
+        normalized = [value.strip() for value in values]
+        if any(not value for value in normalized):
+            raise ValueError("List values must not be empty.")
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("List values must be unique.")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_source_scope(self) -> "BenchmarkItem":
+        """Validate that source IDs match the declared book scope."""
+
+        if any("::" not in source_id for source_id in self.required_sources):
+            raise ValueError(
+                "Each required source must use book_slug::chunk_id format."
+            )
+        source_book_slugs = {
+            source_id.split("::", maxsplit=1)[0] for source_id in self.required_sources
+        }
+        if self.book_scope is BookScope.CROSS_BOOK:
+            if len(source_book_slugs) < 2:
+                raise ValueError(
+                    "Cross-book items require sources from at least two books."
+                )
+            return self
+        if source_book_slugs != {self.book_scope.value}:
+            raise ValueError(
+                "Single-book items must use sources from exactly the book scope."
+            )
+        return self
+
+
+class BenchmarkDataset(BaseModel):
+    """Versioned collection of source-grounded benchmark questions."""
+
+    dataset_id: str = Field(default="brandmind_marketing_5books_v1", min_length=3)
+    dataset_version: str = Field(default="0.1.0", min_length=1)
+    description: str = Field(min_length=20)
+    items: list[BenchmarkItem] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_unique_item_ids(self) -> "BenchmarkDataset":
+        """Ensure each benchmark item ID appears once."""
+
+        ids = [item.id for item in self.items]
+        duplicates = sorted(
+            item_id for item_id, count in Counter(ids).items() if count > 1
+        )
+        if duplicates:
+            raise ValueError(f"Duplicate benchmark item IDs: {duplicates}")
+        return self
+
+    def distribution_summary(self) -> dict[str, dict[str, int]]:
+        """Return review-friendly counts across core stratification dimensions."""
+
+        return {
+            "book_scope": dict(Counter(item.book_scope.value for item in self.items)),
+            "question_type": dict(
+                Counter(item.question_type.value for item in self.items)
+            ),
+            "difficulty": dict(Counter(item.difficulty.value for item in self.items)),
+        }

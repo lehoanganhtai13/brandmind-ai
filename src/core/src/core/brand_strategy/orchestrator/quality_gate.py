@@ -38,7 +38,9 @@ QUALITY_GATES: dict[str, list[GateItem]] = {
         ),
         GateItem(
             id="p0_scope",
-            description="Scope classified (new_brand/refresh/repositioning/full_rebrand)",
+            description=(
+                "Scope classified (new_brand/refresh/repositioning/full_rebrand)"
+            ),
         ),
         GateItem(
             id="p0_category",
