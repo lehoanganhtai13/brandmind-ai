@@ -19,7 +19,7 @@ Present ONE deliverable per response. After each, get user feedback before proce
 4. **KPI tracking spreadsheet (XLSX)** — ≥5 metrics in 4-anchor format plus Monthly Tracking sheet seeded with the 0-3 / 3-6 / 6-12 month roadmap content (document-generator XLSX dispatch)
 
 #### Concepts to Explain
-- **Brand Key Model** — single-page synthesis of the entire brand strategy (canonical Unilever 9-component model): Root Strengths, Competitive Environment, Target, Insight, Benefits, Values + Beliefs + Personality, Reasons to Believe, Discriminator, Brand Essence.
+- **Brand Key Model** — single-page synthesis of the entire brand strategy (canonical Unilever 9-component model): Root Strengths / Competitive Environment / Target / Insight / Benefits / Values, Beliefs & Personality / Reasons to Believe / Discriminator / Brand Essence.
 - **KPI Framework** — brand strategy measurement across awareness / consideration / preference / loyalty / advocacy / revenue. Each metric in chat carries four anchors: method (how the value gets observed), baseline (current value, or explicit "no data — measure pre-launch"), target+date (concrete value by concrete date), cadence (weekly / monthly / quarterly). Render literally as `<Metric>: method = …, current = …, target = … by …, cadence = …`. Five well-formed metrics outweigh ten partial ones. The 4-anchor schema combines SMART goals with Keller's brand-tracking-study cadence (*Strategic Brand Management* Ch 8).
 - **Implementation Roadmap** — three rollout phases on a 12-month launch arc: Quick Wins (0-3 months), Foundation Building (3-6 months), Scale & Optimize (6-12 months).
 
