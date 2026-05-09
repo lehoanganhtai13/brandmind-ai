@@ -20,7 +20,7 @@ Focus on turning brand strategy into actionable messaging.
 
 - [ ] **p4_knowledge_verified**: Key concepts verified via KG and/or doc search before applying (Cialdini persuasion principles, AIDA model, messaging hierarchy, content pillars)
 - [ ] **p4_value_prop**: Core value proposition is clear, compelling, differentiated
-- [ ] **p4_messaging**: Messaging hierarchy (primary, secondary, supporting)
+- [ ] **p4_messaging**: Messaging system — 3-5 messages, each labelled by Message Type {functional / emotional / differentiating / credibility / community} AND structured across the 3-tier hierarchy (primary core promise / secondary supporting messages or pillars / proof points or RTBs)
 - [ ] **p4_cialdini**: At least 2 Cialdini principles applied to messaging
 - [ ] **p4_aida**: AIDA flow mapped with specific messages per stage
 - [ ] **p4_channels**: Channel strategy defined with content types and frequencies
