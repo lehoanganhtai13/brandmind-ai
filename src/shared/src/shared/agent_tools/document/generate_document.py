@@ -138,6 +138,16 @@ def generate_document(
     try:
         content_dict: dict[str, Any] = json.loads(content)
     except (json.JSONDecodeError, TypeError) as e:
+        # Surface the silent-fail path in the server log so the audit
+        # and operators can see why no DOCX/PDF landed on disk —
+        # otherwise the function returns an error string the
+        # sub-agent treats as opaque output and the orchestrator
+        # marks the deliverable "completed" without evidence.
+        logger.error(
+            "generate_document JSON parse error: "
+            f"{e!r}; doc_format={doc_format!r}; content_preview="
+            f"{(content[:200] if isinstance(content, str) else type(content).__name__)!r}"
+        )
         return f"Invalid content JSON: {e}"
 
     images_dict: dict[str, str] | None = None
