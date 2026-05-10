@@ -15,6 +15,8 @@ Business context:
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import Protocol
 
 import numpy as np
@@ -47,6 +49,7 @@ class EmbeddingsClient(Protocol):
         input: list[str],
         model: str,
         dimensions: int,
+        timeout: float,
     ) -> EmbeddingResponse:
         """Create embeddings for a batch of texts."""
 
@@ -77,6 +80,8 @@ class HippoRagLiteLLMConfig(BaseModel):
         embedding_dimensions: Embedding dimensionality used for fair comparison
             with BrandMind's retrieval stack.
         embedding_batch_size: Batch size used by HippoRAG embedding stores.
+        api_key: OpenAI-compatible LiteLLM proxy key. If omitted, the bridge
+            uses ``LITELLM_API_KEY`` from the loaded environment/settings.
     """
 
     save_dir: str
@@ -85,7 +90,8 @@ class HippoRagLiteLLMConfig(BaseModel):
     llm_model_name: str = DEFAULT_LLM_MODEL
     embedding_model_name: str = DEFAULT_EMBEDDING_MODEL
     embedding_dimensions: int = Field(default=DEFAULT_EMBEDDING_DIMENSIONS, gt=0)
-    embedding_batch_size: int = Field(default=16, gt=0)
+    embedding_batch_size: int = Field(default=64, gt=0)
+    api_key: str | None = None
 
 
 def install_gemini_embedding_dimension_patch(
@@ -117,6 +123,7 @@ def install_gemini_embedding_dimension_patch(
             input=sanitized_texts,
             model=self.embedding_model_name,
             dimensions=embedding_dimensions,
+            timeout=60.0,
         )
         return np.array([item.embedding for item in response.data])
 
@@ -158,8 +165,61 @@ def build_hipporag(config: HippoRagLiteLLMConfig):
         A configured HippoRAG instance ready for indexing or retrieval.
     """
 
+    configure_openai_compatible_api_key(config.api_key)
     install_gemini_embedding_dimension_patch(config.embedding_dimensions)
 
     from hipporag import HippoRAG
 
     return HippoRAG(global_config=build_hipporag_config(config))
+
+
+def configure_openai_compatible_api_key(api_key: str | None = None) -> None:
+    """Set the OpenAI-compatible key used by HippoRAG's OpenAI clients.
+
+    Args:
+        api_key: Explicit LiteLLM proxy key. When omitted, the helper prefers
+            ``LITELLM_API_KEY`` from the process environment or loaded project
+            settings, then falls back to an existing ``OPENAI_API_KEY``.
+
+    Raises:
+        ValueError: If no API key is available.
+    """
+
+    resolved_api_key = (
+        api_key
+        or os.getenv("LITELLM_API_KEY")
+        or _load_litellm_api_key_from_settings()
+        or _load_litellm_api_key_from_env_file()
+        or os.getenv("OPENAI_API_KEY")
+    )
+    if not resolved_api_key:
+        raise ValueError("HippoRAG LiteLLM bridge requires LITELLM_API_KEY or api_key.")
+
+    os.environ["OPENAI_API_KEY"] = resolved_api_key
+
+
+def _load_litellm_api_key_from_settings() -> str:
+    """Load the project LiteLLM key without exposing its value."""
+
+    try:
+        from config.system_config import SETTINGS
+    except Exception:
+        return ""
+    return SETTINGS.LITELLM_API_KEY
+
+
+def _load_litellm_api_key_from_env_file() -> str:
+    """Read only ``LITELLM_API_KEY`` from the project env file."""
+
+    env_path = Path(__file__).resolve().parents[2] / "environments" / ".env"
+    if not env_path.exists():
+        return ""
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", maxsplit=1)
+        if key.strip() == "LITELLM_API_KEY":
+            return value.strip().strip("\"'")
+    return ""

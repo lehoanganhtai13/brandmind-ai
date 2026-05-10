@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from uuid import uuid4
@@ -91,7 +91,9 @@ class AnswerFlowRecord(BaseModel):
     latency_ms: int = Field(default=0, ge=0)
     token_usage: TokenUsage = Field(default_factory=TokenUsage)
     error: str | None = None
-    generated_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    generated_at: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
     @property
     def retrieved_source_ids(self) -> list[str]:
@@ -149,7 +151,9 @@ class ComparisonRunResult(BaseModel):
     config: ComparisonRunConfig
     records: list[AnswerFlowRecord]
     summaries: list[SystemSummary] = Field(default_factory=list)
-    created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
+    created_at: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
     @model_validator(mode="after")
     def populate_summaries(self) -> "ComparisonRunResult":

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
@@ -122,12 +123,14 @@ def test_install_gemini_embedding_dimension_patch_passes_dimensions(
             input: list[str],
             model: str,
             dimensions: int,
+            timeout: float,
         ) -> SimpleNamespace:
             """Capture call parameters and return one fake embedding."""
 
             captured["input"] = input
             captured["model"] = model
             captured["dimensions"] = dimensions
+            captured["timeout"] = timeout
             return SimpleNamespace(data=[SimpleNamespace(embedding=[1.0, 0.0])])
 
     class FakeOpenAIEmbeddingModel:
@@ -162,4 +165,45 @@ def test_install_gemini_embedding_dimension_patch_passes_dimensions(
         "input": ["line one line two"],
         "model": "gemini-embedding-001",
         "dimensions": 1536,
+        "timeout": 60.0,
     }
+
+
+def test_configure_openai_compatible_api_key_prefers_litellm_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """HippoRAG bridge should use LiteLLM proxy keys for OpenAI clients."""
+
+    monkeypatch.setenv("OPENAI_API_KEY", "stale-openai-key")
+    monkeypatch.setenv("LITELLM_API_KEY", "fresh-litellm-key")
+
+    from evaluation.hipporag_comparison.hipporag_litellm import (
+        configure_openai_compatible_api_key,
+    )
+
+    configure_openai_compatible_api_key()
+
+    assert os.environ["OPENAI_API_KEY"] == "fresh-litellm-key"
+
+
+def test_load_litellm_api_key_from_env_file(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """The bridge should read the proxy key when config imports are unavailable."""
+
+    env_dir = tmp_path / "environments"
+    env_dir.mkdir()
+    (env_dir / ".env").write_text(
+        "OTHER=value\nLITELLM_API_KEY='file-litellm-key'\n",
+        encoding="utf-8",
+    )
+
+    from evaluation.hipporag_comparison import hipporag_litellm
+
+    fake_file = tmp_path / "evaluation" / "hipporag_comparison" / "module.py"
+    monkeypatch.setattr(hipporag_litellm, "__file__", str(fake_file))
+
+    assert hipporag_litellm._load_litellm_api_key_from_env_file() == (
+        "file-litellm-key"
+    )

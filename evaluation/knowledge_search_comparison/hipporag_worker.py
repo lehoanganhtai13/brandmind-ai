@@ -57,8 +57,8 @@ def retrieve_with_hipporag(
 
     mapping = load_source_mapping(corpus_path, metadata_path)
     solution = query_solutions[0]
-    docs = list(getattr(solution, "docs", []) or [])
-    scores = list(getattr(solution, "doc_scores", []) or [])
+    docs = _coerce_sequence(getattr(solution, "docs", None))
+    scores = _coerce_sequence(getattr(solution, "doc_scores", None))
     passages = [
         HippoRagRetrievedPassage(
             rank=index + 1,
@@ -69,6 +69,26 @@ def retrieve_with_hipporag(
         for index, document in enumerate(docs[:top_k])
     ]
     return HippoRagWorkerResponse(query=query, top_k=top_k, passages=passages)
+
+
+def _coerce_sequence(value: Any) -> list[Any]:
+    """Normalize HippoRAG list-like outputs without truth-value checks."""
+
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple):
+        return list(value)
+
+    tolist = getattr(value, "tolist", None)
+    if callable(tolist):
+        result = tolist()
+        return result if isinstance(result, list) else [result]
+
+    return list(value)
 
 
 def index_with_hipporag(
