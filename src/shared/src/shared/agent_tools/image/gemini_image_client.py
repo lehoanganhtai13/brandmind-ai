@@ -56,9 +56,17 @@ class GeminiImageClient:
 
     @staticmethod
     def _resolve_output_dir() -> str:
-        base = os.environ.get(
-            "BRANDMIND_OUTPUT_DIR",
-            os.path.join(os.getcwd(), "brandmind-output"),
+        """Return the absolute images output directory.
+
+        Treats an empty-string ``BRANDMIND_OUTPUT_DIR`` as unset —
+        ``os.environ.get(KEY, DEFAULT)`` returns the empty string when
+        the variable is exported blank, which would make
+        ``os.path.join("", "images")`` resolve to a relative ``images``
+        path under the process cwd and scatter image artifacts at the
+        repository root.
+        """
+        base = os.environ.get("BRANDMIND_OUTPUT_DIR", "") or os.path.join(
+            os.getcwd(), "brandmind-output"
         )
         return os.path.join(base, "images")
 
@@ -227,6 +235,8 @@ class GeminiImageClient:
         image_bytes: bytes,
         filename: str,
         session_id: str | None,
+        brand_name: str = "Brand",
+        tool_name: str = "generate_image",
     ) -> Path:
         if session_id:
             target_dir = Path(self.output_dir) / session_id
@@ -237,6 +247,26 @@ class GeminiImageClient:
         file_path = target_dir / filename
         file_path.write_bytes(image_bytes)
         logger.debug(f"Image saved to {file_path}")
+
+        # Append manifest entry at the actual save call site so
+        # `list_artifacts(scope="current_session")` and the smoke audit
+        # both observe images alongside DOCX/PPTX/XLSX. Manifest writes
+        # are best-effort; a provenance failure must not block image
+        # delivery.
+        try:
+            from shared.agent_tools.document._output_path import (
+                append_manifest,
+            )
+
+            append_manifest(
+                brand_name=brand_name,
+                category="images",
+                tool=tool_name,
+                path=str(file_path.resolve()),
+            )
+        except Exception as exc:  # pragma: no cover — provenance only
+            logger.debug(f"Image manifest append failed (non-blocking): {exc}")
+
         return file_path
 
     @staticmethod

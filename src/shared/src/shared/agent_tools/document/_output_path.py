@@ -33,13 +33,14 @@ def _base_dir() -> str:
     Reads ``BRANDMIND_OUTPUT_DIR``, falling back to
     ``<cwd>/brandmind-output`` so an unconfigured server still writes
     under the repository workspace instead of leaking to the process
-    cwd.
+    cwd. Treats an empty-string value as unset — ``os.environ.get(KEY,
+    DEFAULT)`` returns the empty string when the variable is exported
+    blank, which would make ``os.path.abspath("")`` resolve to the
+    process cwd and scatter artifacts at the repository root.
     """
     return os.path.abspath(
-        os.environ.get(
-            "BRANDMIND_OUTPUT_DIR",
-            os.path.join(os.getcwd(), "brandmind-output"),
-        )
+        os.environ.get("BRANDMIND_OUTPUT_DIR", "")
+        or os.path.join(os.getcwd(), "brandmind-output")
     )
 
 

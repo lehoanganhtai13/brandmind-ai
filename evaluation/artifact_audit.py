@@ -325,36 +325,204 @@ def inspect_workspace_files(workspace_dir: Path | None) -> dict[str, WorkspaceFi
     return out
 
 
-def scan_artifacts_on_disk(
-    output_root: Path, session_start_iso: str | None
-) -> dict[str, list[str]]:
-    """Enumerate artifacts under brandmind-output/ produced after the pilot.
+def parse_pilot_state(
+    pilot_state_path: Path,
+) -> tuple[dict[str, ToolUsage], dict[str, int]]:
+    """Extract deliverable tool counts from the smoke harness pilot state.
 
-    Filenames are matched against the deliverable extensions table
-    (DOCX/PDF -> strategy document, PPTX -> presentation, XLSX ->
-    spreadsheet, image extensions -> brand key or other image). The
-    audit deliberately uses file mtime relative to the pilot start to
-    drop pre-existing artifacts; when a session start time cannot be
-    determined every matching file is reported.
+    The smoke harness records each turn's ``tools_used`` list inside
+    ``_pilot_state.json`` (``smoke_test.py:_send_turn``). Each entry is
+    a tool name string; ``task`` invocations have their ``subagent_type``
+    captured separately under ``tool_args``. The audit consumes this
+    file as the primary tool-usage source so it stays accurate even
+    when the running server log is not piped into the session
+    directory. Server-log parsing remains as the fallback for runs
+    that do capture ``server.log`` (full-pilot driver harness).
 
     Args:
-        output_root: Root of the BrandMind output tree (typically
-            ``brandmind-output``).
+        pilot_state_path: Path to the smoke harness state file.
+
+    Returns:
+        Tuple of (deliverable_tool_usage, subagent_dispatch_counts).
+        Returns empty maps when the file is absent so the caller can
+        merge with ``parse_server_log`` results unconditionally.
+    """
+    deliverable: dict[str, ToolUsage] = {
+        name: ToolUsage() for name in DELIVERABLE_TOOLS
+    }
+    subagent: dict[str, int] = {name: 0 for name in SUBAGENT_TYPES}
+    if not pilot_state_path.is_file():
+        return deliverable, subagent
+    try:
+        state = json.loads(pilot_state_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return deliverable, subagent
+    for turn in state.get("turns", []):
+        for tool_entry in turn.get("tools_used", []) or []:
+            if isinstance(tool_entry, dict):
+                tool_name = tool_entry.get("name") or tool_entry.get("tool_name")
+                tool_args = tool_entry.get("args") or tool_entry.get("tool_args")
+            else:
+                tool_name = str(tool_entry)
+                tool_args = None
+            if not tool_name:
+                continue
+            if tool_name in deliverable:
+                deliverable[tool_name].call_count += 1
+            elif tool_name == "task" and isinstance(tool_args, dict):
+                target = (tool_args.get("subagent_type") or "").split()[0]
+                if target in subagent:
+                    subagent[target] += 1
+    return deliverable, subagent
+
+
+def merge_tool_usage(
+    primary: dict[str, ToolUsage], fallback: dict[str, ToolUsage]
+) -> dict[str, ToolUsage]:
+    """Merge two deliverable-tool-usage maps, preferring the primary source.
+
+    The primary source is the pilot harness ``_pilot_state.json``
+    (always present after a smoke run); the fallback is the parsed
+    server log (only available when the harness pipes the server log
+    into the session directory). When both record a non-zero count for
+    the same tool, the primary wins; ``files_produced`` is concatenated
+    so on-disk paths from either source are not lost.
+
+    Args:
+        primary: Tool usage from :func:`parse_pilot_state`.
+        fallback: Tool usage from :func:`parse_server_log`.
+
+    Returns:
+        A merged map keyed by tool name.
+    """
+    merged: dict[str, ToolUsage] = {}
+    for name in DELIVERABLE_TOOLS:
+        p = primary.get(name, ToolUsage())
+        f = fallback.get(name, ToolUsage())
+        merged_files = list(dict.fromkeys(list(p.files_produced) + list(f.files_produced)))
+        merged[name] = ToolUsage(
+            call_count=max(p.call_count, f.call_count),
+            files_produced=merged_files,
+        )
+    return merged
+
+
+def merge_subagent(
+    primary: dict[str, int], fallback: dict[str, int]
+) -> dict[str, int]:
+    """Merge two sub-agent dispatch maps, preferring the primary source."""
+    merged: dict[str, int] = {}
+    for name in SUBAGENT_TYPES:
+        merged[name] = max(primary.get(name, 0), fallback.get(name, 0))
+    return merged
+
+
+def parse_manifest(
+    manifest_path: Path, session_id: str | None
+) -> dict[str, list[str]]:
+    """Read the artifact manifest JSONL and group records by audit category.
+
+    The manifest is the ground-truth provenance log: every artifact
+    write goes through ``append_manifest`` and records ``session_id``
+    so the audit can answer "which files belong to this session"
+    independently of where on disk they ultimately landed. Manifest-
+    based discovery survives env-var bugs (e.g. ``BRANDMIND_OUTPUT_DIR``
+    misresolved) that would defeat a path-based ``rglob``.
+
+    Args:
+        manifest_path: Absolute path to a ``.manifest.jsonl`` file.
+            Missing or unreadable files return empty lists.
+        session_id: When provided, only manifest records whose
+            ``session_id`` matches are returned. When ``None`` every
+            record is returned.
+
+    Returns:
+        Mapping of audit category (``brand_key_image``,
+        ``strategy_document``, ``presentation``, ``spreadsheet``,
+        ``other_image``) to absolute file paths. Records pointing at
+        files that no longer exist are dropped so callers see only
+        artifacts a downstream judge can actually open.
+    """
+    out: dict[str, list[str]] = {
+        "brand_key_image": [],
+        "strategy_document": [],
+        "presentation": [],
+        "spreadsheet": [],
+        "other_image": [],
+    }
+    if not manifest_path.is_file():
+        return out
+    try:
+        text = manifest_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return out
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if session_id and rec.get("session_id") != session_id:
+            continue
+        path = rec.get("path") or ""
+        category = rec.get("category") or ""
+        if not path or not Path(path).is_file():
+            continue
+        if category == "documents":
+            out["strategy_document"].append(path)
+        elif category == "presentations":
+            out["presentation"].append(path)
+        elif category == "spreadsheets":
+            out["spreadsheet"].append(path)
+        elif category == "images":
+            if "brand_key" in Path(path).name.lower():
+                out["brand_key_image"].append(path)
+            else:
+                out["other_image"].append(path)
+    return out
+
+
+def scan_artifacts_on_disk(
+    output_root: Path,
+    session_start_iso: str | None,
+    session_id: str | None = None,
+    legacy_roots: list[Path] | None = None,
+) -> dict[str, list[str]]:
+    """Enumerate artifacts produced by the pilot session.
+
+    Resolution order, controlled per Codex guardrail:
+
+    1. Read ``$output_root/.manifest.jsonl`` filtered by ``session_id``
+       (primary source — manifest is ground-truth provenance).
+    2. Read manifest files at any ``legacy_roots`` (e.g. repo cwd
+       when the env-var bug landed prior artifacts at the repo root).
+       Caller passes only known artifact roots — never the entire
+       filesystem — so the fallback stays bounded.
+    3. When the manifest sources are empty (legacy session that
+       predates manifest provenance, or a manifest write that failed
+       silently), fall back to the original ``output_root.rglob``
+       scan filtered by mtime relative to ``session_start_iso``.
+
+    Args:
+        output_root: Root of the BrandMind output tree.
         session_start_iso: ISO timestamp at which the pilot session
-            started. ``None`` disables the time filter.
+            started. Used by the rglob fallback to drop pre-existing
+            artifacts; ``None`` disables the time filter.
+        session_id: Pilot session id used to filter manifest records.
+            ``None`` disables the manifest pass and forces the rglob
+            fallback (legacy compatibility).
+        legacy_roots: Additional manifest roots to consult, typically
+            the process cwd when artifacts may have leaked there from
+            a prior bug. Each root must be a known location, not a
+            user-supplied path.
 
     Returns:
         Mapping of artifact category to list of file paths that match
-        the category and post-date the pilot start (when known).
+        the category for this session.
     """
     from datetime import datetime
-
-    cutoff = None
-    if session_start_iso:
-        try:
-            cutoff = datetime.fromisoformat(session_start_iso).timestamp()
-        except ValueError:
-            cutoff = None
 
     out: dict[str, list[str]] = {
         "brand_key_image": [],
@@ -363,6 +531,27 @@ def scan_artifacts_on_disk(
         "spreadsheet": [],
         "other_image": [],
     }
+
+    if session_id:
+        manifest_paths = [output_root / ".manifest.jsonl"]
+        if legacy_roots:
+            manifest_paths.extend(root / ".manifest.jsonl" for root in legacy_roots)
+        for mpath in manifest_paths:
+            chunk = parse_manifest(mpath, session_id)
+            for key, values in chunk.items():
+                out[key].extend(values)
+        for key in out:
+            out[key] = list(dict.fromkeys(out[key]))
+        if any(out.values()):
+            return out
+
+    cutoff = None
+    if session_start_iso:
+        try:
+            cutoff = datetime.fromisoformat(session_start_iso).timestamp()
+        except ValueError:
+            cutoff = None
+
     if not output_root.is_dir():
         return out
     for entry in output_root.rglob("*"):
@@ -690,6 +879,7 @@ def audit(
     brandmind_home: Path,
     output_root: Path,
     semantic: bool = False,
+    legacy_roots: list[Path] | None = None,
 ) -> AuditReport:
     """Run the full audit pipeline for one session directory.
 
@@ -704,6 +894,12 @@ def audit(
             the produced artifacts and include the results on the
             returned report. Defaults to ``False`` so the lightweight
             existence check stays the default for the M-3 smoke path.
+        legacy_roots: Optional list of additional manifest roots to
+            consult when ``output_root`` may not capture every
+            artifact (e.g. legacy artifacts saved at the repo root
+            before the ``BRANDMIND_OUTPUT_DIR`` env-var fix). Each
+            root is treated as a known location, not a user-supplied
+            path.
 
     Returns:
         A populated :class:`AuditReport` ready for serialisation.
@@ -715,7 +911,14 @@ def audit(
         raise FileNotFoundError(f"Session directory not found: {session_dir}")
 
     api_session_id, scope, completed_phases = parse_metadata(session_dir)
-    deliverable, subagent, notes = parse_server_log(session_dir / "server.log")
+    deliverable_log, subagent_log, notes = parse_server_log(
+        session_dir / "server.log"
+    )
+    deliverable_pilot, subagent_pilot = parse_pilot_state(
+        session_dir / "_pilot_state.json"
+    )
+    deliverable = merge_tool_usage(deliverable_pilot, deliverable_log)
+    subagent = merge_subagent(subagent_pilot, subagent_log)
     workspace_dir, workspace_id = find_workspace_dir(api_session_id, brandmind_home)
     workspace_files = inspect_workspace_files(workspace_dir)
 
@@ -725,7 +928,12 @@ def audit(
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
         session_start_iso = meta.get("created_at") or meta.get("date")
 
-    artifacts = scan_artifacts_on_disk(output_root, session_start_iso)
+    artifacts = scan_artifacts_on_disk(
+        output_root,
+        session_start_iso,
+        session_id=api_session_id,
+        legacy_roots=legacy_roots,
+    )
     health = evaluate_tier1_health(
         deliverable, artifacts, workspace_files, completed_phases
     )
