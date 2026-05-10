@@ -188,7 +188,12 @@ QUALITY_GATES: dict[str, list[GateItem]] = {
         ),
         GateItem(
             id="p4_messaging",
-            description="Messaging hierarchy (primary, secondary, supporting)",
+            description=(
+                "Messaging system — each of 3-5 key messages carries a Message "
+                "Type label (functional / emotional / differentiating / "
+                "credibility / community) AND a 3-tier hierarchy structure "
+                "(primary message + supporting points + proof points/RTBs)"
+            ),
         ),
         GateItem(
             id="p4_cialdini",
@@ -218,7 +223,10 @@ QUALITY_GATES: dict[str, list[GateItem]] = {
         ),
         GateItem(
             id="p5_kpis",
-            description="At least 5 KPIs defined with baselines and targets",
+            description=(
+                "At least 5 KPIs, each rendered with all 4 anchors: "
+                "method / current / target+date / cadence"
+            ),
         ),
         GateItem(
             id="p5_roadmap",
