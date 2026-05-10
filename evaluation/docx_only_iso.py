@@ -212,6 +212,7 @@ def _inspect_messages(messages: list[Any]) -> dict[str, Any]:
     tool_calls: list[str] = []
     gen_doc_input: str = ""
     gen_doc_result: str = ""
+    generate_document_calls: dict[str, str] = {}
 
     for msg in messages:
         if isinstance(msg, AIMessage) and getattr(msg, "tool_calls", None):
@@ -220,7 +221,11 @@ def _inspect_messages(messages: list[Any]) -> dict[str, Any]:
                 tool_calls.append(name)
                 if name == "generate_document":
                     args = tc.get("args", {})
-                    gen_doc_input = args.get("content", "")
+                    tool_call_id = tc.get("id", "")
+                    content_arg = args.get("content", "")
+                    if tool_call_id:
+                        generate_document_calls[tool_call_id] = content_arg
+                    gen_doc_input = content_arg
         if isinstance(msg, ToolMessage):
             content = msg.content
             if isinstance(content, list):
@@ -229,8 +234,9 @@ def _inspect_messages(messages: list[Any]) -> dict[str, Any]:
                     for p in content
                 )
             result_text = content if isinstance(content, str) else str(content)
-            # Check if this ToolMessage follows a generate_document call
-            if gen_doc_input and not gen_doc_result:
+            tool_call_id = getattr(msg, "tool_call_id", "")
+            if tool_call_id in generate_document_calls:
+                gen_doc_input = generate_document_calls[tool_call_id]
                 gen_doc_result = result_text
 
     return {
