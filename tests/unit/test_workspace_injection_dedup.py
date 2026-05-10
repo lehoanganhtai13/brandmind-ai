@@ -1,16 +1,13 @@
-"""Unit tests for _dedup_phase_sections in WorkspaceInjectionMiddleware.
+"""Unit tests for phase-section deduplication in workspace injection.
 
-These tests pin the deduplication contract introduced to harden the middleware
-against brand_brief.md files written twice for the same phase by the
-duplicate-pass framework bug (Task #57). The contract: only the LAST occurrence
-of each duplicate top-level ``## Phase N`` section is kept; non-phase content
-and unique phase sections are preserved with their original relative order.
+The contract: only the last occurrence of each duplicate top-level
+``## Phase N`` section is kept; non-phase content and unique phase
+sections are preserved with their original relative order.
 """
 
 from shared.agent_middlewares.workspace_injection.middleware import (
     _dedup_phase_sections,
 )
-
 
 _PREAMBLE = "# My Brand\n\nSession: abc123\n\n"
 

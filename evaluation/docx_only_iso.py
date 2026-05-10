@@ -1,7 +1,4 @@
-"""DOCX-only isolation test — diagnose Layer 2 vs Layer 3 failure.
-
-Uses the duplicate brand_brief.md fixture from session 317e42d5 (the pilot
-session where DOCX failed all 3 retries while PPTX/XLSX/BrandKey succeeded).
+"""DOCX-only isolation test for document-generator dispatch reliability.
 
 Goal: distinguish whether the failure was at
   Layer 2 — sub-agent reasoning: didn't call generate_document, or called it
@@ -24,9 +21,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
 import sys
-import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -54,7 +49,9 @@ from core.brand_strategy.subagents.configs import (  # noqa: E402
     DOCUMENT_GENERATOR_TOOLS,
     create_subagent_models,
 )
-from prompts.brand_strategy.subagents import DOCUMENT_GENERATOR_SYSTEM_PROMPT  # noqa: E402
+from prompts.brand_strategy.subagents import (  # noqa: E402
+    DOCUMENT_GENERATOR_SYSTEM_PROMPT,
+)
 from shared.agent_middlewares import WorkspaceInjectionMiddleware  # noqa: E402
 from shared.agent_tools.document import (  # noqa: E402
     generate_document,
@@ -333,7 +330,7 @@ async def _run_iso(log_level: str, fixture_session_id: str) -> IsoResult:
     # generate_document was called — inspect the content argument
     result.content_arg_preview = gen_doc_input[:500]
     try:
-        content_dict = json.loads(gen_doc_input)
+        json.loads(gen_doc_input)
         result.content_arg_valid_json = True
     except (json.JSONDecodeError, TypeError) as e:
         result.content_arg_valid_json = False

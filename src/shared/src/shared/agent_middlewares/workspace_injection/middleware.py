@@ -36,14 +36,12 @@ _PHASE_HEADER_RE = re.compile(r"^(## Phase \d+(?:\.\d+)?)\b", re.MULTILINE)
 
 
 def _dedup_phase_sections(content: str) -> tuple[str, int]:
-    """Remove earlier duplicate top-level phase sections from brand_brief.md.
+    """Keep the latest top-level phase section for each phase in brand_brief.md.
 
-    When the duplicate-pass framework bug fires, the orchestrator writes the same
-    phase block to brand_brief.md twice — typically an English skeleton first, then
-    a full Vietnamese content block. Injecting both contradictory "COMPLETED" sections
-    into the sub-agent causes it to return empty output with zero tool calls (Layer 2
-    failure). This helper keeps only the last occurrence of each duplicate phase block,
-    which is the fuller, more recent version.
+    The workspace brief is the sub-agent's source of truth for phase decisions.
+    When a phase appears more than once, the later section represents the
+    freshest workspace state and should be the only version injected into the
+    sub-agent context.
 
     Only top-level ``## Phase N`` or ``## Phase N.M`` section boundaries are
     considered; sub-headings and non-phase sections are preserved with their
