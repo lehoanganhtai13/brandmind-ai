@@ -6,6 +6,7 @@ import asyncio
 import json
 import os
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -20,6 +21,20 @@ from evaluation.knowledge_search_comparison.source_mapping import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+HIPPORAG_SOURCE_ROOT = (
+    PROJECT_ROOT / ".codex" / "benchmarks" / "hipporag" / "HippoRAG" / "src"
+)
+CONDA_ENVIRONMENT_KEYS = (
+    "CONDA_DEFAULT_ENV",
+    "CONDA_PREFIX",
+    "CONDA_PROMPT_MODIFIER",
+    "CONDA_PYTHON_EXE",
+    "CONDA_SHLVL",
+    "UV",
+    "UV_RUN_RECURSION_DEPTH",
+    "VIRTUAL_ENV",
+    "VIRTUAL_ENV_PROMPT",
+)
 
 
 class HippoRagSubprocessConfig(BaseModel):
@@ -69,13 +84,7 @@ class HippoRagSubprocessSearchTool:
             "--metadata-path",
             str(self.config.metadata_path),
         ]
-        env = os.environ.copy()
-        existing_pythonpath = env.get("PYTHONPATH")
-        env["PYTHONPATH"] = (
-            f"{PROJECT_ROOT}:{existing_pythonpath}"
-            if existing_pythonpath
-            else str(PROJECT_ROOT)
-        )
+        env = build_conda_subprocess_env()
         process = await asyncio.create_subprocess_exec(
             *command,
             cwd=PROJECT_ROOT,
@@ -98,6 +107,30 @@ class HippoRagSubprocessSearchTool:
             raise RuntimeError(f"HippoRAG worker failed: {stderr_text}")
 
         return parse_hipporag_worker_stdout(stdout)
+
+
+def build_conda_subprocess_env(
+    base_env: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    """Build a clean environment for nested ``conda run`` calls.
+
+    The live benchmark runner normally executes inside the project uv virtual
+    environment. Passing uv/venv activation variables through to ``conda run``
+    can hide packages installed in the HippoRAG conda environment, so the
+    subprocess receives a clean conda boundary plus explicit source paths.
+    """
+
+    env = dict(os.environ if base_env is None else base_env)
+    for key in CONDA_ENVIRONMENT_KEYS:
+        env.pop(key, None)
+
+    pythonpath_entries = [str(PROJECT_ROOT)]
+    if HIPPORAG_SOURCE_ROOT.exists():
+        pythonpath_entries.append(str(HIPPORAG_SOURCE_ROOT))
+    if existing_pythonpath := env.get("PYTHONPATH"):
+        pythonpath_entries.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_entries)
+    return env
 
 
 def parse_hipporag_worker_stdout(stdout: bytes) -> HippoRagWorkerResponse:
