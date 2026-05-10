@@ -32,14 +32,14 @@ between sections
 
 1. **BRAND NAME** (large, bold, centered at top with brand-color \
 accent bar beneath): {{brand_name}}
-2. **ROOT STRENGTH** (heritage & core competency): {{root_strength}}
+2. **ROOT STRENGTHS** (heritage & core competencies): {{root_strength}}
 3. **COMPETITIVE ENVIRONMENT** (market context & key competitors): \
 {{competitive_environment}}
 4. **TARGET** (primary audience definition): {{target}}
 5. **INSIGHT** (the consumer truth that drives brand relevance): \
 {{insight}}
 6. **BENEFITS** (functional + emotional benefits): {{benefits}}
-7. **VALUES & PERSONALITY** (brand character traits): \
+7. **VALUES, BELIEFS & PERSONALITY** (brand beliefs and character traits): \
 {{values_personality}}
 8. **REASONS TO BELIEVE** (proof points & evidence): \
 {{reasons_to_believe}}

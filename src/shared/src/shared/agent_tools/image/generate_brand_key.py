@@ -100,10 +100,11 @@ def generate_brand_key(
                     f"Essence: {brand_essence}\n\n"
                     f"⚠️ IMPORTANT: File on disk ≠ user delivery. "
                     f"To complete delivery, describe all 9 Brand Key components "
-                    f"(Root Strength, Competitive Environment, Target, Insight, "
-                    f"Benefits, Values & Personality, Reasons to Believe, "
-                    f"Discriminator, Brand Essence) in your next user-facing "
-                    f"response with actual brand-specific content.\n\n"
+                    f"(Root Strengths, Competitive Environment, Target, "
+                    f"Insight, Benefits, Values, Beliefs & Personality, "
+                    f"Reasons to Believe, Discriminator, Brand Essence) "
+                    f"in your next user-facing response with actual "
+                    f"brand-specific content.\n\n"
                     f"To refine visual, use edit_image with "
                     f'image_path="{result.file_path}".'
                 ),

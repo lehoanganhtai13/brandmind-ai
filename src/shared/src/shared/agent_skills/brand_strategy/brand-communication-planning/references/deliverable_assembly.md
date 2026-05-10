@@ -23,12 +23,12 @@ The Brand Key is a single-page visual summary of the brand strategy with 9 compo
 
 | Component | Source |
 |-----------|--------|
-| **Root Strength** | Phase 0 business strengths + Phase 1 competitive advantage |
+| **Root Strengths** | Phase 0 business strengths + Phase 1 competitive advantage |
 | **Competitive Environment** | Phase 1 competitive landscape summary |
 | **Target** | Phase 1 target audience primary segment |
 | **Insight** | Phase 1 top prioritized customer insight |
 | **Benefits** | Phase 2 value architecture (functional + emotional) |
-| **Values & Personality** | Phase 3 brand personality traits |
+| **Values, Beliefs & Personality** | Phase 3 brand beliefs + personality traits |
 | **Reasons to Believe** | Phase 2 value architecture RTBs |
 | **Discriminator** | Phase 2 key POD |
 | **Brand Essence** | Phase 2 brand essence / mantra |
