@@ -18,6 +18,7 @@ the orchestrator's dispatch description was.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any, Callable
 
@@ -31,6 +32,70 @@ from loguru import logger
 
 _DEFAULT_FILES = ("brand_brief.md", "quality_gates.md")
 _DEFAULT_WORKSPACE_ROOT = Path.home() / ".brandmind" / "projects"
+_PHASE_HEADER_RE = re.compile(r"^(## Phase \d+(?:\.\d+)?)\b", re.MULTILINE)
+
+
+def _dedup_phase_sections(content: str) -> tuple[str, int]:
+    """Remove earlier duplicate top-level phase sections from brand_brief.md.
+
+    When the duplicate-pass framework bug fires, the orchestrator writes the same
+    phase block to brand_brief.md twice — typically an English skeleton first, then
+    a full Vietnamese content block. Injecting both contradictory "COMPLETED" sections
+    into the sub-agent causes it to return empty output with zero tool calls (Layer 2
+    failure). This helper keeps only the last occurrence of each duplicate phase block,
+    which is the fuller, more recent version.
+
+    Only top-level ``## Phase N`` or ``## Phase N.M`` section boundaries are
+    considered; sub-headings and non-phase sections are preserved with their
+    original relative order.
+
+    Args:
+        content (str): Raw text of brand_brief.md read from the workspace directory.
+
+    Returns:
+        deduplicated_content (str): Content with earlier duplicate phase sections
+            removed. Identical to ``content`` when no duplicates exist.
+        sections_removed (int): Number of duplicate sections dropped; 0 when the
+            content was already clean.
+    """
+    lines = content.splitlines(keepends=True)
+
+    segments: list[list[str]] = []
+    current: list[str] = []
+    for line in lines:
+        if _PHASE_HEADER_RE.match(line):
+            segments.append(current)
+            current = [line]
+        else:
+            current.append(line)
+    segments.append(current)
+
+    preamble = segments[0]
+    phase_segments = segments[1:]
+
+    if not phase_segments:
+        return content, 0
+
+    phase_keys: list[str] = []
+    for seg in phase_segments:
+        first_line = seg[0] if seg else ""
+        m = _PHASE_HEADER_RE.match(first_line)
+        phase_keys.append(m.group(1) if m else first_line.rstrip())
+
+    last_index_for_key: dict[str, int] = {}
+    for i, key in enumerate(phase_keys):
+        last_index_for_key[key] = i
+
+    removed = len(phase_segments) - len(last_index_for_key)
+    if removed == 0:
+        return content, 0
+
+    result_lines = list(preamble)
+    for i, (key, seg) in enumerate(zip(phase_keys, phase_segments)):
+        if last_index_for_key[key] == i:
+            result_lines.extend(seg)
+
+    return "".join(result_lines), removed
 
 
 class WorkspaceInjectionMiddleware(AgentMiddleware):
@@ -100,6 +165,14 @@ class WorkspaceInjectionMiddleware(AgentMiddleware):
                     f"WorkspaceInjectionMiddleware: skipping {filename}: {exc}"
                 )
                 continue
+            if filename == "brand_brief.md":
+                content, removed = _dedup_phase_sections(content)
+                if removed > 0:
+                    logger.info(
+                        f"WorkspaceInjectionMiddleware: deduped brand_brief.md — "
+                        f"removed {removed} duplicate phase section(s); "
+                        f"injecting {len(content)} chars after dedup"
+                    )
             blocks.append(
                 f"=== WORKSPACE: {filename} (auto-injected) ===\n"
                 f"{content.strip()}\n"
