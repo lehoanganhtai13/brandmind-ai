@@ -285,7 +285,7 @@ class TestGenerateImageTemplateValidation:
         # generate_image now returns multimodal list
         assert isinstance(result, list)
         text_part = result[1]["text"]
-        assert "Image saved to:" in text_part
+        assert "Image FILE saved to disk:" in text_part
         assert "/tmp/test.png" in text_part
 
     def test_partial_vars_reports_only_missing(self) -> None:

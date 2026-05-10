@@ -422,12 +422,9 @@ def parse_manifest(
 ) -> dict[str, list[str]]:
     """Read the artifact manifest JSONL and group records by audit category.
 
-    The manifest is the ground-truth provenance log: every artifact
-    write goes through ``append_manifest`` and records ``session_id``
-    so the audit can answer "which files belong to this session"
-    independently of where on disk they ultimately landed. Manifest-
-    based discovery survives env-var bugs (e.g. ``BRANDMIND_OUTPUT_DIR``
-    misresolved) that would defeat a path-based ``rglob``.
+    The manifest is the ground-truth provenance log: each artifact
+    record carries ``session_id`` so the audit can answer "which files
+    belong to this session" without depending only on directory layout.
 
     Args:
         manifest_path: Absolute path to a ``.manifest.jsonl`` file.
@@ -492,18 +489,15 @@ def scan_artifacts_on_disk(
 ) -> dict[str, list[str]]:
     """Enumerate artifacts produced by the pilot session.
 
-    Resolution order, controlled per Codex guardrail:
+    Resolution order:
 
     1. Read ``$output_root/.manifest.jsonl`` filtered by ``session_id``
-       (primary source — manifest is ground-truth provenance).
-    2. Read manifest files at any ``legacy_roots`` (e.g. repo cwd
-       when the env-var bug landed prior artifacts at the repo root).
-       Caller passes only known artifact roots — never the entire
-       filesystem — so the fallback stays bounded.
+       as the primary provenance source.
+    2. Read manifest files at any ``legacy_roots``. Caller passes only
+       known artifact roots so the fallback stays bounded.
     3. When the manifest sources are empty (legacy session that
-       predates manifest provenance, or a manifest write that failed
-       silently), fall back to the original ``output_root.rglob``
-       scan filtered by mtime relative to ``session_start_iso``.
+       predates manifest provenance), fall back to ``output_root.rglob``
+       filtered by mtime relative to ``session_start_iso``.
 
     Args:
         output_root: Root of the BrandMind output tree.
@@ -514,9 +508,8 @@ def scan_artifacts_on_disk(
             ``None`` disables the manifest pass and forces the rglob
             fallback (legacy compatibility).
         legacy_roots: Additional manifest roots to consult, typically
-            the process cwd when artifacts may have leaked there from
-            a prior bug. Each root must be a known location, not a
-            user-supplied path.
+            known workspace roots used by older sessions. Each root
+            must be a trusted location, not a user-supplied path.
 
     Returns:
         Mapping of artifact category to list of file paths that match
@@ -896,10 +889,8 @@ def audit(
             existence check stays the default for the M-3 smoke path.
         legacy_roots: Optional list of additional manifest roots to
             consult when ``output_root`` may not capture every
-            artifact (e.g. legacy artifacts saved at the repo root
-            before the ``BRANDMIND_OUTPUT_DIR`` env-var fix). Each
-            root is treated as a known location, not a user-supplied
-            path.
+            artifact. Each root is treated as a known location, not a
+            user-supplied path.
 
     Returns:
         A populated :class:`AuditReport` ready for serialisation.

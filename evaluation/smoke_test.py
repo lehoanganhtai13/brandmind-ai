@@ -263,11 +263,9 @@ def main(argv: list[str] | None = None) -> int:
         brandmind_home=args.brandmind_home,
         output_root=Path.cwd() / "brandmind-output",
         semantic=True,
-        # Cwd is consulted as a legacy manifest root so artifacts
-        # saved at the repo root by sessions predating the
-        # BRANDMIND_OUTPUT_DIR empty-string fix remain visible to
-        # the audit. Limited to the cwd path to keep the fallback
-        # bounded — the audit never rglobs unrelated locations.
+        # Cwd is consulted as a known manifest root for older session
+        # outputs. The audit keeps this fallback bounded to the current
+        # workspace rather than scanning unrelated filesystem paths.
         legacy_roots=[Path.cwd()],
     )
     health = report.tier1_health

@@ -58,12 +58,8 @@ class GeminiImageClient:
     def _resolve_output_dir() -> str:
         """Return the absolute images output directory.
 
-        Treats an empty-string ``BRANDMIND_OUTPUT_DIR`` as unset —
-        ``os.environ.get(KEY, DEFAULT)`` returns the empty string when
-        the variable is exported blank, which would make
-        ``os.path.join("", "images")`` resolve to a relative ``images``
-        path under the process cwd and scatter image artifacts at the
-        repository root.
+        Treats a blank ``BRANDMIND_OUTPUT_DIR`` as unset so image
+        artifacts stay under the configured BrandMind output tree.
         """
         base = os.environ.get("BRANDMIND_OUTPUT_DIR", "") or os.path.join(
             os.getcwd(), "brandmind-output"
@@ -248,11 +244,8 @@ class GeminiImageClient:
         file_path.write_bytes(image_bytes)
         logger.debug(f"Image saved to {file_path}")
 
-        # Append manifest entry at the actual save call site so
-        # `list_artifacts(scope="current_session")` and the smoke audit
-        # both observe images alongside DOCX/PPTX/XLSX. Manifest writes
-        # are best-effort; a provenance failure must not block image
-        # delivery.
+        # Record image provenance at the save boundary; manifest writes
+        # are best-effort and must not block image delivery.
         try:
             from shared.agent_tools.document._output_path import (
                 append_manifest,
