@@ -43,6 +43,79 @@ class _StreamEnd(BaseAgentEvent):
 
 
 _STREAM_END = _StreamEnd()
+_INTERNAL_REMINDER_START = "<system-reminder>"
+_INTERNAL_REMINDER_END = "</system-reminder>"
+
+
+def _longest_suffix_prefix_match(text: str, prefix: str) -> int:
+    """Return the longest suffix length in text that may continue as prefix."""
+    max_length = min(len(text), len(prefix) - 1)
+    for length in range(max_length, 0, -1):
+        if prefix.startswith(text[-length:]):
+            return length
+    return 0
+
+
+class _InternalReminderFilter:
+    """Remove internal reminder blocks from streamed model-visible text."""
+
+    def __init__(self) -> None:
+        self._buffer = ""
+        self._inside_internal_block = False
+
+    def feed(self, text: str) -> str:
+        """Accept one streamed chunk and return only user-facing text."""
+        if not text:
+            return ""
+
+        self._buffer += text
+        visible_parts: list[str] = []
+
+        while self._buffer:
+            if self._inside_internal_block:
+                end_index = self._buffer.find(_INTERNAL_REMINDER_END)
+                if end_index == -1:
+                    keep = _longest_suffix_prefix_match(
+                        self._buffer,
+                        _INTERNAL_REMINDER_END,
+                    )
+                    self._buffer = self._buffer[-keep:] if keep else ""
+                    break
+
+                self._buffer = self._buffer[end_index + len(_INTERNAL_REMINDER_END) :]
+                self._inside_internal_block = False
+                continue
+
+            start_index = self._buffer.find(_INTERNAL_REMINDER_START)
+            if start_index != -1:
+                visible_parts.append(self._buffer[:start_index])
+                self._buffer = self._buffer[
+                    start_index + len(_INTERNAL_REMINDER_START) :
+                ]
+                self._inside_internal_block = True
+                continue
+
+            keep = _longest_suffix_prefix_match(
+                self._buffer,
+                _INTERNAL_REMINDER_START,
+            )
+            emit_until = len(self._buffer) - keep
+            visible_parts.append(self._buffer[:emit_until])
+            self._buffer = self._buffer[emit_until:]
+            break
+
+        return "".join(visible_parts)
+
+    def flush(self) -> str:
+        """Return any safe buffered text and discard unterminated reminders."""
+        if self._inside_internal_block:
+            self._buffer = ""
+            self._inside_internal_block = False
+            return ""
+
+        text = self._buffer
+        self._buffer = ""
+        return text
 
 
 async def stream_agent_response(
@@ -98,6 +171,25 @@ async def stream_agent_response(
         # Accumulates response text so we can update session.messages
         # after streaming completes (astream doesn't return final state).
         accumulated_response: list[str] = []
+        response_filter = _InternalReminderFilter()
+        thinking_filter = _InternalReminderFilter()
+        filters_flushed = False
+
+        async def _flush_visible_text() -> None:
+            nonlocal filters_flushed
+            if filters_flushed:
+                return
+
+            thinking_tail = thinking_filter.flush()
+            if thinking_tail:
+                await event_queue.put(StreamingThinkingEvent(token=thinking_tail))
+
+            response_tail = response_filter.flush()
+            if response_tail:
+                accumulated_response.append(response_tail)
+                await event_queue.put(StreamingTokenEvent(token=response_tail))
+
+            filters_flushed = True
 
         async def _run_astream() -> None:
             nonlocal accumulated_response
@@ -118,38 +210,49 @@ async def stream_agent_response(
                             if part.get("type") == "thinking":
                                 text = part.get("thinking", "")
                                 if text:
+                                    visible_text = thinking_filter.feed(text)
+                                    if not visible_text:
+                                        continue
                                     if thinking_done:
                                         thinking_done = False
                                     await event_queue.put(
-                                        StreamingThinkingEvent(token=text)
+                                        StreamingThinkingEvent(token=visible_text)
                                     )
                             elif part.get("type") == "text":
                                 text = part.get("text", "")
                                 if text:
+                                    visible_text = response_filter.feed(text)
+                                    if not visible_text:
+                                        continue
                                     if not thinking_done:
                                         await event_queue.put(
                                             StreamingThinkingEvent(token="", done=True)
                                         )
                                         thinking_done = True
-                                    accumulated_response.append(text)
+                                    accumulated_response.append(visible_text)
                                     await event_queue.put(
-                                        StreamingTokenEvent(token=text)
+                                        StreamingTokenEvent(token=visible_text)
                                     )
 
                     elif isinstance(chunk.content, str) and chunk.content:
+                        visible_text = response_filter.feed(chunk.content)
+                        if not visible_text:
+                            continue
                         if not thinking_done:
                             await event_queue.put(
                                 StreamingThinkingEvent(token="", done=True)
                             )
                             thinking_done = True
-                        accumulated_response.append(chunk.content)
-                        await event_queue.put(StreamingTokenEvent(token=chunk.content))
+                        accumulated_response.append(visible_text)
+                        await event_queue.put(StreamingTokenEvent(token=visible_text))
 
                     if chunk.tool_calls and not thinking_done:
                         await event_queue.put(
                             StreamingThinkingEvent(token="", done=True)
                         )
                         thinking_done = True
+
+                await _flush_visible_text()
 
                 # Append AI response to session history for next turn
                 response_text = "".join(accumulated_response)
@@ -160,6 +263,7 @@ async def stream_agent_response(
                 # Errors are logged server-side; stream ends gracefully
                 pass
             finally:
+                await _flush_visible_text()
                 if not thinking_done:
                     await event_queue.put(StreamingThinkingEvent(token="", done=True))
                 await event_queue.put(StreamingTokenEvent(token="", done=True))
