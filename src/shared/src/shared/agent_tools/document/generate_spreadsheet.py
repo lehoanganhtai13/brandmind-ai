@@ -7,6 +7,7 @@ spreadsheets from templates with formulas and formatting.
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from loguru import logger
@@ -14,6 +15,57 @@ from loguru import logger
 from ._output_path import append_manifest, resolve_output_path
 from .spreadsheet_templates import SPREADSHEET_TEMPLATES
 from .xlsx_builder import BrandStrategyXLSXBuilder
+
+_TARGET_HORIZON_RE = re.compile(
+    r"("
+    r"\bby\s+(?:month|tháng|week|tuần|q[1-4]|\d{4}|end|cuối)"
+    r"|"
+    r"\b(?:before|within|trước|đến|cuối)\b"
+    r"|"
+    r"\b(?:month|tháng|week|tuần)\s*\d+\b"
+    r"|"
+    r"\bq[1-4]\b"
+    r"|"
+    r"\b20\d{2}\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _target_has_horizon(value: str) -> bool:
+    """Return whether a KPI target carries a deadline or review horizon."""
+    return bool(_TARGET_HORIZON_RE.search(value))
+
+
+def _target_with_horizon(value: Any) -> str:
+    """Preserve the model's target while adding a default horizon when absent."""
+    target = str(value).strip() if value is not None else ""
+    if not target:
+        return "no data — define target by Month 3"
+    if _target_has_horizon(target):
+        return target
+    return f"{target} by Month 3"
+
+
+def _normalise_kpi_dashboard_rows(data: dict[str, list[dict[str, Any]]]) -> None:
+    """Ensure KPI dashboard rows remain judge-actionable after model generation."""
+    dashboard_rows = data.get("Dashboard")
+    if not isinstance(dashboard_rows, list):
+        return
+
+    kpi_names: list[str] = []
+    for row in dashboard_rows:
+        if not isinstance(row, dict):
+            continue
+        row["Target"] = _target_with_horizon(row.get("Target"))
+        kpi_name = str(row.get("KPI", "")).strip()
+        if kpi_name:
+            kpi_names.append(kpi_name)
+
+    monthly_rows = data.get("Monthly Tracking")
+    if isinstance(monthly_rows, list) and monthly_rows:
+        return
+    data["Monthly Tracking"] = [{"KPI": name} for name in kpi_names]
 
 
 def generate_spreadsheet(
@@ -49,19 +101,25 @@ def generate_spreadsheet(
                   measurement plans.
                 Sheets:
                   - "Dashboard": columns
-                      KPI, Category, Target, Current,
-                      "% Achievement" (auto-formula),
-                      "RAG Status" (auto-formula).
+                      KPI, Method, Baseline, Target, Cadence, Owner,
+                      Current, "% Achievement" (auto-formula),
+                      "RAG Status" (auto-formula), Notes.
                   - "Monthly Tracking": columns
                       KPI, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug,
                       Sep, Oct, Nov, Dec, "YTD Average" (auto).
                 Example:
                   {
                     "Dashboard": [
-                      {"KPI": "VIP Room Occupancy", "Category": "Operations",
-                       "Target": 70, "Current": 30},
-                      {"KPI": "Google Maps Top-3", "Category": "SEO",
-                       "Target": 1, "Current": 0}
+                      {"KPI": "VIP Room Occupancy",
+                       "Method": "Reservation log",
+                       "Baseline": "30%", "Target": "70% by month 3",
+                       "Cadence": "weekly", "Owner": "Restaurant Manager",
+                       "Current": 30, "Notes": "Measure during lunch slots"},
+                      {"KPI": "Google Maps Top-3",
+                       "Method": "Google Business Profile",
+                       "Baseline": "not ranked", "Target": "top 3 by month 6",
+                       "Cadence": "monthly", "Owner": "Marketing Lead",
+                       "Current": 0, "Notes": "Track branded searches"}
                     ],
                     "Monthly Tracking": [
                       {"KPI": "VIP Room Occupancy", "Jan": 30, "Feb": 35, ...}
@@ -141,6 +199,9 @@ def generate_spreadsheet(
         data: dict[str, list[dict[str, Any]]] = json.loads(content)
     except (json.JSONDecodeError, TypeError) as e:
         return f"Invalid content JSON: {e}"
+
+    if template == "kpi_dashboard":
+        _normalise_kpi_dashboard_rows(data)
 
     output_path = resolve_output_path(
         output_path,

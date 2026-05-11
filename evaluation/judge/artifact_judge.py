@@ -175,15 +175,42 @@ class JudgeReport:
 
 def _extract_brand_key_text(path: Path) -> tuple[str, str | None]:
     """Return (text, skip_reason). text is empty when extraction fails."""
+    sidecar_path = path.with_suffix(".brand_key.json")
+    if sidecar_path.is_file():
+        try:
+            payload = json.loads(sidecar_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            return "", f"Brand Key sidecar failed to parse: {exc}"
+        components = payload.get("components", [])
+        if isinstance(components, list):
+            lines = [f"Brand: {payload.get('brand_name', path.stem)}"]
+            for component in components:
+                if not isinstance(component, dict):
+                    continue
+                label = str(component.get("label", "")).strip()
+                value = str(component.get("value", "")).strip()
+                if label and value:
+                    lines.append(f"{label}: {value}")
+            if len(lines) > 1:
+                return "\n".join(lines), None
+
     try:
         import pytesseract  # type: ignore
-        from PIL import Image  # type: ignore
+        from PIL import Image, ImageEnhance, ImageOps  # type: ignore
     except ImportError as exc:
         return "", f"OCR unavailable: {exc}"
     try:
-        text = pytesseract.image_to_string(Image.open(path), lang="eng+vie")
+        image = Image.open(path)
+        text_parts = [pytesseract.image_to_string(image, lang="eng+vie")]
+        width, height = image.size
+        bottom = image.crop((0, int(height * 0.78), width, height))
+        bottom = bottom.resize((bottom.width * 2, bottom.height * 2))
+        bottom = ImageOps.grayscale(bottom)
+        bottom = ImageEnhance.Contrast(bottom).enhance(2.0)
+        text_parts.append(pytesseract.image_to_string(bottom, lang="eng+vie"))
     except Exception as exc:  # noqa: BLE001
         return "", f"OCR failed: {exc}"
+    text = "\n\n".join(part.strip() for part in text_parts if part.strip())
     return text, None
 
 
@@ -196,8 +223,13 @@ def _extract_docx_text(path: Path) -> tuple[str, str | None]:
         document = docx.Document(str(path))
     except Exception as exc:  # noqa: BLE001
         return "", f"DOCX failed to open: {exc}"
-    paragraphs = [p.text for p in document.paragraphs if p.text and p.text.strip()]
-    return "\n".join(paragraphs), None
+    chunks = [p.text for p in document.paragraphs if p.text and p.text.strip()]
+    for table in document.tables:
+        for row in table.rows:
+            cells = [cell.text.strip() for cell in row.cells]
+            if any(cells):
+                chunks.append(" | ".join(cells))
+    return "\n".join(chunks), None
 
 
 def _extract_pptx_text(path: Path) -> tuple[str, str | None]:
@@ -218,7 +250,12 @@ def _extract_pptx_text(path: Path) -> tuple[str, str | None]:
         )
         chunks.append(f"--- Slide {i}: {title} ---")
         for shape in slide.shapes:
-            if (
+            if getattr(shape, "has_table", False):
+                table = shape.table
+                for row in table.rows:
+                    cells = [cell.text.strip() for cell in row.cells]
+                    chunks.append(" | ".join(cells))
+            elif (
                 shape.has_text_frame
                 and shape != slide.shapes.title
                 and shape.text_frame.text.strip()

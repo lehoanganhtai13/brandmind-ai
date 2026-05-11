@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -25,6 +26,8 @@ from shared.agent_tools.document.export_to_markdown import (
     _format_full_document,
     export_to_markdown,
 )
+from shared.agent_tools.document.generate_document import generate_document
+from shared.agent_tools.document.generate_spreadsheet import generate_spreadsheet
 from shared.agent_tools.document.list_artifacts import list_artifacts
 from shared.agent_tools.document.spreadsheet_templates import SPREADSHEET_TEMPLATES
 
@@ -417,6 +420,99 @@ class TestExportToMarkdown:
         assert "Brand X" not in result
 
 
+# ===== generate_document =====
+
+
+class TestGenerateDocument:
+    """Test the report builder tool contract."""
+
+    def test_accepts_structured_content_object(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        content = {
+            "cover": "Modern Heritage Bistro",
+            "executive_summary": ["Clarify Signature positioning."],
+            "phase_0_output": {"Problem": "Weekday bookings are weak."},
+            "phase_1_output": {"Target": "Executive lunch guests."},
+            "phase_2_output": {"Positioning": "Vietnamese heritage bistro."},
+            "phase_3_output": {"Visual": "Peacock blue and bronze."},
+            "phase_4_output": {"Messaging": "Vị di sản quen, trải nghiệm mới."},
+            "phase_5_output": {
+                "roadmap": [{"Horizon": "0-3 months", "Items": "Launch assets"}],
+                "measurement": [
+                    {
+                        "KPI": "Weekday bookings",
+                        "Method": "Reservation log",
+                        "Baseline": "measure weeks 1-2",
+                        "Target": "20% monthly growth",
+                        "Cadence": "weekly",
+                    }
+                ],
+            },
+        }
+
+        result = generate_document(
+            content,
+            brand_name="Chuyện Ba Bữa Signature",
+        )
+
+        assert "Document FILE saved to disk" in result
+        assert "Format: DOCX" in result
+        path_line = next(
+            line for line in result.splitlines() if line.startswith("Path: ")
+        )
+        artifact_path = Path(path_line.removeprefix("Path: "))
+        assert artifact_path.is_file()
+        assert tmp_path in artifact_path.parents
+
+
+# ===== generate_spreadsheet =====
+
+
+class TestGenerateSpreadsheet:
+    """Test spreadsheet generation guardrails for KPI dashboards."""
+
+    def test_kpi_targets_get_default_horizon_when_missing(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from openpyxl import load_workbook
+
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        content = {
+            "Dashboard": [
+                {
+                    "KPI": "CPA (Cost per Booking)",
+                    "Method": "Ads Manager + Booking Log",
+                    "Baseline": "no data — measure pre-launch",
+                    "Target": "< 150,000 VND",
+                    "Cadence": "monthly",
+                    "Owner": "Marketing Exec",
+                    "Current": "no data — measure pre-launch",
+                    "Notes": "Track paid acquisition efficiency",
+                }
+            ]
+        }
+
+        result = generate_spreadsheet(
+            json.dumps(content, ensure_ascii=False),
+            template="kpi_dashboard",
+            brand_name="Chuyện Ba Bữa Signature",
+        )
+
+        path_line = next(
+            line for line in result.splitlines() if line.startswith("Path: ")
+        )
+        workbook = load_workbook(Path(path_line.removeprefix("Path: ")))
+        dashboard = workbook["Dashboard"]
+        monthly = workbook["Monthly Tracking"]
+
+        assert dashboard["D3"].value == "< 150,000 VND by Month 3"
+        assert monthly["A3"].value == "CPA (Cost per Booking)"
+
+
 # ===== SPREADSHEET_TEMPLATES =====
 
 
@@ -513,6 +609,12 @@ class TestSpreadsheetTemplates:
         assert "Green" in dashboard["formulas"]["RAG Status"]
         assert "Amber" in dashboard["formulas"]["RAG Status"]
         assert "Red" in dashboard["formulas"]["RAG Status"]
+
+    def test_kpi_dashboard_has_actionable_tracker_columns(self) -> None:
+        sheets = SPREADSHEET_TEMPLATES["kpi_dashboard"]["sheets"]
+        dashboard = next(s for s in sheets if s["name"] == "Dashboard")
+        for header in ("Method", "Baseline", "Cadence", "Owner", "Notes"):
+            assert header in dashboard["headers"]
 
 
 # ===== resolve_output_path =====
@@ -802,3 +904,50 @@ class TestListArtifacts:
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
         result = list_artifacts(scope="all", category="bogus")  # type: ignore[arg-type]
         assert "Invalid category" in result
+
+    def test_current_session_reports_missing_required_categories(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        self._seed_manifest(tmp_path, [
+            {
+                "session_id": "s1", "brand_name": "A",
+                "category": "images", "tool": "generate_image",
+                "filename": "a.jpeg", "path": "/x/a.jpeg",
+                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
+            },
+            {
+                "session_id": "s1", "brand_name": "A",
+                "category": "presentations", "tool": "generate_presentation",
+                "filename": "a.pptx", "path": "/x/a.pptx",
+                "size_bytes": 200, "generated_at": "2026-05-01T10:01:00+07:00",
+            },
+        ])
+        session = MagicMock(session_id="s1", brand_name="A")
+
+        with patch("core.brand_strategy.session.get_active_session", return_value=session):
+            result = list_artifacts(scope="current_session")
+
+        assert "Missing required categories: documents, spreadsheets" in result
+        assert "CLOSURE_STATUS: INCOMPLETE" in result
+
+    def test_current_session_reports_complete_required_categories(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        self._seed_manifest(tmp_path, [
+            {
+                "session_id": "s1", "brand_name": "A",
+                "category": category, "tool": "tool",
+                "filename": f"{category}.out", "path": f"/x/{category}.out",
+                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
+            }
+            for category in ("images", "documents", "presentations", "spreadsheets")
+        ])
+        session = MagicMock(session_id="s1", brand_name="A")
+
+        with patch("core.brand_strategy.session.get_active_session", return_value=session):
+            result = list_artifacts(scope="current_session")
+
+        assert "Missing required categories: none" in result
+        assert "CLOSURE_STATUS: COMPLETE" in result

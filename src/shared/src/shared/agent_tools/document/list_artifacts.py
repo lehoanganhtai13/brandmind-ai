@@ -22,6 +22,7 @@ from ._output_path import _base_dir, _manifest_path
 
 _VALID_SCOPES = ("current_session", "current_brand", "all")
 _VALID_CATEGORIES = ("documents", "presentations", "spreadsheets", "images", "all")
+_REQUIRED_PHASE_5_CATEGORIES = ("images", "documents", "presentations", "spreadsheets")
 
 
 def _active_session_context() -> tuple[str | None, str | None]:
@@ -166,9 +167,31 @@ def list_artifacts(
         # Surface category coverage explicitly so the orchestrator can
         # check Phase 5 closure without re-parsing the listing.
         produced_categories = sorted({r.get("category", "?") for r in matches})
+        missing_categories = [
+            category_name
+            for category_name in _REQUIRED_PHASE_5_CATEGORIES
+            if category_name not in produced_categories
+        ]
         lines.append("")
         lines.append(
             f"Categories produced this session: {', '.join(produced_categories)}"
         )
+        lines.append(
+            f"Required Phase 5 categories: {', '.join(_REQUIRED_PHASE_5_CATEGORIES)}"
+        )
+        if missing_categories:
+            lines.append(
+                f"Missing required categories: {', '.join(missing_categories)}"
+            )
+            lines.append(
+                "CLOSURE_STATUS: INCOMPLETE — do not tell the user Phase 5 is "
+                "complete or invent paths for missing categories."
+            )
+        else:
+            lines.append("Missing required categories: none")
+            lines.append(
+                "CLOSURE_STATUS: COMPLETE — all required Phase 5 categories "
+                "are present in the current session manifest."
+            )
 
     return "\n".join(lines)

@@ -110,16 +110,20 @@ SPREADSHEET_TEMPLATES: dict[str, dict[str, Any]] = {
                 "name": "Dashboard",
                 "headers": [
                     "KPI",
-                    "Category",
+                    "Method",
+                    "Baseline",
                     "Target",
+                    "Cadence",
+                    "Owner",
                     "Current",
                     "% Achievement",
                     "RAG Status",
+                    "Notes",
                 ],
                 "formulas": {
-                    "% Achievement": "=IF(C{row}=0,0,D{row}/C{row})",
+                    "% Achievement": "=IFERROR(G{row}/D{row},0)",
                     "RAG Status": (
-                        '=IF(E{row}>=0.9,"Green",IF(E{row}>=0.7,"Amber","Red"))'
+                        '=IF(H{row}>=0.9,"Green",IF(H{row}>=0.7,"Amber","Red"))'
                     ),
                 },
             },

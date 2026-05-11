@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from langchain_core.messages import AIMessage, ToolMessage
 
-from evaluation.docx_only_iso import _inspect_messages
+from evaluation.docx_only_iso import _content_is_valid, _content_preview, _inspect_messages
 
 
 def test_inspect_messages_uses_latest_generate_document_result() -> None:
@@ -50,3 +50,14 @@ def test_inspect_messages_uses_latest_generate_document_result() -> None:
     assert inspection["tool_calls"] == ["generate_document", "generate_document"]
     assert inspection["gen_doc_input"] == valid_content
     assert "DOCX generated" in inspection["gen_doc_result"]
+
+
+def test_content_helpers_accept_structured_tool_args() -> None:
+    """Structured content args are valid after the DOCX tool contract update."""
+    content = {
+        "cover": "Brand",
+        "phase_5_output": {"roadmap": [], "measurement": []},
+    }
+
+    assert _content_is_valid(content) == (True, "")
+    assert '"phase_5_output"' in _content_preview(content)

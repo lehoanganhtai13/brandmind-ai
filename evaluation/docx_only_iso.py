@@ -210,9 +210,9 @@ class IsoResult:
 def _inspect_messages(messages: list[Any]) -> dict[str, Any]:
     """Extract tool call names, generate_document args, and tool results."""
     tool_calls: list[str] = []
-    gen_doc_input: str = ""
+    gen_doc_input: Any = ""
     gen_doc_result: str = ""
-    generate_document_calls: dict[str, str] = {}
+    generate_document_calls: dict[str, Any] = {}
 
     for msg in messages:
         if isinstance(msg, AIMessage) and getattr(msg, "tool_calls", None):
@@ -244,6 +244,30 @@ def _inspect_messages(messages: list[Any]) -> dict[str, Any]:
         "gen_doc_input": gen_doc_input,
         "gen_doc_result": gen_doc_result,
     }
+
+
+def _content_preview(content: Any, limit: int = 500) -> str:
+    """Render a stable preview for structured or legacy string content."""
+    if isinstance(content, str):
+        return content[:limit]
+    try:
+        rendered = json.dumps(content, ensure_ascii=False)
+    except TypeError:
+        rendered = repr(content)
+    return rendered[:limit]
+
+
+def _content_is_valid(content: Any) -> tuple[bool, str]:
+    """Return whether generate_document content is a valid section object."""
+    if isinstance(content, dict):
+        return True, ""
+    try:
+        parsed = json.loads(content)
+    except (json.JSONDecodeError, TypeError) as exc:
+        return False, repr(exc)
+    if not isinstance(parsed, dict):
+        return False, f"expected object, got {type(parsed).__name__}"
+    return True, ""
 
 
 def _check_manifest(session_id: str) -> bool:
@@ -334,15 +358,15 @@ async def _run_iso(log_level: str, fixture_session_id: str) -> IsoResult:
         return result
 
     # generate_document was called — inspect the content argument
-    result.content_arg_preview = gen_doc_input[:500]
-    try:
-        json.loads(gen_doc_input)
-        result.content_arg_valid_json = True
-    except (json.JSONDecodeError, TypeError) as e:
-        result.content_arg_valid_json = False
-        result.content_arg_parse_error = repr(e)
+    result.content_arg_preview = _content_preview(gen_doc_input)
+    content_valid, content_error = _content_is_valid(gen_doc_input)
+    result.content_arg_valid_json = content_valid
+    if content_error:
+        result.content_arg_parse_error = content_error
         result.layer_2_failure = True
-        result.failure_detail = f"generate_document called with invalid JSON content: {e!r}"
+        result.failure_detail = (
+            f"generate_document called with invalid content: {content_error}"
+        )
         return result
 
     # Valid JSON — inspect tool result

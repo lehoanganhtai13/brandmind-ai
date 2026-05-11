@@ -1,13 +1,14 @@
-"""Unit tests for image generation tools (Task 38).
+"""Unit tests for image generation tools.
 
-Tests pure logic only — no API calls to Gemini or any external service.
 Covers: prompt templates, aspect ratios, Pydantic model validation,
 prompt enhancement, and template validation in generate_image.
 """
 
 from __future__ import annotations
 
+import importlib
 import re
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -16,6 +17,11 @@ from prompts.brand_strategy.generate_image import BRAND_PROMPT_TEMPLATES
 from shared.agent_tools.image.gemini_image_client import (
     GeminiImageClient,
     ImageResult,
+)
+from shared.agent_tools.image.generate_brand_key import generate_brand_key
+
+brand_key_module = importlib.import_module(
+    "shared.agent_tools.image.generate_brand_key"
 )
 
 
@@ -150,6 +156,130 @@ class TestImageResult:
             "model_used",
             "prompt_used",
         }
+
+
+class TestGenerateBrandKey:
+    """Verify Brand Key one-pager generation stays text-faithful."""
+
+    def test_load_font_prefers_self_hosted_env_path(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        sentinel = object()
+        calls: list[str] = []
+
+        def fake_truetype(candidate: str, *, size: int) -> object:
+            calls.append(candidate)
+            if candidate == "/srv/fonts/NotoSans-Regular.ttf":
+                return sentinel
+            raise OSError("missing font")
+
+        monkeypatch.setenv(
+            "BRANDMIND_BRAND_KEY_FONT_PATH",
+            "/srv/fonts/NotoSans-Regular.ttf",
+        )
+        monkeypatch.setattr(brand_key_module.ImageFont, "truetype", fake_truetype)
+
+        font = brand_key_module._load_font(24)
+
+        assert font is sentinel
+        assert calls[0] == "/srv/fonts/NotoSans-Regular.ttf"
+
+    def test_load_font_prefers_self_hosted_bold_env_path(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        sentinel = object()
+        calls: list[str] = []
+
+        def fake_truetype(candidate: str, *, size: int) -> object:
+            calls.append(candidate)
+            if candidate == "/srv/fonts/NotoSans-Bold.ttf":
+                return sentinel
+            raise OSError("missing font")
+
+        monkeypatch.setenv(
+            "BRANDMIND_BRAND_KEY_FONT_PATH",
+            "/srv/fonts/NotoSans-Regular.ttf",
+        )
+        monkeypatch.setenv(
+            "BRANDMIND_BRAND_KEY_BOLD_FONT_PATH",
+            "/srv/fonts/NotoSans-Bold.ttf",
+        )
+        monkeypatch.setattr(brand_key_module.ImageFont, "truetype", fake_truetype)
+
+        font = brand_key_module._load_font(24, bold=True)
+
+        assert font is sentinel
+        assert calls[0] == "/srv/fonts/NotoSans-Bold.ttf"
+
+    def test_load_font_falls_back_when_no_candidate_is_available(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        sentinel = object()
+        fallback_sizes: list[int] = []
+
+        def fake_truetype(candidate: str, *, size: int) -> object:
+            raise OSError(f"missing font: {candidate}")
+
+        def fake_load_default(*, size: int) -> object:
+            fallback_sizes.append(size)
+            return sentinel
+
+        monkeypatch.setattr(brand_key_module.ImageFont, "truetype", fake_truetype)
+        monkeypatch.setattr(
+            brand_key_module.ImageFont,
+            "load_default",
+            fake_load_default,
+        )
+        monkeypatch.setattr(brand_key_module, "_font_fallback_warned", False)
+
+        font = brand_key_module._load_font(24)
+
+        assert font is sentinel
+        assert fallback_sizes == [24]
+
+    def test_generates_deterministic_image_with_exact_essence(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        output_root = tmp_path / "brandmind-output"
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(output_root))
+
+        result = generate_brand_key(
+            brand_name="Chuyện Ba Bữa Signature",
+            root_strength="Di sản món Việt và flagship Indochine Q1",
+            competitive_environment="Cục Gạch, Quán Bụi, Anan Saigon",
+            target="Giới chuyên gia Q1 cần nơi tiếp khách ngày thường",
+            insight="Cần món Việt sang trọng nhưng dễ giải thích với đối tác.",
+            benefits="Tự hào bản sắc, tiện cho business lunch.",
+            values_personality="Tinh tế, tự hào, cởi mở.",
+            reasons_to_believe="Iberico, Truffle, không gian Indochine 3 tầng.",
+            discriminator="Ẩm thực Việt vùng miền nâng cấp cho Q1.",
+            brand_essence="Vị Bản Sắc. Nghệ Đương Đại.",
+        )
+
+        assert isinstance(result, list)
+        image_part, text_part = result
+        assert image_part["mime_type"] == "image/jpeg"
+        assert text_part["type"] == "text"
+        assert "Vị Bản Sắc. Nghệ Đương Đại." in text_part["text"]
+
+        path = text_part["text"].split("Brand Key IMAGE FILE saved to disk: ")[1]
+        path = path.splitlines()[0]
+        image_path = Path(path)
+        assert image_path.exists()
+        assert image_path.suffix == ".jpeg"
+        assert image_path.stat().st_size > 0
+        sidecar = image_path.with_suffix(".brand_key.json")
+        assert sidecar.exists()
+        assert "Vị Bản Sắc. Nghệ Đương Đại." in sidecar.read_text(encoding="utf-8")
+
+        manifest = (output_root / ".manifest.jsonl").read_text(encoding="utf-8")
+        assert '"tool": "generate_brand_key"' in manifest
+        assert '"category": "images"' in manifest
 
 
 class TestBuildPrompt:

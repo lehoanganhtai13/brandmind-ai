@@ -6,6 +6,9 @@ from evaluation.judge.artifact_judge import (
     _LEVEL_ACCEPTABLE,
     _LEVEL_FAIL,
     _LEVEL_GOOD,
+    _extract_brand_key_text,
+    _extract_docx_text,
+    _extract_pptx_text,
     ArtifactResult,
     JudgeReport,
     _apply_aggregate_verdict,
@@ -148,3 +151,71 @@ def test_aggregate_fails_when_artifact_is_skipped() -> None:
 
     assert report.aggregate_pass is False
     assert "1 missing or skipped" in report.aggregate_summary
+
+
+def test_pptx_extractor_includes_table_cells(tmp_path) -> None:
+    """Presentation judging must see roadmap and KPI tables, not only text boxes."""
+    from pptx import Presentation
+
+    path = tmp_path / "deck.pptx"
+    deck = Presentation()
+    slide = deck.slides.add_slide(deck.slide_layouts[5])
+    slide.shapes.title.text = "KPIs & Measurement"
+    table = slide.shapes.add_table(2, 2, 914400, 1371600, 7315200, 1371600).table
+    table.cell(0, 0).text = "KPI"
+    table.cell(0, 1).text = "Target"
+    table.cell(1, 0).text = "Weekday bookings"
+    table.cell(1, 1).text = "+30% by month 3"
+    deck.save(path)
+
+    text, skip_reason = _extract_pptx_text(path)
+
+    assert skip_reason is None
+    assert "KPIs & Measurement" in text
+    assert "Weekday bookings | +30% by month 3" in text
+
+
+def test_docx_extractor_includes_table_cells(tmp_path) -> None:
+    """Document judging must see roadmap and KPI tables, not only paragraphs."""
+    from docx import Document
+
+    path = tmp_path / "strategy.docx"
+    document = Document()
+    document.add_heading("KPI & Measurement Plan")
+    table = document.add_table(rows=2, cols=2)
+    table.cell(0, 0).text = "KPI"
+    table.cell(0, 1).text = "Target"
+    table.cell(1, 0).text = "Weekday bookings"
+    table.cell(1, 1).text = "+30% by month 3"
+    document.save(path)
+
+    text, skip_reason = _extract_docx_text(path)
+
+    assert skip_reason is None
+    assert "KPI & Measurement Plan" in text
+    assert "Weekday bookings | +30% by month 3" in text
+
+
+def test_brand_key_extractor_uses_sidecar_before_ocr(tmp_path) -> None:
+    """Brand Key judging should not depend on optional OCR packages."""
+    image_path = tmp_path / "brand_key.jpeg"
+    image_path.write_bytes(b"not a real image")
+    image_path.with_suffix(".brand_key.json").write_text(
+        """
+        {
+          "brand_name": "Chuyện Ba Bữa Signature",
+          "components": [
+            {"label": "Root Strengths", "value": "Indochine flagship"},
+            {"label": "Brand Essence", "value": "Sophisticated Hospitality"}
+          ]
+        }
+        """,
+        encoding="utf-8",
+    )
+
+    text, skip_reason = _extract_brand_key_text(image_path)
+
+    assert skip_reason is None
+    assert "Chuyện Ba Bữa Signature" in text
+    assert "Root Strengths: Indochine flagship" in text
+    assert "Brand Essence: Sophisticated Hospitality" in text

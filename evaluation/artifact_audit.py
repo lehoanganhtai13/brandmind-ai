@@ -171,12 +171,22 @@ class AuditReport:
 
 
 def parse_metadata(session_dir: Path) -> tuple[str, str | None, list[str]]:
-    """Read metadata.json and return (api_session_id, scope, completed_phases)."""
+    """Read pilot metadata and return (api_session_id, scope, completed_phases)."""
     meta_path = session_dir / "metadata.json"
     if not meta_path.is_file():
-        return "", None, []
+        api_id_path = session_dir / "api_session_id.txt"
+        api_session_id = (
+            api_id_path.read_text(encoding="utf-8").strip()
+            if api_id_path.is_file()
+            else ""
+        )
+        return api_session_id, None, []
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     api_session_id = meta.get("session_id", "")
+    if not api_session_id:
+        api_id_path = session_dir / "api_session_id.txt"
+        if api_id_path.is_file():
+            api_session_id = api_id_path.read_text(encoding="utf-8").strip()
     sm = meta.get("session_metadata", {}) or {}
     return api_session_id, sm.get("scope"), list(sm.get("completed_phases", []))
 
@@ -288,6 +298,21 @@ def find_workspace_dir(
         ws = latest / "workspace"
         return (ws if ws.is_dir() else None, latest.name)
     return None, None
+
+
+def _workspace_brand_name(workspace_dir: Path | None) -> str | None:
+    """Read the brand name recorded beside the active workspace."""
+    if workspace_dir is None:
+        return None
+    project_file = workspace_dir.parent / "project.json"
+    if not project_file.is_file():
+        return None
+    try:
+        data = json.loads(project_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    value = data.get("brand_name")
+    return value if isinstance(value, str) and value else None
 
 
 def inspect_workspace_files(workspace_dir: Path | None) -> dict[str, WorkspaceFile]:
@@ -418,7 +443,9 @@ def merge_subagent(
 
 
 def parse_manifest(
-    manifest_path: Path, session_id: str | None
+    manifest_path: Path,
+    session_id: str | None,
+    brand_name: str | None = None,
 ) -> dict[str, list[str]]:
     """Read the artifact manifest JSONL and group records by audit category.
 
@@ -432,6 +459,10 @@ def parse_manifest(
         session_id: When provided, only manifest records whose
             ``session_id`` matches are returned. When ``None`` every
             record is returned.
+        brand_name: Active workspace brand used to drop diagnostics
+            from other brands that share a session id. The legacy
+            ``"Brand"`` placeholder is accepted for older image tools
+            that did not pass through the real brand name.
 
     Returns:
         Mapping of audit category (``brand_key_image``,
@@ -463,6 +494,9 @@ def parse_manifest(
             continue
         if session_id and rec.get("session_id") != session_id:
             continue
+        rec_brand_name = rec.get("brand_name") or ""
+        if brand_name and rec_brand_name not in {brand_name, "Brand"}:
+            continue
         path = rec.get("path") or ""
         category = rec.get("category") or ""
         if not path or not Path(path).is_file():
@@ -485,6 +519,7 @@ def scan_artifacts_on_disk(
     output_root: Path,
     session_start_iso: str | None,
     session_id: str | None = None,
+    brand_name: str | None = None,
     legacy_roots: list[Path] | None = None,
 ) -> dict[str, list[str]]:
     """Enumerate artifacts produced by the pilot session.
@@ -507,6 +542,9 @@ def scan_artifacts_on_disk(
         session_id: Pilot session id used to filter manifest records.
             ``None`` disables the manifest pass and forces the rglob
             fallback (legacy compatibility).
+        brand_name: Active workspace brand used to filter manifest
+            records when diagnostics for another brand share the same
+            session id.
         legacy_roots: Additional manifest roots to consult, typically
             known workspace roots used by older sessions. Each root
             must be a trusted location, not a user-supplied path.
@@ -530,7 +568,7 @@ def scan_artifacts_on_disk(
         if legacy_roots:
             manifest_paths.extend(root / ".manifest.jsonl" for root in legacy_roots)
         for mpath in manifest_paths:
-            chunk = parse_manifest(mpath, session_id)
+            chunk = parse_manifest(mpath, session_id, brand_name)
             for key, values in chunk.items():
                 out[key].extend(values)
         for key in out:
@@ -911,6 +949,7 @@ def audit(
     deliverable = merge_tool_usage(deliverable_pilot, deliverable_log)
     subagent = merge_subagent(subagent_pilot, subagent_log)
     workspace_dir, workspace_id = find_workspace_dir(api_session_id, brandmind_home)
+    workspace_brand = _workspace_brand_name(workspace_dir)
     workspace_files = inspect_workspace_files(workspace_dir)
 
     meta_path = session_dir / "metadata.json"
@@ -922,7 +961,8 @@ def audit(
     artifacts = scan_artifacts_on_disk(
         output_root,
         session_start_iso,
-        session_id=api_session_id,
+        session_id=workspace_id or api_session_id,
+        brand_name=workspace_brand,
         legacy_roots=legacy_roots,
     )
     health = evaluate_tier1_health(

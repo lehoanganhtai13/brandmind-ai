@@ -17,9 +17,33 @@ from .pdf_builder import BrandStrategyPDFBuilder
 from .templates.brand_strategy import BrandStrategyTemplate
 
 
+def _coerce_content_dict(
+    content: dict[str, Any] | str,
+) -> tuple[dict[str, Any] | None, str]:
+    """Normalize structured document content from current and legacy callers."""
+    if isinstance(content, dict):
+        return content, ""
+    try:
+        parsed = json.loads(content)
+    except (json.JSONDecodeError, TypeError) as exc:
+        preview = content[:200] if isinstance(content, str) else type(content).__name__
+        logger.error(
+            "generate_document content parse error: "
+            f"{exc!r}; content_preview={preview!r}"
+        )
+        return None, f"Invalid content JSON: {exc}"
+    if not isinstance(parsed, dict):
+        logger.error(
+            "generate_document content parse error: "
+            f"expected object, got {type(parsed).__name__}"
+        )
+        return None, "Invalid content JSON: top-level content must be an object"
+    return parsed, ""
+
+
 def generate_document(
-    content: str,
-    doc_format: str = "pdf",
+    content: dict[str, Any] | str,
+    doc_format: str = "docx",
     brand_name: str = "Brand",
     brand_colors: list[str] | None = None,
     images: str | None = None,
@@ -28,8 +52,8 @@ def generate_document(
     """Build a long-form branded PDF or DOCX deliverable from phase content.
 
     Renders a professionally formatted document with cover page, table of
-    contents, and per-section narrative — driven by ``content`` (a JSON
-    string parsed into a dict whose keys map to template sections; missing
+    contents, and per-section narrative — driven by ``content`` (a dict
+    whose keys map to template sections; missing
     keys yield a literal "(No content available)" placeholder so empty
     bodies surface a key mismatch instead of being silently dropped).
 
@@ -40,10 +64,12 @@ def generate_document(
     ``export_to_markdown``).
 
     Args:
-        content: JSON string parsed into a dict. The dict MUST
-            contain the following top-level keys (any missing key
-            will produce a "(No content available)" placeholder
-            in its section):
+        content: Dict of document sections. Legacy callers may pass a
+            JSON string, but agent callers should pass a structured
+            object directly to avoid malformed function calls on large
+            strategy documents. The dict MUST contain the following
+            top-level keys (any missing key will produce a
+            "(No content available)" placeholder in its section):
 
               - "cover": str, the cover-page tagline / sub-heading.
               - "executive_summary": str OR list[str] bullets, the
@@ -117,7 +143,7 @@ def generate_document(
                 }
               }
 
-        doc_format: Output format — "pdf" (default) or "docx".
+        doc_format: Output format — "docx" (default) or "pdf".
         brand_name: Brand name for cover page and headers.
         brand_colors: List of 3 hex colors [primary, secondary, accent].
             Default: ["#1B365D", "#F5F0E8", "#D4A84B"].
@@ -135,15 +161,10 @@ def generate_document(
     Returns:
         Message with path to generated document file.
     """
-    try:
-        content_dict: dict[str, Any] = json.loads(content)
-    except (json.JSONDecodeError, TypeError) as e:
-        preview = content[:200] if isinstance(content, str) else type(content).__name__
-        logger.error(
-            "generate_document JSON parse error: "
-            f"{e!r}; doc_format={doc_format!r}; content_preview={preview!r}"
-        )
-        return f"Invalid content JSON: {e}"
+    content_dict, content_error = _coerce_content_dict(content)
+    if content_error:
+        return content_error
+    assert content_dict is not None
 
     images_dict: dict[str, str] | None = None
     if images:
