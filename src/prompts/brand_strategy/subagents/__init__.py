@@ -1,6 +1,6 @@
-"""Sub-agent system prompts for Brand Strategy.
+"""Specialist system prompts for Brand Strategy.
 
-Each sub-agent has its own prompt file organized by business function.
+Each specialist has its own prompt file organized by business function.
 """
 
 from prompts.brand_strategy.subagents.creative_studio import (
