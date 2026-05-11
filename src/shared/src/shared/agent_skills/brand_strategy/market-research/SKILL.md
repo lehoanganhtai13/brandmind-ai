@@ -20,6 +20,14 @@ Accumulate all findings for the Strategic Synthesis in Step 8, which bridges Res
 
 **CORE PRINCIPLE**: BREADTH FIRST, DEPTH WHERE IT MATTERS. Scan wide, then dive deep on signals that affect positioning.
 
+## INPUT SUFFICIENCY & TOOL BUDGET
+
+Start Phase 1 by separating what the user already supplied from what is still unknown. A junior marketer may bring rough but useful field intelligence: named competitors, positioning impressions, price ranges, weak spots, and target-audience hypotheses. Treat that as first-party research input, not as something to discard and rediscover from scratch.
+
+When the user has already named the main competitors and described their strengths, use those notes as the competitor map seed. Run web or browser research only for gaps that materially affect the next strategic decision: missing price tier, unclear target segment, uncertain proof point, or a competitor that changes the perceptual map. In a time-boxed mentoring session, analyze the top 2-3 most decision-relevant competitors deeply and keep the rest as lighter context.
+
+Stop collecting once you can support the Phase 1 synthesis: SWOT, perceptual map, target definition, top insights, and strategic sweet spot. More menu screenshots or social posts do not improve the strategy if they do not change one of those outputs.
+
 ## STEP 1: INDUSTRY SCAN
 
 Establish the macro landscape for the target F&B category and location.
