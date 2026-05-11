@@ -10,7 +10,10 @@ import pytest
 from langchain.agents.middleware.types import ToolCallRequest
 from langchain_core.messages import ToolMessage
 
-from core.brand_strategy.content_check import DeliverableDispatchGuardMiddleware
+from core.brand_strategy.content_check import (
+    DeliverableDispatchGuardMiddleware,
+    PhaseStateReminderMiddleware,
+)
 from core.brand_strategy.session import (
     BrandStrategySession,
     check_brand_brief_phase_section,
@@ -336,6 +339,25 @@ class TestDeliverableDispatchGuard:
         assert isinstance(moodboard, ToolMessage)
         assert research.content == "ran"
         assert moodboard.content == "ran"
+
+
+class TestPhaseStateReminder:
+    """Test dynamic phase-state prompt reminders."""
+
+    def test_reminder_names_authoritative_current_phase(self) -> None:
+        session = BrandStrategySession(
+            scope="repositioning",
+            current_phase="phase_2",
+            completed_phases=["phase_0", "phase_0_5", "phase_1"],
+        )
+
+        reminder = PhaseStateReminderMiddleware._render_reminder(session)
+
+        assert "Current phase: phase_2" in reminder
+        assert "Completed phases: phase_0, phase_0_5, phase_1" in reminder
+        assert "Next phase after this phase passes: phase_3" in reminder
+        assert "Produce only the current phase" in reminder
+        assert "Future phase sections" in reminder
 
 
 class TestSessionPersistence:

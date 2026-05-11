@@ -5,7 +5,13 @@ The contract: only the last occurrence of each duplicate top-level
 sections are preserved with their original relative order.
 """
 
+from types import SimpleNamespace
+
+from langchain_core.messages import HumanMessage
+
+from core.brand_strategy.session import BrandStrategySession, set_active_session
 from shared.agent_middlewares.workspace_injection.middleware import (
+    WorkspaceInjectionMiddleware,
     _dedup_phase_sections,
 )
 
@@ -129,3 +135,27 @@ def test_duplicate_phase_0_5_keeps_last() -> None:
     assert "Updated heritage content." in result
     assert _PHASE_0 in result
     assert _PHASE_1 in result
+
+
+def test_injection_persists_deduped_brand_brief(tmp_path) -> None:
+    workspace = tmp_path / "abc123" / "workspace"
+    workspace.mkdir(parents=True)
+    brief = workspace / "brand_brief.md"
+    brief.write_text(
+        _PREAMBLE + _PHASE_0 + _PHASE_5_SKELETON + _PHASE_5_FULL,
+        encoding="utf-8",
+    )
+    (workspace / "quality_gates.md").write_text("# Gates\n", encoding="utf-8")
+    set_active_session(BrandStrategySession(session_id="abc123"))
+    request = SimpleNamespace(messages=[HumanMessage(content="Build artifacts")])
+    middleware = WorkspaceInjectionMiddleware(workspace_root=tmp_path)
+
+    try:
+        middleware._inject_if_first_turn(request)  # noqa: SLF001
+    finally:
+        set_active_session(None)
+
+    persisted = brief.read_text(encoding="utf-8")
+    assert _PHASE_5_SKELETON not in persisted
+    assert _PHASE_5_FULL in persisted
+    assert "=== WORKSPACE: brand_brief.md" in request.messages[0].content

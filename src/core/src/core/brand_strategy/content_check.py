@@ -22,14 +22,24 @@ import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from langchain.agents.middleware.types import AgentMiddleware, ToolCallRequest
-from langchain_core.messages import AIMessage, ToolMessage
+from langchain.agents.middleware.types import (
+    AgentMiddleware,
+    ModelRequest,
+    ModelResponse,
+    ToolCallRequest,
+)
+from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 from langgraph.types import Command
 from loguru import logger
 from pydantic import BaseModel, Field
 
 from config.system_config import SETTINGS
-from core.brand_strategy.session import PHASE_SEQUENCES, get_active_session
+from core.brand_strategy.session import (
+    PHASE_SEQUENCES,
+    BrandStrategySession,
+    get_active_session,
+    get_next_phase,
+)
 from shared.model_clients.llm.google import (
     GoogleAIClientLLM,
     GoogleAIClientLLMConfig,
@@ -182,6 +192,63 @@ class ContentCheckVerdict(BaseModel):
 # ---------------------------------------------------------------------------
 # Middleware
 # ---------------------------------------------------------------------------
+
+
+class PhaseStateReminderMiddleware(AgentMiddleware):
+    """Inject the authoritative phase state near the model call."""
+
+    @staticmethod
+    def _render_reminder(session: BrandStrategySession) -> str:
+        """Build the per-turn phase-state reminder."""
+        scope = session.scope or "(unset)"
+        completed = ", ".join(session.completed_phases) or "(none)"
+        next_phase = get_next_phase(session.scope, session.current_phase)
+        next_label = next_phase or "(strategy complete)"
+        return (
+            "## Current Phase State (authoritative)\n"
+            f"- Scope: {scope}\n"
+            f"- Current phase: {session.current_phase}\n"
+            f"- Completed phases: {completed}\n"
+            f"- Next phase after this phase passes: {next_label}\n\n"
+            "Use this state as the workflow boundary for this response. "
+            "Produce only the current phase's user-facing work. If the user "
+            "asks for later deliverables while current phase is not `phase_5`, "
+            "acknowledge the request and close or continue the current phase "
+            "instead of writing future phase sections. If the user's last reply "
+            "confirms the current phase output, update the workspace for the "
+            "current phase and call `report_progress(advance=True)` before "
+            "presenting later-phase content. Future phase sections in "
+            "`brand_brief.md` create conflicting specialist context, so only "
+            "write a phase section after `report_progress` has advanced there."
+        )
+
+    @staticmethod
+    def _with_reminder(request: ModelRequest) -> ModelRequest:
+        """Return a model request with the latest phase-state reminder."""
+        session = get_active_session()
+        if session is None:
+            return request
+
+        reminder = PhaseStateReminderMiddleware._render_reminder(session)
+        existing_prompt = request.system_prompt or ""
+        prompt = f"{existing_prompt}\n\n{reminder}" if existing_prompt else reminder
+        return request.override(system_message=SystemMessage(content=prompt))
+
+    def wrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], ModelResponse],
+    ) -> ModelResponse:
+        """Add phase-state context to synchronous model calls."""
+        return handler(self._with_reminder(request))
+
+    async def awrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], Awaitable[ModelResponse]],
+    ) -> ModelResponse:
+        """Add phase-state context to asynchronous model calls."""
+        return await handler(self._with_reminder(request))
 
 
 class ContentCheckAdvanceMiddleware(AgentMiddleware):

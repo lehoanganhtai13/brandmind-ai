@@ -12,6 +12,7 @@ from core.brand_strategy.session import BrandStrategySession, get_active_session
 from server.schemas.enums import SessionMode
 from server.services.session_manager import ManagedSession, SessionManager
 from server.streaming.bridge import (
+    _EMPTY_RESPONSE_FALLBACK,
     _InternalReminderFilter,
     collect_agent_response,
     stream_agent_response,
@@ -154,3 +155,21 @@ async def test_collect_agent_response_returns_sanitized_text() -> None:
 
     assert response.response == "Visible text"
     assert session.messages[-1].content == "Visible text"
+
+
+@pytest.mark.asyncio
+async def test_collect_agent_response_returns_fallback_for_empty_text() -> None:
+    """A tool-only or interrupted model turn should not return a blank reply."""
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.ASK,
+        created_at=datetime.now(),
+        last_active=0.0,
+    )
+    session.agent = cast(CompiledStateGraph, _FakeStreamingAgent([""]))
+    manager = SessionManager()
+
+    response = await collect_agent_response(session, "hello", manager)
+
+    assert response.response == _EMPTY_RESPONSE_FALLBACK
+    assert session.messages[-1].content == _EMPTY_RESPONSE_FALLBACK

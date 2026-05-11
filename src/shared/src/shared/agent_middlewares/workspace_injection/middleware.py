@@ -166,6 +166,13 @@ class WorkspaceInjectionMiddleware(AgentMiddleware):
             if filename == "brand_brief.md":
                 content, removed = _dedup_phase_sections(content)
                 if removed > 0:
+                    try:
+                        file_path.write_text(content, encoding="utf-8")
+                    except OSError as exc:
+                        logger.warning(
+                            "WorkspaceInjectionMiddleware: could not persist "
+                            f"deduped brand_brief.md: {exc}"
+                        )
                     logger.info(
                         f"WorkspaceInjectionMiddleware: deduped brand_brief.md — "
                         f"removed {removed} duplicate phase section(s); "

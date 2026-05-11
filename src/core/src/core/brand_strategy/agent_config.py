@@ -43,6 +43,7 @@ def create_brand_strategy_agent(
     from core.brand_strategy.content_check import (
         ContentCheckAdvanceMiddleware,
         DeliverableDispatchGuardMiddleware,
+        PhaseStateReminderMiddleware,
     )
     from core.brand_strategy.subagents import (
         create_brand_strategy_subagent_middleware,
@@ -265,6 +266,7 @@ def create_brand_strategy_agent(
     # advance short-circuits the rest of the tool pipeline.
     content_check_middleware = ContentCheckAdvanceMiddleware()
     deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
+    phase_state_reminder_middleware = PhaseStateReminderMiddleware()
 
     # ToolSearch middleware.
     # ``all_tools`` is the set whose names the middleware validates
@@ -351,6 +353,7 @@ def create_brand_strategy_agent(
             context_edit_middleware,
             pre_compact_middleware,  # Task 50: remind at 65%
             msg_summary_middleware,  # Summarize at 80%
+            phase_state_reminder_middleware,
             content_check_middleware,  # Verify agent text before allowing phase advance
             deliverable_dispatch_guard_middleware,
             tool_search_middleware,

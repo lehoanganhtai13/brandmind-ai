@@ -19,6 +19,7 @@ from collections.abc import AsyncGenerator
 from typing import Literal
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
+from loguru import logger
 
 from core.brand_strategy.session import set_active_session
 from server.schemas.chat import MessageResponse, ToolCallInfo
@@ -45,6 +46,10 @@ class _StreamEnd(BaseAgentEvent):
 _STREAM_END = _StreamEnd()
 _INTERNAL_REMINDER_START = "<system-reminder>"
 _INTERNAL_REMINDER_END = "</system-reminder>"
+_EMPTY_RESPONSE_FALLBACK = (
+    "The last turn did not produce a visible response. "
+    'Please send "continue" and I will pick up from the saved state.'
+)
 
 
 def _longest_suffix_prefix_match(text: str, prefix: str) -> int:
@@ -259,14 +264,18 @@ async def stream_agent_response(
 
                 await _flush_visible_text()
 
-                # Append AI response to session history for next turn
                 response_text = "".join(accumulated_response)
+                if not response_text.strip():
+                    response_text = _EMPTY_RESPONSE_FALLBACK
+                    accumulated_response.append(response_text)
+                    await event_queue.put(StreamingTokenEvent(token=response_text))
+
+                # Append AI response to session history for next turn
                 if response_text:
                     session.messages.append(AIMessage(content=response_text))
 
-            except Exception:
-                # Errors are logged server-side; stream ends gracefully
-                pass
+            except Exception as exc:
+                logger.exception(f"Agent stream failed: {exc}")
             finally:
                 await _flush_visible_text()
                 if not thinking_done:
