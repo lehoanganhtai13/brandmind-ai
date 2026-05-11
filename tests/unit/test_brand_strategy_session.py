@@ -7,12 +7,18 @@ and brief synchronization.
 from __future__ import annotations
 
 import pytest
+from langchain.agents.middleware.types import ToolCallRequest
+from langchain_core.messages import ToolMessage
 
+from core.brand_strategy.content_check import DeliverableDispatchGuardMiddleware
 from core.brand_strategy.session import (
     BrandStrategySession,
+    check_brand_brief_phase_section,
     list_sessions,
     load_session,
     save_session,
+    set_active_session,
+    update_strategy_progress,
 )
 
 
@@ -47,6 +53,18 @@ class TestBrandStrategySession:
             "phase_2",
         ]
 
+    def test_advance_turn_guard_tracks_one_advance_per_turn(self):
+        session = BrandStrategySession()
+
+        session.begin_user_turn()
+        assert session.can_advance_in_current_turn()
+
+        session.mark_advanced_in_current_turn()
+        assert not session.can_advance_in_current_turn()
+
+        session.begin_user_turn()
+        assert session.can_advance_in_current_turn()
+
     def test_save_phase_output(self):
         session = BrandStrategySession()
         session.save_phase_output(
@@ -76,6 +94,248 @@ class TestBrandStrategySession:
         session.sync_metadata_to_brief()
         assert session.brief.brand_name == ""
         assert session.brief.scope == ""
+
+
+class TestBrandBriefPhaseSectionCheck:
+    """Test workspace phase-section coverage detection."""
+
+    def test_phase_0_and_0_5_headings_are_distinct(self, tmp_path, monkeypatch):
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "\n".join(
+                [
+                    "# Brand Brief",
+                    "## Phase 0: Business Problem Diagnosis",
+                    "## Phase 0.5: Brand Equity Audit",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        phase_0 = check_brand_brief_phase_section("abc123", "phase_0")
+        phase_0_5 = check_brand_brief_phase_section("abc123", "phase_0_5")
+
+        assert phase_0.passes
+        assert phase_0_5.passes
+
+    def test_phase_0_5_heading_does_not_satisfy_phase_0(self, tmp_path, monkeypatch):
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "# Brand Brief\n\n## Phase 0.5: Brand Equity Audit\n",
+            encoding="utf-8",
+        )
+
+        result = check_brand_brief_phase_section("abc123", "phase_0")
+
+        assert result.brief_exists
+        assert not result.section_exists
+        assert not result.passes
+
+    def test_missing_phase_heading_fails_when_quality_gate_says_complete(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "\n".join(
+                [
+                    "# Brand Brief",
+                    "## Phase 2: Brand Positioning",
+                    "## Phase 3: Brand Identity",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        result = check_brand_brief_phase_section("abc123", "phase_1")
+
+        assert result.brief_exists
+        assert not result.section_exists
+        assert not result.passes
+
+
+class TestUpdateStrategyProgress:
+    """Test phase transaction guards exposed through report_progress."""
+
+    def test_blocks_second_advance_in_same_user_turn(self, tmp_path, monkeypatch):
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "# Brand Brief\n\n## Phase 0: Business Problem Diagnosis\n",
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(session_id="abc123", scope="new_brand")
+        session.begin_user_turn()
+
+        first = update_strategy_progress(session, advance=True)
+        second = update_strategy_progress(session, advance=True)
+
+        assert "phase: phase_0 → phase_1" in first
+        assert "already advanced one phase" in second
+        assert session.current_phase == "phase_1"
+
+    def test_blocks_advance_when_completed_phase_section_is_missing(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "# Brand Brief\n\n## Phase 2: Brand Positioning\n",
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_2",
+            completed_phases=["phase_0", "phase_0_5", "phase_1"],
+        )
+        session.begin_user_turn()
+
+        result = update_strategy_progress(session, advance=True)
+
+        assert "brand brief is missing completed/current phase coverage" in result
+        assert "`## Phase 0: ...`" in result
+        assert "`## Phase 0.5: ...`" in result
+        assert "`## Phase 1: ...`" in result
+        assert session.current_phase == "phase_2"
+
+
+class TestDeliverableDispatchGuard:
+    """Test phase-state gating for final artifact sub-agent dispatch."""
+
+    @staticmethod
+    def _task_request(subagent_type: str, description: str) -> ToolCallRequest:
+        return ToolCallRequest(
+            tool_call={
+                "name": "task",
+                "args": {
+                    "subagent_type": subagent_type,
+                    "description": description,
+                },
+                "id": "call_1",
+            },
+            tool=None,
+            state={},
+            runtime=None,  # type: ignore[arg-type]
+        )
+
+    @staticmethod
+    def _handler(request: ToolCallRequest) -> ToolMessage:
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    def test_blocks_document_generator_before_phase_5(self) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        session = BrandStrategySession(
+            scope="repositioning",
+            current_phase="phase_2",
+            completed_phases=["phase_0", "phase_0_5", "phase_1"],
+        )
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("document-generator", "Build the DOCX"),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert "Cannot dispatch final deliverable sub-agents yet" in result.content
+
+    def test_allows_document_generator_at_phase_5(self) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        session = BrandStrategySession(
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("document-generator", "Build the DOCX"),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert result.content == "ran"
+
+    def test_blocks_brand_key_creative_dispatch_before_phase_5(self) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        session = BrandStrategySession(
+            scope="new_brand",
+            current_phase="phase_3",
+            completed_phases=["phase_0", "phase_1", "phase_2"],
+        )
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("creative-studio", "Build Brand Key one-pager"),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert "Cannot dispatch final deliverable sub-agents yet" in result.content
+
+    def test_allows_non_deliverable_subagents_before_phase_5(self) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        session = BrandStrategySession(
+            scope="new_brand",
+            current_phase="phase_1",
+            completed_phases=["phase_0"],
+        )
+        set_active_session(session)
+
+        try:
+            research = guard.wrap_tool_call(
+                self._task_request("market-research", "Research competitors"),
+                self._handler,
+            )
+            moodboard = guard.wrap_tool_call(
+                self._task_request("creative-studio", "Explore color palette"),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(research, ToolMessage)
+        assert isinstance(moodboard, ToolMessage)
+        assert research.content == "ran"
+        assert moodboard.content == "ran"
 
 
 class TestSessionPersistence:

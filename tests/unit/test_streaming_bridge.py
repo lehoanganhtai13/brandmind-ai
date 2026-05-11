@@ -8,6 +8,7 @@ import pytest
 from langchain_core.messages import AIMessageChunk
 from langgraph.graph.state import CompiledStateGraph
 
+from core.brand_strategy.session import BrandStrategySession, get_active_session
 from server.schemas.enums import SessionMode
 from server.services.session_manager import ManagedSession, SessionManager
 from server.streaming.bridge import (
@@ -102,6 +103,30 @@ async def test_stream_agent_response_filters_tokens_and_history() -> None:
 
     assert "".join(tokens) == "AB"
     assert session.messages[-1].content == "AB"
+
+
+@pytest.mark.asyncio
+async def test_stream_agent_response_marks_brand_strategy_user_turn() -> None:
+    """Brand-strategy messages should advance the phase-guard turn counter."""
+    strategy_session = BrandStrategySession()
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.BRAND_STRATEGY,
+        created_at=datetime.now(),
+        last_active=0.0,
+        brand_strategy_session=strategy_session,
+    )
+    session.agent = cast(
+        CompiledStateGraph,
+        _FakeStreamingAgent(["hello"]),
+    )
+    manager = SessionManager()
+
+    async for _event in stream_agent_response(session, "start", manager):
+        pass
+
+    assert strategy_session.turn_index == 1
+    assert get_active_session() is None
 
 
 @pytest.mark.asyncio

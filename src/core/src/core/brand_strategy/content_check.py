@@ -29,7 +29,7 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 from config.system_config import SETTINGS
-from core.brand_strategy.session import get_active_session
+from core.brand_strategy.session import PHASE_SEQUENCES, get_active_session
 from shared.model_clients.llm.google import (
     GoogleAIClientLLM,
     GoogleAIClientLLMConfig,
@@ -373,10 +373,17 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         """
         return ToolMessage(
             content=(
-                f"⚠️ Cannot advance from {phase}. The judge found gaps in the user-facing chat content for this phase deliverable.\n\n"  # noqa: E501
+                f"Cannot advance from {phase}. The judge found gaps in "
+                "the user-facing chat content for this phase deliverable.\n\n"
                 f"**Missing**: {verdict.missing}\n\n"
                 f"**Reasoning**: {verdict.reasoning}\n\n"
-                f"Continue from where your previous reply left off and add only the gap items above as new chat content for the user. Your previous reply plus this additive delta together complete the deliverable as the user reads it — re-narrating parts you already covered is redundant and bundles the response unnecessarily. Once the gap items are in chat, retry `report_progress(advance=True)`."  # noqa: E501
+                "Continue from where your previous reply left off and add "
+                "only the gap items above as new chat content for the user. "
+                "Your previous reply plus this additive delta together "
+                "complete the deliverable as the user reads it; re-narrating "
+                "parts you already covered is redundant and bundles the "
+                "response unnecessarily. Once the gap items are in chat, "
+                "retry `report_progress(advance=True)`."
             ),
             tool_call_id=request.tool_call["id"],
         )
@@ -513,8 +520,107 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         return self._rejection(session.current_phase, verdict, request)
 
 
+class DeliverableDispatchGuardMiddleware(AgentMiddleware):
+    """Block final artifact dispatch until the session reaches Phase 5.
+
+    The orchestrator may mention final files before the phase state has
+    caught up. This middleware keeps heavy deliverable generation behind
+    the workflow state instead of relying only on prompt guidance.
+    Research, analysis, and exploratory creative dispatches are left
+    untouched.
+    """
+
+    _BRAND_KEY_MARKERS = (
+        "brand key",
+        "one-pager",
+        "one pager",
+        "một trang",
+    )
+
+    @staticmethod
+    def _is_task_call(request: ToolCallRequest) -> bool:
+        """Return whether the tool call targets the sub-agent task tool."""
+        return request.tool_call.get("name") == "task"
+
+    @classmethod
+    def _is_deliverable_dispatch(cls, request: ToolCallRequest) -> bool:
+        """Return whether the task call would produce final artifacts."""
+        args = request.tool_call.get("args", {})
+        subagent_type = args.get("subagent_type", "")
+        description = str(args.get("description", "")).lower()
+
+        if subagent_type == "document-generator":
+            return True
+        if subagent_type != "creative-studio":
+            return False
+        return any(marker in description for marker in cls._BRAND_KEY_MARKERS)
+
+    @staticmethod
+    def _phase_5_ready() -> bool:
+        """Return whether the active session is legitimately at Phase 5."""
+        session = get_active_session()
+        if session is None or not session.scope:
+            return False
+
+        sequence = PHASE_SEQUENCES.get(session.scope)
+        if not sequence or "phase_5" not in sequence:
+            return False
+
+        phase_5_index = sequence.index("phase_5")
+        required_completed = set(sequence[:phase_5_index])
+        return session.current_phase == "phase_5" and required_completed.issubset(
+            set(session.completed_phases)
+        )
+
+    @staticmethod
+    def _rejection(request: ToolCallRequest) -> ToolMessage:
+        """Return phase-gate guidance in place of the task result."""
+        return ToolMessage(
+            content=(
+                "Cannot dispatch final deliverable sub-agents yet. "
+                "The session must reach Phase 5 through `report_progress` "
+                "before generating Brand Key, DOCX, PPTX, or XLSX files. "
+                "Finish the current phase in user-facing chat, update "
+                "`/workspace/brand_brief.md` and `/workspace/quality_gates.md`, "
+                "then call `report_progress(advance=True)`. If the files "
+                'already exist, use `list_artifacts(scope="current_session")` '
+                "instead of dispatching generation again."
+            ),
+            tool_call_id=request.tool_call["id"],
+        )
+
+    def wrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], ToolMessage | Command],
+    ) -> ToolMessage | Command:
+        """Gate synchronous final-deliverable task dispatches."""
+        if (
+            self._is_task_call(request)
+            and self._is_deliverable_dispatch(request)
+            and not self._phase_5_ready()
+        ):
+            return self._rejection(request)
+        return handler(request)
+
+    async def awrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Command]],
+    ) -> ToolMessage | Command:
+        """Gate asynchronous final-deliverable task dispatches."""
+        if (
+            self._is_task_call(request)
+            and self._is_deliverable_dispatch(request)
+            and not self._phase_5_ready()
+        ):
+            return self._rejection(request)
+        return await handler(request)
+
+
 __all__ = [
     "ContentCheckAdvanceMiddleware",
     "ContentCheckVerdict",
+    "DeliverableDispatchGuardMiddleware",
     "PHASE_DELIVERABLE_SPECS",
 ]

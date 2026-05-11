@@ -42,6 +42,7 @@ def create_brand_strategy_agent(
     from config.system_config import SETTINGS
     from core.brand_strategy.content_check import (
         ContentCheckAdvanceMiddleware,
+        DeliverableDispatchGuardMiddleware,
     )
     from core.brand_strategy.subagents import (
         create_brand_strategy_subagent_middleware,
@@ -97,9 +98,8 @@ def create_brand_strategy_agent(
 
     # Session tracking tool
     from core.brand_strategy.session import (
-        PHASE_SEQUENCES,
         get_active_session,
-        get_next_phase,
+        update_strategy_progress,
     )
 
     def report_progress(
@@ -136,101 +136,13 @@ def create_brand_strategy_agent(
         if session is None:
             return "No active session."
 
-        updated: list[str] = []
-
-        # Set scope
-        if scope and scope != session.scope:
-            session.scope = scope
-            updated.append(f"scope: {scope}")
-            seq = PHASE_SEQUENCES.get(scope, [])
-            if seq:
-                seq_str = " → ".join(p.replace("phase_", "P") for p in seq)
-                updated.append(f"sequence: {seq_str}")
-
-        # Set brand name
-        if brand_name and brand_name != session.brand_name:
-            session.brand_name = brand_name
-            updated.append(f"brand: {brand_name}")
-            # Update workspace project metadata with new brand name
-            from shared.workspace import ensure_project_workspace
-
-            ensure_project_workspace(session.session_id, brand_name)
-
-        # Advance to next phase
-        if advance:
-            if not session.scope:
-                return (
-                    "Cannot advance: scope not set yet. "
-                    "Set scope first with report_progress(scope='...') "
-                    "before advancing."
-                )
-
-            next_phase = get_next_phase(session.scope, session.current_phase)
-            if next_phase is None:
-                return (
-                    f"All phases complete. "
-                    f"Current: {session.current_phase}. "
-                    f"Strategy finalized."
-                )
-            old = session.current_phase
-            session.advance_phase(next_phase)
-            # Build reference file hint
-            ref_file = {
-                "phase_0_5": "references/phase_0_5_equity_audit.md",
-                "phase_1": "references/phase_1_research.md",
-                "phase_2": "references/phase_2_positioning.md",
-                "phase_3": "references/phase_3_identity.md",
-                "phase_4": "references/phase_4_communication.md",
-                "phase_5": "references/phase_5_deliverables.md",
-            }.get(next_phase, f"references/{next_phase}.md")
-
-            # Remaining phases
-            seq = PHASE_SEQUENCES[session.scope]
-            idx = seq.index(next_phase)
-            remaining = seq[idx:]
-            remaining_str = " → ".join(p.replace("phase_", "P") for p in remaining)
-
-            updated.append(f"phase: {old} → {next_phase}")
-            updated.append(f"Next: Read /brand-strategy-orchestrator/{ref_file}")
-            updated.append(f"Remaining: {remaining_str}")
-
-            # Two-step hint attached to every phase transition: preserve
-            # the phase-completion summary in workspace notes, then load
-            # the next phase's reference. The full workspace note
-            # protocol lives in the system prompt and
-            # :class:`PreCompactNotesMiddleware`; this hint is the
-            # transition-point reminder that keeps ``brand_brief.md``
-            # in sync with the session's phase progress so resumes and
-            # context-compaction cycles have fresh content to read.
-            workspace_hint = (
-                f"\n\n**STEP 1**: Append Phase {old} SOAP summary to "
-                f"`/workspace/brand_brief.md` "
-                f"(Subjective/Objective/Assessment/Plan). Preserves context "
-                f"across compression and session resume.\n"
-                f"**STEP 2**: Read "
-                f"`/brand-strategy-orchestrator/{ref_file}` for "
-                f"{next_phase} guidance.\n"
-                f"Execute STEP 1 before STEP 2."
-            )
-            # Extra emphasis on user profile after Phase 0/0.5 (one-time
-            # opportunity to capture user context comprehensively).
-            if old in ("phase_0", "phase_0_5"):
-                workspace_hint += (
-                    "\n\n*Before STEP 1, also update `/user/profile.md` "
-                    "with user role, experience, language preference, "
-                    "communication style, constraints, working style.*"
-                )
-            updated.append(workspace_hint)
-
-        # Loop back (proactive triggers)
-        if loop_back_to:
-            old = session.current_phase
-            session.advance_phase(loop_back_to)
-            updated.append(f"Loop back: {old} → {loop_back_to} (proactive trigger)")
-
-        if updated:
-            return "Session updated: " + ", ".join(updated)
-        return "No changes needed."
+        return update_strategy_progress(
+            session,
+            advance=advance,
+            scope=scope,
+            brand_name=brand_name,
+            loop_back_to=loop_back_to,
+        )
 
     # Initialize model
     model = RetryChatGoogleGenerativeAI(
@@ -352,6 +264,7 @@ def create_brand_strategy_agent(
     # just produced, and before ``tool_search_middleware`` so a blocked
     # advance short-circuits the rest of the tool pipeline.
     content_check_middleware = ContentCheckAdvanceMiddleware()
+    deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
 
     # ToolSearch middleware.
     # ``all_tools`` is the set whose names the middleware validates
@@ -439,6 +352,7 @@ def create_brand_strategy_agent(
             pre_compact_middleware,  # Task 50: remind at 65%
             msg_summary_middleware,  # Summarize at 80%
             content_check_middleware,  # Verify agent text before allowing phase advance
+            deliverable_dispatch_guard_middleware,
             tool_search_middleware,
             fs_middleware,
             skills_middleware,

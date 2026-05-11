@@ -83,3 +83,63 @@ def test_audit_uses_workspace_session_id_for_manifest(tmp_path: Path) -> None:
     assert report.session_id_api == "api123"
     assert report.workspace_session_id == "workspace123"
     assert report.artifacts_on_disk["strategy_document"] == [str(doc_path)]
+
+
+def test_audit_does_not_count_old_artifacts_without_provenance(
+    tmp_path: Path,
+) -> None:
+    """Current-session audit must not pass from old same-brand files."""
+    session_dir = tmp_path / "eval" / "pilot"
+    session_dir.mkdir(parents=True)
+    (session_dir / "metadata.json").write_text(
+        json.dumps(
+            {
+                "session_id": "api123",
+                "date": "20260512",
+                "session_metadata": {
+                    "scope": "repositioning",
+                    "completed_phases": ["phase_0"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    brandmind_home = tmp_path / "brandmind-home"
+    workspace_dir = brandmind_home / "projects" / "workspace123" / "workspace"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir.parent / "project.json").write_text(
+        json.dumps({"session_id": "workspace123", "brand_name": "Demo"}),
+        encoding="utf-8",
+    )
+    (workspace_dir / "brand_brief.md").write_text(
+        "# Demo\n\n## Phase 0: Business Problem Diagnosis\n",
+        encoding="utf-8",
+    )
+
+    output_root = tmp_path / "brandmind-output"
+    old_doc = output_root / "documents" / "demo" / "old_brand_strategy.docx"
+    old_doc.parent.mkdir(parents=True)
+    old_doc.write_text("old artifact", encoding="utf-8")
+    (output_root / ".manifest.jsonl").write_text(
+        json.dumps(
+            {
+                "session_id": "old-session",
+                "brand_name": "Demo",
+                "category": "documents",
+                "tool": "generate_document",
+                "filename": old_doc.name,
+                "path": str(old_doc),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = audit(
+        session_dir=session_dir,
+        brandmind_home=brandmind_home,
+        output_root=output_root,
+    )
+
+    assert report.artifacts_on_disk["strategy_document"] == []
+    assert not report.tier1_health.strategy_doc_produced

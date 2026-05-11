@@ -163,6 +163,11 @@ async def stream_agent_response(
 
         # Append user message to session history
         session.messages.append(HumanMessage(content=content))
+        if (
+            session.mode is SessionMode.BRAND_STRATEGY
+            and session.brand_strategy_session is not None
+        ):
+            session.brand_strategy_session.begin_user_turn()
 
         # Update last active
         session.last_active = asyncio.get_event_loop().time()
@@ -286,6 +291,7 @@ async def stream_agent_response(
     finally:
         session.event_router.clear_queue()
         if holds_bs_lock:
+            set_active_session(None)
             bs_lock.release()
         session.lock.release()
 

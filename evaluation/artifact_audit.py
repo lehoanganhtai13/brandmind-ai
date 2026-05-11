@@ -515,6 +515,22 @@ def parse_manifest(
     return out
 
 
+def _session_cutoff_timestamp(session_start_iso: str | None) -> float | None:
+    """Return a file-mtime cutoff only when metadata includes a time component."""
+    if not session_start_iso:
+        return None
+    value = session_start_iso.strip()
+    if "T" not in value and " " not in value:
+        return None
+
+    from datetime import datetime
+
+    try:
+        return datetime.fromisoformat(value).timestamp()
+    except ValueError:
+        return None
+
+
 def scan_artifacts_on_disk(
     output_root: Path,
     session_start_iso: str | None,
@@ -532,13 +548,14 @@ def scan_artifacts_on_disk(
        known artifact roots so the fallback stays bounded.
     3. When the manifest sources are empty (legacy session that
        predates manifest provenance), fall back to ``output_root.rglob``
-       filtered by mtime relative to ``session_start_iso``.
+       only when ``session_start_iso`` parses to a reliable cutoff.
 
     Args:
         output_root: Root of the BrandMind output tree.
         session_start_iso: ISO timestamp at which the pilot session
             started. Used by the rglob fallback to drop pre-existing
-            artifacts; ``None`` disables the time filter.
+            artifacts; values without a time component disable the
+            fallback because date-only metadata is too broad.
         session_id: Pilot session id used to filter manifest records.
             ``None`` disables the manifest pass and forces the rglob
             fallback (legacy compatibility).
@@ -553,8 +570,6 @@ def scan_artifacts_on_disk(
         Mapping of artifact category to list of file paths that match
         the category for this session.
     """
-    from datetime import datetime
-
     out: dict[str, list[str]] = {
         "brand_key_image": [],
         "strategy_document": [],
@@ -576,12 +591,9 @@ def scan_artifacts_on_disk(
         if any(out.values()):
             return out
 
-    cutoff = None
-    if session_start_iso:
-        try:
-            cutoff = datetime.fromisoformat(session_start_iso).timestamp()
-        except ValueError:
-            cutoff = None
+    cutoff = _session_cutoff_timestamp(session_start_iso)
+    if cutoff is None:
+        return out
 
     if not output_root.is_dir():
         return out

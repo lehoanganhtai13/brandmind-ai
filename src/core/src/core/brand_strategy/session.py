@@ -10,7 +10,9 @@ as the single source of truth for all phase outputs.
 from __future__ import annotations
 
 import json
+import re
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -21,6 +23,7 @@ from pydantic import BaseModel, Field
 from core.brand_strategy.orchestrator.brand_brief import (
     BrandBrief,
 )
+from shared.workspace import BRANDMIND_HOME, ensure_project_workspace
 
 SESSIONS_DIR = Path("data/brand_strategy_sessions")
 
@@ -49,6 +52,16 @@ PHASE_SEQUENCES: dict[str, list[str]] = {
     ],
 }
 
+_PHASE_HEADINGS: dict[str, str] = {
+    "phase_0": "Phase 0",
+    "phase_0_5": "Phase 0.5",
+    "phase_1": "Phase 1",
+    "phase_2": "Phase 2",
+    "phase_3": "Phase 3",
+    "phase_4": "Phase 4",
+    "phase_5": "Phase 5",
+}
+
 
 def get_next_phase(scope: str | None, current_phase: str) -> str | None:
     """Get the next phase in the sequence for the given scope.
@@ -65,6 +78,188 @@ def get_next_phase(scope: str | None, current_phase: str) -> str | None:
     if idx + 1 >= len(sequence):
         return None
     return sequence[idx + 1]
+
+
+@dataclass(frozen=True)
+class PhaseBriefSectionCheck:
+    """Workspace coverage result for a single phase section."""
+
+    path: Path
+    phase: str
+    expected_heading: str
+    brief_exists: bool
+    section_exists: bool
+
+    @property
+    def passes(self) -> bool:
+        """Return whether the phase has a matching brand brief section."""
+        return self.brief_exists and self.section_exists
+
+
+def check_brand_brief_phase_section(
+    session_id: str,
+    phase: str,
+) -> PhaseBriefSectionCheck:
+    """Check whether ``brand_brief.md`` has the canonical phase heading.
+
+    Args:
+        session_id: Brand strategy session id that owns the workspace.
+        phase: Phase identifier such as ``"phase_0"`` or ``"phase_0_5"``.
+
+    Returns:
+        A coverage result with the expected heading and file path.
+    """
+    expected_heading = _PHASE_HEADINGS.get(phase, phase.replace("_", " ").title())
+    path = BRANDMIND_HOME / "projects" / session_id / "workspace" / "brand_brief.md"
+    if not path.is_file():
+        return PhaseBriefSectionCheck(
+            path=path,
+            phase=phase,
+            expected_heading=expected_heading,
+            brief_exists=False,
+            section_exists=False,
+        )
+
+    text = path.read_text(encoding="utf-8")
+    heading_re = re.compile(
+        rf"^##\s+{re.escape(expected_heading)}(?=\s|:|\(|$)",
+        re.MULTILINE,
+    )
+    return PhaseBriefSectionCheck(
+        path=path,
+        phase=phase,
+        expected_heading=expected_heading,
+        brief_exists=True,
+        section_exists=heading_re.search(text) is not None,
+    )
+
+
+def update_strategy_progress(
+    session: BrandStrategySession,
+    *,
+    advance: bool = False,
+    scope: str = "",
+    brand_name: str = "",
+    loop_back_to: str = "",
+) -> str:
+    """Update session metadata and enforce phase-transition invariants.
+
+    Args:
+        session: Active brand strategy session to update.
+        advance: Whether to move to the next scope-specific phase.
+        scope: Optional brand scope classification from Phase 0.
+        brand_name: Optional brand name for workspace metadata.
+        loop_back_to: Optional proactive loop-back target phase.
+
+    Returns:
+        Human-readable tool result for the agent.
+    """
+    updated: list[str] = []
+
+    if scope and scope != session.scope:
+        session.scope = scope
+        updated.append(f"scope: {scope}")
+        seq = PHASE_SEQUENCES.get(scope, [])
+        if seq:
+            seq_str = " → ".join(p.replace("phase_", "P") for p in seq)
+            updated.append(f"sequence: {seq_str}")
+
+    if brand_name and brand_name != session.brand_name:
+        session.brand_name = brand_name
+        updated.append(f"brand: {brand_name}")
+        ensure_project_workspace(session.session_id, brand_name)
+
+    if advance:
+        if not session.scope:
+            return (
+                "Cannot advance: scope not set yet. "
+                "Set scope first with report_progress(scope='...') "
+                "before advancing."
+            )
+
+        if not session.can_advance_in_current_turn():
+            return (
+                "Cannot advance: this user turn already advanced one phase. "
+                "Stop here, respond to the user with the next teaching moment, "
+                "and wait for their reply before advancing again."
+            )
+
+        phase_checks = [
+            check_brand_brief_phase_section(session.session_id, phase)
+            for phase in [*session.completed_phases, session.current_phase]
+        ]
+        missing_sections = [check for check in phase_checks if not check.passes]
+        if missing_sections:
+            first_missing = missing_sections[0]
+            if first_missing.brief_exists:
+                location = f"`{first_missing.path}`"
+            else:
+                location = "the session workspace"
+            missing_headings = ", ".join(
+                f"`## {check.expected_heading}: ...`" for check in missing_sections
+            )
+            return (
+                "Cannot advance: the brand brief is missing completed/current "
+                f"phase coverage in {location}. Add or restore these markdown "
+                f"sections in `/workspace/brand_brief.md`: {missing_headings}. "
+                "Each section should contain a concise SOAP summary. Then retry "
+                "report_progress(advance=True)."
+            )
+
+        next_phase = get_next_phase(session.scope, session.current_phase)
+        if next_phase is None:
+            return (
+                f"All phases complete. "
+                f"Current: {session.current_phase}. "
+                f"Strategy finalized."
+            )
+        old = session.current_phase
+        session.advance_phase(next_phase)
+        session.mark_advanced_in_current_turn()
+        ref_file = {
+            "phase_0_5": "references/phase_0_5_equity_audit.md",
+            "phase_1": "references/phase_1_research.md",
+            "phase_2": "references/phase_2_positioning.md",
+            "phase_3": "references/phase_3_identity.md",
+            "phase_4": "references/phase_4_communication.md",
+            "phase_5": "references/phase_5_deliverables.md",
+        }.get(next_phase, f"references/{next_phase}.md")
+
+        seq = PHASE_SEQUENCES[session.scope]
+        idx = seq.index(next_phase)
+        remaining = seq[idx:]
+        remaining_str = " → ".join(p.replace("phase_", "P") for p in remaining)
+
+        updated.append(f"phase: {old} → {next_phase}")
+        updated.append(f"Next: Read /brand-strategy-orchestrator/{ref_file}")
+        updated.append(f"Remaining: {remaining_str}")
+
+        workspace_hint = (
+            f"\n\n**STEP 1**: Append Phase {old} SOAP summary to "
+            f"`/workspace/brand_brief.md` "
+            f"(Subjective/Objective/Assessment/Plan). Preserves context "
+            f"across compression and session resume.\n"
+            f"**STEP 2**: Read "
+            f"`/brand-strategy-orchestrator/{ref_file}` for "
+            f"{next_phase} guidance.\n"
+            f"Execute STEP 1 before STEP 2."
+        )
+        if old in ("phase_0", "phase_0_5"):
+            workspace_hint += (
+                "\n\n*Before STEP 1, also update `/user/profile.md` "
+                "with user role, experience, language preference, "
+                "communication style, constraints, working style.*"
+            )
+        updated.append(workspace_hint)
+
+    if loop_back_to:
+        old = session.current_phase
+        session.advance_phase(loop_back_to)
+        updated.append(f"Loop back: {old} → {loop_back_to} (proactive trigger)")
+
+    if updated:
+        return "Session updated: " + ", ".join(updated)
+    return "No changes needed."
 
 
 class BrandStrategySession(BaseModel):
@@ -86,6 +281,22 @@ class BrandStrategySession(BaseModel):
     completed_phases: list[str] = Field(default_factory=list)
     brief: BrandBrief = Field(default_factory=BrandBrief)
     messages: list[Any] = Field(default_factory=list)
+    turn_index: int = 0
+    last_advance_turn_index: int | None = None
+
+    def begin_user_turn(self) -> None:
+        """Mark the start of a new user turn for phase-transition guards."""
+        self.turn_index += 1
+        self.updated_at = datetime.now().isoformat()
+
+    def can_advance_in_current_turn(self) -> bool:
+        """Return whether no phase advance has happened in this user turn."""
+        return self.last_advance_turn_index != self.turn_index
+
+    def mark_advanced_in_current_turn(self) -> None:
+        """Record that this user turn already advanced the phase state."""
+        self.last_advance_turn_index = self.turn_index
+        self.updated_at = datetime.now().isoformat()
 
     def advance_phase(self, next_phase: str) -> None:
         """Move to the next phase, recording completion."""
@@ -175,8 +386,8 @@ def list_sessions() -> list[dict[str, Any]]:
 _active_session: BrandStrategySession | None = None
 
 
-def set_active_session(session: BrandStrategySession) -> None:
-    """Set the active session for report_progress tool access."""
+def set_active_session(session: BrandStrategySession | None) -> None:
+    """Set or clear the active session for report_progress tool access."""
     global _active_session
     _active_session = session
 
