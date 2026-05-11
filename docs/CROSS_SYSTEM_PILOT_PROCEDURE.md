@@ -126,6 +126,51 @@ Each persona's script lives at `evaluation/pilot_scripts/<persona>.md` (to be au
 
 The script must NOT contain prompts the persona would not write. If the script ever needs to add a question to elicit a rubric criterion, that is a signal the persona spec is wrong, not that the script needs more elicitation injected — revise the persona dimensions instead. This rule is the operational form of the "natural simulation, not eval-driven driving" commitment.
 
+### 5.3 Persona script quality contract
+
+The persona script is a measurement instrument. It must preserve the user's outside view of the system, not the evaluator's knowledge of BrandMind internals. This contract applies to BrandMind pilots, vanilla baselines, cross-persona pilots, and any future scenario where an agent is driven through a scripted user conversation.
+
+Each scripted turn should include five fields:
+
+| Field | Purpose | User-facing? |
+|---|---|---|
+| `intent` | What the driver is trying to learn or pressure-test in this turn. | No |
+| `user_message` | The exact message sent to the system, written in persona-natural language. | Yes |
+| `avoid_list` | Terms this turn must not use because they would leak internals or preload expertise. | No |
+| `allowed_echo` | Framework terms the persona may repeat because the agent already introduced them. | No |
+| `expected_signal` | The behavior or evidence the evaluator will inspect after the turn. | No |
+
+The `intent` and `expected_signal` fields are for the evaluator only. They must never be copied into the user message. A valid user message should still sound natural if read without the rubric, phase model, tool schema, or prior debugging history.
+
+Default avoid-list before every turn:
+
+- Internal phase labels: `Phase 0`, `Phase 1`, `Phase 5`, `phase_0`, `phase_5`
+- Tool or orchestration terms: `tool`, `tool call`, `task()`, `subagent_type`, `report_progress`, `dispatch`, `middleware`, `manifest`
+- Internal role terms: `sub-agent`, `subagent`, `creative_studio`, `document_generator`
+- File-extension names: `DOCX`, `PPTX`, `XLSX`
+- Rubric-shaped terms: `Tier 1`, `quality gate`, `B7`, `B8`, `Strategic Coherence`, `Problem-Solving`
+- Framework names not yet introduced by the system: `Keller`, `Cialdini`, `AIDA`, `Aaker`, `POP/POD`, `Brand Key`, `Messaging Hierarchy`
+
+The avoid-list is not static. A framework term can move to `allowed_echo` only after the system has introduced it in a previous response. For example, the persona may ask "Brand Key anh vừa nói là bản tóm tắt lõi thương hiệu đúng không?" only after the agent has already named Brand Key. The persona still should not use tool names or internal phase/orchestration terms, even if the system leaks them.
+
+Natural deliverable wording:
+
+| User need | Persona wording | Avoid |
+|---|---|---|
+| Strategy document | `file chiến lược`, `bản chiến lược gửi sếp` | `DOCX`, `artifact` |
+| Presentation | `slide cho sếp`, `deck trình bày với team` | `PPTX`, `presentation artifact` |
+| KPI workbook | `bảng KPI`, `bảng theo dõi sau launch` | `XLSX`, `spreadsheet artifact` |
+| Brand Key image | `Brand Key tóm tắt`, after the agent introduced Brand Key | `generate_brand_key`, `image tool` |
+
+Before sending each message, the driver must scan the `user_message` against the current avoid-list. If the message only makes sense because the driver knows BrandMind's phases, tools, or rubric, rewrite it. If the transcript already contains a driver-side leak, mark the run invalid or partial before scoring; do not repair the evidence by explaining the leak away.
+
+If the system returns an empty, broken, or truncated response, the persona can nudge naturally:
+
+- "Anh ơi em chưa thấy phần trả lời, anh gửi lại giúp em được không?"
+- "Hình như đoạn trước bị thiếu, anh tiếp tục từ chỗ đang làm giúp em nha."
+
+Do not nudge with implementation language such as "retry the tool call", "dispatch the sub-agent again", or "continue Phase 5". The system's recovery behavior is part of the measurement.
+
 ## 6. Skip-artifact-generation rule
 
 For all eval pilots in Phase D-1 + Phase D-2, artifact generation is skipped. BrandMind sessions stop at Phase 5 closure narration without dispatching to creative-studio or document-generator. Vanilla sessions stop when the system has presented its strategy in chat without being asked to "create the deliverable file".
