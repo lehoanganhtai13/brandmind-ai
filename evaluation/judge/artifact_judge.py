@@ -62,14 +62,36 @@ _RUBRIC_PATH = Path(__file__).resolve().parent / "artifact_rubric.md"
 # Per-artifact criterion lists. Order matches the rubric file so the
 # judge prompt can show criteria in the same sequence.
 _CRITERIA: dict[str, tuple[str, ...]] = {
-    "brand_key_image": ("BK-1", "BK-2", "BK-3", "BK-4"),
-    "strategy_document": ("DOC-1", "DOC-2", "DOC-3", "DOC-4"),
-    "presentation": ("PPT-1", "PPT-2", "PPT-3", "PPT-4"),
-    "spreadsheet": ("KPI-1", "KPI-2", "KPI-3", "KPI-4"),
+    "brand_key_image": ("BK-1", "BK-2", "BK-3", "BK-4", "BK-5", "BK-6"),
+    "strategy_document": ("DOC-1", "DOC-2", "DOC-3", "DOC-4", "DOC-5"),
+    "presentation": ("PPT-1", "PPT-2", "PPT-3", "PPT-4", "PPT-5"),
+    "spreadsheet": (
+        "KPI-1",
+        "KPI-2",
+        "KPI-3",
+        "KPI-4",
+        "KPI-5",
+        "KPI-6",
+        "KPI-7",
+    ),
 }
 
-_PASS_FLOOR_PER_ARTIFACT = 3  # MET threshold per rubric definition
-_AGGREGATE_PASS_FLOOR = 3  # 3 of 4 artifacts must pass
+_ACCEPTABLE_CRITERIA: dict[str, tuple[str, ...]] = {
+    "brand_key_image": ("BK-1", "BK-2", "BK-3", "BK-4", "BK-5"),
+    "strategy_document": ("DOC-1", "DOC-2", "DOC-3", "DOC-4"),
+    "presentation": ("PPT-1", "PPT-2", "PPT-3", "PPT-4"),
+    "spreadsheet": ("KPI-1", "KPI-2", "KPI-3", "KPI-4", "KPI-5", "KPI-6"),
+}
+_GOOD_CRITERIA: dict[str, tuple[str, ...]] = {
+    "brand_key_image": ("BK-6",),
+    "strategy_document": ("DOC-5",),
+    "presentation": ("PPT-5",),
+    "spreadsheet": ("KPI-7",),
+}
+
+_LEVEL_FAIL = "FAIL"
+_LEVEL_ACCEPTABLE = "ACCEPTABLE"
+_LEVEL_GOOD = "GOOD"
 
 
 # ---------------------------------------------------------------------------
@@ -81,9 +103,7 @@ class CriterionVerdict(BaseModel):
     """Judge's verdict for one rubric criterion."""
 
     id: str = Field(..., description="Criterion identifier, e.g. 'BK-1'.")
-    judgment: str = Field(
-        ..., description="One of: MET, UNMET, CANNOT_ASSESS."
-    )
+    judgment: str = Field(..., description="One of: MET, UNMET, CANNOT_ASSESS.")
     evidence: str = Field(
         default="",
         description=(
@@ -132,6 +152,7 @@ class ArtifactResult:
     unmet_count: int = 0
     cannot_assess_count: int = 0
     passed: bool = False
+    quality_level: str = _LEVEL_FAIL
 
 
 @dataclass
@@ -144,6 +165,7 @@ class JudgeReport:
     artifacts: list[ArtifactResult] = field(default_factory=list)
     aggregate_pass: bool = False
     aggregate_summary: str = ""
+    strict_gate: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -174,9 +196,7 @@ def _extract_docx_text(path: Path) -> tuple[str, str | None]:
         document = docx.Document(str(path))
     except Exception as exc:  # noqa: BLE001
         return "", f"DOCX failed to open: {exc}"
-    paragraphs = [
-        p.text for p in document.paragraphs if p.text and p.text.strip()
-    ]
+    paragraphs = [p.text for p in document.paragraphs if p.text and p.text.strip()]
     return "\n".join(paragraphs), None
 
 
@@ -221,9 +241,7 @@ def _extract_xlsx_text(path: Path) -> tuple[str, str | None]:
         chunks.append(f"--- Sheet: {sheet_name} ---")
         sheet = workbook[sheet_name]
         for row in sheet.iter_rows(min_row=1, max_row=20, values_only=True):
-            cells = [
-                str(cell) if cell is not None else "" for cell in row[:10]
-            ]
+            cells = [str(cell) if cell is not None else "" for cell in row[:10]]
             chunks.append(" | ".join(cells))
     return "\n".join(chunks), None
 
@@ -265,30 +283,47 @@ def _load_transcript_context(session_dir: Path, max_chars: int = 20000) -> str:
     return "\n\n".join(reversed(chunks))
 
 
+def _load_workspace_context(workspace_dir: str | None, max_chars: int = 20000) -> str:
+    """Return the strategy workspace summary used as artifact ground truth."""
+    if not workspace_dir:
+        return "(no workspace context available)"
+    workspace_path = Path(workspace_dir)
+    source_paths = [
+        workspace_path / "brand_brief.md",
+        workspace_path / "quality_gates.md",
+    ]
+    chunks: list[str] = []
+    total = 0
+    for source_path in source_paths:
+        if not source_path.is_file():
+            continue
+        content = source_path.read_text(encoding="utf-8")
+        block = f"=== {source_path.name} ===\n{content}"
+        if total + len(block) > max_chars:
+            remaining = max_chars - total
+            if remaining > 0:
+                chunks.append(block[:remaining])
+            break
+        chunks.append(block)
+        total += len(block)
+    return "\n\n".join(chunks) if chunks else "(no workspace context available)"
+
+
 # ---------------------------------------------------------------------------
 # Judge invocation
 # ---------------------------------------------------------------------------
 
 
-_SYSTEM_PROMPT_TEMPLATE = """You are an artifact content reviewer for a Vietnamese
-brand-strategy assistant.
-You are given (1) the rubric below, (2) recent agent / user turns from
-the strategy session, and (3) the extracted text content of one
-artifact the agent produced.
+_SYSTEM_PROMPT_TEMPLATE = """You are an artifact content reviewer for a Vietnamese brand-strategy assistant.
+You are given (1) the rubric below, (2) extracted artifact content, (3) the strategy workspace summary, and (4) recent agent / user turns from the strategy session.
 
-Your job: for every criterion under the artifact's section in the
-rubric, decide MET / UNMET / CANNOT_ASSESS. Quote the strongest
-evidence (from the artifact text or the transcript). Explain your
-verdict in one sentence per criterion.
+Your job: for every criterion under the artifact's section in the rubric, decide MET / UNMET / CANNOT_ASSESS. Quote the strongest evidence from the artifact, workspace summary, or transcript. Explain your verdict in one sentence per criterion.
 
-Be honest. The artifact is intended for a junior marketer to present to
-her boss. Generic-sounding content that could fit any brand is UNMET.
-The transcript decisions take priority over the artifact when the two
-disagree (the transcript is the ground truth for THIS session).
+Be honest. The artifact is intended for a junior marketer to present to her boss. Generic-sounding content that could fit any brand is UNMET. The transcript and workspace decisions take priority over the artifact when they disagree because they are the ground truth for THIS session.
 
-Score only the criteria for the requested artifact type. Do not invent
-new criteria. Always return the verdicts in the order they appear in
-the rubric.
+Use CANNOT_ASSESS only when the provided evidence is genuinely insufficient. It is not a soft pass for a required criterion.
+
+Score only the criteria for the requested artifact type. Do not invent new criteria. Always return the verdicts in the order they appear in the rubric.
 
 Rubric:
 ---
@@ -304,6 +339,9 @@ Required criteria (in order, judge each one): {criteria_list}
 
 === ARTIFACT CONTENT ===
 {artifact_content}
+
+=== STRATEGY WORKSPACE SUMMARY ===
+{workspace_context}
 
 === RECENT TRANSCRIPT TURNS ===
 {transcript_context}
@@ -328,12 +366,27 @@ def _build_llm(model_id: str) -> GoogleAIClientLLM:
     )
 
 
+def _quality_level_for_criteria(
+    artifact_type: str, criteria: list[dict[str, str]]
+) -> str:
+    """Map per-criterion judgments to the artifact acceptance level."""
+    judgments = {item["id"]: item["judgment"] for item in criteria}
+    acceptable_ids = _ACCEPTABLE_CRITERIA[artifact_type]
+    good_ids = _GOOD_CRITERIA[artifact_type]
+    if not all(judgments.get(criterion_id) == "MET" for criterion_id in acceptable_ids):
+        return _LEVEL_FAIL
+    if all(judgments.get(criterion_id) == "MET" for criterion_id in good_ids):
+        return _LEVEL_GOOD
+    return _LEVEL_ACCEPTABLE
+
+
 async def _judge_one_artifact(
     llm: GoogleAIClientLLM,
     artifact_type: str,
     artifact_path: Path,
     rubric: str,
     transcript_context: str,
+    workspace_context: str,
 ) -> ArtifactResult:
     """Run the judge over one artifact and return a structured result."""
     result = ArtifactResult(
@@ -353,6 +406,7 @@ async def _judge_one_artifact(
         artifact_path=str(artifact_path),
         criteria_list=criteria_list,
         artifact_content=content[:40000],
+        workspace_context=workspace_context,
         transcript_context=transcript_context,
     )
 
@@ -384,13 +438,12 @@ async def _judge_one_artifact(
             result.unmet_count += 1
         else:
             result.cannot_assess_count += 1
-    result.passed = result.met_count >= _PASS_FLOOR_PER_ARTIFACT
+    result.quality_level = _quality_level_for_criteria(artifact_type, result.criteria)
+    result.passed = result.quality_level in {_LEVEL_ACCEPTABLE, _LEVEL_GOOD}
     return result
 
 
-def _coerce_verdict(
-    raw: Any, artifact_type: str
-) -> ArtifactVerdict | None:
+def _coerce_verdict(raw: Any, artifact_type: str) -> ArtifactVerdict | None:
     """Best-effort coercion when the LLM returns dict / string instead."""
     if isinstance(raw, ArtifactVerdict):
         return raw
@@ -405,6 +458,22 @@ def _coerce_verdict(
         except Exception:  # noqa: BLE001
             return None
     return None
+
+
+def _apply_aggregate_verdict(report: JudgeReport) -> None:
+    """Apply the strict session-level artifact acceptance gate."""
+    expected_count = len(report.artifacts)
+    judged_count = sum(1 for artifact in report.artifacts if not artifact.skipped)
+    pass_count = sum(1 for artifact in report.artifacts if artifact.passed)
+    skipped_count = expected_count - judged_count
+    report.aggregate_pass = (
+        expected_count > 0 and skipped_count == 0 and pass_count == expected_count
+    )
+    report.aggregate_summary = (
+        f"{pass_count}/{expected_count} expected artifacts pass "
+        f"({judged_count}/{expected_count} judged; "
+        f"{skipped_count} missing or skipped)"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -437,6 +506,7 @@ async def judge_session(
         output_root=Path.cwd() / "brandmind-output",
     )
     transcript_context = _load_transcript_context(session_dir)
+    workspace_context = _load_workspace_context(audit_report.workspace_dir)
     llm = _build_llm(judge_model)
     report = JudgeReport(
         session_dir=str(session_dir),
@@ -444,7 +514,7 @@ async def judge_session(
         judge_model=judge_model,
     )
 
-    targets: list[tuple[str, Path]] = []
+    targets: list[tuple[str, Path | None]] = []
     for artifact_type in _CRITERIA.keys():
         if artifact_filter and artifact_filter != artifact_type:
             continue
@@ -459,31 +529,31 @@ async def judge_session(
         if candidates:
             latest = max(candidates, key=lambda p: p.stat().st_mtime)
             targets.append((artifact_type, latest))
+        else:
+            targets.append((artifact_type, None))
 
     for artifact_type, artifact_path in targets:
+        if artifact_path is None:
+            report.artifacts.append(
+                ArtifactResult(
+                    artifact_type=artifact_type,
+                    artifact_path="",
+                    skipped=True,
+                    skip_reason="artifact not found on disk",
+                )
+            )
+            continue
         result = await _judge_one_artifact(
             llm,
             artifact_type=artifact_type,
             artifact_path=artifact_path,
             rubric=rubric,
             transcript_context=transcript_context,
+            workspace_context=workspace_context,
         )
         report.artifacts.append(result)
 
-    judged = [a for a in report.artifacts if not a.skipped]
-    skipped = [a for a in report.artifacts if a.skipped]
-    pass_count = sum(1 for a in judged if a.passed)
-    # Scale the aggregate threshold down by the number of skipped artifacts:
-    # the rubric defines 3 of 4 as the bar; when an artifact cannot be
-    # judged (e.g. OCR dependency missing), only the remaining artifacts
-    # are eligible to contribute, so the floor drops one for each skip.
-    effective_floor = max(_AGGREGATE_PASS_FLOOR - len(skipped), 1)
-    report.aggregate_pass = pass_count >= effective_floor
-    report.aggregate_summary = (
-        f"{pass_count}/{len(judged)} judged artifacts pass "
-        f"(threshold {effective_floor}; "
-        f"{len(skipped)} skipped of {len(report.artifacts)} total)"
-    )
+    _apply_aggregate_verdict(report)
     return report
 
 
@@ -504,6 +574,7 @@ def _format_summary(report: JudgeReport) -> str:
             f"[{status}] {r.artifact_type}: "
             f"MET={r.met_count} UNMET={r.unmet_count} "
             f"CANNOT_ASSESS={r.cannot_assess_count} "
+            f"LEVEL={r.quality_level} "
             f"({Path(r.artifact_path).name})"
         )
         for c in r.criteria:
