@@ -211,17 +211,17 @@ phase_4_pillars: <content pillars with allocation>
 phase_5_roadmap_summary: <one-paragraph summary of 0-3/3-6/6-12 horizons for the document narrative>
 phase_5_kpi_summary: <one-paragraph summary of the KPI framework for the document narrative>
 
-=== PPTX SLIDES (one block per slide, 10–12 slides total) ===  [PPTX dispatch only]
-slide_1: title="Brand strategy overview" | bullets=["one-line problem", "one-line solution", "outcome target"]
-slide_2: title="The challenge" | bullets=["problem statement detail 1", "...", "..."]
-slide_3: title="Market intelligence" | bullets=["SWOT highlight", "white space", "target insight"]
-slide_4: title="Positioning" | bullets=["positioning statement", "POD 1", "POD 2"]
-slide_5: title="Brand identity" | bullets=["archetype", "personality traits", "visual direction"]
-slide_6: title="Communication framework" | bullets=["value prop", "messaging hierarchy", "channel mix"]
-slide_7: title="Implementation roadmap" | bullets=["month 1 quick wins", "month 2-3", "month 4-6"]
-slide_8: title="KPI framework" | bullets=["metric 1: target", "metric 2: target", "metric 3: target"]
-slide_9: title="Investment summary" | bullets=["budget tier", "cost breakdown", "expected return"]
-slide_10: title="Next steps" | bullets=["immediate action 1", "stakeholder ask", "review cadence"]
+=== PPTX CONTENT JSON MAP (template keys for generate_presentation.content) ===  [PPTX dispatch only]
+cover: <brand name + one-line strategy tagline for the title slide>
+executive_summary: ["one-line problem", "one-line solution", "outcome target"]
+phase_0_output: {"Problem": "<verbatim problem statement>", "Scope": "<scope classification + reasoning>", "Budget": "<budget tier + constraint>"}
+phase_1_output: {"Market findings": "<competitor / SWOT / white-space summary>", "target_segments": [{"Segment": "<primary segment>", "Need": "<job-to-be-done / occasion>", "Barrier": "<purchase or booking barrier>"}, {"Segment": "<secondary segment>", "Need": "<job-to-be-done / occasion>", "Barrier": "<purchase or booking barrier>"}]}
+phase_2_output: {"Positioning statement": "<full positioning statement>", "POPs": ["<point of parity>", "..."], "PODs": ["<point of difference>", "..."], "Brand essence": "<essence / mantra>"}
+phase_3_output: {"Archetype": "<archetype + reasoning>", "Personality": "<traits>", "Visual direction": "<palette / typography / photography>", "Voice": "<tone summary>"}
+phase_4_output: {"Value proposition": "<one-liner>", "Messaging": ["<typed message + proof point>", "..."], "Channels": ["<channel + role>", "..."], "Persuasion mechanics": ["<principle + F&B mechanic>", "..."]}
+phase_5_output: {"roadmap": [{"Horizon": "<0-3 months>", "Focus": "<must-do actions>", "Owner": "<owner / team>"}, {"Horizon": "<3-6 months>", "Focus": "<must-do actions>", "Owner": "<owner / team>"}, {"Horizon": "<6-12 months>", "Focus": "<nice-to-have or scale actions>", "Owner": "<owner / team>"}], "measurement": [{"KPI": "<metric name>", "Method": "<measurement method>", "Baseline": "<current value or no data — measure pre-launch>", "Target": "<target + date>", "Cadence": "<weekly|monthly|quarterly>"}, {"KPI": "<metric name>", "Method": "<measurement method>", "Baseline": "<current value or no data — measure pre-launch>", "Target": "<target + date>", "Cadence": "<weekly|monthly|quarterly>"}, {"KPI": "<metric name>", "Method": "<measurement method>", "Baseline": "<current value or no data — measure pre-launch>", "Target": "<target + date>", "Cadence": "<weekly|monthly|quarterly>"}]}
+
+The PPTX schema mirrors the `generate_presentation` tool contract. The specialist will pass these fields as the `content` JSON string; if `phase_1_output.target_segments`, `phase_5_output.roadmap`, or `phase_5_output.measurement` are missing, required deck slides become empty placeholders. Use 5+ KPI objects in `measurement` when the strategy has a KPI framework, so the deck's KPI slide has enough substance for the boss meeting.
 
 === XLSX KPI ROWS (one row per metric, ≥5 rows) ===  [XLSX dispatch only]
 row_1: metric="<name>" | method="<measurement>" | current="<value or 'no data'>" | target="<target value> by <date>" | cadence="<weekly|monthly|quarterly>"
