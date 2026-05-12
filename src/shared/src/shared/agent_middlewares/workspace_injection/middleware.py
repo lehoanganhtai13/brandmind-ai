@@ -34,28 +34,38 @@ from shared.workspace import BRANDMIND_HOME
 
 _DEFAULT_FILES = ("brand_brief.md", "quality_gates.md")
 _PHASE_HEADER_RE = re.compile(r"^(## Phase \d+(?:\.\d+)?)\b", re.MULTILINE)
+_PHASE_ORDER = {
+    "## Phase 0": 0,
+    "## Phase 0.5": 1,
+    "## Phase 1": 2,
+    "## Phase 2": 3,
+    "## Phase 3": 4,
+    "## Phase 4": 5,
+    "## Phase 5": 6,
+}
 
 
-def _dedup_phase_sections(content: str) -> tuple[str, int]:
-    """Keep the latest top-level phase section for each phase in brand_brief.md.
+def _normalize_phase_sections(content: str) -> tuple[str, int, bool]:
+    """Keep latest phase sections and restore canonical phase order.
 
     The workspace brief is the sub-agent's source of truth for phase decisions.
     When a phase appears more than once, the later section represents the
     freshest workspace state and should be the only version injected into the
-    sub-agent context.
+    sub-agent context. Phase sections are then sorted into the workflow order
+    so out-of-order edits do not confuse later artifact generation.
 
     Only top-level ``## Phase N`` or ``## Phase N.M`` section boundaries are
-    considered; sub-headings and non-phase sections are preserved with their
-    original relative order.
+    considered; sub-headings remain attached to their phase section.
 
     Args:
         content (str): Raw text of brand_brief.md read from the workspace directory.
 
     Returns:
-        deduplicated_content (str): Content with earlier duplicate phase sections
-            removed. Identical to ``content`` when no duplicates exist.
+        normalized_content (str): Content with earlier duplicate phase sections
+            removed and phase sections in canonical order.
         sections_removed (int): Number of duplicate sections dropped; 0 when the
-            content was already clean.
+            content had no duplicate phase sections.
+        reordered (bool): Whether the surviving phase sections were moved.
     """
     lines = content.splitlines(keepends=True)
 
@@ -73,7 +83,7 @@ def _dedup_phase_sections(content: str) -> tuple[str, int]:
     phase_segments = segments[1:]
 
     if not phase_segments:
-        return content, 0
+        return content, 0, False
 
     phase_keys: list[str] = []
     for seg in phase_segments:
@@ -86,15 +96,31 @@ def _dedup_phase_sections(content: str) -> tuple[str, int]:
         last_index_for_key[key] = i
 
     removed = len(phase_segments) - len(last_index_for_key)
-    if removed == 0:
-        return content, 0
-
-    result_lines = list(preamble)
+    kept: list[tuple[int, str, list[str]]] = []
     for i, (key, seg) in enumerate(zip(phase_keys, phase_segments)):
         if last_index_for_key[key] == i:
-            result_lines.extend(seg)
+            kept.append((i, key, seg))
 
-    return "".join(result_lines), removed
+    ordered = sorted(
+        kept,
+        key=lambda item: (_PHASE_ORDER.get(item[1], len(_PHASE_ORDER)), item[0]),
+    )
+    reordered = [item[0] for item in ordered] != [item[0] for item in kept]
+
+    if removed == 0 and not reordered:
+        return content, 0, False
+
+    result_lines = list(preamble)
+    for _, _, seg in ordered:
+        result_lines.extend(seg)
+
+    return "".join(result_lines), removed, reordered
+
+
+def _dedup_phase_sections(content: str) -> tuple[str, int]:
+    """Backward-compatible wrapper around phase-section normalization."""
+    normalized, removed, _ = _normalize_phase_sections(content)
+    return normalized, removed
 
 
 class WorkspaceInjectionMiddleware(AgentMiddleware):
@@ -165,8 +191,8 @@ class WorkspaceInjectionMiddleware(AgentMiddleware):
                 )
                 continue
             if filename == "brand_brief.md":
-                content, removed = _dedup_phase_sections(content)
-                if removed > 0:
+                content, removed, reordered = _normalize_phase_sections(content)
+                if removed > 0 or reordered:
                     try:
                         file_path.write_text(content, encoding="utf-8")
                     except OSError as exc:
@@ -175,9 +201,9 @@ class WorkspaceInjectionMiddleware(AgentMiddleware):
                             f"deduped brand_brief.md: {exc}"
                         )
                     logger.info(
-                        f"WorkspaceInjectionMiddleware: deduped brand_brief.md — "
-                        f"removed {removed} duplicate phase section(s); "
-                        f"injecting {len(content)} chars after dedup"
+                        "WorkspaceInjectionMiddleware: normalized brand_brief.md; "
+                        f"removed {removed} duplicate phase section(s), "
+                        f"reordered={reordered}; injecting {len(content)} chars"
                     )
             blocks.append(
                 f"=== WORKSPACE: {filename} (auto-injected) ===\n"

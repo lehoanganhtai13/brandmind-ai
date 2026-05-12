@@ -13,6 +13,7 @@ from core.brand_strategy.session import BrandStrategySession, set_active_session
 from shared.agent_middlewares.workspace_injection.middleware import (
     WorkspaceInjectionMiddleware,
     _dedup_phase_sections,
+    _normalize_phase_sections,
 )
 from shared.agent_middlewares.workspace_injection import middleware as injection_mod
 
@@ -136,6 +137,35 @@ def test_duplicate_phase_0_5_keeps_last() -> None:
     assert "Updated heritage content." in result
     assert _PHASE_0 in result
     assert _PHASE_1 in result
+
+
+def test_normalize_restores_canonical_phase_order() -> None:
+    content = _PREAMBLE + _PHASE_0 + _PHASE_1 + _PHASE_0_5 + _PHASE_5_FULL
+
+    result, removed, reordered = _normalize_phase_sections(content)
+
+    assert removed == 0
+    assert reordered is True
+    assert result.index("## Phase 0:") < result.index("## Phase 0.5:")
+    assert result.index("## Phase 0.5:") < result.index("## Phase 1:")
+    assert result.index("## Phase 1:") < result.index("## Phase 5:")
+
+
+def test_normalize_keeps_latest_duplicate_then_orders_phase() -> None:
+    phase_0_5_dup = (
+        "## Phase 0.5: Brand Heritage (COMPLETED)\n"
+        "Updated heritage content.\n\n"
+    )
+    content = _PREAMBLE + _PHASE_0 + _PHASE_1 + _PHASE_0_5 + phase_0_5_dup
+
+    result, removed, reordered = _normalize_phase_sections(content)
+
+    assert removed == 1
+    assert reordered is True
+    assert "Heritage audit completed." not in result
+    assert "Updated heritage content." in result
+    assert result.index("## Phase 0:") < result.index("## Phase 0.5:")
+    assert result.index("## Phase 0.5:") < result.index("## Phase 1:")
 
 
 def test_injection_persists_deduped_brand_brief(tmp_path) -> None:

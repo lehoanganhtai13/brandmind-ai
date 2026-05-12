@@ -12,7 +12,7 @@ from loguru import logger
 
 from shared.agent_middlewares.workspace_injection.middleware import (
     _PHASE_HEADER_RE,
-    _dedup_phase_sections,
+    _normalize_phase_sections,
 )
 from shared.workspace import BRANDMIND_HOME
 
@@ -88,8 +88,8 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
             logger.warning(f"WorkspaceBriefHygiene: could not read brand brief: {exc}")
             return
 
-        normalized, removed = _dedup_phase_sections(content)
-        if removed == 0:
+        normalized, removed, reordered = _normalize_phase_sections(content)
+        if removed == 0 and not reordered:
             return
 
         try:
@@ -99,7 +99,7 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
             return
         logger.info(
             "WorkspaceBriefHygiene: normalized brand_brief.md after edit_file; "
-            f"removed {removed} duplicate phase section(s)"
+            f"removed {removed} duplicate phase section(s), reordered={reordered}"
         )
 
     def wrap_tool_call(
