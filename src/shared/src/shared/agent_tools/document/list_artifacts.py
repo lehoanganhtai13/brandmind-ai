@@ -22,7 +22,33 @@ from ._output_path import _base_dir, _manifest_path
 
 _VALID_SCOPES = ("current_session", "current_brand", "all")
 _VALID_CATEGORIES = ("documents", "presentations", "spreadsheets", "images", "all")
-_REQUIRED_PHASE_5_CATEGORIES = ("images", "documents", "presentations", "spreadsheets")
+_REQUIRED_PHASE_5_DELIVERABLES = (
+    "brand_key_image",
+    "documents",
+    "presentations",
+    "spreadsheets",
+)
+
+
+def phase5_deliverable_key(record: dict) -> str | None:
+    """Return the Phase 5 deliverable key represented by a manifest record.
+
+    Phase 5 requires a Brand Key image, not any image. Mood boards and
+    exploratory visual drafts remain useful artifacts, but they must not
+    satisfy or block the Brand Key one-pager deliverable.
+    """
+    category = record.get("category")
+    if category == "images":
+        filename = str(
+            record.get("filename") or os.path.basename(record.get("path", ""))
+        )
+        tool_name = record.get("tool")
+        if tool_name == "generate_brand_key" or "brand_key" in filename.lower():
+            return "brand_key_image"
+        return "other_images"
+    if category in {"documents", "presentations", "spreadsheets"}:
+        return str(category)
+    return None
 
 
 def _active_session_context() -> tuple[str | None, str | None]:
@@ -164,20 +190,23 @@ def list_artifacts(
         )
 
     if scope == "current_session":
-        # Surface category coverage explicitly so the orchestrator can
+        # Surface deliverable coverage explicitly so the orchestrator can
         # check Phase 5 closure without re-parsing the listing.
-        produced_categories = sorted({r.get("category", "?") for r in matches})
+        produced_deliverables = sorted(
+            {deliverable for r in matches if (deliverable := phase5_deliverable_key(r))}
+        )
         missing_categories = [
-            category_name
-            for category_name in _REQUIRED_PHASE_5_CATEGORIES
-            if category_name not in produced_categories
+            deliverable
+            for deliverable in _REQUIRED_PHASE_5_DELIVERABLES
+            if deliverable not in produced_deliverables
         ]
         lines.append("")
         lines.append(
-            f"Categories produced this session: {', '.join(produced_categories)}"
+            f"Produced artifact types this session: {', '.join(produced_deliverables)}"
         )
         lines.append(
-            f"Required Phase 5 categories: {', '.join(_REQUIRED_PHASE_5_CATEGORIES)}"
+            "Required Phase 5 deliverables: "
+            f"{', '.join(_REQUIRED_PHASE_5_DELIVERABLES)}"
         )
         if missing_categories:
             lines.append(

@@ -671,6 +671,9 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             from shared.agent_tools.document._output_path import (  # type: ignore
                 _manifest_path,
             )
+            from shared.agent_tools.document.list_artifacts import (
+                phase5_deliverable_key,
+            )
         except ImportError:
             return set()
 
@@ -684,9 +687,15 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
                     except json.JSONDecodeError:
                         continue
                     if record.get("session_id") == session.session_id:
-                        category = record.get("category")
-                        if isinstance(category, str):
-                            categories.add(category)
+                        deliverable = phase5_deliverable_key(record)
+                        if deliverable == "brand_key_image":
+                            categories.add("images")
+                        elif deliverable in {
+                            "documents",
+                            "presentations",
+                            "spreadsheets",
+                        }:
+                            categories.add(deliverable)
         except OSError:
             return set()
         return categories

@@ -928,7 +928,10 @@ class TestListArtifacts:
         with patch("core.brand_strategy.session.get_active_session", return_value=session):
             result = list_artifacts(scope="current_session")
 
-        assert "Missing required categories: documents, spreadsheets" in result
+        assert (
+            "Missing required categories: brand_key_image, documents, spreadsheets"
+            in result
+        )
         assert "CLOSURE_STATUS: INCOMPLETE" in result
 
     def test_current_session_reports_complete_required_categories(
@@ -937,10 +940,18 @@ class TestListArtifacts:
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
         self._seed_manifest(tmp_path, [
             {
-                "session_id": "s1", "brand_name": "A",
-                "category": category, "tool": "tool",
-                "filename": f"{category}.out", "path": f"/x/{category}.out",
-                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
+                "session_id": "s1",
+                "brand_name": "A",
+                "category": category,
+                "tool": (
+                    "generate_brand_key" if category == "images" else "tool"
+                ),
+                "filename": (
+                    "brand_key.out" if category == "images" else f"{category}.out"
+                ),
+                "path": f"/x/{category}.out",
+                "size_bytes": 100,
+                "generated_at": "2026-05-01T10:00:00+07:00",
             }
             for category in ("images", "documents", "presentations", "spreadsheets")
         ])

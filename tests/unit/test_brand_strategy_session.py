@@ -443,6 +443,99 @@ class TestDeliverableDispatchGuard:
         assert isinstance(result, ToolMessage)
         assert result.content == "ran"
 
+    def test_allows_brand_key_dispatch_after_non_deliverable_image_exists(
+        self,
+        tmp_path,
+        monkeypatch,
+    ) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        (tmp_path / ".manifest.jsonl").write_text(
+            json.dumps(
+                {
+                    "session_id": "abc123",
+                    "category": "images",
+                    "tool": "generate_image",
+                    "filename": "mood_board.jpeg",
+                    "path": str(tmp_path / "mood_board.jpeg"),
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("creative-studio", "Build Brand Key one-pager"),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert result.content == "ran"
+
+    def test_blocks_duplicate_brand_key_dispatch_after_brand_key_exists(
+        self,
+        tmp_path,
+        monkeypatch,
+    ) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        (tmp_path / ".manifest.jsonl").write_text(
+            json.dumps(
+                {
+                    "session_id": "abc123",
+                    "category": "images",
+                    "tool": "generate_brand_key",
+                    "filename": "brand_key.jpeg",
+                    "path": str(tmp_path / "brand_key.jpeg"),
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("creative-studio", "Build Brand Key one-pager"),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert "already exist" in str(result.content)
+        assert "images" in str(result.content)
+
 
 class TestPhaseStateReminder:
     """Test dynamic phase-state prompt reminders."""
