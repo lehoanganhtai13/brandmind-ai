@@ -12,6 +12,10 @@
 4. Khu vực bạn muốn tập trung?
 5. Budget range cho brand strategy?
 
+### Explicit Research Request
+
+If the user explicitly asks for quick market, competitor, or customer research during diagnosis, dispatch one bounded `market-research` pass before presenting market findings. Keep the brief narrow (2-3 targets or signals, query budget, stop condition), then return to the Phase 0 diagnosis questions. Do not present a "market scan" from KG/doc search alone; KG/doc search grounds theory, not current market evidence.
+
 ### Concepts to Explain
 - **5W1H framework** — backbone cho phân tích toàn diện: What (kinh doanh gì), Who (cho ai), Where (ở đâu), When (timeline), Why (tại sao cần brand strategy), How (budget/resources)
 - **Scope classification** — tại sao xác định đúng scope quan trọng: new brand vs refresh vs repositioning vs full rebrand ảnh hưởng toàn bộ workflow phía sau

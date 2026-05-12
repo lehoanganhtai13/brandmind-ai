@@ -14,6 +14,7 @@ from shared.agent_middlewares.workspace_injection.middleware import (
     WorkspaceInjectionMiddleware,
     _dedup_phase_sections,
 )
+from shared.agent_middlewares.workspace_injection import middleware as injection_mod
 
 _PREAMBLE = "# My Brand\n\nSession: abc123\n\n"
 
@@ -159,3 +160,14 @@ def test_injection_persists_deduped_brand_brief(tmp_path) -> None:
     assert _PHASE_5_SKELETON not in persisted
     assert _PHASE_5_FULL in persisted
     assert "=== WORKSPACE: brand_brief.md" in request.messages[0].content
+
+
+def test_default_workspace_root_uses_configured_brandmind_home(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(injection_mod, "BRANDMIND_HOME", tmp_path)
+
+    middleware = WorkspaceInjectionMiddleware()
+
+    assert middleware.workspace_root == tmp_path / "projects"

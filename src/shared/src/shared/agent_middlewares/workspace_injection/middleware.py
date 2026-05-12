@@ -30,8 +30,9 @@ from langchain.agents.middleware.types import (
 from langchain_core.messages import AIMessage, HumanMessage
 from loguru import logger
 
+from shared.workspace import BRANDMIND_HOME
+
 _DEFAULT_FILES = ("brand_brief.md", "quality_gates.md")
-_DEFAULT_WORKSPACE_ROOT = Path.home() / ".brandmind" / "projects"
 _PHASE_HEADER_RE = re.compile(r"^(## Phase \d+(?:\.\d+)?)\b", re.MULTILINE)
 
 
@@ -104,20 +105,20 @@ class WorkspaceInjectionMiddleware(AgentMiddleware):
             directory to inject. Files that do not exist are skipped
             silently so a missing optional file never blocks dispatch.
         workspace_root: Root under which per-session workspace
-            directories live. Defaults to ``~/.brandmind/projects``,
+            directories live. Defaults to ``BRANDMIND_HOME / "projects"``,
             matching :func:`shared.workspace.ensure_project_workspace`.
     """
 
     def __init__(
         self,
         files: tuple[str, ...] = _DEFAULT_FILES,
-        workspace_root: Path = _DEFAULT_WORKSPACE_ROOT,
+        workspace_root: Path | None = None,
     ) -> None:
         self.files = files
-        self.workspace_root = workspace_root
+        self.workspace_root = workspace_root or BRANDMIND_HOME / "projects"
         logger.info(
             "WorkspaceInjectionMiddleware initialized: "
-            f"files={list(files)} root={workspace_root}"
+            f"files={list(files)} root={self.workspace_root}"
         )
 
     def wrap_model_call(

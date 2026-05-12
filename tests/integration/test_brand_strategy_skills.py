@@ -87,6 +87,13 @@ class TestSkillsMiddleware:
         tool_names = {t.name for t in fs_mw.tools}
         assert "read_file" in tool_names
 
+    def test_filesystem_middleware_hides_create_only_write_tool(self):
+        """Brand-strategy workspace files are edited in place, not recreated."""
+        _, fs_mw = create_brand_strategy_skills_middleware()
+        tool_names = {t.name for t in fs_mw.tools}
+        assert "write_file" not in tool_names
+        assert "edit_file" in tool_names
+
 
 class TestSkillReferences:
     """Test that reference files exist for skills that need them."""

@@ -45,35 +45,44 @@ def brand_strategy_agent():
 class TestAgentCreation:
     """Test agent factory creates a working agent."""
 
-    def test_agent_has_all_tools(self, brand_strategy_agent):
-        """Verify all brand strategy tools are registered."""
+    def test_agent_exposes_orchestrator_tools(self, brand_strategy_agent):
+        """Verify the main agent exposes only orchestrator-owned tools."""
         tool_names = _get_tool_names(brand_strategy_agent)
 
         expected_tools = [
             "search_knowledge_graph",
             "search_document_library",
+            "generate_image",
+            "edit_image",
+            "export_to_markdown",
+            "list_artifacts",
+            "report_progress",
+        ]
+        for tool_name in expected_tools:
+            assert tool_name in tool_names, f"Missing tool: {tool_name}"
+
+    def test_external_research_tools_are_specialist_owned(
+        self, brand_strategy_agent
+    ):
+        """Verify web/social research cannot run directly from the main agent."""
+        tool_names = _get_tool_names(brand_strategy_agent)
+
+        specialist_tools = [
             "search_web",
             "scrape_web_content",
             "browse_and_research",
             "deep_research",
             "analyze_social_profile",
             "get_search_autocomplete",
-            "generate_image",
-            "edit_image",
-            "generate_brand_key",
-            "generate_document",
-            "generate_presentation",
-            "generate_spreadsheet",
-            "export_to_markdown",
         ]
-        for tool_name in expected_tools:
-            assert tool_name in tool_names, f"Missing tool: {tool_name}"
+        for tool_name in specialist_tools:
+            assert tool_name not in tool_names, f"Direct research tool leaked: {tool_name}"
 
-    def test_agent_has_inventory_tools(self, brand_strategy_agent):
-        """Verify tool_search/load_tools/unload_tools are present."""
+    def test_agent_does_not_use_tool_inventory_runtime(self, brand_strategy_agent):
+        """Verify Brand Strategy exposes main-owned tools directly."""
         tool_names = _get_tool_names(brand_strategy_agent)
         for meta_tool in ["tool_search", "load_tools", "unload_tools"]:
-            assert meta_tool in tool_names, f"Missing meta tool: {meta_tool}"
+            assert meta_tool not in tool_names, f"Unexpected inventory tool: {meta_tool}"
 
     def test_agent_has_subagent_task_tool(self, brand_strategy_agent):
         """Verify the 'task' tool (from SubAgentMiddleware) is registered."""
@@ -86,11 +95,12 @@ class TestAgentCreation:
         assert "write_todos" in tool_names, "Missing 'write_todos' tool"
 
     def test_agent_total_tool_count(self, brand_strategy_agent):
-        """Verify total number of registered tools is reasonable."""
+        """Verify the narrowed orchestrator tool surface remains complete."""
         tool_names = _get_tool_names(brand_strategy_agent)
-        # 16 brand strategy + 3 inventory + task + write_todos + deepagent built-ins
-        assert len(tool_names) >= 20, (
-            f"Expected at least 20 tools, got {len(tool_names)}: {tool_names}"
+        # 7 orchestrator-owned tools + task + write_todos + deepagent
+        # filesystem tools, without the ToolSearch inventory triad.
+        assert len(tool_names) >= 15, (
+            f"Expected at least 15 tools, got {len(tool_names)}: {tool_names}"
         )
 
 

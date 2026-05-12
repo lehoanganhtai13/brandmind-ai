@@ -23,8 +23,8 @@ from shared.agent_middlewares.tool_search.middleware import (
 class TestBrandStrategyToolCatalog:
     """Test the built-in tool catalog."""
 
-    def test_catalog_has_10_tools(self):
-        assert len(BRAND_STRATEGY_TOOL_CATALOG) == 10
+    def test_catalog_has_6_tools(self):
+        assert len(BRAND_STRATEGY_TOOL_CATALOG) == 6
 
     def test_catalog_tool_names(self):
         names = {m.name for m in BRAND_STRATEGY_TOOL_CATALOG}
@@ -34,10 +34,6 @@ class TestBrandStrategyToolCatalog:
             "get_search_autocomplete",
             "generate_image",
             "edit_image",
-            "generate_brand_key",
-            "generate_document",
-            "generate_presentation",
-            "generate_spreadsheet",
             "export_to_markdown",
         }
         assert names == expected
@@ -51,8 +47,6 @@ class TestBrandStrategyToolCatalog:
             "document_export",
         }
         assert categories == expected
-
-
 
 class TestCreateToolSearchMiddleware:
     """Test factory function."""
@@ -87,10 +81,10 @@ class TestToolSearchFunction:
         result = tool_search.invoke({"query": "generate image"})
         assert "generate_image" in result
 
-    def test_search_document_tools(self):
+    def test_search_markdown_export_tool(self):
         create_tool_search_middleware()
-        result = tool_search.invoke({"query": "create PDF"})
-        assert "generate_document" in result
+        result = tool_search.invoke({"query": "export markdown"})
+        assert "export_to_markdown" in result
 
     def test_search_no_match(self):
         create_tool_search_middleware()

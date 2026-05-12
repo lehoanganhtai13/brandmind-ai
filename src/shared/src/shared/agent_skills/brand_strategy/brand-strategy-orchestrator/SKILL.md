@@ -46,8 +46,8 @@ Map current brand perception vs intended positioning.
 Read `references/phase_0_5_equity_audit.md` for audit procedures.
 
 ### Phase 1: Market Intelligence & Research
-Delegate to `market-research` skill for the 8-step research methodology.
-Read `references/phase_1_research.md` for orchestrator-level guidance, then load the sub-skill.
+Use the `market-research` skill as the methodology reference for decision-grade market synthesis.
+Read `references/phase_1_research.md` for orchestrator-level guidance, then load the sub-skill only when a bounded evidence gap requires fresh research.
 
 ### Phase 2: Brand Strategy Core
 Delegate to `brand-positioning-identity` skill for positioning framework.
@@ -112,8 +112,8 @@ The two-turn handshake, gate-before-advance, and pause-for-user-confirm behavior
 1. **Verify the current phase's quality gate passes** — review gate items in the phase reference file; address gaps before advancing.
 2. After the user has confirmed Phase N's deliverable, call `report_progress(advance=True)` — the tool returns the next phase's reference file path. **You do NOT choose which phase comes next** — `report_progress` enforces the scope-correct sequence so phases cannot be accidentally skipped.
 3. Read that reference file.
-4. Load the relevant sub-skill where the phase delegates:
-   - Phase 1 -> `market-research`
+4. Consult the relevant sub-skill only when the phase needs its methodology or a bounded specialist pass:
+   - Phase 1 -> `market-research` only for a missing evidence question that would change the strategy
    - Phase 2-3 -> `brand-positioning-identity`
    - Phase 4-5 -> `brand-communication-planning`
 5. Brief the user on Phase N+1 and what you need from them.

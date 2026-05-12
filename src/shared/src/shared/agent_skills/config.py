@@ -208,7 +208,7 @@ def create_brand_strategy_skills_middleware(
         sources=["/"],
     )
 
-    # FilesystemMiddleware: provides read_file, write_file, edit_file, etc.
+    # FilesystemMiddleware: provides read_file, edit_file, grep, etc.
     fs_middleware = FilesystemMiddleware(
         backend=backend,
         tool_token_limit_before_evict=None,
@@ -216,8 +216,19 @@ def create_brand_strategy_skills_middleware(
 
     # Patch grep tool for virtual_mode glob bug (deepagents<=0.3.12)
     _patch_grep_virtual_glob(fs_middleware)
+    _remove_write_file_tool(fs_middleware)
 
     return skills_middleware, fs_middleware
+
+
+def _remove_write_file_tool(fs_middleware: FilesystemMiddleware) -> None:
+    """Remove create-only writes from the brand-strategy workspace surface."""
+    tools_list = cast(list[BaseTool], fs_middleware.tools)
+    kept_tools = [t for t in tools_list if t.name != "write_file"]
+    if len(kept_tools) == len(tools_list):
+        return
+    tools_list[:] = kept_tools
+    logger.info("Removed write_file tool from brand strategy filesystem surface")
 
 
 def _patch_grep_virtual_glob(fs_middleware: FilesystemMiddleware) -> None:

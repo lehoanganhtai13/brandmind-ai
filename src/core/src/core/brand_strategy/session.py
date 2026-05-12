@@ -235,20 +235,20 @@ def update_strategy_progress(
         updated.append(f"Remaining: {remaining_str}")
 
         workspace_hint = (
-            f"\n\n**STEP 1**: Append Phase {old} SOAP summary to "
-            f"`/workspace/brand_brief.md` "
-            f"(Subjective/Objective/Assessment/Plan). Preserves context "
-            f"across compression and session resume.\n"
-            f"**STEP 2**: Read "
-            f"`/brand-strategy-orchestrator/{ref_file}` for "
-            f"{next_phase} guidance.\n"
-            f"Execute STEP 1 before STEP 2."
+            "\n\nWorkspace handoff:\n"
+            f"- Use `read_file('/workspace/brand_brief.md')`, then one "
+            f"`edit_file` to add or update the Phase {old} SOAP summary. "
+            "The file already exists in normal sessions; update it in place.\n"
+            "- If `edit_file` cannot find the anchor text, continue with "
+            "the next phase and mention the workspace gap briefly; do not "
+            "retry multiple file edits in the same turn.\n"
+            f"- Read `/brand-strategy-orchestrator/{ref_file}` for "
+            f"{next_phase} guidance."
         )
         if old in ("phase_0", "phase_0_5"):
             workspace_hint += (
-                "\n\n*Before STEP 1, also update `/user/profile.md` "
-                "with user role, experience, language preference, "
-                "communication style, constraints, working style.*"
+                "\n- Update `/user/profile.md` only if this turn revealed "
+                "a new stable preference or constraint; otherwise skip it."
             )
         updated.append(workspace_hint)
 
@@ -379,8 +379,7 @@ def list_sessions() -> list[dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# Active session state (module-level, set by CLI before agent creation)
-# Pattern: same as ToolSearchMiddleware._registry
+# Active session state (module-level, set before agent creation/invocation)
 # ---------------------------------------------------------------------------
 
 _active_session: BrandStrategySession | None = None

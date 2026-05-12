@@ -1,11 +1,10 @@
 """Deep Agent configuration for Brand Strategy mode.
 
 Creates a fully-configured agent with:
-- All brand strategy tools (search, analysis, creative, document)
+- Orchestrator tools plus specialist-owned tool registries
 - SubAgentMiddleware for delegating to 4 specialized sub-agents
 - SkillsMiddleware for progressive skill disclosure
 - Context management middlewares (summarization, context editing)
-- ToolSearchMiddleware for dynamic tool loading
 """
 
 from __future__ import annotations
@@ -52,7 +51,6 @@ def create_brand_strategy_agent(
     from shared.agent_middlewares import (
         EnsureTasksFinishedMiddleware,
         LogModelMessageMiddleware,
-        create_tool_search_middleware,
     )
     from shared.agent_models.retry_gemini import (
         RetryChatGoogleGenerativeAI,
@@ -157,26 +155,19 @@ def create_brand_strategy_agent(
     model_context_window = 262144  # 256K tokens
 
     # ---- Brand Strategy Tools ----
-    # The tool set is split into two groups so delegation boundaries are
+    # The tool set is split into three groups so delegation boundaries are
     # enforced at registration rather than by prompt guidance alone.
-    # ``main_agent_tools`` carries research, analysis, light creative, and
-    # session-tracking tools that the orchestrator uses directly.
-    # Heavy generation tools (Brand Key visual, PDF/DOCX/PPTX/XLSX
-    # exporters) are kept out of that list so the orchestrator must
-    # reach them through ``task(subagent_type=...)``, which routes the
-    # call into the creative-studio / document-generator sub-agents
-    # where their generate→evaluate→refine quality loops live.
+    # ``main_agent_tools`` carries theory/source retrieval, light creative,
+    # artifact verification, and session-tracking tools that the
+    # orchestrator uses directly.
+    # External market/social research and heavy deliverable generation stay
+    # out of that list so the orchestrator must route them through the
+    # owning specialist. This preserves user-specified research budgets and
+    # prevents Phase 1 from expanding into direct web crawling.
     main_agent_tools: list[Any] = [
-        # Research
+        # Theory and source retrieval
         search_knowledge_graph,
         search_document_library,
-        search_web,
-        scrape_web_content,
-        browse_and_research,
-        deep_research,
-        # Analysis
-        analyze_social_profile,
-        get_search_autocomplete,
         # Light creative (quick iteration inline OK)
         generate_image,
         edit_image,
@@ -190,9 +181,21 @@ def create_brand_strategy_agent(
         report_progress,
     ]
 
+    # Specialist-only: external evidence collection. Market and social
+    # sub-agents resolve these from ``tools_registry`` when a bounded
+    # research brief genuinely needs them.
+    specialist_research_tools: list[Any] = [
+        search_web,
+        scrape_web_content,
+        browse_and_research,
+        deep_research,
+        analyze_social_profile,
+        get_search_autocomplete,
+    ]
+
     # Sub-agent-only: heavy generation tools. Main agent must delegate via
     # `task(subagent_type="creative-studio" | "document-generator", ...)`.
-    subagent_only_tools: list[Any] = [
+    specialist_generation_tools: list[Any] = [
         generate_brand_key,  # creative-studio only
         generate_document,  # document-generator only
         generate_presentation,  # document-generator only
@@ -201,7 +204,9 @@ def create_brand_strategy_agent(
 
     # Combined tools registry for sub-agent resolution — sub-agents resolve
     # their tool lists from this registry via `_resolve_tools(names, registry)`.
-    tools: list[Any] = main_agent_tools + subagent_only_tools
+    tools: list[Any] = (
+        main_agent_tools + specialist_research_tools + specialist_generation_tools
+    )
 
     # ---- Middlewares ----
     todo_middleware = TodoWriteMiddleware()
@@ -262,22 +267,10 @@ def create_brand_strategy_agent(
     # contains the deliverable expected for the current phase before
     # letting the advance land. Registered after the context-management
     # middlewares so it runs against the same message window the model
-    # just produced, and before ``tool_search_middleware`` so a blocked
-    # advance short-circuits the rest of the tool pipeline.
+    # just produced, before filesystem and specialist dispatch.
     content_check_middleware = ContentCheckAdvanceMiddleware()
     deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
     phase_state_reminder_middleware = PhaseStateReminderMiddleware()
-
-    # ToolSearch middleware.
-    # ``all_tools`` is the set whose names the middleware validates
-    # against its catalog. Only ``main_agent_tools`` is passed because
-    # those are the tools the main agent can equip via
-    # ``load_tools``; sub-agent-only tools live in ``tools_registry``
-    # and are resolved through the sub-agent path rather than the
-    # warehouse catalog.
-    tool_search_middleware = create_tool_search_middleware(
-        all_tools=main_agent_tools,
-    )
 
     # Skills middleware + filesystem + workspace (Task 35 + 48)
     workspace_dir: str | None = None
@@ -301,7 +294,7 @@ def create_brand_strategy_agent(
 
     # Sub-agent middleware.
     # The registry maps every tool name to its implementation across
-    # both ``main_agent_tools`` and ``subagent_only_tools`` so each
+    # ``main_agent_tools`` and specialist-only groups so each
     # sub-agent can resolve the tools named in its config (for
     # example, creative-studio needs ``generate_brand_key`` while
     # document-generator needs ``generate_document``), even though
@@ -356,7 +349,6 @@ def create_brand_strategy_agent(
             phase_state_reminder_middleware,
             content_check_middleware,  # Verify agent text before allowing phase advance
             deliverable_dispatch_guard_middleware,
-            tool_search_middleware,
             fs_middleware,
             skills_middleware,
             sub_agent_middleware,

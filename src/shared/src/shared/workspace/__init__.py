@@ -31,6 +31,7 @@ Usage:
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -40,7 +41,16 @@ from loguru import logger
 # Constants
 # ============================================================================
 
-BRANDMIND_HOME = Path.home() / ".brandmind"
+
+def _resolve_brandmind_home() -> Path:
+    """Return the root directory for BrandMind persistent workspace data."""
+    configured_home = os.getenv("BRANDMIND_HOME", "").strip()
+    if configured_home:
+        return Path(configured_home).expanduser()
+    return Path.home() / ".brandmind"
+
+
+BRANDMIND_HOME = _resolve_brandmind_home()
 """Root directory for all BrandMind persistent data."""
 
 

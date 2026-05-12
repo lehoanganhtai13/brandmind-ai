@@ -46,8 +46,8 @@ def tool_search(query: str) -> str:
     You start with core tools only. This BROWSES the catalog (does NOT load).
     After reviewing results, use load_tools() to equip what you need.
 
-    Searchable: image generation, document creation (PDF/DOCX/PPTX/XLSX),
-    local market (Google Places), social media analysis, customer reviews.
+    Searchable: image generation, markdown export, social/profile analysis,
+    and customer search signals. Runtime agents may pass a narrower catalog.
 
     Args:
         query: Capability description. Examples: "generate image",
@@ -429,7 +429,7 @@ class ToolSearchMiddleware(AgentMiddleware):
                 not_loaded.append(name)
 
         # Update state — remove unloaded tools
-        request.state["loaded_tools"] = loaded - set(names_to_unload)  # type: ignore[typeddict-unknown-key]
+        request.state["loaded_tools"] = loaded - set(names_to_unload)
 
         # Build informative message
         parts: list[str] = []
@@ -451,9 +451,9 @@ class ToolSearchMiddleware(AgentMiddleware):
 # Brand Strategy Tool Catalog
 # ---------------------------------------------------------------------------
 
-# Defines metadata for all loadable tools in the catalog.
-# Core tools (search_knowledge_graph, search_document_library, search_web,
-# scrape_web_content, deep_research) are NOT in this catalog — they are always visible.
+# Defines metadata for optional loadable tools in the default catalog.
+# Runtime agents may pass a narrowed catalog when tool ownership belongs to
+# a different routing path, such as specialist sub-agents.
 
 BRAND_STRATEGY_TOOL_CATALOG: list[ToolMetadata] = [
     # ---- Category: social_media ----

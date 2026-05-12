@@ -223,6 +223,27 @@ class TestUpdateStrategyProgress:
         assert "`## Phase 1: ...`" in result
         assert session.current_phase == "phase_2"
 
+    def test_advance_hint_uses_bounded_workspace_edits(self, tmp_path, monkeypatch):
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "# Brand Brief\n\n## Phase 0: Business Problem Diagnosis\n",
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(session_id="abc123", scope="new_brand")
+        session.begin_user_turn()
+
+        result = update_strategy_progress(session, advance=True)
+
+        assert "Workspace handoff" in result
+        assert "one `edit_file`" in result
+        assert "update it in place" in result
+        assert "do not retry multiple file edits" in result
+        assert "Update `/user/profile.md` only if" in result
+
 
 class TestDeliverableDispatchGuard:
     """Test phase-state gating for final artifact sub-agent dispatch."""

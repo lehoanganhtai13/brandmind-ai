@@ -14,9 +14,9 @@ description: >-
 
 ## ROLE & OBJECTIVE
 
-Conduct systematic market intelligence gathering for F&B brand strategy.
-Follow the 8-step methodology below. Each step builds on previous findings — execute sequentially.
-Accumulate all findings for the Strategic Synthesis in Step 8, which bridges Research → Strategy.
+Conduct decision-grade market intelligence gathering for F&B brand strategy.
+Use the 8-step methodology below as research lenses, not a mandatory crawl.
+Accumulate enough findings for the Strategic Synthesis in Step 8, which bridges Research → Strategy.
 
 **CORE PRINCIPLE**: BREADTH FIRST, DEPTH WHERE IT MATTERS. Scan wide, then dive deep on signals that affect positioning.
 
@@ -25,6 +25,8 @@ Accumulate all findings for the Strategic Synthesis in Step 8, which bridges Res
 Start Phase 1 by separating what the user already supplied from what is still unknown. A junior marketer may bring rough but useful field intelligence: named competitors, positioning impressions, price ranges, weak spots, and target-audience hypotheses. Treat that as first-party research input, not as something to discard and rediscover from scratch.
 
 When the user has already named the main competitors and described their strengths, use those notes as the competitor map seed. Run web or browser research only for gaps that materially affect the next strategic decision: missing price tier, unclear target segment, uncertain proof point, or a competitor that changes the perceptual map. In a time-boxed mentoring session, analyze the top 2-3 most decision-relevant competitors deeply and keep the rest as lighter context.
+
+Respect the orchestrator's assignment budget. If the brief says quick validation, top competitors only, no browser work, or "search only if truly needed", do not expand it into a full market crawl. For normal mentoring sessions, use no more than 3 `search_web` queries unless the assignment explicitly asks for deeper research. Never pass more than 5 queries to one `search_web` call. Use `browse_and_research` only when the assignment explicitly asks for dynamic-page evidence such as Google Maps reviews; otherwise note the gap and continue.
 
 Stop collecting once you can support the Phase 1 synthesis: SWOT, perceptual map, target definition, top insights, and strategic sweet spot. More menu screenshots or social posts do not improve the strategy if they do not change one of those outputs.
 

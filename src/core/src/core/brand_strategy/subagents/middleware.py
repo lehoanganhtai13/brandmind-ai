@@ -96,12 +96,16 @@ def create_brand_strategy_subagent_middleware(
             "description": (
                 "Researches markets, competitors, audiences, and category "
                 "trends using web tools, knowledge graph, and document "
-                "library. Dispatch when fresh external data is needed: "
-                "competitor menu / pricing scrape, customer review sentiment, "
-                "consumer search trends, broad competitive landscape mapping. "
-                "Don't dispatch for analysis of strategy data already in this "
-                "conversation, for visual asset generation (creative-studio), "
-                "or for deliverable assembly (document-generator)."
+                "library. Dispatch only when the user explicitly asks for "
+                "fresh external research, or when one critical missing fact "
+                "would change the strategy and cannot be resolved from the "
+                "conversation or KG. Don't dispatch when the user has already "
+                "provided competitor context and asks to search only if truly "
+                "needed; synthesize that context in the main agent and name "
+                "any evidence gaps instead. Don't dispatch for visual asset "
+                "generation (creative-studio), deliverable assembly "
+                "(document-generator), or strategy analysis already grounded "
+                "in the conversation."
             ),
             "system_prompt": MARKET_RESEARCH_SYSTEM_PROMPT,
             "model": models["market-research"],
