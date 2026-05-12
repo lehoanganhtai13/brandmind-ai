@@ -603,6 +603,27 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
         "one pager",
         "một trang",
     )
+    _CATEGORY_MARKERS = {
+        "documents": (
+            "docx",
+            "strategy document",
+            "strategy doc",
+            "file chiến lược",
+        ),
+        "presentations": (
+            "pptx",
+            "presentation",
+            "deck",
+            "slide",
+        ),
+        "spreadsheets": (
+            "xlsx",
+            "spreadsheet",
+            "tracker",
+            "kpi",
+            "bảng kpi",
+        ),
+    }
 
     @staticmethod
     def _is_task_call(request: ToolCallRequest) -> bool:
@@ -621,6 +642,54 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
         if subagent_type != "creative-studio":
             return False
         return any(marker in description for marker in cls._BRAND_KEY_MARKERS)
+
+    @classmethod
+    def _requested_categories(cls, request: ToolCallRequest) -> set[str]:
+        args = request.tool_call.get("args", {})
+        subagent_type = args.get("subagent_type", "")
+        description = str(args.get("description", "")).lower()
+        if subagent_type == "creative-studio" and any(
+            marker in description for marker in cls._BRAND_KEY_MARKERS
+        ):
+            return {"images"}
+        if subagent_type != "document-generator":
+            return set()
+
+        categories: set[str] = set()
+        for category, markers in cls._CATEGORY_MARKERS.items():
+            if any(marker in description for marker in markers):
+                categories.add(category)
+        return categories
+
+    @staticmethod
+    def _current_session_artifact_categories() -> set[str]:
+        session = get_active_session()
+        if session is None:
+            return set()
+
+        try:
+            from shared.agent_tools.document._output_path import (  # type: ignore
+                _manifest_path,
+            )
+        except ImportError:
+            return set()
+
+        path = _manifest_path()
+        categories: set[str] = set()
+        try:
+            with open(path, encoding="utf-8") as handle:
+                for line in handle:
+                    try:
+                        record = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if record.get("session_id") == session.session_id:
+                        category = record.get("category")
+                        if isinstance(category, str):
+                            categories.add(category)
+        except OSError:
+            return set()
+        return categories
 
     @staticmethod
     def _phase_5_ready() -> bool:
@@ -656,18 +725,42 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             tool_call_id=request.tool_call["id"],
         )
 
+    @staticmethod
+    def _duplicate_rejection(
+        request: ToolCallRequest,
+        categories: set[str],
+    ) -> ToolMessage:
+        categories_text = ", ".join(sorted(categories))
+        return ToolMessage(
+            content=(
+                "Cannot regenerate final deliverables for this session because "
+                f"these artifact categor(ies) already exist: {categories_text}. "
+                'Call `list_artifacts(scope="current_session")` and report the '
+                "existing paths. If the user explicitly asks for a revised file, "
+                "ask for confirmation before generating another version."
+            ),
+            tool_call_id=request.tool_call["id"],
+        )
+
+    @classmethod
+    def _duplicate_categories(cls, request: ToolCallRequest) -> set[str]:
+        requested = cls._requested_categories(request)
+        if not requested:
+            return set()
+        return requested & cls._current_session_artifact_categories()
+
     def wrap_tool_call(
         self,
         request: ToolCallRequest,
         handler: Callable[[ToolCallRequest], ToolMessage | Command],
     ) -> ToolMessage | Command:
         """Gate synchronous final-deliverable task dispatches."""
-        if (
-            self._is_task_call(request)
-            and self._is_deliverable_dispatch(request)
-            and not self._phase_5_ready()
-        ):
-            return self._rejection(request)
+        if self._is_task_call(request) and self._is_deliverable_dispatch(request):
+            if not self._phase_5_ready():
+                return self._rejection(request)
+            duplicate_categories = self._duplicate_categories(request)
+            if duplicate_categories:
+                return self._duplicate_rejection(request, duplicate_categories)
         return handler(request)
 
     async def awrap_tool_call(
@@ -676,12 +769,12 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
         handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Command]],
     ) -> ToolMessage | Command:
         """Gate asynchronous final-deliverable task dispatches."""
-        if (
-            self._is_task_call(request)
-            and self._is_deliverable_dispatch(request)
-            and not self._phase_5_ready()
-        ):
-            return self._rejection(request)
+        if self._is_task_call(request) and self._is_deliverable_dispatch(request):
+            if not self._phase_5_ready():
+                return self._rejection(request)
+            duplicate_categories = self._duplicate_categories(request)
+            if duplicate_categories:
+                return self._duplicate_rejection(request, duplicate_categories)
         return await handler(request)
 
 

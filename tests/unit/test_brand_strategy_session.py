@@ -6,6 +6,8 @@ and brief synchronization.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 from langchain.agents.middleware.types import ToolCallRequest
 from langchain_core.messages import ToolMessage
@@ -360,6 +362,86 @@ class TestDeliverableDispatchGuard:
         assert isinstance(moodboard, ToolMessage)
         assert research.content == "ran"
         assert moodboard.content == "ran"
+
+    def test_blocks_duplicate_document_dispatch_after_artifact_exists(
+        self,
+        tmp_path,
+        monkeypatch,
+    ) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        manifest = tmp_path / ".manifest.jsonl"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "session_id": "abc123",
+                    "category": "documents",
+                    "path": str(tmp_path / "strategy.docx"),
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("document-generator", "Build the DOCX"),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert "already exist" in str(result.content)
+        assert "documents" in str(result.content)
+
+    def test_allows_missing_artifact_category_at_phase_5(
+        self,
+        tmp_path,
+        monkeypatch,
+    ) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        (tmp_path / ".manifest.jsonl").write_text("", encoding="utf-8")
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("document-generator", "Build the DOCX"),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert result.content == "ran"
 
 
 class TestPhaseStateReminder:
