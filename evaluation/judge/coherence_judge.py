@@ -263,6 +263,7 @@ def _build_llm(model_id: str) -> GoogleAIClientLLM:
             temperature=1.0,
             thinking_level="medium",
             max_tokens=8000,
+            timeout_ms=240_000,
             response_mime_type="application/json",
             response_schema=CoherenceVerdict,
         )

@@ -79,6 +79,9 @@ class GoogleAIClientLLMConfig(LLMConfig):
 
             IMPORTANT: Cannot be used with grounding (use_grounding=True) or tools.
             If grounding or tools are enabled, this must be None.
+        timeout_ms (int):
+            Request timeout in milliseconds for Google API calls.
+            Defaults to 60,000.
     """
 
     def __init__(
@@ -95,6 +98,7 @@ class GoogleAIClientLLMConfig(LLMConfig):
         thinking_level: Optional[str] = None,
         response_mime_type: Optional[str] = None,
         response_schema: Optional[SchemaLike] = None,
+        timeout_ms: int = 60_000,
         **kwargs,
     ):
         # We explicitly set the backend to GOOGLE for this config type.
@@ -110,6 +114,7 @@ class GoogleAIClientLLMConfig(LLMConfig):
         self.thinking_level = thinking_level
         self.response_mime_type = response_mime_type
         self.response_schema = response_schema
+        self.timeout_ms = timeout_ms
         self.tools = tools
 
         # Validate mutually exclusive options
@@ -145,6 +150,8 @@ class GoogleAIClientLLMConfig(LLMConfig):
                 f"({self.model}). Use thinking_budget instead "
                 "(integer value, 0 to disable)."
             )
+        if self.timeout_ms <= 0:
+            raise ValueError("timeout_ms must be a positive integer.")
 
         # Check grounding/tools vs structured output
         if self.use_grounding or self.tools:

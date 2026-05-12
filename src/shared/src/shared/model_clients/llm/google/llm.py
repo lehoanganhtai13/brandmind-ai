@@ -159,7 +159,7 @@ class GoogleAIClientLLM(BaseLLM):
             "tools": self._tools or None,
             "response_mime_type": response_mime_type or self.config.response_mime_type,
             "response_schema": response_schema or self.config.response_schema,
-            "http_options": types.HttpOptions(timeout=60_000),  # 60 seconds timeout
+            "http_options": types.HttpOptions(timeout=self.config.timeout_ms),
         }
 
         # Configure thinking based on model version
