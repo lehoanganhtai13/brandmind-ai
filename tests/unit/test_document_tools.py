@@ -27,7 +27,10 @@ from shared.agent_tools.document.export_to_markdown import (
     export_to_markdown,
 )
 from shared.agent_tools.document.generate_document import generate_document
-from shared.agent_tools.document.generate_spreadsheet import generate_spreadsheet
+from shared.agent_tools.document.generate_spreadsheet import (
+    _normalise_kpi_dashboard_rows,
+    generate_spreadsheet,
+)
 from shared.agent_tools.document.list_artifacts import list_artifacts
 from shared.agent_tools.document.spreadsheet_templates import SPREADSHEET_TEMPLATES
 
@@ -472,6 +475,25 @@ class TestGenerateDocument:
 
 class TestGenerateSpreadsheet:
     """Test spreadsheet generation guardrails for KPI dashboards."""
+
+    def test_kpi_placeholder_measurements_get_actionable_marker(self) -> None:
+        content: dict[str, list[dict[str, Any]]] = {
+            "Dashboard": [
+                {
+                    "KPI": "Engagement Rate (Nội dung Business)",
+                    "Baseline": "[Current]",
+                    "Current": "N/A",
+                    "Target": "+15%",
+                }
+            ]
+        }
+
+        _normalise_kpi_dashboard_rows(content)
+
+        row = content["Dashboard"][0]
+        assert row["Baseline"] == "no data — measure pre-launch"
+        assert row["Current"] == "no data — measure pre-launch"
+        assert row["Target"] == "+15% by Month 3"
 
     def test_kpi_targets_get_default_horizon_when_missing(
         self,

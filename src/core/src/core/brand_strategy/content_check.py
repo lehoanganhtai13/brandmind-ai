@@ -19,6 +19,7 @@ an in-flight session.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -624,6 +625,27 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             "bảng kpi",
         ),
     }
+    _PHASE_5_SECTION_RE = re.compile(
+        r"^##\s+Phase\s+5\b.*?(?=^##\s+Phase\s+\d|\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    _WORKSPACE_KPI_RE = re.compile(
+        r"^\s*\d+\.\s+\*\*(.+?)\*\*\s*(?::|[-–—]|$)",
+        re.MULTILINE,
+    )
+    _DISPATCH_KPI_RE = re.compile(r'"?KPI"?\s*[:=]\s*"([^"]+)"')
+    _PLACEHOLDER_VALUE_RE = re.compile(
+        r'"?(Baseline|Current)"?\s*[:=]\s*"'
+        r"\s*(N/A|na|\[Current\]|Current|Hiện tại|null|none)\s*"
+        r'"',
+        re.IGNORECASE,
+    )
+    _XLSX_MARKERS = (
+        "xlsx",
+        "spreadsheet",
+        "kpi dashboard",
+        "bảng kpi",
+    )
 
     @staticmethod
     def _is_task_call(request: ToolCallRequest) -> bool:
@@ -758,6 +780,119 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             return set()
         return requested & cls._current_session_artifact_categories()
 
+    @classmethod
+    def _is_kpi_spreadsheet_dispatch(cls, request: ToolCallRequest) -> bool:
+        """Return whether a document-generator task is targeting the KPI XLSX."""
+        args = request.tool_call.get("args", {})
+        if args.get("subagent_type") != "document-generator":
+            return False
+
+        description = str(args.get("description", "")).lower()
+        return any(marker in description for marker in cls._XLSX_MARKERS)
+
+    @classmethod
+    def _workspace_phase_5_text(cls) -> str:
+        """Read the active workspace Phase 5 source section."""
+        session = get_active_session()
+        if session is None:
+            return ""
+
+        try:
+            from shared.workspace import BRANDMIND_HOME
+        except ImportError:
+            return ""
+
+        brief_path = (
+            BRANDMIND_HOME
+            / "projects"
+            / session.session_id
+            / "workspace"
+            / "brand_brief.md"
+        )
+        try:
+            content = brief_path.read_text(encoding="utf-8")
+        except OSError:
+            return ""
+
+        match = cls._PHASE_5_SECTION_RE.search(content)
+        if match is None:
+            return ""
+        return match.group(0)
+
+    @classmethod
+    def _workspace_kpi_names(cls) -> list[str]:
+        """Extract numbered KPI names from the active workspace Phase 5 section."""
+        phase_5 = cls._workspace_phase_5_text()
+        return [
+            match.group(1).strip()
+            for match in cls._WORKSPACE_KPI_RE.finditer(phase_5)
+            if match.group(1).strip()
+        ]
+
+    @classmethod
+    def _dispatch_kpi_names(cls, description: str) -> list[str]:
+        """Extract KPI row names from a document-generator dispatch description."""
+        return [
+            match.group(1).strip()
+            for match in cls._DISPATCH_KPI_RE.finditer(description)
+            if match.group(1).strip()
+        ]
+
+    @classmethod
+    def _kpi_dispatch_issues(cls, request: ToolCallRequest) -> list[str]:
+        """Return contract violations for a KPI XLSX dispatch."""
+        if not cls._is_kpi_spreadsheet_dispatch(request):
+            return []
+
+        description = str(request.tool_call.get("args", {}).get("description", ""))
+        issues: list[str] = []
+
+        workspace_names = cls._workspace_kpi_names()
+        dispatch_names = cls._dispatch_kpi_names(description)
+        if workspace_names and dispatch_names:
+            dispatch_lookup = {name.casefold() for name in dispatch_names}
+            missing_names = [
+                name
+                for name in workspace_names
+                if name.casefold() not in dispatch_lookup
+            ]
+            if missing_names:
+                issues.append(
+                    "missing exact workspace KPI(s): " + ", ".join(missing_names)
+                )
+        elif workspace_names:
+            issues.append("dispatch description does not list KPI row names")
+
+        placeholder_fields = {
+            match.group(1).title()
+            for match in cls._PLACEHOLDER_VALUE_RE.finditer(description)
+        }
+        if placeholder_fields:
+            issues.append(
+                "placeholder value(s) in "
+                + ", ".join(sorted(placeholder_fields))
+                + "; use concrete values or `no data — measure pre-launch`"
+            )
+
+        return issues
+
+    @staticmethod
+    def _kpi_dispatch_rejection(
+        request: ToolCallRequest,
+        issues: list[str],
+    ) -> ToolMessage:
+        """Return corrective guidance for malformed KPI XLSX dispatches."""
+        return ToolMessage(
+            content=(
+                "Cannot dispatch KPI XLSX yet. Copy exact KPI names from "
+                "`/workspace/brand_brief.md` Phase 5 and keep every agreed "
+                "metric row. Fix: "
+                + "; ".join(issues)
+                + ". Then dispatch the spreadsheet once."
+            ),
+            tool_call_id=request.tool_call["id"],
+        )
+
     def wrap_tool_call(
         self,
         request: ToolCallRequest,
@@ -770,6 +905,9 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             duplicate_categories = self._duplicate_categories(request)
             if duplicate_categories:
                 return self._duplicate_rejection(request, duplicate_categories)
+            kpi_issues = self._kpi_dispatch_issues(request)
+            if kpi_issues:
+                return self._kpi_dispatch_rejection(request, kpi_issues)
         return handler(request)
 
     async def awrap_tool_call(
@@ -784,6 +922,9 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             duplicate_categories = self._duplicate_categories(request)
             if duplicate_categories:
                 return self._duplicate_rejection(request, duplicate_categories)
+            kpi_issues = self._kpi_dispatch_issues(request)
+            if kpi_issues:
+                return self._kpi_dispatch_rejection(request, kpi_issues)
         return await handler(request)
 
 

@@ -536,6 +536,138 @@ class TestDeliverableDispatchGuard:
         assert "already exist" in str(result.content)
         assert "images" in str(result.content)
 
+    def test_blocks_kpi_xlsx_dispatch_that_substitutes_workspace_metrics(
+        self,
+        tmp_path,
+        monkeypatch,
+    ) -> None:
+        import shared.workspace as workspace_mod
+
+        guard = DeliverableDispatchGuardMiddleware()
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path / "output"))
+        (tmp_path / "output").mkdir()
+        (tmp_path / "output" / ".manifest.jsonl").write_text("", encoding="utf-8")
+        monkeypatch.setattr(workspace_mod, "BRANDMIND_HOME", tmp_path / "home")
+        workspace = tmp_path / "home" / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "\n".join(
+                [
+                    "# Brand Brief",
+                    "## Phase 5: Strategy Plan & Deliverables (COMPLETED)",
+                    "- **KPI Framework**:",
+                    "    1. **Tổng Booking ngày thường (T2-T6)**: target",
+                    "    2. **Tỷ lệ lấp đầy phòng riêng (Ngày thường)**: target",
+                    "    3. **Qualified Booking Leads**: target",
+                    "    4. **Engagement Rate (Nội dung Business)**: target",
+                    "    5. **Cost Per Booking (CPB)**: target",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        description = "\n".join(
+            [
+                "Build XLSX KPI Dashboard.",
+                'row_1 KPI="Tổng Booking ngày thường (T2-T6)" Baseline="N/A"',
+                'row_2 KPI="Tỷ lệ lấp đầy phòng riêng (Ngày thường)" Current="0"',
+                'row_3 KPI="Qualified Booking Leads" Baseline="no data — measure pre-launch"',
+                'row_4 KPI="Average Guest Check (AOV)" Baseline="[Current]"',
+                'row_5 KPI="Cost Per Booking (CPB)" Current="no data — measure pre-launch"',
+            ]
+        )
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("document-generator", description),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert "Cannot dispatch KPI XLSX yet" in str(result.content)
+        assert "Engagement Rate (Nội dung Business)" in str(result.content)
+        assert "placeholder value(s)" in str(result.content)
+
+    def test_allows_kpi_xlsx_dispatch_with_exact_workspace_metrics(
+        self,
+        tmp_path,
+        monkeypatch,
+    ) -> None:
+        import shared.workspace as workspace_mod
+
+        guard = DeliverableDispatchGuardMiddleware()
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path / "output"))
+        (tmp_path / "output").mkdir()
+        (tmp_path / "output" / ".manifest.jsonl").write_text("", encoding="utf-8")
+        monkeypatch.setattr(workspace_mod, "BRANDMIND_HOME", tmp_path / "home")
+        workspace = tmp_path / "home" / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        kpi_names = [
+            "Tổng Booking ngày thường (T2-T6)",
+            "Tỷ lệ lấp đầy phòng riêng (Ngày thường)",
+            "Qualified Booking Leads",
+            "Engagement Rate (Nội dung Business)",
+            "Cost Per Booking (CPB)",
+        ]
+        (workspace / "brand_brief.md").write_text(
+            "\n".join(
+                [
+                    "# Brand Brief",
+                    "## Phase 5: Strategy Plan & Deliverables (COMPLETED)",
+                    "- **KPI Framework**:",
+                    *[
+                        f"    {index}. **{name}**: target"
+                        for index, name in enumerate(kpi_names, start=1)
+                    ],
+                ]
+            ),
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        rows = [
+            f'row_{index} KPI="{name}" Baseline="no data — measure pre-launch"'
+            for index, name in enumerate(kpi_names, start=1)
+        ]
+        set_active_session(session)
+
+        try:
+            result = guard.wrap_tool_call(
+                self._task_request("document-generator", "\n".join(["XLSX", *rows])),
+                self._handler,
+            )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert result.content == "ran"
+
 
 class TestPhaseStateReminder:
     """Test dynamic phase-state prompt reminders."""

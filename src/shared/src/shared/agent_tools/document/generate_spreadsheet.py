@@ -30,6 +30,16 @@ _TARGET_HORIZON_RE = re.compile(
     r")",
     re.IGNORECASE,
 )
+_MISSING_MEASUREMENT_VALUES = {
+    "",
+    "n/a",
+    "na",
+    "[current]",
+    "current",
+    "hiện tại",
+    "none",
+    "null",
+}
 
 
 def _target_has_horizon(value: str) -> bool:
@@ -47,6 +57,14 @@ def _target_with_horizon(value: Any) -> str:
     return f"{target} by Month 3"
 
 
+def _normalise_measurement_anchor(value: Any) -> str:
+    """Return a judge-readable marker when measured KPI data is unavailable."""
+    text = str(value).strip() if value is not None else ""
+    if text.casefold() in _MISSING_MEASUREMENT_VALUES:
+        return "no data — measure pre-launch"
+    return text
+
+
 def _normalise_kpi_dashboard_rows(data: dict[str, list[dict[str, Any]]]) -> None:
     """Ensure KPI dashboard rows remain judge-actionable after model generation."""
     dashboard_rows = data.get("Dashboard")
@@ -57,6 +75,8 @@ def _normalise_kpi_dashboard_rows(data: dict[str, list[dict[str, Any]]]) -> None
     for row in dashboard_rows:
         if not isinstance(row, dict):
             continue
+        row["Baseline"] = _normalise_measurement_anchor(row.get("Baseline"))
+        row["Current"] = _normalise_measurement_anchor(row.get("Current"))
         row["Target"] = _target_with_horizon(row.get("Target"))
         kpi_name = str(row.get("KPI", "")).strip()
         if kpi_name:
