@@ -2,6 +2,7 @@ from .log_model_message import LogModelMessageMiddleware
 from .pre_compact_notes import PreCompactNotesMiddleware
 from .stop_check import EnsureTasksFinishedMiddleware
 from .tool_search import ToolSearchMiddleware, create_tool_search_middleware
+from .workspace_hygiene import WorkspaceBriefHygieneMiddleware
 from .workspace_injection import WorkspaceInjectionMiddleware
 
 __all__ = [
@@ -9,6 +10,7 @@ __all__ = [
     "LogModelMessageMiddleware",
     "PreCompactNotesMiddleware",
     "ToolSearchMiddleware",
+    "WorkspaceBriefHygieneMiddleware",
     "WorkspaceInjectionMiddleware",
     "create_tool_search_middleware",
 ]

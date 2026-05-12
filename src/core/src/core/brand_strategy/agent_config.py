@@ -51,6 +51,7 @@ def create_brand_strategy_agent(
     from shared.agent_middlewares import (
         EnsureTasksFinishedMiddleware,
         LogModelMessageMiddleware,
+        WorkspaceBriefHygieneMiddleware,
     )
     from shared.agent_models.retry_gemini import (
         RetryChatGoogleGenerativeAI,
@@ -271,6 +272,7 @@ def create_brand_strategy_agent(
     content_check_middleware = ContentCheckAdvanceMiddleware()
     deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
     phase_state_reminder_middleware = PhaseStateReminderMiddleware()
+    workspace_hygiene_middleware = WorkspaceBriefHygieneMiddleware()
 
     # Skills middleware + filesystem + workspace (Task 35 + 48)
     workspace_dir: str | None = None
@@ -349,6 +351,7 @@ def create_brand_strategy_agent(
             phase_state_reminder_middleware,
             content_check_middleware,  # Verify agent text before allowing phase advance
             deliverable_dispatch_guard_middleware,
+            workspace_hygiene_middleware,
             fs_middleware,
             skills_middleware,
             sub_agent_middleware,
