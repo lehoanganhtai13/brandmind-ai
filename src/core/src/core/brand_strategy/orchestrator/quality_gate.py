@@ -197,11 +197,15 @@ QUALITY_GATES: dict[str, list[GateItem]] = {
         ),
         GateItem(
             id="p4_cialdini",
-            description="At least 2 Cialdini principles applied to messaging",
+            description=(
+                "At least 2 concrete persuasion mechanics applied to messaging"
+            ),
         ),
         GateItem(
             id="p4_aida",
-            description="AIDA flow mapped with specific messages per stage",
+            description=(
+                "Customer journey flow mapped with specific messages per stage"
+            ),
         ),
         GateItem(
             id="p4_channels",

@@ -46,6 +46,8 @@ class _StreamEnd(BaseAgentEvent):
 _STREAM_END = _StreamEnd()
 _INTERNAL_REMINDER_START = "<system-reminder>"
 _INTERNAL_REMINDER_END = "</system-reminder>"
+_PSEUDO_TOOL_CALL_START = "<call:"
+_PSEUDO_TOOL_CALL_END = "/>"
 _EMPTY_RESPONSE_FALLBACK = (
     "The last turn did not produce a visible response. "
     'Please send "continue" and I will pick up from the saved state.'
@@ -61,12 +63,18 @@ def _longest_suffix_prefix_match(text: str, prefix: str) -> int:
     return 0
 
 
+def _longest_suffix_prefix_match_any(text: str, prefixes: tuple[str, ...]) -> int:
+    """Return the longest suffix length that may continue as any prefix."""
+    return max(_longest_suffix_prefix_match(text, prefix) for prefix in prefixes)
+
+
 class _InternalReminderFilter:
-    """Remove internal reminder blocks from streamed model-visible text."""
+    """Remove internal-only blocks from streamed model-visible text."""
 
     def __init__(self) -> None:
         self._buffer = ""
         self._inside_internal_block = False
+        self._inside_pseudo_tool_call = False
 
     def feed(self, text: str) -> str:
         """Accept one streamed chunk and return only user-facing text."""
@@ -91,18 +99,40 @@ class _InternalReminderFilter:
                 self._inside_internal_block = False
                 continue
 
-            start_index = self._buffer.find(_INTERNAL_REMINDER_START)
-            if start_index != -1:
-                visible_parts.append(self._buffer[:start_index])
-                self._buffer = self._buffer[
-                    start_index + len(_INTERNAL_REMINDER_START) :
-                ]
-                self._inside_internal_block = True
+            if self._inside_pseudo_tool_call:
+                end_index = self._buffer.find(_PSEUDO_TOOL_CALL_END)
+                if end_index == -1:
+                    keep = _longest_suffix_prefix_match(
+                        self._buffer,
+                        _PSEUDO_TOOL_CALL_END,
+                    )
+                    self._buffer = self._buffer[-keep:] if keep else ""
+                    break
+
+                self._buffer = self._buffer[end_index + len(_PSEUDO_TOOL_CALL_END) :]
+                self._inside_pseudo_tool_call = False
                 continue
 
-            keep = _longest_suffix_prefix_match(
+            start_index = self._buffer.find(_INTERNAL_REMINDER_START)
+            tool_call_index = self._buffer.find(_PSEUDO_TOOL_CALL_START)
+            starts = [
+                (start_index, _INTERNAL_REMINDER_START, "internal"),
+                (tool_call_index, _PSEUDO_TOOL_CALL_START, "tool_call"),
+            ]
+            starts = [(idx, prefix, kind) for idx, prefix, kind in starts if idx != -1]
+            if starts:
+                next_index, prefix, kind = min(starts, key=lambda item: item[0])
+                visible_parts.append(self._buffer[:next_index])
+                self._buffer = self._buffer[next_index + len(prefix) :]
+                if kind == "internal":
+                    self._inside_internal_block = True
+                else:
+                    self._inside_pseudo_tool_call = True
+                continue
+
+            keep = _longest_suffix_prefix_match_any(
                 self._buffer,
-                _INTERNAL_REMINDER_START,
+                (_INTERNAL_REMINDER_START, _PSEUDO_TOOL_CALL_START),
             )
             emit_until = len(self._buffer) - keep
             visible_parts.append(self._buffer[:emit_until])
@@ -112,10 +142,11 @@ class _InternalReminderFilter:
         return "".join(visible_parts)
 
     def flush(self) -> str:
-        """Return any safe buffered text and discard unterminated reminders."""
-        if self._inside_internal_block:
+        """Return any safe buffered text and discard unterminated internals."""
+        if self._inside_internal_block or self._inside_pseudo_tool_call:
             self._buffer = ""
             self._inside_internal_block = False
+            self._inside_pseudo_tool_call = False
             return ""
 
         text = self._buffer

@@ -85,7 +85,7 @@ def generate_document(
               - "phase_3_output": same shape, brand identity
                 (archetype + visual + verbal direction).
               - "phase_4_output": same shape, communication
-                framework (messaging + Cialdini + AIDA + channels).
+                framework (messaging + persuasion mechanics + journey flow + channels).
               - "phase_5_output": **must be a dict** (not a string)
                 with TWO required nested keys; passing a single
                 string here leaves both Implementation Roadmap and

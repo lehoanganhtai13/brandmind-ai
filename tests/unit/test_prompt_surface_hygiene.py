@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from core.brand_strategy.content_check import PHASE_DELIVERABLE_SPECS
 from prompts.brand_strategy.subagents import (
     CREATIVE_STUDIO_SYSTEM_PROMPT,
     DOCUMENT_GENERATOR_SYSTEM_PROMPT,
@@ -120,6 +121,53 @@ def test_main_prompt_has_scope_and_research_sufficiency_guardrails() -> None:
     )
     for phrase in expected_phrases:
         assert phrase in BRAND_STRATEGY_SYSTEM_PROMPT
+
+
+def test_main_prompt_has_chat_process_quality_guardrails() -> None:
+    """Keep chat-process fixes focused on evidence, pacing, and personalization."""
+    expected_phrases = (
+        "Framework-minimal mentoring",
+        "Frameworks are scaffolds, not the product",
+        "teach at most one named lens",
+        "Evidence humility",
+        "what the user supplied, what a tool/source verified",
+        "Do not invent credentials",
+        "Adaptive personalization",
+        "interaction patterns across turns",
+        "Em thường cần defend với sếp",
+        "Turn pacing and phase humility",
+        "ask at most three blocking questions",
+        "Treat scope as tentative",
+        "prefer \"bước chẩn đoán\"",
+        "only when the evidence is no longer tentative",
+        "The opening reply is not a workflow-map turn",
+        "Ask 2-3 structured blocking questions first",
+    )
+    for phrase in expected_phrases:
+        assert phrase in BRAND_STRATEGY_SYSTEM_PROMPT
+
+
+def test_orchestrator_skill_keeps_phase_labels_internal() -> None:
+    """Runtime skill should translate phase labels before speaking to users."""
+    skill_text = _ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
+
+    assert "Phase numbers are internal navigation labels" in skill_text
+    assert "bước chẩn đoán" in skill_text
+    assert "Never make the user feel they are reading internal process labels" in (
+        skill_text
+    )
+
+
+def test_phase_4_content_gate_avoids_named_framework_overload() -> None:
+    """Phase 4 gate should require customer mechanics, not framework name-dropping."""
+    spec = PHASE_DELIVERABLE_SPECS["phase_4"]
+
+    assert "Persuasion mechanics" in spec
+    assert "Customer journey flow" in spec
+    assert "named frameworks are optional" in spec
+    assert "do not require named funnel jargon" in spec
+    assert "Cialdini persuasion" not in spec
+    assert "AIDA mapping" not in spec
 
 
 def test_main_agent_keeps_external_research_specialist_owned() -> None:

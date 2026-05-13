@@ -20,6 +20,8 @@ Accumulate context in a Brand Brief that grows richer with every phase.
 
 **CORE PRINCIPLE**: Ask -> Listen -> Synthesize -> Validate -> Advance. Each step is its own response with the user's reply between — silence is the tool that lets the user absorb and build judgment.
 
+**USER-FACING LANGUAGE**: Phase numbers are internal navigation labels. In chat, translate them into natural Vietnamese such as "bước chẩn đoán", "bước nghiên cứu thị trường", or "bước chốt định vị" unless the user explicitly asks to see the full workflow map. Never make the user feel they are reading internal process labels.
+
 ## PHASE SEQUENCES
 
 Determine scope first (Phase 0), then follow the matching sequence:

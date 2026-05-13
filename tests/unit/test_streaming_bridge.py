@@ -76,6 +76,28 @@ def test_internal_reminder_filter_discards_unclosed_block_on_flush() -> None:
     assert token_filter.flush() == ""
 
 
+def test_internal_filter_removes_complete_pseudo_tool_call() -> None:
+    """Pseudo tool-call tags are internal and should not stream to users."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed(
+        'A<call:default_api:report_progress advance=true />B'
+    )
+
+    assert output == "AB"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_removes_split_pseudo_tool_call() -> None:
+    """Pseudo tool-call tags should be removed across chunk boundaries."""
+    token_filter = _InternalReminderFilter()
+
+    assert token_filter.feed("A<ca") == "A"
+    assert token_filter.feed("ll:default_api:read_file file_path=\"/workspace") == ""
+    assert token_filter.feed('/brand_brief.md" />B') == "B"
+    assert token_filter.flush() == ""
+
+
 @pytest.mark.asyncio
 async def test_stream_agent_response_filters_tokens_and_history() -> None:
     """The streaming bridge should sanitize client output and session history."""
@@ -104,6 +126,37 @@ async def test_stream_agent_response_filters_tokens_and_history() -> None:
 
     assert "".join(tokens) == "AB"
     assert session.messages[-1].content == "AB"
+
+
+@pytest.mark.asyncio
+async def test_stream_agent_response_filters_pseudo_tool_calls() -> None:
+    """Raw pseudo tool calls should be absent from client text and history."""
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.ASK,
+        created_at=datetime.now(),
+        last_active=0.0,
+    )
+    session.agent = cast(
+        CompiledStateGraph,
+        _FakeStreamingAgent(
+            [
+                "Đã cập nhật.",
+                "<call:default_api:report_progress advance=true />",
+                " Mình tiếp tục nhé.",
+            ]
+        ),
+    )
+    manager = SessionManager()
+    tokens: list[str] = []
+
+    async for event in stream_agent_response(session, "hello", manager):
+        if isinstance(event, StreamingTokenEvent) and event.token and not event.done:
+            tokens.append(event.token)
+
+    assert "<call:" not in "".join(tokens)
+    assert "".join(tokens) == "Đã cập nhật. Mình tiếp tục nhé."
+    assert session.messages[-1].content == "Đã cập nhật. Mình tiếp tục nhé."
 
 
 @pytest.mark.asyncio
