@@ -362,6 +362,10 @@ make test-watch
 
 > **Note**: For a full list of available commands and their descriptions, run `make help`.
 
+## 📊 Evaluation And Benchmarks
+
+The main retrieval and RAG-style comparison lives in [`evaluation/knowledge_search_comparison/`](evaluation/knowledge_search_comparison/README.md). It documents the 150-item hard multi-hop benchmark comparing BrandMind dual knowledge search, hybrid document search, and HippoRAG, with a clean runbook plus linked full-run reports.
+
 ## 📦 Project Structure
 
 ```
