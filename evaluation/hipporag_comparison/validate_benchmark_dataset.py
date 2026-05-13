@@ -9,7 +9,13 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from evaluation.hipporag_comparison.benchmark_schema import BenchmarkDataset
+from evaluation.hipporag_comparison.benchmark_schema import (
+    BenchmarkDataset,
+    BookScope,
+    Difficulty,
+    QuestionType,
+    ReasoningType,
+)
 
 DEFAULT_DATASET_PATH = Path(
     "evaluation/hipporag_comparison/datasets/marketing_5books_benchmark.json"
@@ -17,6 +23,19 @@ DEFAULT_DATASET_PATH = Path(
 DEFAULT_METADATA_PATH = Path(
     ".codex/benchmarks/hipporag/corpus/marketing_5books_metadata.json"
 )
+HARD_DATASET_ID = "brandmind_marketing_5books_multihop_hard_v2"
+HARD_SCOPE_QUOTAS = {"cross_book": 90, "intra_book": 60}
+HARD_SOURCE_COUNT_QUOTAS = {"2": 20, "3": 60, "4": 50, "5": 20}
+HARD_QUESTION_TYPE_QUOTAS = {
+    QuestionType.MECHANISM.value: 30,
+    QuestionType.COMPARE_CONTRAST.value: 30,
+    QuestionType.APPLICATION.value: 30,
+    QuestionType.SYNTHESIS.value: 30,
+    QuestionType.DIAGNOSIS.value: 30,
+}
+HARD_REASONING_TYPE_QUOTAS = {
+    reasoning_type.value: 30 for reasoning_type in ReasoningType
+}
 
 
 @dataclass(frozen=True)
@@ -61,6 +80,56 @@ def find_missing_sources(
     return missing
 
 
+def find_hard_profile_errors(dataset: BenchmarkDataset) -> list[str]:
+    """Find distribution and item-contract errors for the v2-hard dataset."""
+
+    if dataset.dataset_id != HARD_DATASET_ID:
+        return []
+
+    errors: list[str] = []
+    if len(dataset.items) != 150:
+        errors.append(
+            f"v2-hard dataset must contain 150 items, got {len(dataset.items)}"
+        )
+
+    summary = dataset.distribution_summary()
+    scope_counts = {
+        "cross_book": summary["book_scope"].get(BookScope.CROSS_BOOK.value, 0),
+        "intra_book": sum(
+            count
+            for scope, count in summary["book_scope"].items()
+            if scope != BookScope.CROSS_BOOK.value
+        ),
+    }
+    expected_distributions = {
+        "scope": (scope_counts, HARD_SCOPE_QUOTAS),
+        "required_source_count": (
+            summary["required_source_count"],
+            HARD_SOURCE_COUNT_QUOTAS,
+        ),
+        "question_type": (summary["question_type"], HARD_QUESTION_TYPE_QUOTAS),
+        "reasoning_type": (summary["reasoning_type"], HARD_REASONING_TYPE_QUOTAS),
+    }
+    for name, (actual, expected) in expected_distributions.items():
+        if actual != expected:
+            errors.append(
+                f"v2-hard {name} distribution mismatch: {actual} != {expected}"
+            )
+
+    for item in dataset.items:
+        if item.difficulty is not Difficulty.HARD:
+            errors.append(f"{item.id}: difficulty must be hard.")
+        if item.question_type is QuestionType.DEFINITION:
+            errors.append(f"{item.id}: definition questions are not allowed.")
+        if item.single_source_sufficient is not False:
+            errors.append(f"{item.id}: single_source_sufficient must be false.")
+        if item.reasoning_type is None:
+            errors.append(f"{item.id}: missing reasoning_type.")
+        if not item.answer_key_fact_sources:
+            errors.append(f"{item.id}: missing answer_key_fact_sources.")
+    return errors
+
+
 def validate_benchmark_dataset(
     dataset_path: Path,
     metadata_path: Path,
@@ -99,6 +168,7 @@ def validate_benchmark_dataset(
         available_source_ids = set()
 
     errors.extend(find_missing_sources(dataset, available_source_ids))
+    errors.extend(find_hard_profile_errors(dataset))
     return DatasetValidationReport(
         is_valid=not errors,
         item_count=len(dataset.items),

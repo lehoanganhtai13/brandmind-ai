@@ -6,6 +6,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
+from typing import Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, model_validator
@@ -17,6 +18,12 @@ class ComparisonSystem(str, Enum):
     BRANDMIND_AGENT = "brandmind_agent"
     HYBRID_SEARCH_AGENT = "hybrid_search_agent"
     HIPPORAG_AGENT = "hipporag_agent"
+
+
+ModelProvider = Literal["auto", "gemini", "litellm"]
+AnswerProvider = ModelProvider
+JudgeProvider = ModelProvider
+ReasoningLevel = Literal["minimal", "low", "medium", "high"]
 
 
 class TokenUsage(BaseModel):
@@ -84,6 +91,11 @@ class AnswerFlowRecord(BaseModel):
 
     item_id: str = Field(min_length=1)
     question: str = Field(min_length=1)
+    book_scope: str | None = None
+    question_type: str | None = None
+    difficulty: str | None = None
+    reasoning_type: str | None = None
+    required_source_count: int | None = Field(default=None, ge=0)
     system: ComparisonSystem
     final_answer: str = ""
     judge: AnswerJudgeResult | None = None
@@ -110,22 +122,49 @@ class ComparisonRunConfig(BaseModel):
     dataset_path: Path
     output_path: Path
     systems: list[ComparisonSystem] = Field(default_factory=list)
+    answer_provider: AnswerProvider = "auto"
     answer_model: str = "gemini-2.5-flash-lite"
+    judge_provider: JudgeProvider = "auto"
     judge_model: str = "gemini-2.5-flash"
+    judge_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+    judge_thinking_budget: int | None = Field(default=2000, ge=0)
+    judge_thinking_level: ReasoningLevel | None = None
+    answer_temperature: float = Field(default=0.1, ge=0.0, le=2.0)
+    answer_thinking_budget: int | None = Field(default=2000, ge=0)
+    answer_thinking_level: ReasoningLevel | None = None
     top_k: int = Field(default=5, gt=0)
     candidate_top_k: int = Field(default=10, gt=0)
     max_tool_calls: int = Field(default=4, gt=0)
     recursion_limit: int = Field(default=60, gt=0)
+    brandmind_evidence_recovery: bool = False
+    checkpoint_path: Path | None = None
+    resume: bool = False
+    concurrency: int = Field(default=1, gt=0)
+    progress_interval: int = Field(default=10, ge=0)
     limit: int | None = Field(default=None, ge=0)
     offset: int = Field(default=0, ge=0)
     dry_run_fixture: bool = False
 
     @model_validator(mode="after")
     def validate_systems(self) -> "ComparisonRunConfig":
-        """Default to all systems when no explicit system list is supplied."""
+        """Default systems and normalize provider-specific reasoning controls."""
 
         if not self.systems:
             self.systems = list(ComparisonSystem)
+        if self.answer_provider == "auto":
+            self.answer_provider = _infer_model_provider(self.answer_model)
+        if self.judge_provider == "auto":
+            self.judge_provider = _infer_model_provider(self.judge_model)
+        if self.answer_provider == "litellm":
+            self.answer_thinking_budget = None
+        elif _is_gemini_3_model(self.answer_model):
+            self.answer_thinking_budget = None
+        else:
+            self.answer_thinking_level = None
+        if self.judge_provider == "litellm":
+            self.judge_thinking_budget = None
+        else:
+            self.judge_thinking_level = None
         return self
 
 
@@ -214,6 +253,18 @@ def _mean(values: list[int] | list[float]) -> float:
     """Return the arithmetic mean for a possibly empty list."""
 
     return sum(values) / len(values) if values else 0.0
+
+
+def _is_gemini_3_model(model: str) -> bool:
+    """Return whether a model name should use Gemini 3 thinking controls."""
+
+    return "gemini-3" in model.casefold()
+
+
+def _infer_model_provider(model: str) -> Literal["gemini", "litellm"]:
+    """Infer the model provider from a model ID when CLI config uses auto."""
+
+    return "gemini" if model.casefold().startswith("gemini-") else "litellm"
 
 
 def _unique_non_empty(values: object) -> list[str]:

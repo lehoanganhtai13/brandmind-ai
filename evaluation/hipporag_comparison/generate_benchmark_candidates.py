@@ -7,6 +7,7 @@ Business context:
     rejects ungrounded source IDs, validates the benchmark schema, and writes
     a reviewable candidate artifact under ``.codex``.
 """
+# ruff: noqa: E501
 
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ import urllib.request
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Literal, Protocol, cast
 
 from pydantic import ValidationError
 
@@ -42,6 +43,11 @@ DEFAULT_OUTPUT_PRICE_PER_MILLION = 1.50
 DATASET_DESCRIPTION = (
     "Source-grounded candidate benchmark questions generated from the five "
     "canonical BrandMind marketing books for HippoRAG comparison curation."
+)
+HARD_DATASET_DESCRIPTION = (
+    "Hard multi-hop source-grounded benchmark candidates generated from the "
+    "five canonical BrandMind marketing books for BrandMind, hybrid search, "
+    "and HippoRAG comparison curation."
 )
 
 BOOK_SCOPE_CODES = {
@@ -90,6 +96,56 @@ application, synthesis, and diagnosis.
 If the evidence is too thin, ask a narrower question instead of adding facts.
 """
 
+HARD_GENERATION_SYSTEM_PROMPT = """## Role
+You create hard multi-hop benchmark questions for comparing marketing knowledge-search systems.
+
+## Non-negotiable rules
+Use only the evidence packet. Do not use outside marketing knowledge.
+Write the user-facing fields in natural Vietnamese.
+Create exactly one hard question that cannot be answered well from any single source alone.
+Use every required source in the gold answer and answer-key fact dependencies.
+Make the question force synthesis across distributed evidence, tension resolution, diagnosis, or mechanism bridging.
+Do not create a localized lookup, definition-only, or single-chunk summarization question.
+Never cite, invent, or rename a source ID that is not in the allowed list.
+Return JSON only. Do not wrap the JSON in Markdown.
+
+## Output JSON shape
+{
+  "id": "BM5B-HARD-001",
+  "question": "Vietnamese hard benchmark question",
+  "gold_answer": "Vietnamese reference answer grounded in all required sources",
+  "answer_key_facts": [
+    "Atomic fact that a correct answer must include"
+  ],
+  "required_sources": ["book_slug::chunk_id"],
+  "book_scope": "scope",
+  "question_type": "use the requested question_type exactly",
+  "difficulty": "hard",
+  "evidence_digest": "Why the listed sources jointly support the answer",
+  "reasoning_type": "use the requested reasoning_type exactly",
+  "single_source_sufficient": false,
+  "answer_key_fact_sources": [
+    {
+      "fact_index": 1,
+      "source_ids": ["book_slug::chunk_id"],
+      "role": "support"
+    },
+    {
+      "fact_index": 2,
+      "source_ids": ["book_slug::chunk_id", "book_slug::chunk_id"],
+      "role": "synthesis"
+    }
+  ]
+}
+
+## Quality bar
+Include 5 to 8 answer_key_facts.
+Include at least two answer-key facts with role "synthesis" and more than one source_id.
+Every required source must support at least one answer-key fact.
+The gold answer must explain how the sources combine, not merely list separate facts.
+If the evidence packet is too thin for a hard multi-hop question, ask a sharper comparative or diagnostic question instead of adding unsupported claims.
+"""
+
 
 class CandidateGenerationError(RuntimeError):
     """Raised when a packet cannot produce a valid benchmark candidate."""
@@ -108,6 +164,8 @@ class GenerationConfig:
         default_reasoning_effort: Reasoning level for normal packets.
         hard_reasoning_effort: Reasoning level for hard and cross-book packets.
         request_timeout_seconds: HTTP timeout for one LiteLLM request.
+        profile: Generation profile. ``v1`` preserves the original dataset
+            drafting behavior; ``v2-hard`` requires multi-source hard items.
     """
 
     model: str = DEFAULT_MODEL
@@ -118,6 +176,7 @@ class GenerationConfig:
     default_reasoning_effort: str = "low"
     hard_reasoning_effort: str = "medium"
     request_timeout_seconds: int = 180
+    profile: Literal["v1", "v2-hard"] = "v1"
 
 
 @dataclass(frozen=True)
@@ -348,6 +407,15 @@ def packet_source_ids(packet: Mapping[str, object]) -> list[str]:
     return [require_string(source_id, "source_id") for source_id in raw_source_ids]
 
 
+def packet_reasoning_type(packet: Mapping[str, object]) -> str | None:
+    """Return optional v2-hard reasoning type declared by a packet."""
+
+    raw_reasoning_type = packet.get("reasoning_type")
+    if raw_reasoning_type is None:
+        return None
+    return require_string(raw_reasoning_type, "reasoning_type")
+
+
 def packet_sources(packet: Mapping[str, object]) -> list[dict[str, object]]:
     """Return source objects for a packet."""
 
@@ -355,17 +423,23 @@ def packet_sources(packet: Mapping[str, object]) -> list[dict[str, object]]:
     return [require_mapping(source, "source") for source in raw_sources]
 
 
-def build_item_id(packet: Mapping[str, object]) -> str:
+def build_item_id(
+    packet: Mapping[str, object],
+    profile: Literal["v1", "v2-hard"] = "v1",
+) -> str:
     """Build a deterministic benchmark item ID from packet metadata."""
+
+    packet_id = require_string(packet.get("packet_id"), "packet_id")
+    match = re.search(r"(\d+)$", packet_id)
+    if not match:
+        raise CandidateGenerationError(f"Packet has no numeric suffix: {packet_id}")
+    if profile == "v2-hard":
+        return f"BM5B-HARD-{int(match.group(1)):03d}"
 
     scope = packet_scope(packet)
     code = BOOK_SCOPE_CODES.get(scope)
     if code is None:
         code = re.sub(r"[^A-Z0-9]+", "-", scope.upper()).strip("-")
-    packet_id = require_string(packet.get("packet_id"), "packet_id")
-    match = re.search(r"(\d+)$", packet_id)
-    if not match:
-        raise CandidateGenerationError(f"Packet has no numeric suffix: {packet_id}")
     return f"BM5B-{code}-{int(match.group(1)):03d}"
 
 
@@ -384,7 +458,11 @@ def packet_reasoning_effort(
     return config.default_reasoning_effort
 
 
-def build_packet_prompt(packet: Mapping[str, object], item_id: str) -> str:
+def build_packet_prompt(
+    packet: Mapping[str, object],
+    item_id: str,
+    profile: Literal["v1", "v2-hard"] = "v1",
+) -> str:
     """Build the user prompt for one evidence packet.
 
     Args:
@@ -423,16 +501,36 @@ def build_packet_prompt(packet: Mapping[str, object], item_id: str) -> str:
     allowed_source_ids = "\n".join(
         f"- {source_id}" for source_id in packet_source_ids(packet)
     )
+    fixed_fields = [
+        f"id: {item_id}",
+        f"book_scope: {packet_scope(packet)}",
+        f"question_type: {packet_question_type(packet)}",
+        f"difficulty: {packet_difficulty(packet)}",
+    ]
+    if profile == "v2-hard":
+        reasoning_type = packet_reasoning_type(packet)
+        if reasoning_type is None:
+            raise CandidateGenerationError("V2-hard packet is missing reasoning_type.")
+        fixed_fields.extend(
+            [
+                f"reasoning_type: {reasoning_type}",
+                "single_source_sufficient: false",
+                f"required_source_count: {len(packet_source_ids(packet))}",
+            ]
+        )
+
+    task = (
+        "Create exactly one hard multi-hop benchmark candidate."
+        if profile == "v2-hard"
+        else "Create exactly one source-grounded benchmark candidate."
+    )
     return "\n\n".join(
         [
             "## Task",
-            "Create exactly one source-grounded benchmark candidate.",
+            task,
             "",
             "## Required fixed fields",
-            f"id: {item_id}",
-            f"book_scope: {packet_scope(packet)}",
-            f"question_type: {packet_question_type(packet)}",
-            f"difficulty: {packet_difficulty(packet)}",
+            "\n".join(fixed_fields),
             "",
             "## Evidence digest",
             require_string(packet.get("evidence_digest"), "evidence_digest"),
@@ -489,6 +587,7 @@ def validate_fixed_fields(
     candidate: Mapping[str, object],
     packet: Mapping[str, object],
     item_id: str,
+    profile: Literal["v1", "v2-hard"] = "v1",
 ) -> None:
     """Ensure fixed stratification fields match the source packet."""
 
@@ -498,6 +597,10 @@ def validate_fixed_fields(
         "question_type": packet_question_type(packet),
         "difficulty": packet_difficulty(packet),
     }
+    if profile == "v2-hard":
+        expected_fields["difficulty"] = "hard"
+        expected_fields["single_source_sufficient"] = False
+        expected_fields["reasoning_type"] = packet_reasoning_type(packet)
     mismatches = {
         field: (candidate.get(field), expected)
         for field, expected in expected_fields.items()
@@ -507,16 +610,70 @@ def validate_fixed_fields(
         raise CandidateGenerationError(f"Candidate fixed-field mismatch: {mismatches}")
 
 
+def validate_hard_candidate_fields(candidate: Mapping[str, object]) -> None:
+    """Reject v2-hard candidates that weaken source-dependency constraints."""
+
+    required_sources = require_list(
+        candidate.get("required_sources"),
+        "candidate required_sources",
+    )
+    if not 2 <= len(required_sources) <= 5:
+        raise CandidateGenerationError("V2-hard candidates require 2 to 5 sources.")
+
+    answer_key_facts = require_list(
+        candidate.get("answer_key_facts"),
+        "candidate answer_key_facts",
+    )
+    if not 5 <= len(answer_key_facts) <= 8:
+        raise CandidateGenerationError("V2-hard candidates require 5 to 8 facts.")
+
+    fact_sources = require_list(
+        candidate.get("answer_key_fact_sources"),
+        "candidate answer_key_fact_sources",
+    )
+    if not fact_sources:
+        raise CandidateGenerationError("V2-hard candidate is missing fact sources.")
+
+    synthesis_count = 0
+    used_sources: set[str] = set()
+    for fact_source in fact_sources:
+        mapping = require_mapping(fact_source, "answer_key_fact_sources entry")
+        source_ids = require_list(mapping.get("source_ids"), "fact source_ids")
+        normalized_source_ids = {
+            require_string(source_id, "fact source_id") for source_id in source_ids
+        }
+        used_sources.update(normalized_source_ids)
+        role = require_string(mapping.get("role"), "fact source role")
+        if role.lower() == "synthesis" and len(normalized_source_ids) > 1:
+            synthesis_count += 1
+
+    normalized_required_sources = {
+        require_string(source_id, "required source") for source_id in required_sources
+    }
+    missing_sources = sorted(normalized_required_sources - used_sources)
+    if missing_sources:
+        raise CandidateGenerationError(
+            f"V2-hard candidate has unused required sources: {missing_sources}"
+        )
+    if synthesis_count < 2:
+        raise CandidateGenerationError(
+            "V2-hard candidate needs at least two multi-source synthesis facts."
+        )
+
+
 def build_candidate_item(
     raw_content: str,
     packet: Mapping[str, object],
     item_id: str,
+    profile: Literal["v1", "v2-hard"] = "v1",
 ) -> BenchmarkItem:
     """Parse and validate one model-generated benchmark item."""
 
     candidate = extract_json_object(raw_content)
-    validate_fixed_fields(candidate, packet, item_id)
+    validate_fixed_fields(candidate, packet, item_id, profile=profile)
     validate_source_subset(candidate, packet)
+    if profile == "v2-hard":
+        validate_hard_candidate_fields(candidate)
     try:
         return BenchmarkItem.model_validate(candidate)
     except ValidationError as exc:
@@ -572,16 +729,35 @@ def generate_candidates(
 
     for index, packet in enumerate(packets, start=1):
         packet_id = require_string(packet.get("packet_id"), "packet_id")
-        item_id = build_item_id(packet)
+        item_id = build_item_id(packet, profile=config.profile)
         reasoning_effort = packet_reasoning_effort(packet, config)
+        system_prompt = (
+            HARD_GENERATION_SYSTEM_PROMPT
+            if config.profile == "v2-hard"
+            else GENERATION_SYSTEM_PROMPT
+        )
         messages = [
-            {"role": "system", "content": GENERATION_SYSTEM_PROMPT},
-            {"role": "user", "content": build_packet_prompt(packet, item_id)},
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": build_packet_prompt(
+                    packet,
+                    item_id,
+                    profile=config.profile,
+                ),
+            },
         ]
         try:
             completion = chat_client.complete(messages, reasoning_effort)
             total_usage = total_usage.add(completion.usage)
-            items.append(build_candidate_item(completion.content, packet, item_id))
+            items.append(
+                build_candidate_item(
+                    completion.content,
+                    packet,
+                    item_id,
+                    profile=config.profile,
+                )
+            )
             if progress is not None:
                 progress(f"[{index}/{len(packets)}] {packet_id} -> ok")
         except CandidateGenerationError as exc:
@@ -592,7 +768,15 @@ def generate_candidates(
     if not items:
         raise CandidateGenerationError("No valid candidates generated.")
 
-    dataset = BenchmarkDataset(description=DATASET_DESCRIPTION, items=items)
+    if config.profile == "v2-hard":
+        dataset = BenchmarkDataset(
+            dataset_id="brandmind_marketing_5books_multihop_hard_v2_candidates",
+            dataset_version="0.1.0",
+            description=HARD_DATASET_DESCRIPTION,
+            items=items,
+        )
+    else:
+        dataset = BenchmarkDataset(description=DATASET_DESCRIPTION, items=items)
     return CandidateGenerationResult(
         dataset=dataset,
         failures=failures,
@@ -602,6 +786,7 @@ def generate_candidates(
         reasoning_policy={
             "default": config.default_reasoning_effort,
             "hard_or_cross_book": config.hard_reasoning_effort,
+            "profile": config.profile,
         },
     )
 
@@ -668,6 +853,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_OUTPUT_PATH,
         help="Path for generated candidate dataset JSON.",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=["v1", "v2-hard"],
+        default="v1",
+        help="Candidate generation profile.",
     )
     parser.add_argument(
         "--model",
@@ -756,6 +947,7 @@ def main() -> None:
         max_tokens=args.max_tokens,
         default_reasoning_effort=args.default_reasoning_effort,
         hard_reasoning_effort=args.hard_reasoning_effort,
+        profile=args.profile,
     )
     packets = filter_packets(
         load_packets(args.evidence_packets),

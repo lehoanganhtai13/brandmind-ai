@@ -32,6 +32,24 @@ def make_packet(
     """Create a valid evidence packet fixture."""
 
     source_id = f"{scope}::chunk_1"
+    sources = [
+        {
+            "source_id": source_id,
+            "book_slug": scope,
+            "source": "Chapter 1: Marketing Strategy",
+            "pages": [1, 2],
+            "section_summary": (
+                "A marketer should connect customer value, positioning, "
+                "and implementation choices."
+            ),
+            "excerpt": (
+                "Marketing strategy requires choosing a target market, "
+                "creating customer value, and aligning the offer with "
+                "positioning and execution choices."
+            ),
+            "word_count": 120,
+        }
+    ]
     return {
         "packet_id": packet_id,
         "candidate_scope": scope,
@@ -41,26 +59,34 @@ def make_packet(
             "The source explains how a marketing principle should guide a "
             "managerial decision in a specific market situation."
         ),
-        "sources": [
-            {
-                "source_id": source_id,
-                "book_slug": scope,
-                "source": "Chapter 1: Marketing Strategy",
-                "pages": [1, 2],
-                "section_summary": (
-                    "A marketer should connect customer value, positioning, "
-                    "and implementation choices."
-                ),
-                "excerpt": (
-                    "Marketing strategy requires choosing a target market, "
-                    "creating customer value, and aligning the offer with "
-                    "positioning and execution choices."
-                ),
-                "word_count": 120,
-            }
-        ],
+        "sources": sources,
         "source_ids": [source_id],
     }
+
+
+def make_hard_packet() -> dict[str, object]:
+    """Create a valid v2-hard evidence packet fixture."""
+
+    packet = make_packet(
+        packet_id="hard-v2-001",
+        scope="kotler_and_armstrong_principles_of_marketing",
+        difficulty="hard",
+        question_type="synthesis",
+    )
+    packet["candidate_scope"] = "cross_book"
+    first_source = packet["sources"][0]
+    assert isinstance(first_source, dict)
+    second_source = {
+        **first_source,
+        "source_id": "influence_new_and_expanded_the_psychology_of_persuasion::chunk_2",
+        "book_slug": "influence_new_and_expanded_the_psychology_of_persuasion",
+        "source": "Chapter 2: Persuasion",
+    }
+    packet["sources"] = [first_source, second_source]
+    packet["source_ids"] = [first_source["source_id"], second_source["source_id"]]
+    packet["reasoning_type"] = "strategy_synthesis"
+    packet["single_source_sufficient"] = False
+    return packet
 
 
 def make_candidate_payload(
@@ -94,6 +120,47 @@ def make_candidate_payload(
             "The source provides enough evidence about target market, customer "
             "value, positioning, and execution to judge the answer."
         ),
+    }
+
+
+def make_hard_candidate_payload() -> dict[str, object]:
+    """Create a schema-valid v2-hard candidate payload fixture."""
+
+    first_source = "kotler_and_armstrong_principles_of_marketing::chunk_1"
+    second_source = "influence_new_and_expanded_the_psychology_of_persuasion::chunk_2"
+    return {
+        **make_candidate_payload(
+            item_id="BM5B-HARD-001",
+            source_id=first_source,
+            scope="cross_book",
+            question_type="synthesis",
+            difficulty="hard",
+        ),
+        "answer_key_facts": [
+            "The answer must use the first source.",
+            "The answer must use the second source.",
+            "The answer must synthesize the sources.",
+            "The answer must explain the distributed mechanism.",
+            "The answer must state the strategic implication.",
+        ],
+        "required_sources": [first_source, second_source],
+        "reasoning_type": "strategy_synthesis",
+        "single_source_sufficient": False,
+        "answer_key_fact_sources": [
+            {"fact_index": 1, "source_ids": [first_source], "role": "support"},
+            {"fact_index": 2, "source_ids": [second_source], "role": "support"},
+            {
+                "fact_index": 3,
+                "source_ids": [first_source, second_source],
+                "role": "synthesis",
+            },
+            {
+                "fact_index": 4,
+                "source_ids": [first_source, second_source],
+                "role": "synthesis",
+            },
+            {"fact_index": 5, "source_ids": [first_source], "role": "support"},
+        ],
     }
 
 
@@ -131,6 +198,21 @@ def test_build_packet_prompt_uses_only_packet_source_ids() -> None:
     assert "question_type: application" in prompt
 
 
+def test_build_packet_prompt_includes_hard_metadata() -> None:
+    """V2-hard prompts should expose reasoning and insufficiency constraints."""
+
+    packet = make_hard_packet()
+    prompt = build_packet_prompt(
+        packet,
+        item_id="BM5B-HARD-001",
+        profile="v2-hard",
+    )
+
+    assert "reasoning_type: strategy_synthesis" in prompt
+    assert "single_source_sufficient: false" in prompt
+    assert "required_source_count: 2" in prompt
+
+
 def test_extract_json_object_accepts_fenced_output() -> None:
     """JSON parser should handle model output wrapped in Markdown fences."""
 
@@ -163,6 +245,12 @@ def test_build_item_id_is_stable_for_packet_scope() -> None:
     )
 
     assert build_item_id(packet) == "BM5B-SBM-017"
+
+
+def test_build_item_id_is_stable_for_hard_profile() -> None:
+    """Hard item IDs should use a dedicated namespace."""
+
+    assert build_item_id(make_hard_packet(), profile="v2-hard") == "BM5B-HARD-001"
 
 
 def test_packet_reasoning_effort_is_adaptive() -> None:
@@ -200,6 +288,24 @@ def test_generate_candidates_with_fake_client_returns_valid_dataset() -> None:
     assert result.failures == []
     assert result.usage.prompt_tokens == 10
     assert client.reasoning_efforts == ["low"]
+
+
+def test_generate_hard_candidates_with_fake_client_returns_valid_dataset() -> None:
+    """V2-hard fake-client flow should preserve source-dependency metadata."""
+
+    packet = make_hard_packet()
+    payload = make_hard_candidate_payload()
+    client = FakeChatClient(json.dumps(payload, ensure_ascii=False))
+
+    result = generate_candidates(
+        packets=[packet],
+        chat_client=client,
+        config=GenerationConfig(model="test-model", profile="v2-hard"),
+    )
+
+    assert result.dataset.items[0].reasoning_type.value == "strategy_synthesis"
+    assert result.dataset.items[0].single_source_sufficient is False
+    assert client.reasoning_efforts == ["medium"]
 
 
 def test_filter_packets_applies_scope_start_and_limit() -> None:

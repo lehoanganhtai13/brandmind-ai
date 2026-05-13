@@ -1,15 +1,13 @@
-"""
-LiteLLM client that follows the same design pattern as BaseLLM.
+"""OpenAI-compatible client for calling a LiteLLM proxy."""
 
-Provides a unified interface for calling any LLM provider through
-litellm's completion API. Supports sync/async and streaming.
+from typing import Any, Dict, List, cast
 
-Requires: litellm>=1.82.0,<1.82.7
-"""
-
-from typing import Any, Dict, List
-
-import litellm as litellm_sdk
+from openai import AsyncOpenAI, OpenAI
+from openai.types.chat import (
+    ChatCompletionMessageParam,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
 
 from shared.model_clients.llm.base_class import (
     CompletionResponse,
@@ -23,16 +21,12 @@ from shared.model_clients.llm.litellm.config import LiteLLMClientLLMConfig
 
 class LiteLLMClientLLM(BaseLLM):
     """
-    An LLM client that implements the BaseLLM interface using LiteLLM's
-    unified API for calling any LLM provider.
+    BaseLLM adapter for the local LiteLLM OpenAI-compatible proxy.
 
-    This class provides a standardized way to perform synchronous and
-    asynchronous completions, including streaming, across any provider
-    supported by LiteLLM (OpenAI, Anthropic, Google, Cohere, etc.).
-
-    Unlike OpenAI/Google backends which use provider-specific client
-    instances, LiteLLM uses module-level functions with per-call parameters.
-    This is by design — litellm normalizes the interface across providers.
+    The project uses LiteLLM as a hosted proxy, so this client talks to its
+    `/v1` OpenAI-compatible endpoint through the official OpenAI SDK. That
+    avoids installing the LiteLLM SDK inside the main app environment while
+    preserving the same proxy routing behavior.
     """
 
     def __init__(self, config: LiteLLMClientLLMConfig, **kwargs):
@@ -41,16 +35,18 @@ class LiteLLMClientLLM(BaseLLM):
 
     def _initialize_llm(self, **kwargs) -> None:
         """
-        Configure litellm module-level settings.
-
-        Unlike OpenAI/Google backends, litellm uses module-level functions
-        (litellm.completion) rather than client instances. Configuration is
-        applied per-call via parameters built by _call_kwargs().
+        Initialize reusable OpenAI-compatible clients for the LiteLLM proxy.
         """
-        # Suppress litellm's verbose logging by default
-        litellm_sdk.suppress_debug_info = True
+        self._sync_client = OpenAI(
+            api_key=self.config.api_key,
+            base_url=_normalize_litellm_base_url(self.config.base_url),
+        )
+        self._async_client = AsyncOpenAI(
+            api_key=self.config.api_key,
+            base_url=_normalize_litellm_base_url(self.config.base_url),
+        )
 
-    def _prepare_messages(self, prompt: str) -> List[Dict[str, str]]:
+    def _prepare_messages(self, prompt: str) -> List[ChatCompletionMessageParam]:
         """
         Construct the message payload for the API call.
 
@@ -65,18 +61,23 @@ class LiteLLMClientLLM(BaseLLM):
             messages (List[Dict[str, str]]): Message list in OpenAI-compatible
                 format with optional system message.
         """
-        messages: List[Dict[str, str]] = []
+        messages: List[ChatCompletionMessageParam] = []
         if self.config.system_prompt:
-            messages.append({"role": "system", "content": self.config.system_prompt})
-        messages.append({"role": "user", "content": prompt})
+            messages.append(
+                ChatCompletionSystemMessageParam(
+                    role="system",
+                    content=self.config.system_prompt,
+                )
+            )
+        messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
         return messages
 
     def _call_kwargs(self) -> Dict[str, Any]:
         """
-        Build common kwargs for litellm completion calls.
+        Build common kwargs for LiteLLM proxy completion calls.
 
         Centralizes all configuration into a single dict passed to every
-        litellm.completion/acompletion call. Only includes optional params
+        completion call. Only includes optional params
         (api_key, api_base, response_format, reasoning_effort) when they
         are explicitly set — avoids sending None values to the API.
 
@@ -98,6 +99,20 @@ class LiteLLMClientLLM(BaseLLM):
             kwargs["reasoning_effort"] = self.config.reasoning_effort
         return kwargs
 
+    def _completion_kwargs(self) -> Dict[str, Any]:
+        """
+        Build request kwargs accepted by the OpenAI-compatible chat endpoint.
+
+        Returns:
+            Keyword arguments for ``chat.completions.create``.
+        """
+        kwargs = {
+            key: value
+            for key, value in self._call_kwargs().items()
+            if key not in {"api_key", "api_base"}
+        }
+        return kwargs
+
     def complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
         """
         Generate a single, non-streaming completion response synchronously.
@@ -113,18 +128,21 @@ class LiteLLMClientLLM(BaseLLM):
             CallServerLLMError: If the API call fails.
         """
         messages = self._prepare_messages(prompt)
-        call_kwargs = self._call_kwargs()
+        call_kwargs = self._completion_kwargs()
         call_kwargs.update(kwargs)
         try:
-            response = litellm_sdk.completion(
-                messages=messages,
-                stream=False,
-                **call_kwargs,
+            response = cast(
+                Any,
+                self._sync_client.chat.completions.create(
+                    messages=messages,
+                    stream=False,
+                    **call_kwargs,
+                ),
             )
             content = response.choices[0].message.content or ""
             return CompletionResponse(text=content)
         except Exception as e:
-            raise CallServerLLMError(f"LiteLLM API call failed: {e!s}") from e
+            raise CallServerLLMError(f"LiteLLM proxy API call failed: {e!s}") from e
 
     def stream_complete(self, prompt: str, **kwargs: Any) -> CompletionResponseGen:
         """
@@ -141,13 +159,16 @@ class LiteLLMClientLLM(BaseLLM):
             CallServerLLMError: If the streaming call fails.
         """
         messages = self._prepare_messages(prompt)
-        call_kwargs = self._call_kwargs()
+        call_kwargs = self._completion_kwargs()
         call_kwargs.update(kwargs)
         try:
-            stream = litellm_sdk.completion(
-                messages=messages,
-                stream=True,
-                **call_kwargs,
+            stream = cast(
+                Any,
+                self._sync_client.chat.completions.create(
+                    messages=messages,
+                    stream=True,
+                    **call_kwargs,
+                ),
             )
             full_text = ""
             for chunk in stream:
@@ -157,7 +178,7 @@ class LiteLLMClientLLM(BaseLLM):
                         full_text += delta
                         yield CompletionResponse(text=full_text, delta=delta)
         except Exception as e:
-            raise CallServerLLMError(f"LiteLLM stream call failed: {e!s}") from e
+            raise CallServerLLMError(f"LiteLLM proxy stream call failed: {e!s}") from e
 
     async def acomplete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
         """
@@ -174,18 +195,23 @@ class LiteLLMClientLLM(BaseLLM):
             CallServerLLMError: If the async API call fails.
         """
         messages = self._prepare_messages(prompt)
-        call_kwargs = self._call_kwargs()
+        call_kwargs = self._completion_kwargs()
         call_kwargs.update(kwargs)
         try:
-            response = await litellm_sdk.acompletion(
-                messages=messages,
-                stream=False,
-                **call_kwargs,
+            response = cast(
+                Any,
+                await self._async_client.chat.completions.create(
+                    messages=messages,
+                    stream=False,
+                    **call_kwargs,
+                ),
             )
             content = response.choices[0].message.content or ""
             return CompletionResponse(text=content)
         except Exception as e:
-            raise CallServerLLMError(f"Async LiteLLM API call failed: {e!s}") from e
+            raise CallServerLLMError(
+                f"Async LiteLLM proxy API call failed: {e!s}"
+            ) from e
 
     async def astream_complete(  # type: ignore[override]
         self, prompt: str, **kwargs: Any
@@ -204,13 +230,16 @@ class LiteLLMClientLLM(BaseLLM):
             CallServerLLMError: If the async streaming call fails.
         """
         messages = self._prepare_messages(prompt)
-        call_kwargs = self._call_kwargs()
+        call_kwargs = self._completion_kwargs()
         call_kwargs.update(kwargs)
         try:
-            stream = await litellm_sdk.acompletion(
-                messages=messages,
-                stream=True,
-                **call_kwargs,
+            stream = cast(
+                Any,
+                await self._async_client.chat.completions.create(
+                    messages=messages,
+                    stream=True,
+                    **call_kwargs,
+                ),
             )
             full_text = ""
             async for chunk in stream:
@@ -220,4 +249,24 @@ class LiteLLMClientLLM(BaseLLM):
                         full_text += delta
                         yield CompletionResponse(text=full_text, delta=delta)
         except Exception as e:
-            raise CallServerLLMError(f"Async LiteLLM stream call failed: {e!s}") from e
+            raise CallServerLLMError(
+                f"Async LiteLLM proxy stream call failed: {e!s}"
+            ) from e
+
+
+def _normalize_litellm_base_url(base_url: str | None) -> str | None:
+    """
+    Normalize a LiteLLM proxy root to its OpenAI-compatible `/v1` endpoint.
+
+    Args:
+        base_url: LiteLLM proxy root or OpenAI-compatible endpoint.
+
+    Returns:
+        Normalized base URL, or None when no proxy URL is configured.
+    """
+    if not base_url:
+        return None
+    normalized = base_url.rstrip("/")
+    if normalized.endswith("/v1"):
+        return normalized
+    return f"{normalized}/v1"

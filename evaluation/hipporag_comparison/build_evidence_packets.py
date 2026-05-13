@@ -17,6 +17,9 @@ from pathlib import Path
 from evaluation.hipporag_comparison.export_corpus import build_records, write_json
 
 DEFAULT_PACKET_OUTPUT = Path(".codex/benchmarks/hipporag/dataset/evidence_packets.json")
+DEFAULT_HARD_PACKET_OUTPUT = Path(
+    ".codex/benchmarks/hipporag/dataset/evidence_packets_v2_hard.json"
+)
 LOW_VALUE_SOURCE_LABELS = {
     "index",
     "appendices > index",
@@ -44,6 +47,55 @@ REFERENCE_LIST_MARKERS = (
     "adweek",
 )
 NUMBERED_REFERENCE_PATTERN = re.compile(r"^\s*\d{1,3}\.\s+\S+")
+HARD_REASONING_TYPES = [
+    "mechanism_bridge",
+    "tension_resolution",
+    "distributed_diagnosis",
+    "strategy_synthesis",
+    "failure_mode_analysis",
+]
+HARD_QUESTION_TYPES = [
+    "mechanism",
+    "compare_contrast",
+    "application",
+    "synthesis",
+    "diagnosis",
+]
+HARD_SOURCE_COUNT_CYCLE = [2, 3, 4, 5]
+TOKEN_PATTERN = re.compile(r"[a-zA-Z][a-zA-Z\-]{3,}")
+STOPWORDS = {
+    "about",
+    "after",
+    "also",
+    "because",
+    "before",
+    "between",
+    "brand",
+    "brands",
+    "business",
+    "chapter",
+    "consumer",
+    "customers",
+    "different",
+    "example",
+    "marketing",
+    "market",
+    "markets",
+    "product",
+    "products",
+    "section",
+    "should",
+    "strategy",
+    "their",
+    "these",
+    "those",
+    "through",
+    "value",
+    "where",
+    "which",
+    "while",
+    "would",
+}
 
 
 @dataclass(frozen=True)
@@ -69,6 +121,8 @@ class EvidencePacket:
     question_type_hint: str
     evidence_digest: str
     sources: list[EvidenceSource]
+    reasoning_type: str | None = None
+    single_source_sufficient: bool | None = None
 
 
 def compact_excerpt(text: str, max_chars: int = 900) -> str:
@@ -287,10 +341,246 @@ def build_cross_book_packets(
     return packets
 
 
+def source_tokens(source: EvidenceSource) -> set[str]:
+    """Return stable topical tokens for weak semantic packet pairing."""
+
+    text = " ".join(
+        [
+            source.source,
+            source.section_summary,
+            source.excerpt[:600],
+        ]
+    ).lower()
+    return {
+        token
+        for token in TOKEN_PATTERN.findall(text)
+        if token not in STOPWORDS and len(token) >= 5
+    }
+
+
+def source_relatedness(left: EvidenceSource, right: EvidenceSource) -> tuple[int, int]:
+    """Rank source relatedness by topical overlap and total useful length."""
+
+    overlap = len(source_tokens(left) & source_tokens(right))
+    length_score = (left.word_count or 0) + (right.word_count or 0)
+    return overlap, length_score
+
+
+def choose_related_source(
+    anchor: EvidenceSource,
+    candidates: list[EvidenceSource],
+    offset: int,
+    selected_ids: set[str],
+) -> EvidenceSource | None:
+    """Choose one related source while keeping deterministic diversity."""
+
+    available = [
+        candidate
+        for candidate in candidates
+        if candidate.source_id not in selected_ids
+        and source_group_key(candidate) != source_group_key(anchor)
+    ]
+    if not available:
+        available = [
+            candidate
+            for candidate in candidates
+            if candidate.source_id not in selected_ids
+        ]
+    if not available:
+        return None
+
+    ranked = sorted(
+        available,
+        key=lambda candidate: (
+            *source_relatedness(anchor, candidate),
+            candidate.source_id,
+        ),
+        reverse=True,
+    )
+    return ranked[offset % len(ranked)]
+
+
+def hard_packet_metadata(
+    packet_index: int,
+    source_count_override: int | None = None,
+) -> tuple[str, str, int]:
+    """Return reasoning type, question type, and source count for v2 packets."""
+
+    zero_index = packet_index - 1
+    return (
+        HARD_REASONING_TYPES[zero_index % len(HARD_REASONING_TYPES)],
+        HARD_QUESTION_TYPES[zero_index % len(HARD_QUESTION_TYPES)],
+        source_count_override
+        if source_count_override is not None
+        else HARD_SOURCE_COUNT_CYCLE[zero_index % len(HARD_SOURCE_COUNT_CYCLE)],
+    )
+
+
+def build_hard_evidence_digest(
+    sources: list[EvidenceSource],
+    reasoning_type: str,
+) -> str:
+    """Build a compact digest that explains the hard multi-source packet."""
+
+    source_summaries = [
+        f"{source.book_slug}: {source.section_summary or source.source}"
+        for source in sources
+    ]
+    return f"{reasoning_type} across " + " | ".join(source_summaries)
+
+
+def build_cross_book_hard_packets(
+    selected_by_book: dict[str, list[EvidenceSource]],
+    packet_start_index: int,
+    limit: int,
+    source_count_override: int | None = None,
+) -> list[EvidencePacket]:
+    """Build cross-book v2-hard packets with 2 to 5 evidence sources."""
+
+    book_slugs = sorted(selected_by_book)
+    packets: list[EvidencePacket] = []
+    for local_index in range(1, limit + 1):
+        packet_index = packet_start_index + local_index - 1
+        reasoning_type, question_type, requested_source_count = hard_packet_metadata(
+            packet_index,
+            source_count_override=source_count_override,
+        )
+        source_count = min(requested_source_count, len(book_slugs))
+        start_book_index = (local_index - 1) % len(book_slugs)
+        chosen_books = [
+            book_slugs[(start_book_index + offset) % len(book_slugs)]
+            for offset in range(source_count)
+        ]
+        anchor_sources = selected_by_book[chosen_books[0]]
+        anchor = anchor_sources[(local_index - 1) % len(anchor_sources)]
+        selected_sources = [anchor]
+        selected_ids = {anchor.source_id}
+        for book_offset, book_slug in enumerate(chosen_books[1:], start=1):
+            related = choose_related_source(
+                anchor,
+                selected_by_book[book_slug],
+                offset=local_index + book_offset,
+                selected_ids=selected_ids,
+            )
+            if related is None:
+                continue
+            selected_sources.append(related)
+            selected_ids.add(related.source_id)
+
+        if len({source.book_slug for source in selected_sources}) < 2:
+            continue
+        packets.append(
+            EvidencePacket(
+                packet_id=f"hard-v2-{packet_index:03d}",
+                candidate_scope="cross_book",
+                difficulty_hint="hard",
+                question_type_hint=question_type,
+                evidence_digest=build_hard_evidence_digest(
+                    selected_sources,
+                    reasoning_type,
+                ),
+                sources=selected_sources,
+                reasoning_type=reasoning_type,
+                single_source_sufficient=False,
+            )
+        )
+    return packets
+
+
+def build_intra_book_hard_packets(
+    selected_by_book: dict[str, list[EvidenceSource]],
+    packet_start_index: int,
+    limit: int,
+    source_count_override: int | None = None,
+) -> list[EvidencePacket]:
+    """Build single-book v2-hard packets spread across sections."""
+
+    book_slugs = sorted(selected_by_book)
+    packets: list[EvidencePacket] = []
+    local_index = 1
+    while len(packets) < limit:
+        packet_index = packet_start_index + local_index - 1
+        reasoning_type, question_type, requested_source_count = hard_packet_metadata(
+            packet_index,
+            source_count_override=source_count_override,
+        )
+        book_slug = book_slugs[(local_index - 1) % len(book_slugs)]
+        book_sources = selected_by_book[book_slug]
+        anchor = book_sources[(local_index - 1) % len(book_sources)]
+        selected_sources = [anchor]
+        selected_ids = {anchor.source_id}
+        for offset in range(1, requested_source_count):
+            related = choose_related_source(
+                anchor,
+                book_sources,
+                offset=local_index + offset,
+                selected_ids=selected_ids,
+            )
+            if related is None:
+                continue
+            selected_sources.append(related)
+            selected_ids.add(related.source_id)
+
+        section_count = len({source_group_key(source) for source in selected_sources})
+        if section_count >= 2 and len(selected_sources) >= 2:
+            packets.append(
+                EvidencePacket(
+                    packet_id=f"hard-v2-{packet_index:03d}",
+                    candidate_scope=book_slug,
+                    difficulty_hint="hard",
+                    question_type_hint=question_type,
+                    evidence_digest=build_hard_evidence_digest(
+                        selected_sources,
+                        reasoning_type,
+                    ),
+                    sources=selected_sources,
+                    reasoning_type=reasoning_type,
+                    single_source_sufficient=False,
+                )
+            )
+        local_index += 1
+        if local_index > limit * 8:
+            raise ValueError("Could not build enough intra-book hard packets.")
+    return packets
+
+
+def build_hard_multihop_packets(
+    selected_by_book: dict[str, list[EvidenceSource]],
+    cross_book_limit: int = 180,
+    intra_book_limit: int = 120,
+    packet_id_offset: int = 0,
+    source_count_override: int | None = None,
+) -> list[EvidencePacket]:
+    """Build v2-hard evidence packets for distributed multi-hop questions."""
+
+    if cross_book_limit <= 0:
+        raise ValueError("cross_book_limit must be positive.")
+    if intra_book_limit <= 0:
+        raise ValueError("intra_book_hard_limit must be positive.")
+
+    cross_book_packets = build_cross_book_hard_packets(
+        selected_by_book,
+        packet_start_index=packet_id_offset + 1,
+        limit=cross_book_limit,
+        source_count_override=source_count_override,
+    )
+    intra_book_packets = build_intra_book_hard_packets(
+        selected_by_book,
+        packet_start_index=packet_id_offset + len(cross_book_packets) + 1,
+        limit=intra_book_limit,
+        source_count_override=source_count_override,
+    )
+    return [*cross_book_packets, *intra_book_packets]
+
+
 def build_evidence_packets(
     parsed_root: Path,
     per_book_limit: int = 40,
     cross_book_limit: int = 30,
+    profile: str = "v1",
+    intra_book_hard_limit: int = 120,
+    packet_id_offset: int = 0,
+    hard_source_count: int | None = None,
 ) -> list[EvidencePacket]:
     """Build single-book and cross-book evidence packets.
 
@@ -298,6 +588,13 @@ def build_evidence_packets(
         parsed_root: Root directory containing parsed document folders.
         per_book_limit: Maximum single-book packets per canonical book.
         cross_book_limit: Maximum cross-book packets.
+        profile: ``v1`` keeps the localized benchmark prep, while ``v2-hard``
+            builds distributed multi-source packets.
+        intra_book_hard_limit: Maximum intra-book distributed packets for
+            ``v2-hard``.
+        packet_id_offset: Numeric offset for v2-hard supplemental packet IDs.
+        hard_source_count: Optional forced source count for targeted v2-hard
+            supplemental packets.
 
     Returns:
         Evidence packets in deterministic order.
@@ -313,6 +610,16 @@ def build_evidence_packets(
 
     source_lookup = build_source_lookup(parsed_root)
     selected_by_book = select_book_sources(source_lookup, per_book_limit=per_book_limit)
+    if profile == "v2-hard":
+        return build_hard_multihop_packets(
+            selected_by_book,
+            cross_book_limit=cross_book_limit,
+            intra_book_limit=intra_book_hard_limit,
+            packet_id_offset=packet_id_offset,
+            source_count_override=hard_source_count,
+        )
+    if profile != "v1":
+        raise ValueError(f"Unsupported evidence packet profile: {profile}")
     return [
         *build_single_book_packets(selected_by_book),
         *build_cross_book_packets(selected_by_book, cross_book_limit=cross_book_limit),
@@ -352,8 +659,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=DEFAULT_PACKET_OUTPUT,
+        default=None,
         help="Output evidence packet JSON path.",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=["v1", "v2-hard"],
+        default="v1",
+        help="Evidence packet profile.",
     )
     parser.add_argument(
         "--per-book-limit",
@@ -367,6 +680,25 @@ def parse_args() -> argparse.Namespace:
         default=30,
         help="Maximum selected cross-book packets.",
     )
+    parser.add_argument(
+        "--intra-book-hard-limit",
+        type=int,
+        default=120,
+        help="Maximum intra-book distributed packets for v2-hard.",
+    )
+    parser.add_argument(
+        "--packet-id-offset",
+        type=int,
+        default=0,
+        help="Numeric offset for v2-hard supplemental packet IDs.",
+    )
+    parser.add_argument(
+        "--hard-source-count",
+        type=int,
+        choices=[2, 3, 4, 5],
+        default=None,
+        help="Optional forced source count for targeted v2-hard packets.",
+    )
     return parser.parse_args()
 
 
@@ -374,12 +706,23 @@ def main() -> None:
     """Run evidence packet generation from the command line."""
 
     args = parse_args()
+    output_path = args.output
+    if output_path is None:
+        output_path = (
+            DEFAULT_HARD_PACKET_OUTPUT
+            if args.profile == "v2-hard"
+            else DEFAULT_PACKET_OUTPUT
+        )
     packets = build_evidence_packets(
         parsed_root=args.parsed_root,
         per_book_limit=args.per_book_limit,
         cross_book_limit=args.cross_book_limit,
+        profile=args.profile,
+        intra_book_hard_limit=args.intra_book_hard_limit,
+        packet_id_offset=args.packet_id_offset,
+        hard_source_count=args.hard_source_count,
     )
-    write_evidence_packets(packets, args.output)
+    write_evidence_packets(packets, output_path)
 
 
 if __name__ == "__main__":

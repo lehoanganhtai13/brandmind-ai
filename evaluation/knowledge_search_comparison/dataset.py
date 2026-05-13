@@ -12,6 +12,9 @@ from evaluation.hipporag_comparison.benchmark_schema import (
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
 DEFAULT_DATASET_PATH = PACKAGE_ROOT / "datasets" / "marketing_5books_benchmark_v1.json"
+DEFAULT_HARD_DATASET_PATH = (
+    PACKAGE_ROOT / "datasets" / "marketing_5books_multihop_hard_v2.json"
+)
 
 
 def load_benchmark_dataset(path: Path = DEFAULT_DATASET_PATH) -> BenchmarkDataset:

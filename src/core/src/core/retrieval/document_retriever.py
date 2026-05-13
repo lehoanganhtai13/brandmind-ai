@@ -64,6 +64,44 @@ class DocumentRetriever:
         self.embedder = embedder
         self.collection_name = collection_name
 
+    async def get_chunks_by_ids(
+        self,
+        chunk_ids: List[str],
+    ) -> List[DocumentChunkResult]:
+        """
+        Fetch exact document chunks by their canonical chunk IDs.
+
+        Args:
+            chunk_ids: DocumentChunks IDs to retrieve in order.
+
+        Returns:
+            Matching document chunks with source metadata.
+        """
+        if not chunk_ids:
+            return []
+
+        raw_records = await self.vector_db.async_get_items(
+            ids=chunk_ids,
+            collection_name=self.collection_name,
+        )
+        records_by_id = {record.get("id", ""): record for record in raw_records}
+        ordered_records = [
+            records_by_id[chunk_id]
+            for chunk_id in chunk_ids
+            if chunk_id in records_by_id
+        ]
+        return [
+            DocumentChunkResult(
+                id=record.get("id", ""),
+                content=record.get("content", ""),
+                source=record.get("source", ""),
+                original_document=record.get("original_document", ""),
+                author=record.get("author", ""),
+                score=record.get("_score", 1.0),
+            )
+            for record in ordered_records
+        ]
+
     async def search(
         self,
         query: str,

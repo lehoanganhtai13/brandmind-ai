@@ -8,6 +8,7 @@ to provide comprehensive semantic context for knowledge graph queries.
 
 import asyncio
 import json
+import re
 from typing import Dict, List
 
 from loguru import logger
@@ -401,12 +402,97 @@ class KGRetriever:
         for f in facts:
             output.append(f"* {f.text}")
 
-            # Include source metadata for provenance
-            if f.source_metadata:
-                for src in f.source_metadata:
-                    output.append(
-                        f"  * 📚 Source: {src.source} | "
-                        f"Document: {src.original_document}"
-                    )
+            if f.source_metadata or f.source_chunk_ids:
+                output.extend(format_fact_evidence_handoff(f))
 
         return "\n".join(output)
+
+
+def format_fact_evidence_handoff(fact: VerbalizedFact) -> list[str]:
+    """
+    Format per-fact provenance as next-step context for document search.
+
+    Args:
+        fact: One verbalized KG fact with source metadata and chunk IDs.
+
+    Returns:
+        Markdown lines with exact verification and scoped exploration options.
+    """
+    lines = ["  * Evidence map:"]
+    followup_query = quote_tool_arg(compact_followup_query(fact.text))
+    for source in fact.source_metadata:
+        lines.append(
+            f"    - Source: {source.source} | Document: {source.original_document}"
+        )
+
+    if fact.source_chunk_ids:
+        chunk_ids = ", ".join(fact.source_chunk_ids)
+        lines.append(f"    - Source chunk IDs: {chunk_ids}")
+        lines.append("  * Follow-up options:")
+        for chunk_id in fact.source_chunk_ids[:3]:
+            lines.append(
+                "    - Exact verify: "
+                f'search_document_library(query="{followup_query}", '
+                f'source_chunk_id="{chunk_id}")'
+            )
+    elif fact.source_metadata:
+        lines.append("  * Follow-up options:")
+
+    for source in fact.source_metadata[:3]:
+        chapter_filter = extract_chapter_filter(source.source)
+        filter_parts = [f'filter_by_book="{source.original_document}"']
+        if chapter_filter:
+            filter_parts.append(f'filter_by_chapter="{chapter_filter}"')
+        filters = ", ".join(filter_parts)
+        lines.append(
+            "    - Scoped explore: "
+            f'search_document_library(query="{followup_query}", {filters})'
+        )
+    return lines
+
+
+def compact_followup_query(text: str, limit: int = 180) -> str:
+    """
+    Compact a KG fact into a copyable document-search query hint.
+
+    Args:
+        text: Verbalized KG fact.
+        limit: Maximum character count before truncation.
+
+    Returns:
+        Whitespace-normalized query text for follow-up document search.
+    """
+    normalized = " ".join(text.split())
+    if len(normalized) <= limit:
+        return normalized
+    truncated = normalized[:limit].rsplit(" ", maxsplit=1)[0]
+    return f"{truncated}..."
+
+
+def quote_tool_arg(value: str) -> str:
+    """
+    Make a text value safe to display inside a quoted tool-call hint.
+
+    Args:
+        value: Tool argument value.
+
+    Returns:
+        Value with double quotes replaced to avoid malformed hints.
+    """
+    return value.replace('"', "'")
+
+
+def extract_chapter_filter(source: str) -> str:
+    """
+    Extract a stable chapter filter from a source hierarchy when present.
+
+    Args:
+        source: Source hierarchy from DocumentChunks metadata.
+
+    Returns:
+        A chapter label suitable for document-library filtering, or empty string.
+    """
+    match = re.search(r"Chapter\s+\d+", source, re.IGNORECASE)
+    if not match:
+        return ""
+    return match.group(0)
