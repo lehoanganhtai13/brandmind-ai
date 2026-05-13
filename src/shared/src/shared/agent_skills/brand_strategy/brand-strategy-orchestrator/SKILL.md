@@ -20,7 +20,7 @@ Accumulate context in a Brand Brief that grows richer with every phase.
 
 **CORE PRINCIPLE**: Ask -> Listen -> Synthesize -> Validate -> Advance. Each step is its own response with the user's reply between — silence is the tool that lets the user absorb and build judgment.
 
-**USER-FACING LANGUAGE**: Phase numbers are internal navigation labels. In chat, translate them into natural Vietnamese such as "bước chẩn đoán", "bước nghiên cứu thị trường", or "bước chốt định vị" unless the user explicitly asks to see the full workflow map. Never make the user feel they are reading internal process labels.
+**USER-FACING LANGUAGE**: Phase numbers are internal navigation labels. In chat, translate them into natural step descriptions in the user's language, such as diagnosis, market research, or positioning closure, unless the user explicitly asks to see the full workflow map. Never make the user feel they are reading internal process labels.
 
 ## PHASE SEQUENCES
 
@@ -139,10 +139,10 @@ Your todo list is your **navigation anchor** — it keeps you on track across a 
 
 ## MENTORING AT EVERY PHASE
 
-Your mentoring approach — the Cognitive Apprenticeship arc, Socratic Partnership tone, and Vietnamese symmetric *chúng ta* voice — is defined in the system prompt. This skill section operationalizes one teaching moment per response across a typical phase:
+Your mentoring approach — the Cognitive Apprenticeship arc, Socratic Partnership tone, and symmetric partner voice in the user's language — is defined in the system prompt. This skill section operationalizes one teaching moment per response across a typical phase:
 
 1. **Open** — name what we are exploring and why (cite the framework). Ask the user what they already think before you analyze. Stop and wait.
-2. **Model** — externalize your reasoning so the user sees how you got there. Vietnamese pattern: *"Tôi nhìn vào X → thấy Y → suy ra Z vì [framework]."* Stop and wait.
+2. **Model** — externalize your reasoning so the user sees how you got there. Use an observation -> pattern -> conclusion -> evidence chain in the user's language. Stop and wait.
 3. **Coach** — invite the user to attempt the next reasoning piece on their own data; offer hints, not answers. Lighten hints as competence grows. Stop and wait.
 4. **Validate** — present the joint conclusion; ask the user to confirm or adjust. Their pushback is signal, not friction. Stop and wait.
 5. **Gate** — once the conclusion is co-confirmed, run the phase quality gate; address failing items before advancing.

@@ -134,11 +134,11 @@ def test_main_prompt_has_chat_process_quality_guardrails() -> None:
         "Do not invent credentials",
         "Adaptive personalization",
         "interaction patterns across turns",
-        "Em thường cần defend với sếp",
+        "stakeholder-defense logic",
         "Turn pacing and phase humility",
         "ask at most three blocking questions",
         "Treat scope as tentative",
-        "prefer \"bước chẩn đoán\"",
+        "natural step descriptions",
         "only when the evidence is no longer tentative",
         "The opening reply is not a workflow-map turn",
         "Ask 2-3 structured blocking questions first",
@@ -152,10 +152,29 @@ def test_orchestrator_skill_keeps_phase_labels_internal() -> None:
     skill_text = _ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
 
     assert "Phase numbers are internal navigation labels" in skill_text
-    assert "bước chẩn đoán" in skill_text
+    assert "natural step descriptions in the user's language" in skill_text
     assert "Never make the user feel they are reading internal process labels" in (
         skill_text
     )
+
+
+def test_prompt_surfaces_keep_instruction_language_consistent() -> None:
+    """Avoid mixing Vietnamese examples into otherwise English instructions."""
+    skill_text = _ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
+    combined = "\n".join((BRAND_STRATEGY_SYSTEM_PROMPT, skill_text))
+    mixed_language_examples = (
+        "Em thường",
+        "bước chẩn đoán",
+        "bước tiếp theo",
+        "chúng ta",
+        "Tôi nhìn",
+        "Im lặng",
+        "Sau câu hỏi",
+        "Đừng lấp đầy",
+    )
+
+    for phrase in mixed_language_examples:
+        assert phrase not in combined
 
 
 def test_phase_4_content_gate_avoids_named_framework_overload() -> None:
