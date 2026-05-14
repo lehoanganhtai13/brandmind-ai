@@ -46,8 +46,15 @@ class _StreamEnd(BaseAgentEvent):
 _STREAM_END = _StreamEnd()
 _INTERNAL_REMINDER_START = "<system-reminder>"
 _INTERNAL_REMINDER_END = "</system-reminder>"
-_PSEUDO_TOOL_CALL_START = "<call:"
-_PSEUDO_TOOL_CALL_END = "/>"
+_PSEUDO_TOOL_CALL_STARTS = (
+    "<call:",
+    "<report_progress",
+    "<tool",
+    "<plan-check",
+    "<task",
+    "<function_call",
+)
+_PSEUDO_TOOL_CALL_END = ">"
 _EMPTY_RESPONSE_FALLBACK = (
     "The last turn did not produce a visible response. "
     'Please send "continue" and I will pick up from the saved state.'
@@ -114,10 +121,12 @@ class _InternalReminderFilter:
                 continue
 
             start_index = self._buffer.find(_INTERNAL_REMINDER_START)
-            tool_call_index = self._buffer.find(_PSEUDO_TOOL_CALL_START)
             starts = [
                 (start_index, _INTERNAL_REMINDER_START, "internal"),
-                (tool_call_index, _PSEUDO_TOOL_CALL_START, "tool_call"),
+                *(
+                    (self._buffer.find(prefix), prefix, "tool_call")
+                    for prefix in _PSEUDO_TOOL_CALL_STARTS
+                ),
             ]
             starts = [(idx, prefix, kind) for idx, prefix, kind in starts if idx != -1]
             if starts:
@@ -132,7 +141,7 @@ class _InternalReminderFilter:
 
             keep = _longest_suffix_prefix_match_any(
                 self._buffer,
-                (_INTERNAL_REMINDER_START, _PSEUDO_TOOL_CALL_START),
+                (_INTERNAL_REMINDER_START, *_PSEUDO_TOOL_CALL_STARTS),
             )
             emit_until = len(self._buffer) - keep
             visible_parts.append(self._buffer[:emit_until])

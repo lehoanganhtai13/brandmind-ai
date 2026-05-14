@@ -98,6 +98,36 @@ def test_internal_filter_removes_split_pseudo_tool_call() -> None:
     assert token_filter.flush() == ""
 
 
+def test_internal_filter_removes_raw_tool_xml_call() -> None:
+    """Raw XML-like tool calls are internal and should not reach chat."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed('A<report_progress advance="true" />B')
+
+    assert output == "AB"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_removes_split_raw_tool_xml_call() -> None:
+    """Raw XML-like tool calls should be removed across chunk boundaries."""
+    token_filter = _InternalReminderFilter()
+
+    assert token_filter.feed("A<report") == "A"
+    assert token_filter.feed('_progress advance="true" /') == ""
+    assert token_filter.feed(">B") == "B"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_preserves_markdown_html_breaks() -> None:
+    """Only known internal tool tags should be stripped."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed("A<br>B")
+
+    assert output == "A<br>B"
+    assert token_filter.flush() == ""
+
+
 @pytest.mark.asyncio
 async def test_stream_agent_response_filters_tokens_and_history() -> None:
     """The streaming bridge should sanitize client output and session history."""
