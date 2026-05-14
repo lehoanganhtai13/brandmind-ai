@@ -8,8 +8,10 @@ Output: evaluation_results.json — backward-compatible with aggregate.py,
 containing per-judge criteria + scores (via scoring.py) + Fleiss' Kappa.
 
 Usage:
-    uv run python evaluation/judge/run_judges.py --session-dir brandmind-output/eval/brandmind_linh_r1_20260409/
-    uv run python evaluation/judge/run_judges.py --session-dir brandmind-output/eval/ --all
+    uv run python evaluation/judge/run_judges.py --session-dir \
+        brandmind-output/eval/brandmind_linh_r1_20260409/
+    uv run python evaluation/judge/run_judges.py \
+        --session-dir brandmind-output/eval/ --all
 """
 
 from __future__ import annotations
@@ -104,6 +106,49 @@ def _parse_rubric_sections(rubric: str) -> dict[str, list[str]]:
 # Session input loading
 # ============================================================
 
+def _turn_user_text(turn: dict[str, Any]) -> str:
+    """Return the user text from either legacy or API-driver transcript schemas."""
+    return str(turn.get("user") or turn.get("user_message") or "").strip()
+
+
+def _turn_agent_text(turn: dict[str, Any]) -> str:
+    """Return the agent text from either legacy or API-driver transcript schemas."""
+    return str(
+        turn.get("agent")
+        or turn.get("agent_response")
+        or turn.get("assistant_response")
+        or ""
+    ).strip()
+
+
+def _session_metadata(meta: dict[str, Any]) -> dict[str, Any]:
+    """Return final session metadata across pilot-driver metadata schemas."""
+    if isinstance(meta.get("session_metadata"), dict):
+        return meta["session_metadata"]
+    if isinstance(meta.get("final_metadata"), dict):
+        return meta["final_metadata"]
+    created = meta.get("created_session_response")
+    if isinstance(created, dict) and isinstance(created.get("metadata"), dict):
+        return created["metadata"]
+    return {}
+
+
+def _transcript_turns(data: Any) -> list[dict[str, Any]]:
+    """Return turns from legacy dict transcripts or API-driver list transcripts."""
+    if isinstance(data, list):
+        return [turn for turn in data if isinstance(turn, dict)]
+    if isinstance(data, dict) and isinstance(data.get("turns"), list):
+        return [turn for turn in data["turns"] if isinstance(turn, dict)]
+    return []
+
+
+def _transcript_system(data: Any) -> str:
+    """Return the system label when a transcript schema provides one."""
+    if isinstance(data, dict):
+        return str(data.get("system", "unknown"))
+    return "unknown"
+
+
 def _load_session_input(session_dir: Path) -> str:
     """Load and format session transcript + scope context for judge consumption.
 
@@ -118,7 +163,7 @@ def _load_session_input(session_dir: Path) -> str:
     meta_path = session_dir / "metadata.json"
     if meta_path.exists():
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        session_meta = meta.get("session_metadata", {})
+        session_meta = _session_metadata(meta)
         scope = session_meta.get("scope", "unknown")
         completed = session_meta.get("completed_phases", [])
         system = meta.get("system", "unknown")
@@ -129,11 +174,17 @@ def _load_session_input(session_dir: Path) -> str:
         sections.append(f"- Completed phases: {', '.join(completed) if completed else 'none'}")
         sections.append("")
         sections.append("**Rubric scope rules:**")
-        sections.append("- Phase 0.5 (Q05-*) applies only to refresh/repositioning/full_rebrand scopes")
+        sections.append(
+            "- Phase 0.5 (Q05-*) applies only to "
+            "refresh/repositioning/full_rebrand scopes"
+        )
         sections.append("- For new_brand scope → mark Q05-* as CANNOT_ASSESS")
         sections.append("- Phase sequences by scope:")
         sections.append("  - new_brand: 0 → 1 → 2 → 3 → 4 → 5 (skip 0.5)")
-        sections.append("  - refresh: 0 → 0.5 → 1 → 3 → 4 → 5 (skip Phase 2 → Q2-* = CANNOT_ASSESS)")
+        sections.append(
+            "  - refresh: 0 → 0.5 → 1 → 3 → 4 → 5 "
+            "(skip Phase 2 → Q2-* = CANNOT_ASSESS)"
+        )
         sections.append("  - repositioning: 0 → 0.5 → 1 → 2 → 3 → 4 → 5")
         sections.append("  - full_rebrand: 0 → 0.5 → 1 → 2 → 3 → 4 → 5")
         sections.append("")
@@ -142,13 +193,13 @@ def _load_session_input(session_dir: Path) -> str:
     transcript_path = session_dir / "transcript.json"
     if transcript_path.exists():
         data = json.loads(transcript_path.read_text(encoding="utf-8"))
-        system = data.get("system", "unknown")
+        system = _transcript_system(data)
         sections.append(f"## SESSION TRANSCRIPT (System: {system})\n")
 
-        for turn in data.get("turns", []):
+        for turn in _transcript_turns(data):
             sections.append(f"[Turn {turn['turn']}]")
-            sections.append(f"USER: {turn.get('user', '')}")
-            sections.append(f"AGENT: {turn.get('agent', turn.get('agent_response', ''))}")
+            sections.append(f"USER: {_turn_user_text(turn)}")
+            sections.append(f"AGENT: {_turn_agent_text(turn)}")
             sections.append("")
 
     return "\n".join(sections)
@@ -332,7 +383,12 @@ async def _run_judge_batched(
         )
 
         ts = time.strftime("%H:%M:%S")
-        print(f"  [{tag}] {batch_id} START {ts} ({batch_label}, input={len(session_input) + len(prompt):,} chars)", flush=True)
+        prompt_chars = len(session_input) + len(prompt)
+        print(
+            f"  [{tag}] {batch_id} START {ts} "
+            f"({batch_label}, input={prompt_chars:,} chars)",
+            flush=True,
+        )
         start_t = time.time()
         result = await _run_batch(model, prompt, session_input)
         elapsed = time.time() - start_t
@@ -343,7 +399,11 @@ async def _run_judge_batched(
         if not criteria and not ap:
             print(f"  [{tag}] {batch_id} FAIL ({elapsed:.0f}s)", flush=True)
         else:
-            print(f"  [{tag}] {batch_id} OK ({elapsed:.0f}s) — {len(criteria)} crit, {len(ap)} AP", flush=True)
+            print(
+                f"  [{tag}] {batch_id} OK ({elapsed:.0f}s) — "
+                f"{len(criteria)} crit, {len(ap)} AP",
+                flush=True,
+            )
 
         combined["criteria"].extend(criteria)
         combined["anti_patterns"].extend(ap)
@@ -373,7 +433,10 @@ async def _run_judge_batched(
         seen[cid] = c
     combined["criteria"] = list(seen.values())
     if dropped_incomplete:
-        print(f"    ⚠ Dropped {dropped_incomplete} incomplete criterion entries (missing required fields)")
+        print(
+            f"    ⚠ Dropped {dropped_incomplete} incomplete criterion entries "
+            "(missing required fields)"
+        )
 
     # Deduplicate anti-patterns by ID
     ap_seen: dict[str, dict[str, Any]] = {}
@@ -400,13 +463,13 @@ def _validate_transcript(session_dir: Path) -> list[str]:
         return warnings
 
     data = json.loads(transcript_path.read_text(encoding="utf-8"))
-    turns = data.get("turns", [])
+    turns = _transcript_turns(data)
     if not turns:
         warnings.append("Transcript has no turns")
         return warnings
 
-    # Check for empty agent responses
-    empty_count = sum(1 for t in turns if not t.get("agent", "").strip())
+    # Check for empty agent responses across all supported transcript schemas.
+    empty_count = sum(1 for t in turns if not _turn_agent_text(t))
     if empty_count > 0:
         warnings.append(f"{empty_count} turn(s) with empty agent response")
 
@@ -550,7 +613,7 @@ async def evaluate_session(
                   f"M={s['mentor']['final_score']}, "
                   f"P={s['personalization']['final_score']}")
     if agreement:
-        print(f"\n=== INTER-RATER AGREEMENT ===")
+        print("\n=== INTER-RATER AGREEMENT ===")
         print(f"  Fleiss' Kappa: {agreement.get('overall_kappa', '?')} "
               f"({agreement.get('interpretation', '?')})")
         print(f"  Criteria rated by all: {agreement.get('n_criteria', 0)}")

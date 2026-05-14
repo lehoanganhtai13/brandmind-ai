@@ -79,6 +79,49 @@ def _active_session_context() -> tuple[str | None, str | None]:
     return session.session_id, session.brand_name or None
 
 
+def _phase_5_closure_summary_lines(matches: list[dict]) -> list[str]:
+    """Return the Phase 5 closure status before long artifact listings."""
+    produced_deliverables = sorted(
+        {deliverable for r in matches if (deliverable := phase5_deliverable_key(r))}
+    )
+    missing_categories = [
+        deliverable
+        for deliverable in _REQUIRED_PHASE_5_DELIVERABLES
+        if deliverable not in produced_deliverables
+    ]
+
+    lines = [
+        f"Produced artifact types this session: {', '.join(produced_deliverables)}",
+        "Required Phase 5 deliverables: "
+        f"{', '.join(_REQUIRED_PHASE_5_DELIVERABLES)}",
+    ]
+    if missing_categories:
+        lines.append(
+            f"Missing required categories: {', '.join(missing_categories)}"
+        )
+        missing_guidance = "; ".join(
+            _MISSING_DELIVERABLE_GUIDANCE[category]
+            for category in missing_categories
+        )
+        lines.append(
+            "CLOSURE_STATUS: INCOMPLETE — do not tell the user Phase 5 is "
+            "complete or invent paths for missing categories."
+        )
+        lines.append(
+            "NEXT_ACTION_FOR_FINAL_HANDOFF: if the user already asked for the "
+            "final deliverable pack, dispatch only these missing deliverables "
+            f"now without asking for confirmation: {missing_guidance}. Then "
+            'call list_artifacts(scope="current_session") again.'
+        )
+    else:
+        lines.append("Missing required categories: none")
+        lines.append(
+            "CLOSURE_STATUS: COMPLETE — all required Phase 5 categories "
+            "are present in the current session manifest."
+        )
+    return lines
+
+
 def list_artifacts(
     scope: Literal["current_session", "current_brand", "all"] = "current_session",
     category: Literal[
@@ -184,6 +227,10 @@ def list_artifacts(
         f"Found {len(matches)} artifact(s) (scope={scope}, category={category}):",
         "",
     ]
+    if scope == "current_session":
+        lines.extend(_phase_5_closure_summary_lines(matches))
+        lines.append("")
+
     for record in matches:
         size_kb = record.get("size_bytes", 0) / 1024
         lines.append(
@@ -194,49 +241,5 @@ def list_artifacts(
             f"    size: {size_kb:.1f} KB\n"
             f"    path: {record.get('path', '?')}"
         )
-
-    if scope == "current_session":
-        # Surface deliverable coverage explicitly so the orchestrator can
-        # check Phase 5 closure without re-parsing the listing.
-        produced_deliverables = sorted(
-            {deliverable for r in matches if (deliverable := phase5_deliverable_key(r))}
-        )
-        missing_categories = [
-            deliverable
-            for deliverable in _REQUIRED_PHASE_5_DELIVERABLES
-            if deliverable not in produced_deliverables
-        ]
-        lines.append("")
-        lines.append(
-            f"Produced artifact types this session: {', '.join(produced_deliverables)}"
-        )
-        lines.append(
-            "Required Phase 5 deliverables: "
-            f"{', '.join(_REQUIRED_PHASE_5_DELIVERABLES)}"
-        )
-        if missing_categories:
-            lines.append(
-                f"Missing required categories: {', '.join(missing_categories)}"
-            )
-            missing_guidance = "; ".join(
-                _MISSING_DELIVERABLE_GUIDANCE[category]
-                for category in missing_categories
-            )
-            lines.append(
-                "CLOSURE_STATUS: INCOMPLETE — do not tell the user Phase 5 is "
-                "complete or invent paths for missing categories."
-            )
-            lines.append(
-                "NEXT_ACTION_FOR_FINAL_HANDOFF: if the user already asked for the "
-                "final deliverable pack, dispatch only these missing deliverables "
-                f"now without asking for confirmation: {missing_guidance}. Then "
-                'call list_artifacts(scope="current_session") again.'
-            )
-        else:
-            lines.append("Missing required categories: none")
-            lines.append(
-                "CLOSURE_STATUS: COMPLETE — all required Phase 5 categories "
-                "are present in the current session manifest."
-            )
 
     return "\n".join(lines)

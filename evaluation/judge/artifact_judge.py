@@ -317,14 +317,30 @@ def _load_transcript_context(session_dir: Path, max_chars: int = 20000) -> str:
     if not source.is_file():
         return "(no transcript available)"
     data = json.loads(source.read_text(encoding="utf-8"))
-    turns = data.get("turns", [])
+    if isinstance(data, list):
+        turns = [turn for turn in data if isinstance(turn, dict)]
+    elif isinstance(data, dict):
+        turns = [
+            turn
+            for turn in data.get("turns", [])
+            if isinstance(turn, dict)
+        ]
+    else:
+        turns = []
     chunks: list[str] = []
     total = 0
     for turn in reversed(turns):
+        user_text = turn.get("user") or turn.get("user_message") or ""
+        agent_text = (
+            turn.get("agent")
+            or turn.get("agent_response")
+            or turn.get("assistant_response")
+            or ""
+        )
         block = (
             f"--- Turn {turn.get('turn', '?')} ---\n"
-            f"USER: {turn.get('user', '')}\n\n"
-            f"AGENT: {turn.get('agent', '')}"
+            f"USER: {user_text}\n\n"
+            f"AGENT: {agent_text}"
         )
         if total + len(block) > max_chars:
             break

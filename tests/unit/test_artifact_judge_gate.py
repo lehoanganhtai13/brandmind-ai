@@ -14,6 +14,7 @@ from evaluation.judge.artifact_judge import (
     _extract_brand_key_text,
     _extract_docx_text,
     _extract_pptx_text,
+    _load_transcript_context,
     _quality_level_for_criteria,
 )
 
@@ -221,6 +222,29 @@ def test_brand_key_extractor_uses_sidecar_before_ocr(tmp_path) -> None:
     assert "Chuyện Ba Bữa Signature" in text
     assert "Root Strengths: Indochine flagship" in text
     assert "Brand Essence: Sophisticated Hospitality" in text
+
+
+def test_artifact_judge_transcript_context_accepts_driver_list_schema(tmp_path) -> None:
+    """Artifact judge should see API-driver transcripts, not blank turns."""
+    session_dir = tmp_path / "pilot"
+    session_dir.mkdir()
+    (session_dir / "transcript.json").write_text(
+        """
+        [
+          {
+            "turn": 1,
+            "user_message": "Tôi cần slide pitch.",
+            "assistant_response": "Tôi sẽ tạo slide pitch cho founder."
+          }
+        ]
+        """,
+        encoding="utf-8",
+    )
+
+    text = _load_transcript_context(session_dir)
+
+    assert "USER: Tôi cần slide pitch." in text
+    assert "AGENT: Tôi sẽ tạo slide pitch cho founder." in text
 
 
 def test_artifact_judge_defaults_follow_isolated_run_env(tmp_path, monkeypatch) -> None:

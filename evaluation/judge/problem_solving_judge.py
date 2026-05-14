@@ -212,12 +212,21 @@ def _load_transcript_data(path: Path) -> tuple[str, list[dict[str, Any]]]:
                 f"No transcript.json under {path}"
             )
         data = json.loads(transcript_path.read_text(encoding="utf-8"))
-        return path.name, data.get("turns", [])
+        return path.name, _turns_from_transcript(data)
     if path.is_file():
         data = json.loads(path.read_text(encoding="utf-8"))
-        sample_id = data.get("id", path.stem)
-        return sample_id, data.get("turns", [])
+        sample_id = data.get("id", path.stem) if isinstance(data, dict) else path.stem
+        return sample_id, _turns_from_transcript(data)
     raise FileNotFoundError(f"{path} is neither a directory nor a file")
+
+
+def _turns_from_transcript(data: Any) -> list[dict[str, Any]]:
+    """Return turns from dict or top-level-list transcript schemas."""
+    if isinstance(data, list):
+        return [turn for turn in data if isinstance(turn, dict)]
+    if isinstance(data, dict) and isinstance(data.get("turns"), list):
+        return [turn for turn in data["turns"] if isinstance(turn, dict)]
+    return []
 
 
 def _format_transcript_for_judge(turns: list[dict[str, Any]]) -> str:

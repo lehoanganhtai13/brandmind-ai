@@ -128,6 +128,38 @@ def test_internal_filter_preserves_markdown_html_breaks() -> None:
     assert token_filter.flush() == ""
 
 
+def test_internal_filter_removes_tool_json_fence() -> None:
+    """Fenced JSON tool payloads are internal and should not reach users."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed(
+        'A```json\n{"action": "edit_file", "file_path": "/workspace/x"}\n```B'
+    )
+
+    assert output == "AB"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_removes_split_tool_json_fence() -> None:
+    """Fenced JSON tool payloads should be removed across chunk boundaries."""
+    token_filter = _InternalReminderFilter()
+
+    assert token_filter.feed("A```j") == "A"
+    assert token_filter.feed('son\n{"subagent_type": "document-generator"') == ""
+    assert token_filter.feed(', "description": "build deck"}\n```B') == "B"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_preserves_non_tool_json_fence() -> None:
+    """Ordinary JSON examples should remain visible when they are not tool payloads."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed('A```json\n{"metric": "RPR"}\n```B')
+
+    assert output == 'A```json\n{"metric": "RPR"}\n```B'
+    assert token_filter.flush() == ""
+
+
 @pytest.mark.asyncio
 async def test_stream_agent_response_filters_tokens_and_history() -> None:
     """The streaming bridge should sanitize client output and session history."""

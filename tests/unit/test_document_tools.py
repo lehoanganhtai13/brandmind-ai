@@ -954,6 +954,7 @@ class TestListArtifacts:
             in result
         )
         assert "CLOSURE_STATUS: INCOMPLETE" in result
+        assert result.index("CLOSURE_STATUS: INCOMPLETE") < result.index("- [images]")
         assert "NEXT_ACTION_FOR_FINAL_HANDOFF" in result
         assert "strategy DOCX via document-generator" in result
         assert "KPI XLSX via document-generator" in result

@@ -55,6 +55,18 @@ _PSEUDO_TOOL_CALL_STARTS = (
     "<function_call",
 )
 _PSEUDO_TOOL_CALL_END = ">"
+_JSON_FENCE_START = "```json"
+_JSON_FENCE_END = "```"
+_PSEUDO_TOOL_JSON_MARKERS = (
+    '"action"',
+    '"file_path"',
+    '"old_string"',
+    '"new_string"',
+    '"advance"',
+    '"subagent_type"',
+    '"todos"',
+    '"scope"',
+)
 _EMPTY_RESPONSE_FALLBACK = (
     "The last turn did not produce a visible response. "
     'Please send "continue" and I will pick up from the saved state.'
@@ -75,13 +87,20 @@ def _longest_suffix_prefix_match_any(text: str, prefixes: tuple[str, ...]) -> in
     return max(_longest_suffix_prefix_match(text, prefix) for prefix in prefixes)
 
 
+def _looks_like_pseudo_tool_json(block: str) -> bool:
+    """Return whether a fenced JSON block is an exposed internal tool payload."""
+    return any(marker in block for marker in _PSEUDO_TOOL_JSON_MARKERS)
+
+
 class _InternalReminderFilter:
     """Remove internal-only blocks from streamed model-visible text."""
 
     def __init__(self) -> None:
         self._buffer = ""
+        self._json_fence_buffer = ""
         self._inside_internal_block = False
         self._inside_pseudo_tool_call = False
+        self._inside_json_fence = False
 
     def feed(self, text: str) -> str:
         """Accept one streamed chunk and return only user-facing text."""
@@ -92,6 +111,23 @@ class _InternalReminderFilter:
         visible_parts: list[str] = []
 
         while self._buffer:
+            if self._inside_json_fence:
+                end_index = self._buffer.find(_JSON_FENCE_END)
+                if end_index == -1:
+                    self._json_fence_buffer += self._buffer
+                    self._buffer = ""
+                    break
+
+                json_body = self._json_fence_buffer + self._buffer[:end_index]
+                self._buffer = self._buffer[end_index + len(_JSON_FENCE_END) :]
+                self._json_fence_buffer = ""
+                self._inside_json_fence = False
+                if not _looks_like_pseudo_tool_json(json_body):
+                    visible_parts.append(
+                        f"{_JSON_FENCE_START}{json_body}{_JSON_FENCE_END}"
+                    )
+                continue
+
             if self._inside_internal_block:
                 end_index = self._buffer.find(_INTERNAL_REMINDER_END)
                 if end_index == -1:
@@ -121,8 +157,10 @@ class _InternalReminderFilter:
                 continue
 
             start_index = self._buffer.find(_INTERNAL_REMINDER_START)
+            json_fence_index = self._buffer.find(_JSON_FENCE_START)
             starts = [
                 (start_index, _INTERNAL_REMINDER_START, "internal"),
+                (json_fence_index, _JSON_FENCE_START, "json_fence"),
                 *(
                     (self._buffer.find(prefix), prefix, "tool_call")
                     for prefix in _PSEUDO_TOOL_CALL_STARTS
@@ -135,13 +173,19 @@ class _InternalReminderFilter:
                 self._buffer = self._buffer[next_index + len(prefix) :]
                 if kind == "internal":
                     self._inside_internal_block = True
+                elif kind == "json_fence":
+                    self._inside_json_fence = True
                 else:
                     self._inside_pseudo_tool_call = True
                 continue
 
             keep = _longest_suffix_prefix_match_any(
                 self._buffer,
-                (_INTERNAL_REMINDER_START, *_PSEUDO_TOOL_CALL_STARTS),
+                (
+                    _INTERNAL_REMINDER_START,
+                    _JSON_FENCE_START,
+                    *_PSEUDO_TOOL_CALL_STARTS,
+                ),
             )
             emit_until = len(self._buffer) - keep
             visible_parts.append(self._buffer[:emit_until])
@@ -154,9 +198,18 @@ class _InternalReminderFilter:
         """Return any safe buffered text and discard unterminated internals."""
         if self._inside_internal_block or self._inside_pseudo_tool_call:
             self._buffer = ""
+            self._json_fence_buffer = ""
             self._inside_internal_block = False
             self._inside_pseudo_tool_call = False
             return ""
+        if self._inside_json_fence:
+            text = self._json_fence_buffer + self._buffer
+            self._buffer = ""
+            self._json_fence_buffer = ""
+            self._inside_json_fence = False
+            if _looks_like_pseudo_tool_json(text):
+                return ""
+            return f"{_JSON_FENCE_START}{text}"
 
         text = self._buffer
         self._buffer = ""
