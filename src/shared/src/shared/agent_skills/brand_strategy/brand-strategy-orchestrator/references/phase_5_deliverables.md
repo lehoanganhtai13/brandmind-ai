@@ -8,7 +8,7 @@ Document assembly delegates to `document-generator` sub-agent.
 ### Mentor Script
 
 #### Opening
-"Giai đoạn cuối — tổng hợp tất cả thành deliverables chuyên nghiệp. Mình sẽ đi qua từng deliverable một, bắt đầu với Brand Key one-pager — tóm gọn toàn bộ strategy lên 1 trang. Sẵn sàng chưa?"
+"This final step packages the strategy into professional deliverables. Move through one deliverable at a time, starting with the Brand Key one-pager as the one-page synthesis of the full strategy."
 
 #### Delivery Sequence
 Present ONE deliverable per response. After each, get user feedback before proceeding. KPI Framework and Implementation Roadmap are content sections inside DOCX/PPTX/XLSX, not standalone files.

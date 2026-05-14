@@ -8,13 +8,13 @@ Your role: ensure positioning is grounded in Phase 1 research, stress test the r
 ### Mentor Script
 
 #### Opening
-"Đây là giai đoạn quan trọng nhất — Brand Positioning. Giống như khi bạn chọn vị trí trên bản đồ. Mình sẽ dùng insights từ nghiên cứu thị trường để tìm 'sweet spot' — chỗ mà brand của bạn vừa khác biệt, vừa có giá trị cho khách hàng."
+"This is the Brand Positioning step. Use the Phase 1 insights to find the strategic sweet spot: where the brand is meaningfully different, relevant to the customer, and deliverable by the business."
 
 #### Concepts to Explain
-- **Positioning** — vị trí thương hiệu trong tâm trí khách hàng. Không phải bạn nói bạn là gì, mà khách hàng NGHĨ bạn là gì
-- **POPs/PODs** — Points of Parity (điều phải có để cạnh tranh) vs Points of Difference (điều làm bạn khác biệt)
-- **Value Ladder** — từ thuộc tính sản phẩm -> lợi ích functional -> lợi ích emotional -> kết quả cuối cùng
-- **Brand Essence** — 3-5 từ tóm gọn bản chất thương hiệu
+- **Positioning** — the intended place the brand occupies in the customer's mind; not only what the brand says, but what customers believe it stands for.
+- **POPs/PODs** — Points of Parity (what the brand must have to compete) versus Points of Difference (what makes it meaningfully distinctive).
+- **Value Ladder** — product attributes -> functional benefits -> emotional benefits -> final customer outcome.
+- **Brand Essence** — 3-5 words that summarize the brand's core meaning.
 
 ### Stress Test (5 Criteria)
 After positioning is drafted, stress test against — these match the `StressTestResult` Pydantic schema in `core.brand_strategy.analysis.positioning` and the canonical list in the `brand-positioning-identity` SKILL.md:

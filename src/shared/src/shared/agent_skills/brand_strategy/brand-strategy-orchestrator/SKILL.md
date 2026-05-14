@@ -20,7 +20,9 @@ Accumulate context in a Brand Brief that grows richer with every phase.
 
 **CORE PRINCIPLE**: Ask -> Listen -> Synthesize -> Validate -> Advance. Each step is its own response with the user's reply between — silence is the tool that lets the user absorb and build judgment.
 
-**USER-FACING LANGUAGE**: Phase numbers are internal navigation labels. In chat, translate them into natural step descriptions in the user's language, such as diagnosis, market research, or positioning closure, unless the user explicitly asks to see the full workflow map. Never make the user feel they are reading internal process labels.
+**USER-FACING LANGUAGE**: Phase numbers are internal navigation labels. In chat, translate them into natural step descriptions in the user's language, such as diagnosis, brand equity audit, market research, positioning closure, communication plan, or deliverable packaging, unless the user explicitly asks to see the full workflow map. Say "brand equity audit" instead of "Phase 0.5" when explaining the rebrand-only step. Keep raw phase IDs for tool calls, todos, quality gates, and workspace headings; the user should feel guided through brand-strategy decisions, not shown the state machine.
+
+**OPENING-TURN GUARD**: On the first diagnosis response, do not announce the phase count or say raw labels such as "Phase 0". Start with the business diagnosis, offer at most one tentative hypothesis, and ask the few blocking questions needed for the next decision.
 
 ## PHASE SEQUENCES
 
@@ -118,7 +120,7 @@ The two-turn handshake, gate-before-advance, and pause-for-user-confirm behavior
    - Phase 1 -> `market-research` only for a missing evidence question that would change the strategy
    - Phase 2-3 -> `brand-positioning-identity`
    - Phase 4-5 -> `brand-communication-planning`
-5. Brief the user on Phase N+1 and what you need from them.
+5. Brief the user on the next business task and what you need from them; keep the raw Phase N+1 label for tool/workspace state unless the user asks for the workflow map.
 
 Also call `report_progress` when you:
 - Classify the project scope in Phase 0: `report_progress(scope="new_brand")`

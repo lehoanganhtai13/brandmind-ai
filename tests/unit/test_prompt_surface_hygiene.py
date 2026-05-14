@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from core.brand_strategy.content_check import PHASE_DELIVERABLE_SPECS
@@ -22,6 +23,10 @@ _ORCHESTRATOR_SKILL = (
     _PROJECT_ROOT
     / "src/shared/src/shared/agent_skills/brand_strategy/brand-strategy-orchestrator/SKILL.md"
 )
+_COMMUNICATION_SKILL = (
+    _PROJECT_ROOT
+    / "src/shared/src/shared/agent_skills/brand_strategy/brand-communication-planning/SKILL.md"
+)
 _PHASE_1_REFERENCE = (
     _PROJECT_ROOT
     / "src/shared/src/shared/agent_skills/brand_strategy/brand-strategy-orchestrator"
@@ -31,6 +36,11 @@ _PHASE_0_REFERENCE = (
     _PROJECT_ROOT
     / "src/shared/src/shared/agent_skills/brand_strategy/brand-strategy-orchestrator"
     / "references/phase_0_diagnosis.md"
+)
+_ORCHESTRATOR_REFERENCES = (
+    _PROJECT_ROOT
+    / "src/shared/src/shared/agent_skills/brand_strategy/brand-strategy-orchestrator"
+    / "references"
 )
 _SUBAGENT_MIDDLEWARE = (
     _PROJECT_ROOT / "src/core/src/core/brand_strategy/subagents/middleware.py"
@@ -82,6 +92,17 @@ def test_pptx_dispatch_schema_matches_generator_content_contract() -> None:
     assert "content` argument that is a JSON STRING" not in docx_tool_line
     assert "top-level `slides` argument" in DOCUMENT_GENERATOR_SYSTEM_PROMPT
     assert "accepts a `slides` argument" not in DOCUMENT_GENERATOR_SYSTEM_PROMPT
+
+
+def test_brand_key_dispatch_preserves_prioritized_customer_insight() -> None:
+    """Brand Key dispatch should not rewrite the agreed Phase 1 insight."""
+    assert "Phase 1 prioritized customer insight" in BRAND_STRATEGY_SYSTEM_PROMPT
+    assert "copy that wording exactly into the Brand Key dispatch" in (
+        BRAND_STRATEGY_SYSTEM_PROMPT
+    )
+    assert "do not replace it with a more dramatic adjacent hosting insight" in (
+        BRAND_STRATEGY_SYSTEM_PROMPT
+    )
 
 
 def test_xlsx_schema_matches_actionable_kpi_dashboard_contract() -> None:
@@ -136,11 +157,25 @@ def test_main_prompt_has_chat_process_quality_guardrails() -> None:
         "interaction patterns across turns",
         "stakeholder-defense logic",
         "Turn pacing and phase humility",
+        "Do not add extra question marks inside examples",
         "ask at most three blocking questions",
         "Treat scope as tentative",
         "natural step descriptions",
+        "Backstage labels, business language",
+        "Phase names and the number of phases are workflow state",
+        'do not announce a "6-step" or "6-phase" process',
+        'do not say "Phase 0"',
+        "The user is learning brand strategy, not operating the state machine",
+        "diagnose the problem, audit existing equity, read the market",
+        'say "brand equity audit" or "equity audit step" rather than "Phase 0.5"',
+        "INTERNAL WORKFLOW",
+        "natural consulting engagement",
+        "phase count, and raw phase labels",
+        "The opening reply is a diagnosis turn, not a process-map turn",
+        "USER-FACING LANGUAGE CHECK",
+        'Say "brand equity audit" instead of "Phase 0.5"',
+        "not routed through a state machine",
         "only when the evidence is no longer tentative",
-        "The opening reply is not a workflow-map turn",
         "Ask 2-3 structured blocking questions first",
     )
     for phrase in expected_phrases:
@@ -153,15 +188,51 @@ def test_orchestrator_skill_keeps_phase_labels_internal() -> None:
 
     assert "Phase numbers are internal navigation labels" in skill_text
     assert "natural step descriptions in the user's language" in skill_text
-    assert "Never make the user feel they are reading internal process labels" in (
+    assert "raw phase IDs for tool calls, todos, quality gates" in skill_text
+    assert "OPENING-TURN GUARD" in skill_text
+    assert "do not announce the phase count" in skill_text
+    assert 'raw labels such as "Phase 0"' in skill_text
+    assert 'Say "brand equity audit" instead of "Phase 0.5"' in skill_text
+    assert "Brief the user on the next business task" in skill_text
+    assert "Brief the user on Phase N+1" not in skill_text
+    assert "not shown the state machine" in (
         skill_text
     )
 
 
+def test_tool_invocation_example_avoids_user_facing_phase_labels() -> None:
+    """Natural-language examples should not teach raw phase labels."""
+    assert "I've advanced you to Phase 5" not in BRAND_STRATEGY_SYSTEM_PROMPT
+    assert "we are ready to package the deliverables" in (
+        BRAND_STRATEGY_SYSTEM_PROMPT
+    )
+
+
+def test_phase_0_reference_keeps_raw_phase_labels_internal() -> None:
+    """Opening reference should not prime user-facing raw phase labels."""
+    reference_text = _PHASE_0_REFERENCE.read_text(encoding="utf-8")
+
+    assert "Do not announce the full workflow" in reference_text
+    assert "the raw label \"Phase 0\"" in reference_text
+    assert "working hypothesis" in reference_text
+
+
 def test_prompt_surfaces_keep_instruction_language_consistent() -> None:
     """Avoid mixing Vietnamese examples into otherwise English instructions."""
-    skill_text = _ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
-    combined = "\n".join((BRAND_STRATEGY_SYSTEM_PROMPT, skill_text))
+    orchestrator_text = _ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
+    communication_text = _COMMUNICATION_SKILL.read_text(encoding="utf-8")
+    reference_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(_ORCHESTRATOR_REFERENCES.glob("*.md"))
+    )
+    combined = "\n".join(
+        (
+            BRAND_STRATEGY_SYSTEM_PROMPT,
+            orchestrator_text,
+            communication_text,
+            reference_text,
+        )
+    )
     mixed_language_examples = (
         "Em thường",
         "bước chẩn đoán",
@@ -175,6 +246,52 @@ def test_prompt_surfaces_keep_instruction_language_consistent() -> None:
 
     for phrase in mixed_language_examples:
         assert phrase not in combined
+
+
+def test_prompt_surfaces_do_not_embed_vietnamese_diacritic_examples() -> None:
+    """Keep prompt instructions in one language; response language is runtime behavior."""
+    orchestrator_text = _ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
+    communication_text = _COMMUNICATION_SKILL.read_text(encoding="utf-8")
+    reference_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(_ORCHESTRATOR_REFERENCES.glob("*.md"))
+    )
+    combined = "\n".join(
+        (
+            BRAND_STRATEGY_SYSTEM_PROMPT,
+            orchestrator_text,
+            communication_text,
+            reference_text,
+        )
+    )
+    vietnamese_diacritics = (
+        r"[ăâêôơưđáàảãạấầẩẫậắằẳẵặ"
+        r"éèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộ"
+        r"ớờởỡợúùủũụứừửữựýỳỷỹỵ]"
+    )
+
+    assert not re.search(
+        vietnamese_diacritics,
+        combined,
+        flags=re.IGNORECASE,
+    )
+
+
+def test_communication_skill_reinforces_phase_5_artifact_defense() -> None:
+    """Keep Phase 5 skill aligned with artifact rationale and ROI gates."""
+    skill_text = _COMMUNICATION_SKILL.read_text(encoding="utf-8")
+    expected_phrases = (
+        "pre-dispatch artifact rationale",
+        "Brand Key one-pager",
+        "Strategy DOCX",
+        "Executive PPTX",
+        "KPI XLSX",
+        "budget defensibility line",
+        "break-even or risk note",
+    )
+
+    for phrase in expected_phrases:
+        assert phrase in skill_text
 
 
 def test_phase_4_content_gate_avoids_named_framework_overload() -> None:

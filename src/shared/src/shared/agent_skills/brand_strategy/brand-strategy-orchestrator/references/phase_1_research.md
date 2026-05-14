@@ -7,12 +7,12 @@ This phase builds decision-grade market understanding. Use the `market-research`
 ### Mentor Script
 
 #### Opening
-"Bây giờ mình cần hiểu thị trường — đối thủ, khách hàng, và xu hướng. Giai đoạn này gọi là 'Market Intelligence'. Giống như trước khi mở quán, bạn phải đi khảo sát khu vực vậy."
+"Now build decision-grade market understanding: competitors, customers, and trends. This is the Market Intelligence step. Explain in the user's language why strategy needs market context before positioning."
 
 #### Key Questions
-1. Bạn biết đối thủ trực tiếp nào trong khu vực?
-2. Khách hàng mục tiêu của bạn trông như thế nào? (tuổi, lifestyle, thói quen)
-3. Có xu hướng nào trong ngành F&B mà bạn thấy đang lên?
+1. Which direct competitors in the area does the user already know?
+2. What does the target customer look like? (age, lifestyle, habits, occasion)
+3. Which F&B trends has the user observed as relevant?
 
 ### Research Brief Template
 Frame bounded research tasks only when the missing evidence would change SWOT, target definition, perceptual map, or the strategic sweet spot:

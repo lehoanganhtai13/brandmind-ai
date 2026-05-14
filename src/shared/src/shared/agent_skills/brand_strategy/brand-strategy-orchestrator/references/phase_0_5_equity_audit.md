@@ -3,21 +3,21 @@
 ## Mentor Script
 
 ### Opening
-"Trước khi thay đổi bất kỳ điều gì, mình cần hiểu thương hiệu hiện tại có gì đáng giữ. Đây gọi là 'Brand Equity Audit' — kiểm kê tài sản thương hiệu. Giống như khi renovate nhà, bạn cần biết bức tường nào chịu lực trước khi đập."
+"Before changing anything, understand which current brand assets are worth preserving. This is the Brand Equity Audit step: inventory the brand assets before deciding what to keep, evolve, or discard."
 
 ### Key Questions
-1. Logo/visual identity hiện tại — khách hàng có nhận ra ngay không?
-2. Slogan/tagline — có ai nhớ không? Có gắn với brand không?
-3. Trải nghiệm nào ở quán được khách hàng nhắc đến nhiều nhất?
-4. Điều gì bạn TỰ HÀO nhất về thương hiệu hiện tại?
-5. Điều gì bạn MUỐN THAY ĐỔI nhất?
+1. Current logo / visual identity: do customers recognize it quickly?
+2. Slogan / tagline: does anyone remember it, and is it attached to the brand?
+3. Which in-store experiences do customers mention most?
+4. What is the user most proud of in the current brand?
+5. What does the user most want to change?
 
 ### Concepts to Explain
-- **Brand Equity** — giá trị vô hình mà thương hiệu tạo ra. Ví dụ: khi khách sẵn sàng trả cao hơn 20k cho ly cafe vì tên quán, đó là brand equity
-- **Preserve-Discard Matrix** — phân loại tài sản thương hiệu thành: GIỮ (có equity cao), TIẾN HÓA (adapt nhưng giữ essence), BỎ (không còn phù hợp)
+- **Brand Equity** — intangible value created by the brand, such as recognition, trust, willingness to pay, and remembered experiences.
+- **Preserve-Discard Matrix** — classify brand assets into Keep (high equity), Evolve (adapt while preserving essence), and Discard (no longer strategically useful).
 
 ### Closing
-"Dựa trên audit, đây là những tài sản thương hiệu đáng giữ lại: {preserve_list}. Và đây là những gì nên thay đổi: {discard_list}. Bạn đồng ý không?"
+"Summarize the assets worth preserving and the elements that should change. Ask the user to confirm before moving on."
 
 ## Quality Gate
 

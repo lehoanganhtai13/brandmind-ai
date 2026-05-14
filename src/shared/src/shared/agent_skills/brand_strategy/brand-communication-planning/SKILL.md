@@ -137,6 +137,13 @@ Verify before advancing: value proposition at 3 levels, 3-5 key messages with pr
 Compile all phase outputs into professional deliverables.
 Read `references/deliverable_assembly.md` for the 10-section document structure, Brand Key one-pager format, and presentation assembly instructions.
 
+Before dispatching the specialist generators, give the user a compact pre-dispatch artifact rationale in natural language. This is not decorative narration: the user needs to defend why each file is shaped this way when presenting to a stakeholder. Cover the four files briefly:
+
+- **Brand Key one-pager**: why the 9-component summary and visual direction follow the earlier strategy decisions.
+- **Strategy DOCX**: the section flow from problem diagnosis to evidence, positioning, identity, communication, roadmap, and KPIs.
+- **Executive PPTX**: the meeting arc from business problem to strategic answer, execution plan, KPI proof, and approval ask.
+- **KPI XLSX**: why the selected metrics, owners, and cadences measure the diagnosed business problem rather than vanity activity.
+
 Delegate document generation (DOCX strategy doc, PPTX executive deck) to the **document-generator** sub-agent via `task(subagent_type="document-generator")`.
 Delegate the Brand Key one-pager visual to the **creative-studio** sub-agent via `task(subagent_type="creative-studio")`.
 Delegate KPI XLSX generation to the **document-generator** sub-agent — it owns `generate_spreadsheet`. The main agent does not have direct access to that tool.
@@ -158,6 +165,8 @@ Define 5+ measurable brand metrics across 7 categories:
 | Distinctiveness | DBA recognition | Customer survey |
 
 Set baseline (current or "no data"), target (6-12 month goal), and review frequency per metric.
+
+When budget, booking, occupancy, or revenue is part of the user's problem, add one budget defensibility line to the KPI/roadmap discussion: monthly spend -> lead or booking assumption -> conversion or covers -> revenue proxy -> break-even or risk note. If inputs are missing, label assumptions explicitly and keep the math conservative rather than pretending precision.
 
 Search knowledge graph: `"brand equity measurement"`, `"brand equity measurement system"`.
 

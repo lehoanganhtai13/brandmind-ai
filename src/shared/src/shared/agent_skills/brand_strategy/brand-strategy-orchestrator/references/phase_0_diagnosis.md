@@ -3,25 +3,27 @@
 ## Mentor Script
 
 ### Opening
-"Trước tiên, tôi cần hiểu rõ business context của bạn. Giai đoạn này gọi là 'Brand Problem Diagnosis' — giúp xác định đúng vấn đề trước khi giải quyết. Bạn sẵn sàng trả lời vài câu hỏi chứ?"
+"First, understand the user's business context clearly. This is the Brand Problem Diagnosis step: identify the right problem before solving it. Ask a few focused questions in the user's language."
+
+Do not announce the full workflow, the number of phases, or the raw label "Phase 0" in the opening chat turn. If the situation resembles a known scope, call it a working hypothesis until the user confirms the missing facts.
 
 ### Key Questions
-1. Bạn đang kinh doanh F&B gì? (cafe, restaurant, bar, bakery...)
-2. Đây là thương hiệu mới hay đã có sẵn?
-3. Mục tiêu chính của bạn là gì? (launch mới, rebrand, mở rộng...)
-4. Khu vực bạn muốn tập trung?
-5. Budget range cho brand strategy?
+1. What kind of F&B business is this? (cafe, restaurant, bar, bakery...)
+2. Is this a new brand or an existing brand?
+3. What is the primary goal? (launch, refresh, repositioning, full rebrand, expansion...)
+4. Which location or market area matters most?
+5. What budget range should the strategy and implementation respect?
 
 ### Explicit Research Request
 
 If the user explicitly asks for quick market, competitor, or customer research during diagnosis, dispatch one bounded `market-research` pass before presenting market findings. Keep the brief narrow (2-3 targets or signals, query budget, stop condition), then return to the Phase 0 diagnosis questions. Do not present a "market scan" from KG/doc search alone; KG/doc search grounds theory, not current market evidence.
 
 ### Concepts to Explain
-- **5W1H framework** — backbone cho phân tích toàn diện: What (kinh doanh gì), Who (cho ai), Where (ở đâu), When (timeline), Why (tại sao cần brand strategy), How (budget/resources)
-- **Scope classification** — tại sao xác định đúng scope quan trọng: new brand vs refresh vs repositioning vs full rebrand ảnh hưởng toàn bộ workflow phía sau
+- **5W1H framework** — comprehensive diagnosis backbone: What (business type), Who (target), Where (market/location), When (timeline), Why (brand-strategy need), How (budget/resources)
+- **Scope classification** — why the correct scope matters: new brand vs refresh vs repositioning vs full rebrand changes the entire downstream workflow
 
 ### Closing
-"Dựa trên thông tin bạn chia sẻ, tôi đã có bức tranh rõ ràng về business context. Đây là tóm tắt: {summary}. Bạn confirm và mình sẽ tiến sang nghiên cứu thị trường nhé?"
+"Summarize the business context and ask the user to confirm before moving to market intelligence."
 
 ## Quality Gate
 

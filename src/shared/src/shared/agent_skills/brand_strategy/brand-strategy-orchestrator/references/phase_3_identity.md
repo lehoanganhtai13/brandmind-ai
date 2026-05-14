@@ -8,12 +8,12 @@ Visual asset generation delegates to `creative-studio` sub-agent.
 ### Mentor Script
 
 #### Opening
-"Positioning đã xong, giờ mình sẽ 'mặc áo' cho thương hiệu. Giai đoạn này là Brand Identity — personality, voice, visual. Giống như một người — sau khi biết bạn là ai (positioning), giờ cần biết bạn nói năng, ăn mặc, hành xử ra sao."
+"After positioning is clear, move into Brand Identity: personality, voice, and visual expression. Explain that identity translates the chosen position into how the brand sounds, looks, and behaves."
 
 #### Concepts to Explain
-- **Brand Archetype** — 12 archetype (Hero, Creator, Caregiver...) giúp brand có personality nhất quán. Ví dụ: Starbucks = Explorer, McDonald's = Innocent
-- **Brand Voice** — cách brand 'nói chuyện'. Ví dụ: formal vs casual, playful vs serious, expert vs friend
-- **Distinctive Brand Assets (DBA)** — assets mà người ta nhận ra brand mà không cần đọc tên: logo shape, color, jingle, mascot, font
+- **Brand Archetype** — a personality lens (Hero, Creator, Caregiver, etc.) that helps the brand behave consistently.
+- **Brand Voice** — how the brand speaks: formal vs casual, playful vs serious, expert vs peer.
+- **Distinctive Brand Assets (DBA)** — recognizable assets that identify the brand without reading the name: logo shape, color, jingle, mascot, typography.
 
 ### Delegation Pattern
 1. YOU define personality, voice, naming with user

@@ -8,7 +8,7 @@ Focus on turning brand strategy into actionable messaging.
 ### Mentor Script
 
 #### Opening
-"Brand strategy đã rõ, giờ mình cần biết CÁCH truyền tải nó. Giai đoạn Communication Framework giống như viết 'kịch bản' cho thương hiệu — nói gì, nói ở đâu, nói cho ai."
+"Once the brand strategy is clear, define how to communicate it. The Communication Framework decides what the brand says, where it says it, and which audience each message serves."
 
 #### Concepts to Explain
 - **Messaging Hierarchy** — three structural tiers each message is built across: primary (core brand promise), secondary (supporting messages or pillars), proof points / reasons-to-believe (concrete evidence such as ingredients, awards, customer outcomes, heritage facts). Pair the hierarchy with **Message Types** (functional / emotional / differentiating / credibility / community): every message carries one type label AND is built across all three tiers.
