@@ -6,12 +6,14 @@ from evaluation.judge.artifact_judge import (
     _LEVEL_ACCEPTABLE,
     _LEVEL_FAIL,
     _LEVEL_GOOD,
-    _extract_brand_key_text,
-    _extract_docx_text,
-    _extract_pptx_text,
     ArtifactResult,
     JudgeReport,
     _apply_aggregate_verdict,
+    _default_brandmind_home,
+    _default_output_root,
+    _extract_brand_key_text,
+    _extract_docx_text,
+    _extract_pptx_text,
     _quality_level_for_criteria,
 )
 
@@ -219,3 +221,14 @@ def test_brand_key_extractor_uses_sidecar_before_ocr(tmp_path) -> None:
     assert "Chuyện Ba Bữa Signature" in text
     assert "Root Strengths: Indochine flagship" in text
     assert "Brand Essence: Sophisticated Hospitality" in text
+
+
+def test_artifact_judge_defaults_follow_isolated_run_env(tmp_path, monkeypatch) -> None:
+    """Judge audit lookup should follow isolated eval env roots."""
+    brandmind_home = tmp_path / "brandmind-home"
+    output_root = tmp_path / "brandmind-output"
+    monkeypatch.setenv("BRANDMIND_HOME", str(brandmind_home))
+    monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(output_root))
+
+    assert _default_brandmind_home() == brandmind_home
+    assert _default_output_root() == output_root

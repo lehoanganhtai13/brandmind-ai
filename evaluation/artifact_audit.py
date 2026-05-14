@@ -23,6 +23,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -460,7 +461,10 @@ def parse_manifest(
             ``session_id`` matches are returned. When ``None`` every
             record is returned.
         brand_name: Active workspace brand used to drop diagnostics
-            from other brands that share a session id. The legacy
+            from other brands that share a session id. The comparison
+            accepts casing drift and format suffixes such as
+            ``" - KPI"`` because artifact tools sometimes receive
+            artifact-specific brand labels from the agent. The legacy
             ``"Brand"`` placeholder is accepted for older image tools
             that did not pass through the real brand name.
 
@@ -495,7 +499,7 @@ def parse_manifest(
         if session_id and rec.get("session_id") != session_id:
             continue
         rec_brand_name = rec.get("brand_name") or ""
-        if brand_name and rec_brand_name not in {brand_name, "Brand"}:
+        if brand_name and not _brand_names_compatible(rec_brand_name, brand_name):
             continue
         path = rec.get("path") or ""
         category = rec.get("category") or ""
@@ -513,6 +517,35 @@ def parse_manifest(
             else:
                 out["other_image"].append(path)
     return out
+
+
+def _normalise_brand_label(value: str) -> str:
+    """Return a stable comparison key for manifest brand labels."""
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _brand_names_compatible(recorded: str, expected: str) -> bool:
+    """Return whether a manifest brand label belongs to the workspace brand.
+
+    ``session_id`` remains the primary provenance boundary. This helper
+    only filters obvious cross-brand contamination within the same
+    session, while allowing harmless tool-label drift such as casing
+    changes or artifact suffixes like ``"Brand X - KPI"``.
+    """
+    if recorded == "Brand":
+        return True
+
+    recorded_key = _normalise_brand_label(recorded)
+    expected_key = _normalise_brand_label(expected)
+    if not recorded_key or not expected_key:
+        return False
+    if recorded_key == expected_key:
+        return True
+    return any(
+        recorded_key.startswith(f"{expected_key}{separator}")
+        for separator in (" - ", " | ", ": ")
+    )
 
 
 def _session_cutoff_timestamp(session_start_iso: str | None) -> float | None:
@@ -821,6 +854,11 @@ def _check_presentation_semantic(path: Path) -> SemanticCheck:
     for slide in deck.slides:
         if slide.shapes.title and slide.shapes.title.text:
             titles.append(slide.shapes.title.text.lower())
+            continue
+        for shape in slide.shapes:
+            if hasattr(shape, "text") and shape.text.strip():
+                titles.append(shape.text.strip().lower())
+                break
     slide_count = len(deck.slides)
     title_text = " | ".join(titles)
     matched = _matches_any(title_text, _PRESENTATION_TITLE_PATTERNS)

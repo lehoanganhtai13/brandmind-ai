@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -92,6 +93,18 @@ _GOOD_CRITERIA: dict[str, tuple[str, ...]] = {
 _LEVEL_FAIL = "FAIL"
 _LEVEL_ACCEPTABLE = "ACCEPTABLE"
 _LEVEL_GOOD = "GOOD"
+
+
+def _default_brandmind_home() -> Path:
+    """Return the BrandMind home used by the artifact existence audit."""
+    return Path(os.environ.get("BRANDMIND_HOME") or Path.home() / ".brandmind")
+
+
+def _default_output_root() -> Path:
+    """Return the artifact output root used by the artifact existence audit."""
+    return Path(
+        os.environ.get("BRANDMIND_OUTPUT_DIR") or Path.cwd() / "brandmind-output"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -522,6 +535,8 @@ async def judge_session(
     session_dir: Path,
     judge_model: str,
     artifact_filter: str | None = None,
+    brandmind_home: Path | None = None,
+    output_root: Path | None = None,
 ) -> JudgeReport:
     """Run the artifact content judge over a single session directory.
 
@@ -531,6 +546,11 @@ async def judge_session(
         judge_model: Gemini model id used by the judge.
         artifact_filter: When set to one of the artifact-type keys,
             only that artifact is judged. ``None`` judges all four.
+        brandmind_home: Optional BrandMind workspace root. Defaults to
+            ``BRANDMIND_HOME`` when set, then ``~/.brandmind``.
+        output_root: Optional artifact output root. Defaults to
+            ``BRANDMIND_OUTPUT_DIR`` when set, then
+            ``<cwd>/brandmind-output``.
 
     Returns:
         :class:`JudgeReport` with per-artifact verdicts and the
@@ -539,8 +559,8 @@ async def judge_session(
     rubric = _RUBRIC_PATH.read_text(encoding="utf-8")
     audit_report = run_existence_audit(
         session_dir=session_dir,
-        brandmind_home=Path.home() / ".brandmind",
-        output_root=Path.cwd() / "brandmind-output",
+        brandmind_home=brandmind_home or _default_brandmind_home(),
+        output_root=output_root or _default_output_root(),
     )
     transcript_context = _load_transcript_context(session_dir)
     workspace_context = _load_workspace_context(audit_report.workspace_dir)
@@ -653,6 +673,22 @@ def _build_argparser() -> argparse.ArgumentParser:
             "<session-dir>/artifact_judge.json)."
         ),
     )
+    parser.add_argument(
+        "--brandmind-home",
+        type=Path,
+        help=(
+            "BrandMind workspace root for audit lookup. Defaults to "
+            "BRANDMIND_HOME, then ~/.brandmind."
+        ),
+    )
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        help=(
+            "Artifact output root for audit lookup. Defaults to "
+            "BRANDMIND_OUTPUT_DIR, then <cwd>/brandmind-output."
+        ),
+    )
     return parser
 
 
@@ -669,6 +705,8 @@ def main(argv: list[str] | None = None) -> int:
             session_dir=args.session_dir,
             judge_model=args.judge_model,
             artifact_filter=args.artifact,
+            brandmind_home=args.brandmind_home,
+            output_root=args.output_root,
         )
     )
     output_path = args.out or args.session_dir / "artifact_judge.json"
