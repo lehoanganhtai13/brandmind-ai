@@ -224,10 +224,20 @@ def _format_transcript_for_judge(turns: list[dict[str, Any]]) -> str:
     """Return turn-by-turn text the judge reads as the source of truth."""
     chunks: list[str] = []
     for turn in turns:
+        user_text = (
+            turn.get("user")
+            or turn.get("user_message")
+            or ""
+        ).strip()
+        agent_text = (
+            turn.get("agent")
+            or turn.get("assistant_response")
+            or ""
+        ).strip()
         chunks.append(
             f"--- Turn {turn.get('turn', '?')} ---\n"
-            f"USER: {turn.get('user', '').strip()}\n\n"
-            f"AGENT: {turn.get('agent', '').strip()}"
+            f"USER: {user_text}\n\n"
+            f"AGENT: {agent_text}"
         )
     return "\n\n".join(chunks)
 

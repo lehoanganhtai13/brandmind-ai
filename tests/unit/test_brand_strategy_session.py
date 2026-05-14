@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from langchain.agents.middleware.types import ToolCallRequest
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 
 from core.brand_strategy.content_check import (
     DeliverableDispatchGuardMiddleware,
@@ -19,6 +19,7 @@ from core.brand_strategy.content_check import (
 )
 from core.brand_strategy.session import (
     BrandStrategySession,
+    can_sync_to_deliverable_packaging,
     check_brand_brief_phase_section,
     list_sessions,
     load_session,
@@ -247,12 +248,106 @@ class TestUpdateStrategyProgress:
         assert "do not retry multiple file edits" in result
         assert "Update `/user/profile.md` only if" in result
 
+    def test_final_handoff_request_syncs_to_phase_5_when_brief_is_complete(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "\n\n".join(
+                [
+                    "# Brand Brief",
+                    "## Phase 0: Business Problem Diagnosis\nDone.",
+                    "## Phase 0.5: Brand Equity Audit\nDone.",
+                    "## Phase 1: Market Intelligence\nDone.",
+                    "## Phase 2: Brand Positioning\nDone.",
+                    "## Phase 3: Brand Identity\nDone.",
+                    "## Phase 4: Communication Framework\nDone.",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_0",
+            messages=[
+                HumanMessage(
+                    content=(
+                        "Bạn làm giúp tôi bộ tài liệu cuối: một file "
+                        "chiến lược, "
+                        "một bộ slide, một bảng KPI, và một trang tóm tắt thương "
+                        "hiệu để đem bàn với nhân viên."
+                    )
+                )
+            ],
+        )
+        session.begin_user_turn()
+
+        assert can_sync_to_deliverable_packaging(session)
+        result = update_strategy_progress(session, advance=True)
+
+        assert "phase: phase_0 → phase_5" in result
+        assert session.current_phase == "phase_5"
+        assert session.completed_phases == [
+            "phase_0",
+            "phase_0_5",
+            "phase_1",
+            "phase_2",
+            "phase_3",
+            "phase_4",
+        ]
+
+    def test_final_handoff_request_does_not_sync_when_brief_is_incomplete(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "# Brand Brief\n\n## Phase 0: Business Problem Diagnosis\nDone.\n",
+            encoding="utf-8",
+        )
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_0",
+            messages=[
+                HumanMessage(
+                    content=(
+                        "Làm bộ tài liệu cuối gồm file chiến lược, slide, "
+                        "bảng KPI và trang tóm tắt thương hiệu."
+                    )
+                )
+            ],
+        )
+        session.begin_user_turn()
+
+        assert not can_sync_to_deliverable_packaging(session)
+        result = update_strategy_progress(session, advance=True)
+
+        assert "phase: phase_0 → phase_0_5" in result
+        assert session.current_phase == "phase_0_5"
+
 
 class TestDeliverableDispatchGuard:
     """Test phase-state gating for final artifact sub-agent dispatch."""
 
     @staticmethod
-    def _task_request(subagent_type: str, description: str) -> ToolCallRequest:
+    def _task_request(
+        subagent_type: str,
+        description: str,
+        messages: list[HumanMessage] | None = None,
+    ) -> ToolCallRequest:
         return ToolCallRequest(
             tool_call={
                 "name": "task",
@@ -263,7 +358,7 @@ class TestDeliverableDispatchGuard:
                 "id": "call_1",
             },
             tool=None,
-            state={},
+            state={"messages": messages or []},
             runtime=None,  # type: ignore[arg-type]
         )
 
@@ -290,6 +385,74 @@ class TestDeliverableDispatchGuard:
 
         assert isinstance(result, ToolMessage)
         assert "Cannot dispatch final deliverable sub-agents yet" in result.content
+
+    def test_syncs_to_phase_5_before_final_dispatch_when_workspace_is_ready(
+        self,
+        tmp_path,
+        monkeypatch,
+    ) -> None:
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+        workspace = tmp_path / "projects" / "abc123" / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text(
+            "\n\n".join(
+                [
+                    "# Brand Brief",
+                    "## Phase 0: Business Problem Diagnosis\nDone.",
+                    "## Phase 0.5: Brand Equity Audit\nDone.",
+                    "## Phase 1: Market Intelligence\nDone.",
+                    "## Phase 2: Brand Positioning\nDone.",
+                    "## Phase 3: Brand Identity\nDone.",
+                    "## Phase 4: Communication Framework\nDone.",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        guard = DeliverableDispatchGuardMiddleware()
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_2",
+            completed_phases=["phase_0", "phase_0_5", "phase_1"],
+        )
+        final_request = HumanMessage(
+            content=(
+                "Làm bộ tài liệu cuối gồm file chiến lược, bộ slide, "
+                "bảng KPI và trang tóm tắt thương hiệu."
+            )
+        )
+        set_active_session(session)
+
+        try:
+            with patch.object(
+                DeliverableDispatchGuardMiddleware,
+                "_current_session_artifact_categories",
+                side_effect=[set(), {"documents"}],
+            ):
+                result = guard.wrap_tool_call(
+                    self._task_request(
+                        "document-generator",
+                        "Build the DOCX strategy document",
+                        messages=[final_request],
+                    ),
+                    self._handler,
+                )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert result.content == "ran"
+        assert session.current_phase == "phase_5"
+        assert session.completed_phases == [
+            "phase_0",
+            "phase_0_5",
+            "phase_1",
+            "phase_2",
+            "phase_3",
+            "phase_4",
+        ]
 
     def test_allows_document_generator_at_phase_5(self) -> None:
         guard = DeliverableDispatchGuardMiddleware()

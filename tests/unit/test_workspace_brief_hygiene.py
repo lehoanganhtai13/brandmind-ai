@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from langchain.agents.middleware.types import ToolCallRequest
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 
 from core.brand_strategy.session import BrandStrategySession, set_active_session
 from shared.agent_middlewares.workspace_hygiene import (
@@ -83,6 +83,188 @@ def test_normalizes_duplicate_phases_after_allowed_edit(tmp_path, monkeypatch) -
     assert "Old." not in persisted
     assert "New." in persisted
     assert _PHASE_1 in persisted
+
+
+def test_recovers_stale_full_brief_template_replace(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(hygiene_mod, "BRANDMIND_HOME", tmp_path)
+    workspace = tmp_path / "projects" / "abc123" / "workspace"
+    workspace.mkdir(parents=True)
+    brief = workspace / "brand_brief.md"
+    brief.write_text("# Brand Brief\n\n" + _PHASE_0, "utf-8")
+
+    old_string = "# Brand Strategy Brief: [Brand Name]\n\n## Phase 0\n"
+    new_string = "\n\n".join(
+        [
+            "# Brand Strategy Brief: Cà Phê Cũ",
+            "## Phase 0: Business Problem Diagnosis\nDone.",
+            "## Phase 0.5: Brand Equity Audit\nDone.",
+            "## Phase 1: Market Intelligence\nDone.",
+            "## Phase 2: Brand Positioning\nDone.",
+            "## Phase 3: Brand Identity\nDone.",
+            "## Phase 4: Communication Framework\nDone.",
+            "## Phase 5: Strategy Plan & Deliverables\nDone.",
+        ]
+    )
+
+    middleware = WorkspaceBriefHygieneMiddleware()
+    session = BrandStrategySession(session_id="abc123")
+    set_active_session(session)
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        return ToolMessage("Error: String not found in file", tool_call_id="call_1")
+
+    try:
+        result = middleware.wrap_tool_call(_edit_request(old_string, new_string), handler)
+    finally:
+        set_active_session(None)
+
+    persisted = brief.read_text("utf-8")
+    assert isinstance(result, ToolMessage)
+    assert "Recovered `/workspace/brand_brief.md`" in str(result.content)
+    assert "# Brand Strategy Brief: Cà Phê Cũ" in persisted
+    assert "## Phase 0.5: Brand Equity Audit" in persisted
+    assert "## Phase 5: Strategy Plan & Deliverables" in persisted
+
+
+def test_recovers_placeholder_full_brief_with_nested_phases_and_syncs_handoff(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    import core.brand_strategy.session as sess_mod
+
+    monkeypatch.setattr(hygiene_mod, "BRANDMIND_HOME", tmp_path)
+    monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+    workspace = tmp_path / "projects" / "abc123" / "workspace"
+    workspace.mkdir(parents=True)
+    brief = workspace / "brand_brief.md"
+    brief.write_text("# Brand Brief\n\n## Phase 0: Business Problem Diagnosis\nOld.", "utf-8")
+
+    old_string = "# Brand Brief\n(Empty or placeholder content)\n"
+    new_string = "\n\n".join(
+        [
+            "# Brand Brief - Cà Phê Cũ",
+            "## 3. Chi tiết các giai đoạn",
+            "### Phase 0: Business Problem Diagnosis\nDone.",
+            "### Phase 0.5: Brand Equity Audit\nDone.",
+            "### Phase 1: Market Intelligence\nDone.",
+            "### Phase 2: Brand Positioning\nDone.",
+            "### Phase 3: Brand Identity\nDone.",
+            "### Phase 4: Communication Framework\nDone.",
+            "### Phase 5: Strategy Plan & Deliverables\nReady.",
+        ]
+    )
+
+    request = _edit_request(old_string, new_string)
+    request.state["messages"] = [
+        HumanMessage(
+            content=(
+                "Làm giúp tôi bộ tài liệu cuối gồm file chiến lược, "
+                "bộ slide, bảng KPI và trang tóm tắt thương hiệu."
+            )
+        )
+    ]
+    middleware = WorkspaceBriefHygieneMiddleware()
+    session = BrandStrategySession(
+        session_id="abc123",
+        scope="repositioning",
+        current_phase="phase_0_5",
+        completed_phases=["phase_0"],
+    )
+    set_active_session(session)
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        return ToolMessage("Error: String not found in file", tool_call_id="call_1")
+
+    try:
+        result = middleware.wrap_tool_call(request, handler)
+    finally:
+        set_active_session(None)
+
+    persisted = brief.read_text("utf-8")
+    assert isinstance(result, ToolMessage)
+    assert "Recovered `/workspace/brand_brief.md`" in str(result.content)
+    assert "phase: phase_0_5 → phase_5" in str(result.content)
+    assert session.current_phase == "phase_5"
+    assert "### Phase" not in persisted
+    assert "## Phase 2: Brand Positioning" in persisted
+    assert "## Phase 5: Strategy Plan & Deliverables" in persisted
+
+
+def test_intercepts_broad_replace_all_as_phase_section_upsert(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(hygiene_mod, "BRANDMIND_HOME", tmp_path)
+    workspace = tmp_path / "projects" / "abc123" / "workspace"
+    workspace.mkdir(parents=True)
+    brief = workspace / "brand_brief.md"
+    brief.write_text("# Brand Brief\n\n" + _PHASE_0 + _PHASE_1, "utf-8")
+
+    new_string = "\n\n".join(
+        [
+            "---",
+            "## Phase 2: Brand Positioning\nPositioning summary.",
+            "## Phase 3: Brand Identity\nIdentity summary.",
+        ]
+    )
+    request = _edit_request("---", new_string)
+    request.tool_call["args"]["replace_all"] = True
+    middleware = WorkspaceBriefHygieneMiddleware()
+    session = BrandStrategySession(session_id="abc123")
+    set_active_session(session)
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    try:
+        result = middleware.wrap_tool_call(request, handler)
+    finally:
+        set_active_session(None)
+
+    persisted = brief.read_text("utf-8")
+    assert handler_called is False
+    assert isinstance(result, ToolMessage)
+    assert "upserting the supplied phase section" in str(result.content)
+    assert "## Phase 0: Business Problem Diagnosis" in persisted
+    assert "## Phase 1: Market Intelligence" in persisted
+    assert "## Phase 2: Brand Positioning" in persisted
+    assert "## Phase 3: Brand Identity" in persisted
+
+
+def test_recovers_ambiguous_separator_edit_as_phase_section_upsert(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(hygiene_mod, "BRANDMIND_HOME", tmp_path)
+    workspace = tmp_path / "projects" / "abc123" / "workspace"
+    workspace.mkdir(parents=True)
+    brief = workspace / "brand_brief.md"
+    brief.write_text("# Brand Brief\n\n" + _PHASE_0, "utf-8")
+
+    new_string = "---\n\n## Phase 2: Brand Positioning\nPositioning summary."
+    middleware = WorkspaceBriefHygieneMiddleware()
+    session = BrandStrategySession(session_id="abc123")
+    set_active_session(session)
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        return ToolMessage(
+            "Error: String '---' appears 3 times in file.",
+            tool_call_id=request.tool_call["id"],
+        )
+
+    try:
+        result = middleware.wrap_tool_call(_edit_request("---", new_string), handler)
+    finally:
+        set_active_session(None)
+
+    persisted = brief.read_text("utf-8")
+    assert isinstance(result, ToolMessage)
+    assert "upserting the supplied phase section" in str(result.content)
+    assert "## Phase 0: Business Problem Diagnosis" in persisted
+    assert "## Phase 2: Brand Positioning" in persisted
 
 
 def test_ignores_non_brand_brief_edits() -> None:

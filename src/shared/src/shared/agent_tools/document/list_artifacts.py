@@ -28,6 +28,12 @@ _REQUIRED_PHASE_5_DELIVERABLES = (
     "presentations",
     "spreadsheets",
 )
+_MISSING_DELIVERABLE_GUIDANCE = {
+    "brand_key_image": "Brand Key one-pager image via creative-studio",
+    "documents": "strategy DOCX via document-generator",
+    "presentations": "executive PPTX via document-generator",
+    "spreadsheets": "KPI XLSX via document-generator",
+}
 
 
 def phase5_deliverable_key(record: dict) -> str | None:
@@ -212,9 +218,19 @@ def list_artifacts(
             lines.append(
                 f"Missing required categories: {', '.join(missing_categories)}"
             )
+            missing_guidance = "; ".join(
+                _MISSING_DELIVERABLE_GUIDANCE[category]
+                for category in missing_categories
+            )
             lines.append(
                 "CLOSURE_STATUS: INCOMPLETE — do not tell the user Phase 5 is "
                 "complete or invent paths for missing categories."
+            )
+            lines.append(
+                "NEXT_ACTION_FOR_FINAL_HANDOFF: if the user already asked for the "
+                "final deliverable pack, dispatch only these missing deliverables "
+                f"now without asking for confirmation: {missing_guidance}. Then "
+                'call list_artifacts(scope="current_session") again.'
             )
         else:
             lines.append("Missing required categories: none")

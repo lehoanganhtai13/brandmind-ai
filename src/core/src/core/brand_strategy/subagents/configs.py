@@ -19,8 +19,6 @@ MARKET_RESEARCH_TOOLS = [
     "search_web",
     "scrape_web_content",
     "get_search_autocomplete",
-    "deep_research",
-    "browse_and_research",
 ]
 
 SOCIAL_MEDIA_TOOLS = [

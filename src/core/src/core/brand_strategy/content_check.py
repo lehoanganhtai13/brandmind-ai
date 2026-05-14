@@ -43,6 +43,7 @@ from core.brand_strategy.session import (
     BrandStrategySession,
     get_active_session,
     get_next_phase,
+    sync_to_deliverable_packaging_if_ready,
 )
 from shared.model_clients.llm.google import (
     GoogleAIClientLLM,
@@ -240,7 +241,16 @@ class PhaseStateReminderMiddleware(AgentMiddleware):
             "current phase and call `report_progress(advance=True)` before "
             "presenting later-phase content. Future phase sections in "
             "`brand_brief.md` create conflicting specialist context, so only "
-            "write a phase section after `report_progress` has advanced there."
+            "write a phase section after `report_progress` has advanced there. "
+            "Final-deliverable requests are a catch-up signal: when the user "
+            "explicitly asks for the final strategy files and the prior chat "
+            "or workspace already contains enough substance for the pending "
+            "phase gates, treat that request as permission to close the "
+            "remaining phase work through `report_progress` and move to "
+            "`phase_5` artifact packaging. Do not keep asking for generic "
+            "confirmation or promise files before dispatching the generators; "
+            "if a real strategic input is still missing, ask only that one "
+            "blocking question."
         )
 
     @staticmethod
@@ -361,6 +371,28 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         if request.tool_call.get("name") != "report_progress":
             return False
         return request.tool_call.get("args", {}).get("advance") is True
+
+    @staticmethod
+    def _extract_last_user_text(messages: list[Any]) -> str:
+        """Return the latest human/user message text from a state window."""
+        for message in reversed(messages):
+            message_type = getattr(message, "type", "")
+            class_name = message.__class__.__name__
+            if message_type not in {"human", "user"} and class_name != "HumanMessage":
+                continue
+
+            content = getattr(message, "content", "")
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                return "\n".join(
+                    str(part.get("text", ""))
+                    for part in content
+                    if isinstance(part, dict) and part.get("text")
+                )
+            if isinstance(content, dict):
+                return str(content.get("text") or content.get("content") or "")
+        return ""
 
     @staticmethod
     def _extract_recent_ai_text(messages: list[Any], limit: int = 3) -> str:
@@ -592,6 +624,19 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
             return handler(request)
 
         session = get_active_session()
+        if session is not None:
+            final_request_text = self._extract_last_user_text(
+                request.state.get("messages", [])
+            )
+            sync_result = sync_to_deliverable_packaging_if_ready(
+                session,
+                final_request_text,
+            )
+            if sync_result is not None:
+                return ToolMessage(
+                    content=sync_result,
+                    tool_call_id=request.tool_call["id"],
+                )
         if session is None or session.current_phase not in PHASE_DELIVERABLE_SPECS:
             return handler(request)
 
@@ -643,6 +688,19 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
             return await handler(request)
 
         session = get_active_session()
+        if session is not None:
+            final_request_text = self._extract_last_user_text(
+                request.state.get("messages", [])
+            )
+            sync_result = sync_to_deliverable_packaging_if_ready(
+                session,
+                final_request_text,
+            )
+            if sync_result is not None:
+                return ToolMessage(
+                    content=sync_result,
+                    tool_call_id=request.tool_call["id"],
+                )
         if session is None or session.current_phase not in PHASE_DELIVERABLE_SPECS:
             return await handler(request)
 
@@ -820,6 +878,21 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
         required_completed = set(sequence[:phase_5_index])
         return session.current_phase == "phase_5" and required_completed.issubset(
             set(session.completed_phases)
+        )
+
+    @staticmethod
+    def _sync_phase_5_if_ready(request: ToolCallRequest) -> bool:
+        """Catch up authoritative phase state before final artifact dispatch."""
+        session = get_active_session()
+        if session is None:
+            return False
+
+        final_request_text = ContentCheckAdvanceMiddleware._extract_last_user_text(
+            request.state.get("messages", [])
+        )
+        return (
+            sync_to_deliverable_packaging_if_ready(session, final_request_text)
+            is not None
         )
 
     @staticmethod
@@ -1009,7 +1082,7 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
     ) -> ToolMessage | Command:
         """Gate synchronous final-deliverable task dispatches."""
         if self._is_task_call(request) and self._is_deliverable_dispatch(request):
-            if not self._phase_5_ready():
+            if not self._phase_5_ready() and not self._sync_phase_5_if_ready(request):
                 return self._rejection(request)
             duplicate_categories = self._duplicate_categories(request)
             if duplicate_categories:
@@ -1036,7 +1109,7 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
     ) -> ToolMessage | Command:
         """Gate asynchronous final-deliverable task dispatches."""
         if self._is_task_call(request) and self._is_deliverable_dispatch(request):
-            if not self._phase_5_ready():
+            if not self._phase_5_ready() and not self._sync_phase_5_if_ready(request):
                 return self._rejection(request)
             duplicate_categories = self._duplicate_categories(request)
             if duplicate_categories:

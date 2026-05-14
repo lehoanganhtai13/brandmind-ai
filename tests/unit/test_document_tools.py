@@ -21,9 +21,9 @@ from shared.agent_tools.document._output_path import (
 )
 from shared.agent_tools.document.export_to_markdown import (
     _PHASE_TITLES,
-    _render_value,
-    _format_table,
     _format_full_document,
+    _format_table,
+    _render_value,
     export_to_markdown,
 )
 from shared.agent_tools.document.generate_document import generate_document
@@ -33,7 +33,6 @@ from shared.agent_tools.document.generate_spreadsheet import (
 )
 from shared.agent_tools.document.list_artifacts import list_artifacts
 from shared.agent_tools.document.spreadsheet_templates import SPREADSHEET_TEMPLATES
-
 
 # ===== _PHASE_TITLES =====
 
@@ -955,6 +954,10 @@ class TestListArtifacts:
             in result
         )
         assert "CLOSURE_STATUS: INCOMPLETE" in result
+        assert "NEXT_ACTION_FOR_FINAL_HANDOFF" in result
+        assert "strategy DOCX via document-generator" in result
+        assert "KPI XLSX via document-generator" in result
+        assert "without asking for confirmation" in result
 
     def test_current_session_reports_complete_required_categories(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

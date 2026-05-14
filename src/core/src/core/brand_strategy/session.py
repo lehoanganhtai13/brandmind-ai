@@ -62,6 +62,25 @@ _PHASE_HEADINGS: dict[str, str] = {
     "phase_5": "Phase 5",
 }
 
+_FINAL_HANDOFF_MARKERS = (
+    "final",
+    "handoff",
+    "deliverable",
+    "artifact",
+    "stakeholder",
+    "tài liệu cuối",
+    "bộ tài liệu",
+    "đem bàn",
+    "bàn với",
+)
+
+_FINAL_ARTIFACT_MARKERS: tuple[tuple[str, ...], ...] = (
+    ("strategy file", "strategy document", "file chiến lược", "tài liệu chiến lược"),
+    ("slide", "presentation", "deck", "bộ slide"),
+    ("kpi", "tracker", "spreadsheet", "bảng theo dõi", "bảng kpi"),
+    ("brand key", "brand summary", "tóm tắt thương hiệu", "trang tóm tắt"),
+)
+
 
 def get_next_phase(scope: str | None, current_phase: str) -> str | None:
     """Get the next phase in the sequence for the given scope.
@@ -134,6 +153,119 @@ def check_brand_brief_phase_section(
     )
 
 
+def _message_text(message: Any) -> str:
+    content = getattr(message, "content", message)
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(
+            str(part.get("text", ""))
+            for part in content
+            if isinstance(part, dict) and part.get("type") in {"text", "human"}
+        )
+    if isinstance(content, dict):
+        return str(content.get("content") or content.get("text") or "")
+    return ""
+
+
+def _last_user_text(session: BrandStrategySession) -> str:
+    for message in reversed(session.messages):
+        message_type = getattr(message, "type", "")
+        class_name = message.__class__.__name__
+        if message_type == "human" or class_name == "HumanMessage":
+            return _message_text(message)
+    return ""
+
+
+def _is_final_handoff_request(text: str) -> bool:
+    normalized = text.lower()
+    if not any(marker in normalized for marker in _FINAL_HANDOFF_MARKERS):
+        return False
+    artifact_hits = sum(
+        1
+        for marker_group in _FINAL_ARTIFACT_MARKERS
+        if any(marker in normalized for marker in marker_group)
+    )
+    return artifact_hits >= 2
+
+
+def _pre_deliverable_phases(scope: str | None) -> list[str]:
+    sequence = PHASE_SEQUENCES.get(scope or "", [])
+    if "phase_5" not in sequence:
+        return []
+    return sequence[: sequence.index("phase_5")]
+
+
+def can_sync_to_deliverable_packaging(
+    session: BrandStrategySession,
+    final_request_text: str | None = None,
+) -> bool:
+    """Return whether session state can safely catch up to Phase 5 packaging.
+
+    This is a narrow recovery path for long mentor sessions where the
+    strategic work has been written into the workspace but the formal
+    phase state lagged behind. It only activates when the user asks for
+    final handoff artifacts and the workspace already contains every
+    pre-deliverable phase section required by the selected scope.
+    """
+    if session.current_phase == "phase_5" or not session.scope:
+        return False
+    if final_request_text is not None:
+        handoff_text = final_request_text
+    else:
+        handoff_text = _last_user_text(session)
+    if not _is_final_handoff_request(handoff_text):
+        return False
+
+    required_phases = _pre_deliverable_phases(session.scope)
+    if not required_phases:
+        return False
+    return all(
+        check_brand_brief_phase_section(session.session_id, phase).passes
+        for phase in required_phases
+    )
+
+
+def sync_to_deliverable_packaging_if_ready(
+    session: BrandStrategySession,
+    final_request_text: str | None = None,
+) -> str | None:
+    """Synchronize a lagging session to Phase 5 when handoff is ready.
+
+    The sync is intentionally narrow: it requires an explicit final-file
+    request and verified workspace coverage for every pre-deliverable phase.
+    This keeps the mentor workflow intact while preventing a stale phase
+    counter from blocking artifact packaging after the strategy is already
+    written.
+    """
+    if not can_sync_to_deliverable_packaging(session, final_request_text):
+        return None
+
+    sequence = PHASE_SEQUENCES[session.scope or ""]
+    target_idx = sequence.index("phase_5")
+    old = session.current_phase
+    pre_deliverable = sequence[:target_idx]
+    session.completed_phases = list(pre_deliverable)
+    session.current_phase = "phase_5"
+    session.mark_advanced_in_current_turn()
+
+    return (
+        "Session updated: "
+        f"phase: {old} → phase_5, "
+        "Next: Read /brand-strategy-orchestrator/references/phase_5_deliverables.md, "
+        "Remaining: P5, "
+        "\n\nWorkspace handoff:\n"
+        "- The workspace already contains every pre-deliverable phase section for "
+        "the selected scope, so the session state has been synchronized to "
+        "Phase 5 packaging.\n"
+        "- Read `/brand-strategy-orchestrator/references/phase_5_deliverables.md` "
+        "and dispatch the current-session Brand Key image, strategy DOCX, "
+        "executive PPTX, and KPI XLSX.\n"
+        '- Verify with `list_artifacts(scope="current_session")` before telling '
+        "the user the files are complete."
+    )
+
+
 def update_strategy_progress(
     session: BrandStrategySession,
     *,
@@ -176,6 +308,10 @@ def update_strategy_progress(
                 "Set scope first with report_progress(scope='...') "
                 "before advancing."
             )
+
+        sync_result = sync_to_deliverable_packaging_if_ready(session)
+        if sync_result is not None:
+            return sync_result
 
         if not session.can_advance_in_current_turn():
             return (

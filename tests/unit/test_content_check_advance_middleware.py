@@ -26,11 +26,12 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from core.brand_strategy.content_check import (
     ContentCheckAdvanceMiddleware,
 )
+from core.brand_strategy.session import BrandStrategySession
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -99,6 +100,67 @@ def _phase_session_stub(phase: str) -> Any:
 # ---------------------------------------------------------------------------
 # Test cases
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_final_request_syncs_phase_state_before_judge(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    """Final-file handoff should sync stale phase state without judge latency."""
+    import core.brand_strategy.session as sess_mod
+
+    monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path)
+    workspace = tmp_path / "projects" / "abc123" / "workspace"
+    workspace.mkdir(parents=True)
+    (workspace / "brand_brief.md").write_text(
+        "\n\n".join(
+            [
+                "# Brand Brief",
+                "## Phase 0: Business Problem Diagnosis\nDone.",
+                "## Phase 0.5: Brand Equity Audit\nDone.",
+                "## Phase 1: Market Intelligence\nDone.",
+                "## Phase 2: Brand Positioning\nDone.",
+                "## Phase 3: Brand Identity\nDone.",
+                "## Phase 4: Communication Framework\nDone.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    session = BrandStrategySession(
+        session_id="abc123",
+        scope="repositioning",
+        current_phase="phase_2",
+        completed_phases=["phase_0", "phase_0_5", "phase_1"],
+    )
+    middleware = ContentCheckAdvanceMiddleware()
+    request = _build_advance_request(
+        [
+            HumanMessage(
+                content=(
+                    "Làm bộ tài liệu cuối gồm file chiến lược, bộ slide, "
+                    "bảng KPI và trang tóm tắt thương hiệu."
+                )
+            ),
+            _ai_message_with_text("Ready to package."),
+        ]
+    )
+    handler = AsyncMock(return_value="HANDLER_RAN")
+
+    with (
+        patch(
+            "core.brand_strategy.content_check.get_active_session",
+            return_value=session,
+        ),
+        patch.object(middleware, "_get_llm") as get_llm,
+    ):
+        result = await middleware.awrap_tool_call(request, handler)
+
+    handler.assert_not_awaited()
+    get_llm.assert_not_called()
+    assert isinstance(result, ToolMessage)
+    assert "phase: phase_2 → phase_5" in result.content
+    assert session.current_phase == "phase_5"
 
 
 @pytest.mark.asyncio
