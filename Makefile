@@ -29,8 +29,8 @@ install-dev: ## Install development dependencies only
 install-migration: ## Install migration dependencies only
 	uv sync --group migration
 
-install-all: ## Install all dependencies (chatbot + indexer + dev + migration)
-	uv sync --group chatbot --group indexer --group dev --group migration
+install-all: ## Install all dependencies (chatbot + indexer + server + dev + migration)
+	uv sync --group chatbot --group indexer --group server --group dev --group migration
 
 install-browser: ## Download Chromium for browser tool (run once after install-all)
 	uv run playwright install chromium
@@ -147,7 +147,7 @@ security-check: ## Run security scan with bandit on src/ folder
 
 secrets-baseline: ## Create/update secrets baseline (excludes .env files - they're allowed to have secrets)
 	@echo "Creating baseline (excluding .env files from scan)..."
-	@uv run detect-secrets scan --all-files --exclude-files '.venv/|venv/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/|node_modules/|data/|environments/\.env$$|\.env$$|\.env\..*$$|\.secrets\.baseline$$' > .secrets.baseline
+	@uv run detect-secrets scan --all-files --exclude-files '.venv/|venv/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/|\.ruff_cache/|node_modules/|data/|\.agent/|\.claude/|\.codex/|\.gemini/|\.gitnexus/|brandmind-output/|thesis_reports/|environments/\.env$$|\.env$$|\.env\..*$$|\.secrets\.baseline$$' > .secrets.baseline
 	@echo "✓ Baseline created: .secrets.baseline"
 	@echo "Note: .env files are excluded - they're allowed to contain secrets"
 
@@ -158,7 +158,7 @@ secrets-scan: ## Scan for NEW secrets in code (fails if found - excludes .env fi
 		exit 1; \
 	fi
 	@echo "🔍 Scanning for secrets in code..."
-	@uv run detect-secrets scan --all-files --exclude-files '.venv/|venv/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/|node_modules/|data/|environments/\.env$$|\.env$$|\.env\..*$$|\.secrets\.baseline$$' > /tmp/secrets-current-scan.json 2>&1
+	@uv run detect-secrets scan --all-files --exclude-files '.venv/|venv/|\.git/|__pycache__/|\.pytest_cache/|\.mypy_cache/|\.ruff_cache/|node_modules/|data/|\.agent/|\.claude/|\.codex/|\.gemini/|\.gitnexus/|brandmind-output/|thesis_reports/|environments/\.env$$|\.env$$|\.env\..*$$|\.secrets\.baseline$$' > /tmp/secrets-current-scan.json 2>&1
 	@python3 scripts/compare_secrets.py
 	@rm -f /tmp/secrets-current-scan.json
 
