@@ -9,11 +9,14 @@ The judge reads the last few AI messages and compares them against a
 per-phase deliverable specification (see :data:`PHASE_DELIVERABLE_SPECS`).
 On PASS the tool call proceeds normally. On FAIL the middleware returns
 a :class:`ToolMessage` describing what content is missing so the agent
-can supply it in the next response and retry the advance. If the judge
-call itself fails (network, model error, malformed response) the
-middleware logs a warning and allows the advance — availability is
-prioritized over strict enforcement so a degraded judge does not stall
-an in-flight session.
+can supply it in the next response and retry the advance. Phase 5 also
+requires current-session artifact manifest completeness before
+advancing, because chat text is not a substitute for the Brand Key,
+DOCX, PPTX, and XLSX files the workflow promises. If the judge call
+itself fails (network, model error, malformed response) the middleware
+logs a warning and allows the advance — availability is prioritized
+over strict enforcement so a degraded judge does not stall an in-flight
+session.
 """
 
 from __future__ import annotations
@@ -157,6 +160,22 @@ PHASE_DELIVERABLE_SPECS: dict[str, str] = {
     ),
 }
 
+PHASE_5_REQUIRED_ARTIFACT_CATEGORIES = frozenset(
+    {
+        "images",
+        "documents",
+        "presentations",
+        "spreadsheets",
+    }
+)
+
+PHASE_5_ARTIFACT_GUIDANCE = {
+    "images": "Brand Key one-pager image via the creative-studio specialist",
+    "documents": "strategy DOCX via the document-generator specialist",
+    "presentations": "executive PPTX via the document-generator specialist",
+    "spreadsheets": "KPI XLSX via the document-generator specialist",
+}
+
 
 # ---------------------------------------------------------------------------
 # LLM judge verdict schema
@@ -265,6 +284,10 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
     Outcomes:
 
     * **pass** — the ``handler`` runs normally and the phase advances.
+    * **artifact gap** — Phase 5 completion is blocked when the
+      current-session manifest is missing Brand Key, DOCX, PPTX, or
+      XLSX artifact categories; the agent receives concrete retry
+      guidance for only the missing categories.
     * **fail** — a :class:`ToolMessage` is returned instead of running
       the handler; the message lists the missing components and
       instructs the agent to add them before retrying the advance.
@@ -458,6 +481,57 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         )
 
     @staticmethod
+    def _phase_5_missing_artifact_categories(session: BrandStrategySession) -> set[str]:
+        """Return missing final artifact categories for Phase 5 completion.
+
+        The content judge verifies what the user read in chat. This
+        helper verifies the process contract that final deliverable
+        files exist in the current-session artifact manifest. It is
+        intentionally deterministic and runs before the LLM judge so a
+        missing PPTX cannot pass as a slide outline in chat.
+
+        Args:
+            session: Active brand strategy session.
+
+        Returns:
+            Missing artifact categories when the session is at
+            ``phase_5``; empty set for every other phase or when all
+            required Phase 5 artifact categories are present.
+        """
+        if session.current_phase != "phase_5":
+            return set()
+
+        existing = (
+            DeliverableDispatchGuardMiddleware._current_session_artifact_categories()
+        )
+        return set(PHASE_5_REQUIRED_ARTIFACT_CATEGORIES - existing)
+
+    @staticmethod
+    def _artifact_rejection(
+        request: ToolCallRequest,
+        missing_categories: set[str],
+    ) -> ToolMessage:
+        """Return retry guidance when Phase 5 artifacts are incomplete."""
+        missing_text = ", ".join(sorted(missing_categories))
+        guidance = "; ".join(
+            PHASE_5_ARTIFACT_GUIDANCE[category]
+            for category in sorted(missing_categories)
+        )
+        return ToolMessage(
+            content=(
+                "Cannot complete Phase 5 yet. Current-session artifacts are "
+                f"missing: {missing_text}.\n\n"
+                f"Generate only the missing deliverable(s): {guidance}.\n\n"
+                'Call `list_artifacts(scope="current_session")` to verify the '
+                "current files, then retry `report_progress(advance=True)` "
+                "only after the manifest shows images, documents, "
+                "presentations, and spreadsheets. Chat text or a slide outline "
+                "is not a substitute for a generated PPTX file."
+            ),
+            tool_call_id=request.tool_call["id"],
+        )
+
+    @staticmethod
     def _parse_verdict(raw_text: str) -> ContentCheckVerdict:
         """Parse the judge's raw response into a :class:`ContentCheckVerdict`.
 
@@ -521,6 +595,10 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         if session is None or session.current_phase not in PHASE_DELIVERABLE_SPECS:
             return handler(request)
 
+        missing_artifacts = self._phase_5_missing_artifact_categories(session)
+        if missing_artifacts:
+            return self._artifact_rejection(request, missing_artifacts)
+
         recent_text = self._extract_recent_ai_text(request.state.get("messages", []))
         if not recent_text:
             return handler(request)
@@ -567,6 +645,10 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         session = get_active_session()
         if session is None or session.current_phase not in PHASE_DELIVERABLE_SPECS:
             return await handler(request)
+
+        missing_artifacts = self._phase_5_missing_artifact_categories(session)
+        if missing_artifacts:
+            return self._artifact_rejection(request, missing_artifacts)
 
         recent_text = self._extract_recent_ai_text(request.state.get("messages", []))
         if not recent_text:
@@ -774,6 +856,32 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             tool_call_id=request.tool_call["id"],
         )
 
+    @staticmethod
+    def _missing_after_dispatch_rejection(
+        request: ToolCallRequest,
+        categories: set[str],
+    ) -> ToolMessage:
+        """Return guidance when a specialist dispatch produced no requested file."""
+        categories_text = ", ".join(sorted(categories))
+        guidance = "; ".join(
+            PHASE_5_ARTIFACT_GUIDANCE[category]
+            for category in sorted(categories)
+            if category in PHASE_5_ARTIFACT_GUIDANCE
+        )
+        return ToolMessage(
+            content=(
+                "The specialist dispatch returned, but the current-session "
+                f"artifact manifest still does not contain: {categories_text}.\n\n"
+                f"Do not mark this deliverable as completed. Retry only the "
+                f"missing deliverable(s): {guidance}.\n\n"
+                'After retrying, call `list_artifacts(scope="current_session")` '
+                "and continue only when the requested file category appears in "
+                "the manifest. A chat outline or fallback text does not satisfy "
+                "the file-delivery contract."
+            ),
+            tool_call_id=request.tool_call["id"],
+        )
+
     @classmethod
     def _duplicate_categories(cls, request: ToolCallRequest) -> set[str]:
         requested = cls._requested_categories(request)
@@ -909,6 +1017,16 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             kpi_issues = self._kpi_dispatch_issues(request)
             if kpi_issues:
                 return self._kpi_dispatch_rejection(request, kpi_issues)
+            requested_categories = self._requested_categories(request)
+            result = handler(request)
+            missing_after_dispatch = (
+                requested_categories - self._current_session_artifact_categories()
+            )
+            if missing_after_dispatch:
+                return self._missing_after_dispatch_rejection(
+                    request, missing_after_dispatch
+                )
+            return result
         return handler(request)
 
     async def awrap_tool_call(
@@ -926,6 +1044,16 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             kpi_issues = self._kpi_dispatch_issues(request)
             if kpi_issues:
                 return self._kpi_dispatch_rejection(request, kpi_issues)
+            requested_categories = self._requested_categories(request)
+            result = await handler(request)
+            missing_after_dispatch = (
+                requested_categories - self._current_session_artifact_categories()
+            )
+            if missing_after_dispatch:
+                return self._missing_after_dispatch_rejection(
+                    request, missing_after_dispatch
+                )
+            return result
         return await handler(request)
 
 

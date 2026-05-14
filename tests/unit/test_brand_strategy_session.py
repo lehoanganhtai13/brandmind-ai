@@ -7,6 +7,7 @@ and brief synchronization.
 from __future__ import annotations
 
 import json
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from langchain.agents.middleware.types import ToolCallRequest
@@ -307,13 +308,94 @@ class TestDeliverableDispatchGuard:
         set_active_session(session)
 
         try:
-            result = guard.wrap_tool_call(
-                self._task_request("document-generator", "Build the DOCX"),
-                self._handler,
-            )
+            with patch.object(
+                DeliverableDispatchGuardMiddleware,
+                "_current_session_artifact_categories",
+                side_effect=[set(), {"documents"}],
+            ):
+                result = guard.wrap_tool_call(
+                    self._task_request("document-generator", "Build the DOCX"),
+                    self._handler,
+                )
         finally:
             set_active_session(None)
 
+        assert isinstance(result, ToolMessage)
+        assert result.content == "ran"
+
+    def test_blocks_dispatch_result_when_requested_artifact_is_missing(self) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        set_active_session(session)
+
+        try:
+            with patch.object(
+                DeliverableDispatchGuardMiddleware,
+                "_current_session_artifact_categories",
+                side_effect=[set(), set()],
+            ):
+                result = guard.wrap_tool_call(
+                    self._task_request("document-generator", "Build the PPTX deck"),
+                    self._handler,
+                )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert "still does not contain: presentations" in result.content
+        assert "Do not mark this deliverable as completed" in result.content
+        assert 'list_artifacts(scope="current_session")' in result.content
+        assert "fallback text does not satisfy" in result.content
+
+    @pytest.mark.asyncio
+    async def test_async_allows_dispatch_result_when_requested_artifact_exists(
+        self,
+    ) -> None:
+        guard = DeliverableDispatchGuardMiddleware()
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        set_active_session(session)
+        handler = AsyncMock(
+            return_value=ToolMessage("ran", tool_call_id="call_1")
+        )
+
+        try:
+            with patch.object(
+                DeliverableDispatchGuardMiddleware,
+                "_current_session_artifact_categories",
+                side_effect=[set(), {"presentations"}],
+            ):
+                result = await guard.awrap_tool_call(
+                    self._task_request("document-generator", "Build the PPTX deck"),
+                    handler,
+                )
+        finally:
+            set_active_session(None)
+
+        handler.assert_awaited_once()
         assert isinstance(result, ToolMessage)
         assert result.content == "ran"
 
@@ -409,7 +491,7 @@ class TestDeliverableDispatchGuard:
         assert "already exist" in str(result.content)
         assert "documents" in str(result.content)
 
-    def test_allows_missing_artifact_category_at_phase_5(
+    def test_allows_missing_artifact_category_when_dispatch_creates_it(
         self,
         tmp_path,
         monkeypatch,
@@ -433,10 +515,15 @@ class TestDeliverableDispatchGuard:
         set_active_session(session)
 
         try:
-            result = guard.wrap_tool_call(
-                self._task_request("document-generator", "Build the DOCX"),
-                self._handler,
-            )
+            with patch.object(
+                DeliverableDispatchGuardMiddleware,
+                "_current_session_artifact_categories",
+                side_effect=[set(), {"documents"}],
+            ):
+                result = guard.wrap_tool_call(
+                    self._task_request("document-generator", "Build the DOCX"),
+                    self._handler,
+                )
         finally:
             set_active_session(None)
 
@@ -478,10 +565,26 @@ class TestDeliverableDispatchGuard:
         )
         set_active_session(session)
 
+        def _handler_that_writes_brand_key(request: ToolCallRequest) -> ToolMessage:
+            with (tmp_path / ".manifest.jsonl").open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "session_id": "abc123",
+                            "category": "images",
+                            "tool": "generate_brand_key",
+                            "filename": "brand_key.jpeg",
+                            "path": str(tmp_path / "brand_key.jpeg"),
+                        }
+                    )
+                    + "\n"
+                )
+            return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
         try:
             result = guard.wrap_tool_call(
                 self._task_request("creative-studio", "Build Brand Key one-pager"),
-                self._handler,
+                _handler_that_writes_brand_key,
             )
         finally:
             set_active_session(None)
@@ -583,9 +686,11 @@ class TestDeliverableDispatchGuard:
                 "Build XLSX KPI Dashboard.",
                 'row_1 KPI="Tổng Booking ngày thường (T2-T6)" Baseline="N/A"',
                 'row_2 KPI="Tỷ lệ lấp đầy phòng riêng (Ngày thường)" Current="0"',
-                'row_3 KPI="Qualified Booking Leads" Baseline="no data — measure pre-launch"',
+                'row_3 KPI="Qualified Booking Leads" '
+                'Baseline="no data — measure pre-launch"',
                 'row_4 KPI="Average Guest Check (AOV)" Baseline="[Current]"',
-                'row_5 KPI="Cost Per Booking (CPB)" Current="no data — measure pre-launch"',
+                'row_5 KPI="Cost Per Booking (CPB)" '
+                'Current="no data — measure pre-launch"',
             ]
         )
         set_active_session(session)
@@ -658,10 +763,17 @@ class TestDeliverableDispatchGuard:
         set_active_session(session)
 
         try:
-            result = guard.wrap_tool_call(
-                self._task_request("document-generator", "\n".join(["XLSX", *rows])),
-                self._handler,
-            )
+            with patch.object(
+                DeliverableDispatchGuardMiddleware,
+                "_current_session_artifact_categories",
+                side_effect=[set(), {"spreadsheets"}],
+            ):
+                result = guard.wrap_tool_call(
+                    self._task_request(
+                        "document-generator", "\n".join(["XLSX", *rows])
+                    ),
+                    self._handler,
+                )
         finally:
             set_active_session(None)
 

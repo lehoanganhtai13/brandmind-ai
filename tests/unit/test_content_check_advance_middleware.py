@@ -30,9 +30,7 @@ from langchain_core.messages import AIMessage, ToolMessage
 
 from core.brand_strategy.content_check import (
     ContentCheckAdvanceMiddleware,
-    ContentCheckVerdict,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -141,6 +139,83 @@ async def test_pass_verdict_allows_handler_to_run() -> None:
 
 
 @pytest.mark.asyncio
+async def test_phase_5_missing_artifact_blocks_advance_before_judge() -> None:
+    """Phase 5 cannot complete while a promised artifact category is missing.
+
+    The Phase 5 artifact gate is deterministic and runs before the LLM
+    judge. This pins the process contract surfaced by the Linh
+    acceptance trace: a slide outline in chat must not substitute for a
+    generated PPTX artifact in the current-session manifest.
+    """
+    middleware = ContentCheckAdvanceMiddleware()
+    request = _build_advance_request(
+        [_ai_message_with_text("Here is the final strategy and artifact summary.")]
+    )
+
+    handler = AsyncMock()
+
+    with (
+        patch(
+            "core.brand_strategy.content_check.get_active_session",
+            return_value=_phase_session_stub("phase_5"),
+        ),
+        patch(
+            "core.brand_strategy.content_check."
+            "DeliverableDispatchGuardMiddleware._current_session_artifact_categories",
+            return_value={"images", "documents", "spreadsheets"},
+        ),
+        patch.object(middleware, "_get_llm") as get_llm,
+    ):
+        result = await middleware.awrap_tool_call(request, handler)
+
+    handler.assert_not_awaited()
+    get_llm.assert_not_called()
+    assert isinstance(result, ToolMessage)
+    assert "Cannot complete Phase 5 yet" in result.content
+    assert "presentations" in result.content
+    assert "generated PPTX file" in result.content
+    assert 'list_artifacts(scope="current_session")' in result.content
+
+
+@pytest.mark.asyncio
+async def test_phase_5_complete_artifacts_continue_to_content_judge() -> None:
+    """When Phase 5 artifacts are complete, the normal content judge still applies."""
+    middleware = ContentCheckAdvanceMiddleware()
+    request = _build_advance_request(
+        [_ai_message_with_text("Phase 5 text includes Brand Key, KPI, and roadmap.")]
+    )
+
+    handler = AsyncMock(return_value="HANDLER_RAN")
+
+    with (
+        patch(
+            "core.brand_strategy.content_check.get_active_session",
+            return_value=_phase_session_stub("phase_5"),
+        ),
+        patch(
+            "core.brand_strategy.content_check."
+            "DeliverableDispatchGuardMiddleware._current_session_artifact_categories",
+            return_value={"images", "documents", "presentations", "spreadsheets"},
+        ),
+        patch.object(
+            middleware,
+            "_get_llm",
+            return_value=MagicMock(
+                acomplete=AsyncMock(
+                    return_value=MagicMock(
+                        text='{"passes": true, "missing": "", "reasoning": "ok"}'
+                    )
+                )
+            ),
+        ),
+    ):
+        result = await middleware.awrap_tool_call(request, handler)
+
+    handler.assert_awaited_once_with(request)
+    assert result == "HANDLER_RAN"
+
+
+@pytest.mark.asyncio
 async def test_fail_verdict_returns_rejection_tool_message() -> None:
     """A FAIL verdict short-circuits the handler with an additive-delta rejection.
 
@@ -170,7 +245,8 @@ async def test_fail_verdict_returns_rejection_tool_message() -> None:
                     return_value=MagicMock(
                         text=(
                             '{"passes": false, '
-                            '"missing": "Brand Inventory across visual/verbal/experiential", '
+                            '"missing": "Brand Inventory across '
+                            'visual/verbal/experiential", '
                             '"reasoning": "shallow"}'
                         )
                     )
@@ -215,7 +291,10 @@ async def test_fail_verdict_does_not_redirect_to_workspace() -> None:
             return_value=MagicMock(
                 acomplete=AsyncMock(
                     return_value=MagicMock(
-                        text='{"passes": false, "missing": "competitive landscape", "reasoning": "x"}'
+                        text=(
+                            '{"passes": false, "missing": "competitive landscape", '
+                            '"reasoning": "x"}'
+                        )
                     )
                 )
             ),
