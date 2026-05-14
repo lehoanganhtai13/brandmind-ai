@@ -413,6 +413,69 @@ async def test_mandatory_field_validation():
     assert "invalid priority" in validation["error"]
 
 
+def test_completed_phase_5_pptx_todo_requires_current_session_artifact(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A completed PPTX todo must be backed by the current manifest."""
+    middleware = TodoWriteMiddleware()
+    monkeypatch.setattr(
+        TodoWriteMiddleware,
+        "_phase_5_artifact_guard_active",
+        staticmethod(lambda: True),
+    )
+    monkeypatch.setattr(
+        TodoWriteMiddleware,
+        "_current_session_artifact_categories",
+        staticmethod(lambda: {"images", "documents", "spreadsheets"}),
+    )
+
+    validation = middleware._validate_todos(
+        [
+            {
+                "content": "Khởi tạo Slide họp sếp (PPTX)",
+                "status": "completed",
+                "activeForm": "Đã hoàn thành slide họp sếp",
+                "priority": "high",
+            }
+        ]
+    )
+
+    assert not validation["valid"]
+    assert "presentations todo marked completed" in validation["error"]
+
+
+def test_completed_phase_5_artifact_todo_passes_when_manifest_has_category(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Artifact todos can complete when the current session has the file."""
+    middleware = TodoWriteMiddleware()
+    monkeypatch.setattr(
+        TodoWriteMiddleware,
+        "_phase_5_artifact_guard_active",
+        staticmethod(lambda: True),
+    )
+    monkeypatch.setattr(
+        TodoWriteMiddleware,
+        "_current_session_artifact_categories",
+        staticmethod(
+            lambda: {"images", "documents", "presentations", "spreadsheets"}
+        ),
+    )
+
+    validation = middleware._validate_todos(
+        [
+            {
+                "content": "Khởi tạo Slide họp sếp (PPTX)",
+                "status": "completed",
+                "activeForm": "Đã hoàn thành slide họp sếp",
+                "priority": "high",
+            }
+        ]
+    )
+
+    assert validation["valid"]
+
+
 @pytest.mark.asyncio
 async def test_tool_creation():
     """Test that the middleware creates the tool correctly."""

@@ -31,9 +31,7 @@ from prompts.task_management.todo_system_prompt import (
     WRITE_TODOS_SYSTEM_PROMPT,
     WRITE_TODOS_TOOL_DESCRIPTION,
 )
-
-# Import shared types to ensure consistency
-from shared.agent_types import TodoItem
+from shared.agent_tools.todo.todo_state import TodoState
 
 
 class PlanningState(AgentState):
@@ -48,7 +46,7 @@ class PlanningState(AgentState):
         todos (List[TodoItem]): Persistent todo list for task tracking
     """
 
-    todos: List[TodoItem]
+    todos: TodoState
 
 
 class TodoWriteMiddleware(AgentMiddleware):
@@ -64,6 +62,37 @@ class TodoWriteMiddleware(AgentMiddleware):
     """
 
     state_schema = PlanningState
+
+    _ARTIFACT_TODO_MARKERS = {
+        "images": (
+            "brand key",
+            "brand-key",
+            "brandkey",
+            "bản tóm tắt thương hiệu",
+        ),
+        "documents": (
+            "docx",
+            "strategy document",
+            "strategy doc",
+            "file chiến lược",
+            "bản chiến lược",
+        ),
+        "presentations": (
+            "pptx",
+            "presentation",
+            "deck",
+            "slide",
+            "slide họp",
+            "thuyết trình",
+        ),
+        "spreadsheets": (
+            "xlsx",
+            "spreadsheet",
+            "excel",
+            "kpi",
+            "bảng kpi",
+        ),
+    }
 
     def __init__(
         self,
@@ -411,6 +440,14 @@ class TodoWriteMiddleware(AgentMiddleware):
                     ),
                 }
 
+            artifact_issues = self._artifact_completion_issues(todos)
+            if artifact_issues:
+                return {
+                    "valid": False,
+                    "error": "Artifact completion mismatch: "
+                    + "; ".join(artifact_issues),
+                }
+
             # Mandatory field validation
             for i, todo in enumerate(todos):
                 # Check required content field
@@ -453,6 +490,91 @@ class TodoWriteMiddleware(AgentMiddleware):
 
         except Exception as e:
             return {"valid": False, "error": f"Validation error: {str(e)}"}
+
+    @classmethod
+    def _artifact_completion_issues(cls, todos: List[Dict[str, Any]]) -> list[str]:
+        """Return Phase 5 artifact todo completions unsupported by manifest.
+
+        The todo list is planning state, not proof of file delivery. During
+        Phase 5, a completed artifact todo must be backed by a file in the
+        current-session manifest so the agent cannot satisfy a missing PPTX
+        by pointing at an older run or by saying the DOCX replaces it.
+        """
+        if not cls._phase_5_artifact_guard_active():
+            return []
+
+        produced = cls._current_session_artifact_categories()
+        issues: list[str] = []
+        for todo in todos:
+            if todo.get("status") != "completed":
+                continue
+            text = (
+                f"{todo.get('content', '')} {todo.get('activeForm', '')}"
+            ).casefold()
+            for category, markers in cls._ARTIFACT_TODO_MARKERS.items():
+                if category in produced:
+                    continue
+                if any(marker.casefold() in text for marker in markers):
+                    issues.append(
+                        f"{category} todo marked completed but no current-session "
+                        f"{category} artifact exists"
+                    )
+                    break
+        return issues
+
+    @staticmethod
+    def _phase_5_artifact_guard_active() -> bool:
+        """Return whether completed artifact todos should check the manifest."""
+        try:
+            from core.brand_strategy.session import (  # type: ignore[import-not-found]
+                get_active_session,
+            )
+        except ImportError:
+            return False
+
+        session = get_active_session()
+        return session is not None and session.current_phase == "phase_5"
+
+    @staticmethod
+    def _current_session_artifact_categories() -> set[str]:
+        """Return Phase 5 artifact categories produced in the active session."""
+        try:
+            from core.brand_strategy.session import (  # type: ignore[import-not-found]
+                get_active_session,
+            )
+            from shared.agent_tools.document._output_path import _manifest_path
+            from shared.agent_tools.document.list_artifacts import (
+                phase5_deliverable_key,
+            )
+        except ImportError:
+            return set()
+
+        session = get_active_session()
+        if session is None:
+            return set()
+
+        categories: set[str] = set()
+        try:
+            with open(_manifest_path(), encoding="utf-8") as handle:
+                for line in handle:
+                    try:
+                        record = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if record.get("session_id") != session.session_id:
+                        continue
+                    deliverable = phase5_deliverable_key(record)
+                    if deliverable == "brand_key_image":
+                        categories.add("images")
+                    elif deliverable in {
+                        "documents",
+                        "presentations",
+                        "spreadsheets",
+                    }:
+                        categories.add(deliverable)
+        except OSError:
+            return set()
+        return categories
 
 
 if __name__ == "__main__":

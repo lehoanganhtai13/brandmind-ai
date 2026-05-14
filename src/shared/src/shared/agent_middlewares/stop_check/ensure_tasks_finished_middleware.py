@@ -23,6 +23,7 @@ from prompts.task_management.stop_check_prompts import (
     STOP_CHECK_CRITICAL_REMINDER,
     STOP_CHECK_FINAL_CONFIRMATION,
 )
+from shared.agent_tools.todo.todo_state import TodoState
 from shared.agent_types import TodoItem
 
 
@@ -34,7 +35,7 @@ class PlanningState(AgentState):
     to ensure state consistency across the application.
     """
 
-    todos: List[TodoItem]
+    todos: TodoState
 
 
 class EnsureTasksFinishedMiddleware(AgentMiddleware):
