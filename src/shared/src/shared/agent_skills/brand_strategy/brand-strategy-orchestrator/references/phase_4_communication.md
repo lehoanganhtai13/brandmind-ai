@@ -26,4 +26,4 @@ Focus on turning brand strategy into actionable messaging.
 - [ ] **p4_channels**: Channel strategy defined with content types and frequencies
 - [ ] **p4_pillars**: 3-5 content pillars established
 
-**BEFORE proceeding**: Call `report_progress(advance=True)` to move to the next phase in sequence.
+**Internal transition operation**: After the user confirms the communication framework, call `report_progress(advance=True)` through the tool interface. Keep the tool name and call syntax out of chat; the user-facing reply should describe only the next business step.

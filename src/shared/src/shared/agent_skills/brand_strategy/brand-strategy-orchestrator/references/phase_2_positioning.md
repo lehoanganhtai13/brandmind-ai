@@ -36,4 +36,4 @@ If any criterion fails -> PROACTIVE LOOP TRIGGER fires (see orchestrator: Delive
 - [ ] **p2_product_alignment**: Product-brand alignment checked (menu, pricing, service fit)
 - [ ] **p2_stress_test**: Positioning stress test passed (5 criteria)
 
-**BEFORE proceeding**: Call `report_progress(advance=True)` to move to the next phase in sequence.
+**Internal transition operation**: After the user confirms the positioning decision, call `report_progress(advance=True)` through the tool interface. Keep the tool name and call syntax out of chat; the user-facing reply should describe only the next business step.

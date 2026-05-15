@@ -35,6 +35,7 @@ Usage::
     )
 """
 
+import asyncio
 import os
 from typing import Callable, Coroutine, Literal
 
@@ -47,7 +48,9 @@ from .browser_manager import BrowserManager
 
 _DEFAULT_MODEL = "gemini-3-flash-preview"
 _DEFAULT_THINKING_LEVEL: Literal["minimal", "low", "medium", "high"] = "medium"
-_DEFAULT_MAX_STEPS = 30  # Cap browser actions per task to prevent runaway sessions
+_DEFAULT_MAX_STEPS = 10
+_DEFAULT_TIMEOUT_SECONDS = 90
+_LIVE_BROWSER_MARKER = "LIVE_BROWSER_VERIFICATION_APPROVED"
 
 
 def _create_browser_llm() -> ChatGoogle:
@@ -121,11 +124,12 @@ def create_browse_tool(
         Research social media platforms using a real browser with a
         logged-in clone account session.
 
-        Use this tool ONLY when you need to access content that requires
-        user authentication or JavaScript rendering on social media platforms
-        (Facebook, Instagram, etc.). For general web search, use
-        ``search_web()`` instead. For reading public articles or documents,
-        use the crawl tools instead.
+        Use this tool ONLY when the main Brand Manager assignment explicitly
+        asks for live browser verification and includes the authorization marker
+        ``LIVE_BROWSER_VERIFICATION_APPROVED`` in the task. This keeps normal
+        strategy mentoring proactive while preventing accidental browser loops.
+        For general web search, use ``search_web()`` instead. For reading
+        public articles or documents, use the crawl tools instead.
 
         This tool opens a visible Chrome window that the user can watch.
         An AI browser agent (powered by ``browser-use``) autonomously navigates
@@ -133,13 +137,13 @@ def create_browse_tool(
         information. Interactive elements are highlighted on screen.
 
         When to use:
-        - Research competitor social media posts and engagement metrics
-        - Analyze trending content on Facebook / Instagram feeds
-        - Gather audience feedback from social media comments or replies
-        - Browse social media profiles for brand research
+        - The user explicitly asks to verify current live social/profile data
+        - The assignment includes ``LIVE_BROWSER_VERIFICATION_APPROVED``
+        - A lighter search/scrape path cannot answer the user-requested fact
         - Access authenticated content (e.g., private group posts)
 
         When NOT to use:
+        - The user asks for strategy reasoning and has supplied enough case facts
         - Simple web search queries → use ``search_web()``
         - Reading public articles, blogs, or documentation → use crawl tools
         - Querying marketing knowledge → use ``search_knowledge_graph()``
@@ -172,6 +176,16 @@ def create_browse_tool(
             ValueError: If ``GEMINI_API_KEY`` is not configured. Run
                 ``make setup-env`` to set it up.
         """
+        if _LIVE_BROWSER_MARKER not in task:
+            return (
+                "Live browser verification was not authorized for this task. "
+                "Use search_web or scrape_web_content for lightweight evidence, "
+                "or report the evidence gap instead of opening a browser. "
+                f"Only call browse_and_research when the assignment contains "
+                f"{_LIVE_BROWSER_MARKER}."
+            )
+
+        task = task.replace(_LIVE_BROWSER_MARKER, "").strip()
         llm = _create_browser_llm()
         browser = browser_manager.get_browser()
 
@@ -200,10 +214,21 @@ def create_browse_tool(
             browser=browser,
         )
 
-        # agent.run() returns AgentHistoryList; final_result() extracts
-        # the last response. max_steps is a safety net in case guardrails
-        # don't fully prevent runaway sessions.
-        history = await agent.run(max_steps=_DEFAULT_MAX_STEPS)
+        # agent.run() returns AgentHistoryList; final_result() extracts the
+        # last response. Step and wall-clock caps are both safety nets because
+        # browser agents can keep retrying blocked social/search pages.
+        try:
+            history = await asyncio.wait_for(
+                agent.run(max_steps=_DEFAULT_MAX_STEPS),
+                timeout=_DEFAULT_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            return (
+                "Browser research stopped after the live verification budget "
+                f"({_DEFAULT_TIMEOUT_SECONDS}s, {_DEFAULT_MAX_STEPS} steps). "
+                "Report partial observations and use search_web/scrape_web_content "
+                "for any remaining lightweight checks."
+            )
         final: str = history.final_result() or str(history)
         return final
 

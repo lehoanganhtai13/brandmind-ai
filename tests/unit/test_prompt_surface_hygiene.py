@@ -135,7 +135,9 @@ def test_main_prompt_has_scope_and_research_sufficiency_guardrails() -> None:
         "Do not launch parallel browser deep-dives",
         "External market and social research tools are not part of the main-agent surface",
         "Explicit research request override",
-        "dispatch one bounded `market-research` specialist pass",
+        "dispatch one bounded specialist pass",
+        "Live browser authorization",
+        "LIVE_BROWSER_VERIFICATION_APPROVED",
         "do not present a \"market pulse\"",
         'use `task(subagent_type="market-research")` before claiming you scanned',
         "dispatch a bounded specialist brief",
@@ -163,6 +165,9 @@ def test_main_prompt_has_chat_process_quality_guardrails() -> None:
         "natural step descriptions",
         "Backstage labels, business language",
         "Phase names and the number of phases are workflow state",
+        "Artifact labels, user language",
+        "File-format labels such as DOCX, PPTX, and XLSX are implementation details",
+        "default to human artifact names",
         'do not announce a "6-step" or "6-phase" process',
         'do not say "Phase 0"',
         "The user is learning brand strategy, not operating the state machine",
@@ -194,6 +199,10 @@ def test_orchestrator_skill_keeps_phase_labels_internal() -> None:
     assert 'raw labels such as "Phase 0"' in skill_text
     assert 'Say "brand equity audit" instead of "Phase 0.5"' in skill_text
     assert "Brief the user on the next business task" in skill_text
+    assert "`report_progress` is an internal operation, not a chat topic" in (
+        skill_text
+    )
+    assert "business transition and next decision surface" in skill_text
     assert "Brief the user on Phase N+1" not in skill_text
     assert "not shown the state machine" in (
         skill_text
@@ -215,6 +224,20 @@ def test_phase_0_reference_keeps_raw_phase_labels_internal() -> None:
     assert "Do not announce the full workflow" in reference_text
     assert "the raw label \"Phase 0\"" in reference_text
     assert "working hypothesis" in reference_text
+    assert "Internal transition operation" in reference_text
+    assert "Keep the tool name and call syntax out of chat" in reference_text
+
+
+def test_phase_references_mark_progress_calls_as_internal() -> None:
+    """Loaded phase references should not prime visible tool-call narration."""
+    reference_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(_ORCHESTRATOR_REFERENCES.glob("phase_*.md"))
+    )
+
+    assert "**BEFORE proceeding**" not in reference_text
+    assert "Internal transition operation" in reference_text
+    assert "Keep the tool name and call syntax out of chat" in reference_text
 
 
 def test_prompt_surfaces_keep_instruction_language_consistent() -> None:
@@ -355,10 +378,33 @@ def test_market_research_prompt_has_assignment_budget() -> None:
         "Do not expand a bounded request into a full market crawl",
         "no more than 3 `search_web` queries",
         "at most 5 queries per call",
-        "Use `browse_and_research` only when the assignment explicitly requires",
+        "Browser/live social verification is outside your normal tool surface",
     )
     for phrase in expected_phrases:
         assert phrase in MARKET_RESEARCH_SYSTEM_PROMPT
+
+
+def test_social_media_routing_requires_live_verification_authorization() -> None:
+    """Keep social audits from launching browser loops during strategy mentoring."""
+    source_text = _SUBAGENT_MIDDLEWARE.read_text(encoding="utf-8")
+    expected_phrases = (
+        "Dispatch only when the user explicitly",
+        "Do not dispatch for strategic reasoning from",
+        "LIVE_BROWSER_VERIFICATION_APPROVED",
+        "use lightweight search/scrape",
+        "report the gap",
+    )
+    for phrase in expected_phrases:
+        assert phrase in source_text
+
+    social_expected = (
+        "assignment contains `LIVE_BROWSER_VERIFICATION_APPROVED`",
+        "If the assignment does not explicitly ask for live verification",
+        "no more than 3 `search_web` queries",
+        "report the uncertainty and move on",
+    )
+    for phrase in social_expected:
+        assert phrase in SOCIAL_MEDIA_ANALYST_SYSTEM_PROMPT
 
 
 def test_market_research_task_description_requires_explicit_need() -> None:
@@ -433,7 +479,7 @@ def test_market_research_skill_has_input_sufficiency_budget() -> None:
         "top 2-3 most decision-relevant competitors",
         "Respect the orchestrator's assignment budget",
         "Never pass more than 5 queries",
-        "Use `browse_and_research` only when the assignment explicitly asks",
+        "Browser/live social verification is not part of the market-research default surface",
         "Stop collecting",
     )
     for phrase in expected_phrases:

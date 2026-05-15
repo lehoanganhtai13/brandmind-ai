@@ -122,6 +122,8 @@ The two-turn handshake, gate-before-advance, and pause-for-user-confirm behavior
    - Phase 4-5 -> `brand-communication-planning`
 5. Brief the user on the next business task and what you need from them; keep the raw Phase N+1 label for tool/workspace state unless the user asks for the workflow map.
 
+`report_progress` is an internal operation, not a chat topic. Execute it through the tool interface; in the user-facing reply, describe only the business transition and next decision surface.
+
 Also call `report_progress` when you:
 - Classify the project scope in Phase 0: `report_progress(scope="new_brand")`
 - Learn the brand name: `report_progress(brand_name="...")`

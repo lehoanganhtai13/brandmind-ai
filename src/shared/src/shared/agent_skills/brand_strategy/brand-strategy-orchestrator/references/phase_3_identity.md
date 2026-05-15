@@ -33,4 +33,4 @@ Visual asset generation delegates to `creative-studio` sub-agent.
 - [ ] **p3_dba**: Distinctive Brand Assets strategy planned
 - [ ] **p3_transition**: [Rebrand only] Identity transition plan completed
 
-**BEFORE proceeding**: Call `report_progress(advance=True)` to move to the next phase in sequence.
+**Internal transition operation**: After the user confirms the identity direction, call `report_progress(advance=True)` through the tool interface. Keep the tool name and call syntax out of chat; the user-facing reply should describe only the next business step.

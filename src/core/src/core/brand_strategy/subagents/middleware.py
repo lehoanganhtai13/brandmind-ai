@@ -117,11 +117,19 @@ def create_brand_strategy_subagent_middleware(
             "description": (
                 "Audits F&B brand presence on Instagram, Facebook, and TikTok "
                 "at profile depth: follower mix, content cadence, brand-voice "
-                "tone, hashtag patterns. Dispatch for a focused look at one "
-                "specific competitor's social account or the user's own pages. "
-                "Don't dispatch for broad multi-channel competitive research "
-                "(market-research has wider scope), or for generating new "
-                "social content (creative-studio for visuals)."
+                "tone, hashtag patterns. Dispatch only when the user explicitly "
+                "asks for current social/profile verification, or when one "
+                "specific live social fact is essential to the current decision "
+                "and cannot be answered from user-provided facts, KG, docs, or "
+                "light search. Do not dispatch for strategic reasoning from "
+                "first-party case facts, broad competitor mapping, or a generic "
+                "brand audit; synthesize in the main agent and name the evidence "
+                "gap instead. If live browser verification is truly authorized, "
+                "the assignment must include LIVE_BROWSER_VERIFICATION_APPROVED; "
+                "otherwise the social agent must use lightweight search/scrape "
+                "or report the gap. Don't dispatch for broad multi-channel "
+                "competitive research (market-research has wider scope), or for "
+                "generating new social content (creative-studio for visuals)."
             ),
             "system_prompt": SOCIAL_MEDIA_ANALYST_SYSTEM_PROMPT,
             "model": models["social-media-analyst"],

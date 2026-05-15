@@ -35,7 +35,7 @@ If the user explicitly asks for quick market, competitor, or customer research d
 - [ ] **p0_budget**: Budget tier identified for implementation planning
 - [ ] **p0_user_confirm**: User confirms understanding and agrees to proceed
 
-**BEFORE proceeding**: Set scope and brand via `report_progress(scope="...", brand_name="...")`, then call `report_progress(advance=True)` to move to the next phase.
+**Internal transition operation**: After the user confirms this diagnosis, set scope and brand through `report_progress(scope="...", brand_name="...")`, then call `report_progress(advance=True)` through the tool interface. Keep the tool name and call syntax out of chat; the user-facing reply should describe only the next business step.
 
 ## Special: Rebrand Decision Matrix
 

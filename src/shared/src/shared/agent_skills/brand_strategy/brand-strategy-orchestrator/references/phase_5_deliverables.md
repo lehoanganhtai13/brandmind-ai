@@ -4,6 +4,7 @@
 
 This phase continues with the `brand-communication-planning` sub-skill.
 Document assembly delegates to `document-generator` sub-agent.
+In chat, use human artifact names unless the user asks about file formats: Brand Key one-pager, strategy document, executive deck, and KPI tracker. Keep DOCX/PPTX/XLSX labels for dispatch schemas, manifests, and exact saved paths.
 
 ### Mentor Script
 
@@ -66,4 +67,4 @@ Present ONE deliverable per response. After each, get user feedback before proce
 - [ ] **p5_transition**: [Rebrand only] Transition & change management plan completed
 - [ ] **p5_stakeholder**: [Rebrand only] Stakeholder communication plan defined
 
-**On completion**: Call `report_progress(advance=True)` to mark strategy as complete.
+**Internal completion operation**: After `list_artifacts(scope="current_session")` confirms all required categories, call `report_progress(advance=True)` through the tool interface to mark the strategy complete. Keep the tool name and call syntax out of chat; the user-facing reply should state that the package is complete and explain where each artifact helps them.

@@ -27,7 +27,7 @@
 - [ ] **p05_equity**: Brand equity sources identified (what to keep, evolve, discard)
 - [ ] **p05_preserve_discard**: Preserve-Discard Matrix completed with user alignment
 
-**BEFORE proceeding**: Call `report_progress(advance=True)` to move to the next phase in sequence.
+**Internal transition operation**: After the user confirms the equity audit, call `report_progress(advance=True)` through the tool interface. Keep the tool name and call syntax out of chat; the user-facing reply should describe only the next business step.
 
 ## Audit Procedure
 

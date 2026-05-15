@@ -46,11 +46,14 @@ class _StreamEnd(BaseAgentEvent):
 _STREAM_END = _StreamEnd()
 _INTERNAL_REMINDER_START = "<system-reminder>"
 _INTERNAL_REMINDER_END = "</system-reminder>"
+_COMMENTARY_START = "<commentary>"
+_COMMENTARY_END = "</commentary>"
+_PLAN_CHECK_START = "<plan-check"
+_PLAN_CHECK_END = "</plan-check>"
 _PSEUDO_TOOL_CALL_STARTS = (
     "<call:",
     "<report_progress",
     "<tool",
-    "<plan-check",
     "<task",
     "<function_call",
 )
@@ -66,6 +69,16 @@ _PSEUDO_TOOL_JSON_MARKERS = (
     '"subagent_type"',
     '"todos"',
     '"scope"',
+)
+_INTERNAL_TOOL_LINE_MARKERS = (
+    "`report_progress",
+    "`write_todos",
+    "`task(",
+    "`list_artifacts",
+    "report_progress(",
+    "write_todos",
+    "task(subagent_type=",
+    "list_artifacts(",
 )
 _EMPTY_RESPONSE_FALLBACK = (
     "The last turn did not produce a visible response. "
@@ -92,12 +105,20 @@ def _looks_like_pseudo_tool_json(block: str) -> bool:
     return any(marker in block for marker in _PSEUDO_TOOL_JSON_MARKERS)
 
 
+def _looks_like_internal_tool_line(line: str) -> bool:
+    """Return whether a visible line is only leaking internal tool mechanics."""
+    return any(marker in line for marker in _INTERNAL_TOOL_LINE_MARKERS)
+
+
 class _InternalReminderFilter:
     """Remove internal-only blocks from streamed model-visible text."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, suppress_internal_tool_lines: bool = False) -> None:
         self._buffer = ""
         self._json_fence_buffer = ""
+        self._line_buffer = ""
+        self._internal_block_end = _INTERNAL_REMINDER_END
+        self._suppress_internal_tool_lines = suppress_internal_tool_lines
         self._inside_internal_block = False
         self._inside_pseudo_tool_call = False
         self._inside_json_fence = False
@@ -129,17 +150,20 @@ class _InternalReminderFilter:
                 continue
 
             if self._inside_internal_block:
-                end_index = self._buffer.find(_INTERNAL_REMINDER_END)
+                end_index = self._buffer.find(self._internal_block_end)
                 if end_index == -1:
                     keep = _longest_suffix_prefix_match(
                         self._buffer,
-                        _INTERNAL_REMINDER_END,
+                        self._internal_block_end,
                     )
                     self._buffer = self._buffer[-keep:] if keep else ""
                     break
 
-                self._buffer = self._buffer[end_index + len(_INTERNAL_REMINDER_END) :]
+                self._buffer = self._buffer[
+                    end_index + len(self._internal_block_end) :
+                ]
                 self._inside_internal_block = False
+                self._internal_block_end = _INTERNAL_REMINDER_END
                 continue
 
             if self._inside_pseudo_tool_call:
@@ -157,9 +181,13 @@ class _InternalReminderFilter:
                 continue
 
             start_index = self._buffer.find(_INTERNAL_REMINDER_START)
+            commentary_index = self._buffer.find(_COMMENTARY_START)
+            plan_check_index = self._buffer.find(_PLAN_CHECK_START)
             json_fence_index = self._buffer.find(_JSON_FENCE_START)
             starts = [
                 (start_index, _INTERNAL_REMINDER_START, "internal"),
+                (commentary_index, _COMMENTARY_START, "commentary"),
+                (plan_check_index, _PLAN_CHECK_START, "plan_check"),
                 (json_fence_index, _JSON_FENCE_START, "json_fence"),
                 *(
                     (self._buffer.find(prefix), prefix, "tool_call")
@@ -171,8 +199,12 @@ class _InternalReminderFilter:
                 next_index, prefix, kind = min(starts, key=lambda item: item[0])
                 visible_parts.append(self._buffer[:next_index])
                 self._buffer = self._buffer[next_index + len(prefix) :]
-                if kind == "internal":
+                if kind in {"internal", "commentary", "plan_check"}:
                     self._inside_internal_block = True
+                    self._internal_block_end = {
+                        "commentary": _COMMENTARY_END,
+                        "plan_check": _PLAN_CHECK_END,
+                    }.get(kind, _INTERNAL_REMINDER_END)
                 elif kind == "json_fence":
                     self._inside_json_fence = True
                 else:
@@ -183,6 +215,8 @@ class _InternalReminderFilter:
                 self._buffer,
                 (
                     _INTERNAL_REMINDER_START,
+                    _COMMENTARY_START,
+                    _PLAN_CHECK_START,
                     _JSON_FENCE_START,
                     *_PSEUDO_TOOL_CALL_STARTS,
                 ),
@@ -192,15 +226,17 @@ class _InternalReminderFilter:
             self._buffer = self._buffer[emit_until:]
             break
 
-        return "".join(visible_parts)
+        return self._filter_internal_tool_lines("".join(visible_parts))
 
     def flush(self) -> str:
         """Return any safe buffered text and discard unterminated internals."""
         if self._inside_internal_block or self._inside_pseudo_tool_call:
             self._buffer = ""
             self._json_fence_buffer = ""
+            self._line_buffer = ""
             self._inside_internal_block = False
             self._inside_pseudo_tool_call = False
+            self._internal_block_end = _INTERNAL_REMINDER_END
             return ""
         if self._inside_json_fence:
             text = self._json_fence_buffer + self._buffer
@@ -209,11 +245,32 @@ class _InternalReminderFilter:
             self._inside_json_fence = False
             if _looks_like_pseudo_tool_json(text):
                 return ""
-            return f"{_JSON_FENCE_START}{text}"
+            return self._filter_internal_tool_lines(f"{_JSON_FENCE_START}{text}", final=True)
 
         text = self._buffer
         self._buffer = ""
-        return text
+        return self._filter_internal_tool_lines(text, final=True)
+
+    def _filter_internal_tool_lines(self, text: str, *, final: bool = False) -> str:
+        """Drop leaked internal operation lines for Brand Strategy chat only."""
+        if not self._suppress_internal_tool_lines:
+            return text
+
+        self._line_buffer += text
+        visible_lines: list[str] = []
+        while "\n" in self._line_buffer:
+            line, self._line_buffer = self._line_buffer.split("\n", 1)
+            line_with_newline = f"{line}\n"
+            if not _looks_like_internal_tool_line(line):
+                visible_lines.append(line_with_newline)
+
+        if final and self._line_buffer:
+            line = self._line_buffer
+            self._line_buffer = ""
+            if not _looks_like_internal_tool_line(line):
+                visible_lines.append(line)
+
+        return "".join(visible_lines)
 
 
 async def stream_agent_response(
@@ -274,8 +331,13 @@ async def stream_agent_response(
         # Accumulates response text so we can update session.messages
         # after streaming completes (astream doesn't return final state).
         accumulated_response: list[str] = []
-        response_filter = _InternalReminderFilter()
-        thinking_filter = _InternalReminderFilter()
+        suppress_internal_tool_lines = session.mode is SessionMode.BRAND_STRATEGY
+        response_filter = _InternalReminderFilter(
+            suppress_internal_tool_lines=suppress_internal_tool_lines
+        )
+        thinking_filter = _InternalReminderFilter(
+            suppress_internal_tool_lines=suppress_internal_tool_lines
+        )
         filters_flushed = False
 
         async def _flush_visible_text() -> None:

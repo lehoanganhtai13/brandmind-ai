@@ -128,6 +128,79 @@ def test_internal_filter_preserves_markdown_html_breaks() -> None:
     assert token_filter.flush() == ""
 
 
+def test_internal_filter_removes_commentary_blocks() -> None:
+    """Commentary blocks are internal execution notes, not user-facing text."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed("A<commentary>hidden plan</commentary>B")
+
+    assert output == "AB"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_removes_split_commentary_blocks() -> None:
+    """Commentary blocks should be removed across chunk boundaries."""
+    token_filter = _InternalReminderFilter()
+
+    assert token_filter.feed("A<comm") == "A"
+    assert token_filter.feed("entary>hidden") == ""
+    assert token_filter.feed(" plan</comment") == ""
+    assert token_filter.feed("ary>B") == "B"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_removes_plan_check_blocks() -> None:
+    """Plan-check blocks are internal self-checks, not user-facing text."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed(
+        "A<plan-check>Action: report_progress</plan-check>B"
+    )
+
+    assert output == "AB"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_removes_split_plan_check_blocks() -> None:
+    """Plan-check blocks should be removed across chunk boundaries."""
+    token_filter = _InternalReminderFilter()
+
+    assert token_filter.feed("A<plan") == "A"
+    assert token_filter.feed("-check>Action: report") == ""
+    assert token_filter.feed("_progress</plan") == ""
+    assert token_filter.feed("-check>B") == "B"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_preserves_tool_name_lines_by_default() -> None:
+    """General chat can still discuss tool-call examples when relevant."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed("A\n`report_progress(advance=True)`\nB")
+
+    assert output == "A\n`report_progress(advance=True)`\nB"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_removes_tool_name_lines_when_enabled() -> None:
+    """Brand Strategy chat should drop leaked internal tool-call lines."""
+    token_filter = _InternalReminderFilter(suppress_internal_tool_lines=True)
+
+    output = token_filter.feed("A\n`report_progress(advance=True)` retry\nB")
+
+    assert output == "A\n"
+    assert token_filter.flush() == "B"
+
+
+def test_internal_filter_removes_split_tool_name_lines_when_enabled() -> None:
+    """Line filtering should hold partial tool lines until the newline arrives."""
+    token_filter = _InternalReminderFilter(suppress_internal_tool_lines=True)
+
+    assert token_filter.feed("A\n`report") == "A\n"
+    assert token_filter.feed("_progress(advance=True)` retry\nB") == ""
+    assert token_filter.flush() == "B"
+
+
 def test_internal_filter_removes_tool_json_fence() -> None:
     """Fenced JSON tool payloads are internal and should not reach users."""
     token_filter = _InternalReminderFilter()
@@ -219,6 +292,38 @@ async def test_stream_agent_response_filters_pseudo_tool_calls() -> None:
     assert "<call:" not in "".join(tokens)
     assert "".join(tokens) == "Đã cập nhật. Mình tiếp tục nhé."
     assert session.messages[-1].content == "Đã cập nhật. Mình tiếp tục nhé."
+
+
+@pytest.mark.asyncio
+async def test_stream_agent_response_filters_brand_strategy_internals() -> None:
+    """Brand Strategy streams should suppress plan checks and tool-call lines."""
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.BRAND_STRATEGY,
+        created_at=datetime.now(),
+        last_active=0.0,
+        brand_strategy_session=BrandStrategySession(),
+    )
+    session.agent = cast(
+        CompiledStateGraph,
+        _FakeStreamingAgent(
+            [
+                "A<plan",
+                "-check>Action: report_progress</plan-check>B\n",
+                "`report_progress(advance=True)` retry\n",
+                "C",
+            ]
+        ),
+    )
+    manager = SessionManager()
+    tokens: list[str] = []
+
+    async for event in stream_agent_response(session, "hello", manager):
+        if isinstance(event, StreamingTokenEvent) and event.token and not event.done:
+            tokens.append(event.token)
+
+    assert "".join(tokens) == "AB\nC"
+    assert session.messages[-1].content == "AB\nC"
 
 
 @pytest.mark.asyncio

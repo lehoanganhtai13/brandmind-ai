@@ -37,4 +37,4 @@ Frame bounded research tasks only when the missing evidence would change SWOT, t
 - [ ] **p1_perceptual_map**: Competitive perceptual map created with white space identified
 - [ ] **p1_synthesis**: Strategic synthesis completed (sweet spot + prioritized insights)
 
-**BEFORE proceeding**: Call `report_progress(advance=True)` to move to the next phase in sequence.
+**Internal transition operation**: After the user confirms the market synthesis, call `report_progress(advance=True)` through the tool interface. Keep the tool name and call syntax out of chat; the user-facing reply should describe only the next business step.
