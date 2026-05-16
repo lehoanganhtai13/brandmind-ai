@@ -41,7 +41,6 @@ from .models import (
 
 _DEFAULT_API_URL = "http://localhost:8000"
 _HEALTH_POLL_INTERVAL_SECONDS = 10
-_SIDEBAR_COLLAPSED_BREAKPOINT_PX = 1280
 
 
 def _api_base_url() -> str:
@@ -114,7 +113,9 @@ class BrandMindState(rx.State):
             logger.warning(f"BrandMind web: session bootstrap failed: {exc}")
             async with self:
                 self.is_connected = False
-                self.error_message = "Backend unreachable — start brandmind serve."
+                self.error_message = (
+                    "Backend unreachable — start `brandmind serve` and retry."
+                )
             return
 
         async with self:
@@ -251,7 +252,7 @@ class BrandMindState(rx.State):
             async with self:
                 self.is_streaming = False
                 self.error_message = (
-                    "Mất kết nối khi đang gửi tin nhắn. Thử lại nhé."
+                    "Connection lost mid-send. Please try again."
                 )
                 self._finalize_agent_message()
 
@@ -363,7 +364,7 @@ class BrandMindState(rx.State):
             return
         for tool_call in target.tool_calls:
             if tool_call.result == "":
-                tool_call.result = "(hoàn tất)"
+                tool_call.result = "(done)"
         if target.is_streaming:
             target.is_streaming = False
         self.messages = [*self.messages[:-1], target]

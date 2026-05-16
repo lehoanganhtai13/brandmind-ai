@@ -1,15 +1,17 @@
 """Chat message bubble — user (right-aligned capsule) and agent (left, framed).
 
-Implements ``docs/web_design.md`` § 9.3.1:
-- ``user`` variant: right-aligned, teal-tinted capsule.
-- ``agent`` variant: left-aligned, ``bg.surface.1`` framed page with hairline
-  border. Markdown rendered inline via :func:`rx.markdown`; code blocks use
-  ``font.mono`` against ``bg.surface.2`` per § 9.3.1.
+Implements ``docs/web_design.md`` § 9.3.1 with Codex-review Findings 2, 3,
+and 5 folded in:
 
-The agent variant also surfaces:
-- :func:`_thinking_expansion` — collapsible "Suy nghĩ" pre-amble.
-- :func:`tool_call_card` — inline tool-call cards above the body.
-- :func:`_streaming_cursor` — typing cursor while the turn streams.
+- The agent variant no longer wraps its body in a heavy framed card.
+  A 2 px teal left-border replaces the surrounding box so turns are
+  distinguished by an editorial gutter, not an old-web panel border.
+- Tool-call cards render BEFORE the "Thinking" accordion, so concrete
+  actions surface first and the reasoning trace stays a secondary detail.
+- The "Thinking" accordion is now a small italic toggle with a 12 px
+  chevron; its body is rendered through :func:`rx.markdown` so bold /
+  italic / list formatting survives the trip from the model.
+- The user variant stays a right-aligned teal-tinted capsule.
 """
 
 from __future__ import annotations
@@ -28,37 +30,98 @@ _MARKDOWN_PARAGRAPH_STYLE: dict[str, str] = {
     "margin": "0 0 12px 0",
 }
 
+_THINKING_MD_STYLE: dict[str, str] = {
+    "color": tokens.TEXT_SECONDARY,
+    "font_family": tokens.FONT_SANS,
+    "font_size": "13px",
+    "font_style": "italic",
+    "line_height": "1.6",
+    "margin": "0 0 8px 0",
+}
+
+
+def _thinking_body(message: rx.Var[ChatMessage]) -> rx.Component:
+    """Render the thinking trace as markdown so emphasis survives.
+
+    Inline elements (``strong`` / ``em``) render as ``<span>`` so they do
+    not nest inside the paragraph's ``<p>`` — that combination triggers
+    hydration errors in React 18.
+    """
+    inline_strong = {
+        "color": tokens.TEXT_SECONDARY,
+        "font_family": tokens.FONT_SANS,
+        "font_size": "13px",
+        "font_style": "italic",
+        "font_weight": "600",
+    }
+    inline_em = {
+        "color": tokens.TEXT_SECONDARY,
+        "font_family": tokens.FONT_SANS,
+        "font_size": "13px",
+        "font_style": "italic",
+    }
+    return rx.markdown(
+        message.thinking,
+        component_map={
+            "p": lambda text: rx.text(text, style=_THINKING_MD_STYLE),
+            "strong": lambda text: rx.el.span(text, style=inline_strong),
+            "em": lambda text: rx.el.span(text, style=inline_em),
+            "ul": lambda items: rx.list.unordered(
+                items,
+                style={
+                    **_THINKING_MD_STYLE,
+                    "padding_left": "1.2em",
+                },
+            ),
+            "ol": lambda items: rx.list.ordered(
+                items,
+                style={
+                    **_THINKING_MD_STYLE,
+                    "padding_left": "1.4em",
+                },
+            ),
+            "li": lambda text: rx.list.item(text, style={"margin": "0 0 4px 0"}),
+        },
+    )
+
 
 def _thinking_expansion(message: rx.Var[ChatMessage]) -> rx.Component:
-    """Collapsible "Suy nghĩ" section above the agent body text."""
+    """Minimal collapsible "Thinking" toggle below tool pills.
+
+    Renders as a small italic sans label with a 12 px chevron so it reads
+    as inline metadata, not a primary UI control. Default collapsed.
+    """
     return rx.cond(
         message.thinking != "",
         rx.accordion.root(
             rx.accordion.item(
-                header=rx.text(
-                    "Suy nghĩ",
-                    style={
-                        "color": tokens.TEXT_MUTED,
-                        "font_family": tokens.FONT_MONO,
-                        "font_size": "11px",
-                        "letter_spacing": "0.08em",
-                    },
+                header=rx.hstack(
+                    rx.icon(
+                        tag="chevron_down",
+                        size=12,
+                        color=tokens.TEXT_MUTED,
+                    ),
+                    rx.text(
+                        "Thinking",
+                        style={
+                            "color": tokens.TEXT_MUTED,
+                            "font_family": tokens.FONT_SANS,
+                            "font_size": "12px",
+                            "font_style": "italic",
+                        },
+                    ),
+                    spacing="1",
+                    align="center",
                 ),
-                content=rx.text(
-                    message.thinking,
-                    style={
-                        "color": tokens.TEXT_SECONDARY,
-                        "font_family": tokens.FONT_SANS,
-                        "font_size": "13px",
-                        "font_style": "italic",
-                        "line_height": "1.55",
-                        "white_space": "pre-wrap",
-                    },
+                content=rx.box(
+                    _thinking_body(message),
+                    style={"padding": "6px 0 0 18px"},
                 ),
                 value="thinking",
             ),
             type="single",
             collapsible=True,
+            default_value="",
             variant="ghost",
             width="100%",
         ),
@@ -80,32 +143,24 @@ def _streaming_cursor() -> rx.Component:
 
 
 def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
-    """Render the agent message body with proper markdown styling.
-
-    Uses :func:`rx.markdown` so the agent's bold / italic / list formatting
-    surfaces as real typography instead of leaking raw markdown literals into
-    the chat. The trailing streaming cursor renders only while the turn is
-    still in flight.
-    """
+    """Agent message body rendered as proper markdown."""
     return rx.box(
         rx.markdown(
             message.content,
             component_map={
                 "p": lambda text: rx.text(text, style=_MARKDOWN_PARAGRAPH_STYLE),
-                "strong": lambda text: rx.text(
+                "strong": lambda text: rx.el.span(
                     text,
                     style={
                         "color": tokens.TEXT_PRIMARY,
                         "font_weight": "600",
-                        "display": "inline",
                     },
                 ),
-                "em": lambda text: rx.text(
+                "em": lambda text: rx.el.span(
                     text,
                     style={
                         "color": tokens.TEXT_PRIMARY,
                         "font_style": "italic",
-                        "display": "inline",
                     },
                 ),
                 "ul": lambda items: rx.list.unordered(
@@ -130,13 +185,8 @@ def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
                         "margin": "0 0 12px 0",
                     },
                 ),
-                "li": lambda text: rx.list.item(
-                    text,
-                    style={
-                        "margin": "0 0 4px 0",
-                    },
-                ),
-                "code": lambda text: rx.text(
+                "li": lambda text: rx.list.item(text, style={"margin": "0 0 4px 0"}),
+                "code": lambda text: rx.el.code(
                     text,
                     style={
                         "font_family": tokens.FONT_MONO,
@@ -145,7 +195,6 @@ def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
                         "color": tokens.TEXT_PRIMARY,
                         "padding": "1px 6px",
                         "border_radius": tokens.RADIUS_SM,
-                        "display": "inline",
                     },
                 ),
             },
@@ -156,9 +205,8 @@ def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
 
 
 def _agent_bubble(message: rx.Var[ChatMessage]) -> rx.Component:
-    """Render the agent variant — left-aligned framed page on ``bg.surface.1``."""
+    """Agent turn — left-bordered editorial column, no enclosing box."""
     body = rx.vstack(
-        _thinking_expansion(message),
         rx.cond(
             message.tool_calls.length() > 0,
             rx.vstack(
@@ -169,16 +217,14 @@ def _agent_bubble(message: rx.Var[ChatMessage]) -> rx.Component:
             ),
             rx.fragment(),
         ),
+        _thinking_expansion(message),
         _agent_body(message),
         spacing="3",
         align="start",
         width="100%",
-        padding="16px 20px",
+        padding="6px 0 6px 18px",
         style={
-            "background_color": tokens.BG_SURFACE_1,
-            "border": f"1px solid {tokens.GLASS_BORDER}",
-            "border_radius": tokens.RADIUS_LG,
-            "max_width": "100%",
+            "border_left": f"2px solid {tokens.ACCENT_TEAL_MUTED}",
         },
     )
     return rx.flex(
@@ -190,7 +236,7 @@ def _agent_bubble(message: rx.Var[ChatMessage]) -> rx.Component:
 
 
 def _user_bubble(message: rx.Var[ChatMessage]) -> rx.Component:
-    """Render the user variant — right-aligned capsule with teal-tinted fill."""
+    """User turn — right-aligned capsule with teal-tinted fill."""
     bubble = rx.box(
         rx.text(
             message.content,

@@ -2,9 +2,11 @@
 
 Renders one entry inside an agent message body for each tool call the
 agent dispatches. Matches ``docs/web_design.md`` § 9.3.4 — tool icon,
-human-readable tool label, status pill (running / completed). Cards
-are inline with the message body rather than in a separate panel so
-the chat reads as a single chronological strip.
+human-readable English label, status pill (running / done). Cards are
+inline with the message body so the chat reads as a single chronological
+strip. The label table is restricted to tools actually registered in
+:mod:`core.brand_strategy.agent_config` — alias keys (Codex review
+Finding 4) have been removed.
 """
 
 from __future__ import annotations
@@ -15,41 +17,37 @@ from ..models import ToolCallInfo
 from . import tokens
 
 _TOOL_LABELS: dict[str, str] = {
-    "ls": "Liệt kê tệp workspace",
-    "read_file": "Đọc tệp workspace",
-    "write_file": "Ghi tệp workspace",
-    "edit_file": "Cập nhật tệp workspace",
-    "write_todos": "Cập nhật danh sách todo",
-    "tool_search": "Tìm công cụ phù hợp",
-    "load_tools": "Nạp công cụ chuyên biệt",
-    "task": "Giao việc cho agent chuyên biệt",
-    "report_progress": "Cập nhật tiến độ phase",
-    "kg_search": "Tra cứu Knowledge Graph",
-    "search_knowledge_graph": "Tra cứu Knowledge Graph",
-    "search_documents": "Tra cứu tài liệu chuyên môn",
-    "search_docs": "Tra cứu tài liệu chuyên môn",
-    "search_document_library": "Tra cứu tài liệu chuyên môn",
-    "search_document": "Tra cứu tài liệu chuyên môn",
-    "scrape_url": "Đọc nội dung trang web",
-    "smart_search": "Tìm kiếm thông tin trên web",
-    "web_search": "Tìm kiếm thông tin trên web",
-    "generate_brand_key": "Tạo Brand Key một trang",
-    "generate_document": "Soạn tài liệu chiến lược",
-    "generate_presentation": "Soạn bộ slide trình bày",
-    "generate_spreadsheet": "Lập bảng KPI",
-    "use_browser": "Mở trình duyệt khảo sát",
-    "browser_navigate": "Điều hướng trình duyệt",
-    "extract_content": "Trích xuất nội dung trang",
+    "ls": "List workspace files",
+    "read_file": "Read workspace file",
+    "edit_file": "Update workspace file",
+    "grep": "Search workspace",
+    "write_todos": "Update todo list",
+    "tool_search": "Search for tools",
+    "load_tools": "Load specialist tools",
+    "unload_tools": "Unload specialist tools",
+    "task": "Delegate to specialist agent",
+    "report_progress": "Advance phase",
+    "search_knowledge_graph": "Search Knowledge Graph",
+    "search_document_library": "Search document library",
+    "search_web": "Search the web",
+    "scrape_web_content": "Read web page",
+    "browse_and_research": "Browse and research",
+    "deep_research": "Deep research",
+    "analyze_social_profile": "Analyze social profile",
+    "get_search_autocomplete": "Get customer search suggestions",
+    "generate_image": "Generate brand image",
+    "edit_image": "Edit image",
+    "export_to_markdown": "Export to Markdown",
+    "list_artifacts": "List artifacts",
+    "generate_brand_key": "Compose Brand Key one-pager",
+    "generate_document": "Compose strategy document",
+    "generate_presentation": "Compose presentation deck",
+    "generate_spreadsheet": "Compose KPI spreadsheet",
 }
 
 
 def _humanize(tool_name: rx.Var[str]) -> rx.Var:
-    """Map raw tool name to a Vietnamese label, fall back to the raw value.
-
-    Reflex Vars cannot be looked up with a Python dict at compile time, so
-    the mapping is unrolled into a chained :func:`rx.cond` ladder. New tool
-    names should be added both to ``_TOOL_LABELS`` and to the chain below.
-    """
+    """Project a raw tool name to its English label, fall back to the raw value."""
     label: rx.Var = tool_name
     for raw, human in _TOOL_LABELS.items():
         label = rx.cond(tool_name == raw, human, label)
@@ -73,7 +71,7 @@ def tool_call_card(call: rx.Var[ToolCallInfo]) -> rx.Component:
     return rx.hstack(
         rx.icon(
             tag=rx.cond(is_done, "circle_check", "loader"),
-            size=14,
+            size=13,
             color=rx.cond(is_done, tokens.ACCENT_TEAL_SOLID, tokens.TEXT_MUTED),
         ),
         rx.text(
@@ -85,7 +83,7 @@ def tool_call_card(call: rx.Var[ToolCallInfo]) -> rx.Component:
             },
         ),
         rx.text(
-            rx.cond(is_done, "đã xong", "đang chạy"),
+            rx.cond(is_done, "done", "running"),
             style={
                 "color": tokens.TEXT_MUTED,
                 "font_family": tokens.FONT_SANS,
@@ -95,9 +93,9 @@ def tool_call_card(call: rx.Var[ToolCallInfo]) -> rx.Component:
         ),
         spacing="2",
         align="center",
-        padding="6px 10px",
+        padding="5px 10px",
         style={
-            "background_color": tokens.BG_SURFACE_2,
+            "background_color": "rgba(255, 255, 255, 0.03)",
             "border_radius": tokens.RADIUS_PILL,
             "border": f"1px solid {tokens.GLASS_BORDER}",
             "width": "fit-content",
