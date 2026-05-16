@@ -7,6 +7,7 @@ metadata based on session mode.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -57,3 +58,24 @@ class CreateSessionRequest(BaseModel):
 
     mode: SessionMode
     initial_message: str | None = None
+
+
+class SessionMessage(BaseModel):
+    """One user-or-agent turn from a session's chat history.
+
+    Returned by ``GET /api/v1/sessions/{id}/messages`` so the web UI
+    can repaint a chat scroll when the user switches between
+    persistent sessions. Tool calls and the internal reasoning trace
+    are intentionally not part of this shape — they are stream-only
+    artefacts that do not survive across page reloads.
+    """
+
+    role: Literal["user", "agent"]
+    content: str
+
+
+class SessionMessages(BaseModel):
+    """Wire-format payload for a session's chat history."""
+
+    session_id: str
+    messages: list[SessionMessage]

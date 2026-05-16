@@ -379,3 +379,48 @@ class TestAPIRoutes:
     def test_delete_session_not_found(self, client):
         resp = client.delete("/api/v1/sessions/nonexistent")
         assert resp.status_code == 404
+
+    def test_get_session_messages_empty(self, client):
+        """Brand new session returns empty message history."""
+        create_resp = client.post(
+            "/api/v1/sessions", json={"mode": "ask"}
+        )
+        sid = create_resp.json()["session_id"]
+        resp = client.get(f"/api/v1/sessions/{sid}/messages")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["session_id"] == sid
+        assert body["messages"] == []
+
+    def test_get_session_messages_not_found(self, client):
+        resp = client.get("/api/v1/sessions/nonexistent/messages")
+        assert resp.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_get_session_messages_after_turns(self, client):
+        """Populating a session's message log surfaces through the endpoint."""
+        from langchain_core.messages import AIMessage, HumanMessage
+
+        create_resp = client.post(
+            "/api/v1/sessions", json={"mode": "ask"}
+        )
+        sid = create_resp.json()["session_id"]
+        manager = client.app.state.session_manager
+        session = await manager.get_session(sid)
+        session.messages.extend([
+            HumanMessage(content="Hello"),
+            AIMessage(content="Hi there!"),
+            HumanMessage(content="Tell me a joke"),
+            AIMessage(content=[
+                {"type": "text", "text": "Why did the chicken cross the road?"},
+                {"type": "tool_use", "name": "noop", "input": {}},
+            ]),
+        ])
+        resp = client.get(f"/api/v1/sessions/{sid}/messages")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["session_id"] == sid
+        history = body["messages"]
+        assert [m["role"] for m in history] == ["user", "agent", "user", "agent"]
+        assert history[0]["content"] == "Hello"
+        assert history[3]["content"] == "Why did the chicken cross the road?"
