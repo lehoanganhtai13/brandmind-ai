@@ -1,31 +1,33 @@
 """BrandMind web UI — Reflex entry point.
 
-Wires the application state and registers the root page. Phase 3 lands
-the Header + collapsible PhaseProgressSidebar layout (canonical
-sidebar implementation matching ``docs/web_design.md`` § 8 + § 9.1 +
-§ 9.2). The center chat column stays a placeholder until Phase 4
-ships the ChatPane components — that work plugs into the slot left
-open in :func:`_chat_placeholder`.
+Wires the application state and registers the root page. Phase 4
+lands the full Header + collapsible PhaseProgressSidebar + ChatPane
+layout with streaming chat. The Canvas pane and artifact rendering
+land in Task #92.
 """
 
 from __future__ import annotations
 
 import reflex as rx
 
+from .components.chat_pane import chat_pane
 from .components.header import header
 from .components.sidebar import phase_progress_sidebar
 from .components.tokens import (
-    BG_CANVAS,
     BG_SURFACE_1,
-    GLASS_BORDER,
-    HEADER_HEIGHT_PX,
     STATE_ERROR_BG,
     STATE_ERROR_BORDER,
     STATE_ERROR_FG,
-    TEXT_MUTED,
     TEXT_PRIMARY,
 )
 from .state import BrandMindState
+
+_CURSOR_BLINK_KEYFRAMES = """
+@keyframes bm-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+"""
 
 
 def _error_banner() -> rx.Component:
@@ -54,74 +56,20 @@ def _error_banner() -> rx.Component:
     )
 
 
-def _chat_placeholder() -> rx.Component:
-    """Placeholder centre column until Phase 4 lands ChatPane components.
-
-    Surfaces enough state today to verify Phase 3 visually: session id,
-    current phase label, streaming indicator. Phase 4 replaces this
-    box with the real chat scroll + InputComposer.
-    """
-    return rx.center(
-        rx.vstack(
-            rx.text(
-                "Chat pane comes in Task #91 Phase 4",
-                style={"color": TEXT_MUTED, "font_size": "14px"},
-            ),
-            rx.text(
-                "Session:",
-                style={"color": TEXT_MUTED, "font_size": "12px"},
-            ),
-            rx.text(
-                BrandMindState.session_id,
-                style={
-                    "color": TEXT_PRIMARY,
-                    "font_size": "13px",
-                    "font_family": "monospace",
-                },
-            ),
-            rx.text(
-                "Current phase:",
-                style={"color": TEXT_MUTED, "font_size": "12px"},
-            ),
-            rx.text(
-                BrandMindState.phase_display_labels.get(
-                    BrandMindState.current_phase,
-                    BrandMindState.current_phase,
-                ),
-                style={"color": TEXT_PRIMARY, "font_size": "14px"},
-            ),
-            rx.cond(
-                BrandMindState.is_streaming,
-                rx.text(
-                    "Streaming...",
-                    style={"color": TEXT_MUTED, "font_size": "12px"},
-                ),
-                rx.fragment(),
-            ),
-            spacing="2",
-            align="center",
-        ),
-        flex="1",
-        width="100%",
-        style={
-            "background_color": BG_CANVAS,
-        },
-    )
-
-
 def index() -> rx.Component:
-    """Root page: Header + (Sidebar | ChatPane placeholder).
+    """Root page: Header + (Sidebar | ChatPane).
 
-    Layout is a stacked column: a sticky header on top, a horizontal
-    flex row below that splits the remaining viewport between the
-    sidebar and the chat column. Phase 4 fills the chat column.
+    Layout is a stacked column: a sticky header on top, an optional
+    error banner, and a horizontal row that splits the remaining
+    viewport between the sidebar and the chat column.
     """
     return rx.vstack(
+        rx.html(f"<style>{_CURSOR_BLINK_KEYFRAMES}</style>"),
         header(),
         _error_banner(),
         rx.hstack(
             phase_progress_sidebar(),
-            _chat_placeholder(),
+            chat_pane(),
             spacing="0",
             align="stretch",
             style={
@@ -153,7 +101,3 @@ app = rx.App(
     },
 )
 app.add_page(index, title="BrandMind")
-
-
-_ = HEADER_HEIGHT_PX  # token re-export — referenced by future layout polish
-_ = GLASS_BORDER
