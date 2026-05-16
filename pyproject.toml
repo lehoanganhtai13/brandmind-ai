@@ -50,6 +50,7 @@ server = [
 web = [
     "reflex>=0.8.0",
     "httpx>=0.28.0",
+    "httpx-sse>=0.4.0",
 ]
 migration = [
     "minio>=7.2.20",

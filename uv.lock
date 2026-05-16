@@ -464,6 +464,7 @@ server = [
 ]
 web = [
     { name = "httpx" },
+    { name = "httpx-sse" },
     { name = "reflex" },
 ]
 
@@ -511,6 +512,7 @@ server = [
 ]
 web = [
     { name = "httpx", specifier = ">=0.28.0" },
+    { name = "httpx-sse", specifier = ">=0.4.0" },
     { name = "reflex", specifier = ">=0.8.0" },
 ]
 
