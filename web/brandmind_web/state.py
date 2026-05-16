@@ -77,7 +77,7 @@ class BrandMindState(rx.State):
     is_streaming: bool = False
     pending_input: str = ""
     error_message: str = ""
-    sidebar_collapsed: bool = rx.LocalStorage(
+    sidebar_collapsed: str = rx.LocalStorage(
         "",
         name="bm.web.sidebar.collapsed",
     )

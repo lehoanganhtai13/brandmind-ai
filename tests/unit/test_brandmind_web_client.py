@@ -41,7 +41,7 @@ class TestModels:
     """Pin the client-side Pydantic mirror of the backend schemas."""
 
     def test_session_info_defaults_match_unset_scope_state(self):
-        info = SessionInfo(session_id="abc", mode="brand_strategy")
+        info = SessionInfo(session_id="abc", mode="brand-strategy")
         assert info.metadata.current_phase == "phase_0"
         assert info.metadata.phase_sequence == []
         assert info.metadata.phase_display_labels == {}
@@ -218,7 +218,7 @@ class TestCreateBrandStrategySession:
             def json(self) -> dict:
                 return {
                     "session_id": "sess-1",
-                    "mode": "brand_strategy",
+                    "mode": "brand-strategy",
                     "message_count": 0,
                     "metadata": {
                         "current_phase": "phase_0",
@@ -249,6 +249,6 @@ class TestCreateBrandStrategySession:
         info = await api_client.create_brand_strategy_session("http://localhost:8000")
 
         assert captured["url"].endswith("/api/v1/sessions")
-        assert captured["json"] == {"mode": "brand_strategy"}
+        assert captured["json"] == {"mode": "brand-strategy"}
         assert info.session_id == "sess-1"
         assert info.metadata.current_phase == "phase_0"

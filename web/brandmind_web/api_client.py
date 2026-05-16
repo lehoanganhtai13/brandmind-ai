@@ -83,7 +83,7 @@ async def create_brand_strategy_session(api_base_url: str) -> SessionInfo:
         httpx.HTTPError: On network failure or non-2xx response.
     """
     url = f"{api_base_url}/api/v1/sessions"
-    payload = {"mode": "brand_strategy"}
+    payload = {"mode": "brand-strategy"}
     async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
         response = await client.post(url, json=payload)
         response.raise_for_status()
