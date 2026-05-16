@@ -17,7 +17,7 @@ from dataclasses import dataclass
 import httpx
 from httpx_sse import aconnect_sse
 
-from .models import SessionInfo, StreamDonePayload
+from .models import SessionInfo, SessionMessages, StreamDonePayload
 
 _HEALTH_TIMEOUT_SECONDS = 3
 _CREATE_TIMEOUT_SECONDS = 10
@@ -88,6 +88,57 @@ async def create_brand_strategy_session(api_base_url: str) -> SessionInfo:
         response = await client.post(url, json=payload)
         response.raise_for_status()
     return SessionInfo.model_validate(response.json())
+
+
+async def list_brand_strategy_sessions(api_base_url: str) -> list[SessionInfo]:
+    """Fetch all known brand-strategy sessions on the backend.
+
+    Powers the chat-picker in the sidebar. The web UI filters
+    server-side ask-mode sessions out client-side because the brand
+    strategy UI does not surface them.
+
+    Args:
+        api_base_url (str): Backend base URL.
+
+    Returns:
+        sessions (list[SessionInfo]): Every active session the backend
+        currently exposes; the caller filters by mode if needed.
+
+    Raises:
+        httpx.HTTPError: On network failure or non-2xx response.
+    """
+    url = f"{api_base_url}/api/v1/sessions"
+    async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
+        response = await client.get(url)
+        response.raise_for_status()
+    raw = response.json()
+    return [SessionInfo.model_validate(entry) for entry in raw]
+
+
+async def get_session_messages(
+    api_base_url: str, session_id: str
+) -> SessionMessages:
+    """Fetch persisted message history for a session.
+
+    Called when the user switches between chats so the scroll can
+    repaint the previous conversation. The endpoint omits tool calls
+    and reasoning blocks — those are stream-only artefacts.
+
+    Args:
+        api_base_url (str): Backend base URL.
+        session_id (str): Identifier returned by a prior session creation.
+
+    Returns:
+        messages (SessionMessages): Ordered list of user/agent turns.
+
+    Raises:
+        httpx.HTTPError: On network failure or non-2xx response.
+    """
+    url = f"{api_base_url}/api/v1/sessions/{session_id}/messages"
+    async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
+        response = await client.get(url)
+        response.raise_for_status()
+    return SessionMessages.model_validate(response.json())
 
 
 async def get_session(api_base_url: str, session_id: str) -> SessionInfo:

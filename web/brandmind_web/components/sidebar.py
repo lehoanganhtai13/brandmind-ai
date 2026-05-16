@@ -1,17 +1,23 @@
-"""PhaseProgressSidebar — collapsible left rail showing phase progress.
+"""Sidebar — collapsible left rail showing chat list + phase progress.
 
-Matches ``docs/web_design.md`` § 9.2: scope-dependent phase list with
-per-item states (idle / current / completed), expanded (240 px) and
-collapsed (56 px rail) variants. The collapsed rail renders a numbered
-phase pill per slot (Codex review Finding 5) so the rail communicates
-position even without text labels. State source-of-truth is
-:class:`BrandMindState` — the component only renders.
+Two stacked sections:
+
+- **Chats**: list of brand-strategy chats persisted on the backend with
+  a "+ New chat" button. The active chat is highlighted; clicking
+  another chat repaints the scroll via ``BrandMindState.switch_chat``.
+- **Phases**: scope-dependent phase list with per-item states (idle /
+  current / completed) following ``docs/web_design.md`` § 9.2.
+
+Both sections collapse together into a 56 px rail (Codex review
+Finding 5: numbered glyphs survive the collapse). State source-of-truth
+is :class:`BrandMindState` — the component only renders.
 """
 
 from __future__ import annotations
 
 import reflex as rx
 
+from ..models import SessionInfo
 from ..state import BrandMindState
 from . import tokens
 
@@ -206,8 +212,176 @@ def _empty_state() -> rx.Component:
     )
 
 
-def phase_progress_sidebar() -> rx.Component:
-    """Render the collapsible PhaseProgressSidebar."""
+def _chat_row(info: rx.Var[SessionInfo]) -> rx.Component:
+    """One clickable chat in the picker; teal-tinted when active."""
+    is_active = info.session_id == BrandMindState.session_id
+    label = rx.cond(info.metadata.brand_name, info.metadata.brand_name, "Untitled")
+    meta = rx.cond(
+        info.message_count > 0,
+        info.message_count.to_string() + " msgs",
+        "No messages yet",
+    )
+    return rx.box(
+        rx.vstack(
+            rx.text(
+                label,
+                style={
+                    "color": rx.cond(
+                        is_active, tokens.TEXT_PRIMARY, tokens.TEXT_SECONDARY
+                    ),
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "13px",
+                    "font_weight": rx.cond(is_active, "600", "500"),
+                    "line_height": "1.3",
+                    "overflow": "hidden",
+                    "text_overflow": "ellipsis",
+                    "white_space": "nowrap",
+                    "width": "100%",
+                },
+            ),
+            rx.text(
+                meta,
+                style={
+                    "color": tokens.TEXT_MUTED,
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "11px",
+                    "line_height": "1.3",
+                },
+            ),
+            spacing="1",
+            align="start",
+            width="100%",
+        ),
+        on_click=BrandMindState.switch_chat(info.session_id),
+        style={
+            "padding": "8px 14px",
+            "cursor": "pointer",
+            "border_radius": tokens.RADIUS_SM,
+            "background_color": rx.cond(
+                is_active,
+                "rgba(95, 179, 168, 0.10)",
+                "transparent",
+            ),
+            "border_left": rx.cond(
+                is_active,
+                f"2px solid {tokens.ACCENT_TEAL_SOLID}",
+                "2px solid transparent",
+            ),
+            "transition": "background-color 160ms ease",
+            "_hover": {
+                "background_color": rx.cond(
+                    is_active,
+                    "rgba(95, 179, 168, 0.14)",
+                    "rgba(255, 255, 255, 0.04)",
+                ),
+            },
+        },
+    )
+
+
+def _new_chat_button() -> rx.Component:
+    """Pill button that resets the workspace into a fresh empty chat."""
+    return rx.button(
+        rx.hstack(
+            rx.icon(tag="plus", size=14, color=tokens.TEXT_PRIMARY),
+            rx.text(
+                "New chat",
+                style={
+                    "color": tokens.TEXT_PRIMARY,
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "13px",
+                    "font_weight": "500",
+                },
+            ),
+            spacing="2",
+            align="center",
+        ),
+        on_click=BrandMindState.start_new_chat,
+        variant="ghost",
+        style={
+            "width": "100%",
+            "justify_content": "flex-start",
+            "padding": "8px 14px",
+            "border_radius": tokens.RADIUS_SM,
+            "background_color": "transparent",
+            "border": f"1px solid {tokens.GLASS_BORDER}",
+            "cursor": "pointer",
+            "transition": "border-color 160ms ease, background-color 160ms ease",
+            "_hover": {
+                "border_color": "rgba(95, 179, 168, 0.35)",
+                "background_color": "rgba(95, 179, 168, 0.06)",
+            },
+        },
+    )
+
+
+def _chats_section() -> rx.Component:
+    """Top section: section label + new-chat button + persisted chat list."""
+    return rx.cond(
+        BrandMindState.sidebar_is_collapsed,
+        rx.center(
+            rx.button(
+                rx.icon(tag="plus", size=16, color=tokens.TEXT_PRIMARY),
+                on_click=BrandMindState.start_new_chat,
+                variant="ghost",
+                style={
+                    "width": "32px",
+                    "height": "32px",
+                    "padding": "0",
+                    "border_radius": tokens.RADIUS_PILL,
+                    "border": f"1px solid {tokens.GLASS_BORDER}",
+                    "cursor": "pointer",
+                    "_hover": {
+                        "border_color": "rgba(95, 179, 168, 0.35)",
+                    },
+                },
+            ),
+            width="100%",
+            padding="16px 0 8px 0",
+        ),
+        rx.vstack(
+            rx.text(
+                "Chats",
+                style={
+                    "color": tokens.TEXT_MUTED,
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "12px",
+                    "font_weight": "500",
+                    "letter_spacing": "0.02em",
+                    "padding": "20px 16px 8px 16px",
+                },
+            ),
+            rx.box(_new_chat_button(), padding="0 12px 8px 12px", width="100%"),
+            rx.cond(
+                BrandMindState.sessions.length() == 0,
+                rx.text(
+                    "No chats yet — send a message to start.",
+                    style={
+                        "color": tokens.TEXT_MUTED,
+                        "font_family": tokens.FONT_SANS,
+                        "font_size": "12px",
+                        "font_style": "italic",
+                        "padding": "4px 16px 16px 16px",
+                        "line_height": "1.5",
+                    },
+                ),
+                rx.vstack(
+                    rx.foreach(BrandMindState.sessions, _chat_row),
+                    spacing="1",
+                    align="stretch",
+                    padding="0 12px",
+                    width="100%",
+                ),
+            ),
+            spacing="0",
+            align="stretch",
+            width="100%",
+        ),
+    )
+
+
+def _phases_section() -> rx.Component:
+    """Bottom section: scope-dependent phase tracker."""
     return rx.vstack(
         _section_label(),
         rx.cond(
@@ -237,6 +411,29 @@ def phase_progress_sidebar() -> rx.Component:
         ),
         spacing="0",
         align="start",
+        width="100%",
+    )
+
+
+def _section_divider() -> rx.Component:
+    """Hairline between the Chats and Phases sections."""
+    return rx.box(
+        style={
+            "height": "1px",
+            "background_color": tokens.GLASS_BORDER,
+            "margin": "8px 16px",
+        },
+    )
+
+
+def phase_progress_sidebar() -> rx.Component:
+    """Render the collapsible sidebar with both Chats and Phases sections."""
+    return rx.vstack(
+        _chats_section(),
+        _section_divider(),
+        _phases_section(),
+        spacing="0",
+        align="stretch",
         style={
             "width": rx.cond(
                 BrandMindState.sidebar_is_collapsed,

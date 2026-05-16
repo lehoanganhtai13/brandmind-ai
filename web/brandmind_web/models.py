@@ -77,6 +77,20 @@ class SessionInfo(BaseModel):
     metadata: BrandStrategyMetadata = Field(default_factory=BrandStrategyMetadata)
 
 
+class SessionMessage(BaseModel):
+    """One persisted turn from a session's chat history."""
+
+    role: Literal["user", "agent"]
+    content: str
+
+
+class SessionMessages(BaseModel):
+    """Response body of ``GET /api/v1/sessions/{id}/messages``."""
+
+    session_id: str
+    messages: list[SessionMessage] = Field(default_factory=list)
+
+
 class ChatMessage(BaseModel):
     """One row in the chat scroll — either a user turn or an agent turn.
 

@@ -88,7 +88,7 @@ def index() -> rx.Component:
             "overflow": "hidden",
         },
         on_mount=[
-            BrandMindState.initialize_session,
+            BrandMindState.initialize_app,
             BrandMindState.poll_health,
         ],
     )
