@@ -52,13 +52,14 @@ def _expanded_row(phase_key: rx.Var) -> rx.Component:
     is_current = phase_key == BrandMindState.current_phase
     is_done = BrandMindState.completed_phases.contains(phase_key)
 
-    pill = rx.center(
-        rx.text(
+    pill = rx.box(
+        rx.el.span(
             _phase_number(phase_key),
             style={
                 "font_family": tokens.FONT_SANS,
                 "font_size": "12px",
                 "font_weight": "600",
+                "line_height": "1",
                 "color": rx.cond(
                     is_current | is_done,
                     "#003732",
@@ -69,7 +70,11 @@ def _expanded_row(phase_key: rx.Var) -> rx.Component:
         style={
             "width": "26px",
             "height": "26px",
+            "min_width": "26px",
             "border_radius": tokens.RADIUS_PILL,
+            "display": "flex",
+            "align_items": "center",
+            "justify_content": "center",
             "background_color": rx.cond(
                 is_current | is_done,
                 tokens.ACCENT_TEAL_SOLID,
@@ -111,13 +116,14 @@ def _collapsed_rail_item(phase_key: rx.Var) -> rx.Component:
     is_current = phase_key == BrandMindState.current_phase
     is_done = BrandMindState.completed_phases.contains(phase_key)
 
-    pill = rx.center(
-        rx.text(
+    pill = rx.box(
+        rx.el.span(
             _phase_number(phase_key),
             style={
                 "font_family": tokens.FONT_SANS,
                 "font_size": "12px",
                 "font_weight": "600",
+                "line_height": "1",
                 "color": rx.cond(
                     is_current | is_done,
                     "#003732",
@@ -128,7 +134,11 @@ def _collapsed_rail_item(phase_key: rx.Var) -> rx.Component:
         style={
             "width": "28px",
             "height": "28px",
+            "min_width": "28px",
             "border_radius": tokens.RADIUS_PILL,
+            "display": "flex",
+            "align_items": "center",
+            "justify_content": "center",
             "background_color": rx.cond(
                 is_current | is_done,
                 tokens.ACCENT_TEAL_SOLID,
