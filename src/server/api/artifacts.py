@@ -36,7 +36,15 @@ from shared.agent_tools.document._output_path import _base_dir, _manifest_path
 router = APIRouter(tags=["artifacts"])
 
 _SESSION_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
-_FILENAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.(docx|pptx|xlsx|png|jpg|jpeg|webp)$")
+# Filename must start with a word character (Unicode-aware via ``\w``) so leading
+# ``.`` or ``-`` cannot smuggle a traversal token. Body chars allow Unicode word
+# characters, ``.``, ``-`` so Vietnamese diacritics in real brand-name-derived
+# filenames (e.g. ``brand_key_an_privée.jpeg``) are accepted while ``/`` and
+# control characters remain blocked.
+_FILENAME_RE = re.compile(
+    r"^\w[\w.\-]*\.(docx|pptx|xlsx|png|jpg|jpeg|webp)$",
+    re.UNICODE,
+)
 _INLINE_CATEGORIES = {"images"}
 
 ArtifactCategory = Literal["documents", "presentations", "spreadsheets", "images"]

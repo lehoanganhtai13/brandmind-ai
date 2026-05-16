@@ -323,6 +323,38 @@ class TestDownloadArtifact:
         resp = client.get("/api/v1/artifacts/bad..sid/file.docx")
         assert resp.status_code == 400
 
+    def test_accepts_unicode_filename(
+        self, client: TestClient, output_root: Path
+    ) -> None:
+        """Vietnamese filenames from real production data must round-trip.
+
+        Production manifests carry filenames such as
+        ``brand_key_an_privée.jpeg`` (diacritics inherited from the
+        brand name). The filename regex uses ``re.UNICODE`` so these
+        survive the route-level shape check.
+        """
+        path = _stub_artifact(output_root, "images", "brand_key_an_privée.jpeg")
+        _write_manifest(
+            output_root,
+            [
+                {
+                    "session_id": "s_alpha",
+                    "brand_name": "Alpha",
+                    "category": "images",
+                    "tool": "generate_brand_key",
+                    "filename": "brand_key_an_privée.jpeg",
+                    "path": str(path),
+                    "size_bytes": path.stat().st_size,
+                    "generated_at": "2026-05-16T10:00:00+07:00",
+                }
+            ],
+        )
+        resp = client.get(
+            "/api/v1/artifacts/s_alpha/brand_key_an_privée.jpeg"
+        )
+        assert resp.status_code == 200
+        assert resp.content == b"FAKE_BINARY_PAYLOAD"
+
     def test_404_when_manifest_path_escapes_base(
         self,
         client: TestClient,
