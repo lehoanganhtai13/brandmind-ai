@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 import uuid
 
 import httpx
@@ -34,6 +35,7 @@ from .models import (
     PhaseAdvancePayload,
     StreamingThinkingPayload,
     StreamingTokenPayload,
+    TimelineEntry,
     ToolCallInfo,
     ToolCallPayload,
     ToolResultPayload,
@@ -41,6 +43,22 @@ from .models import (
 
 _DEFAULT_API_URL = "http://localhost:8000"
 _HEALTH_POLL_INTERVAL_SECONDS = 10
+
+
+def _format_duration(seconds: float) -> str:
+    """Format a positive elapsed seconds value as a short human label.
+
+    Returns ``"<1s"`` for sub-second turns, ``"Ns"`` for under a minute,
+    and ``"MmSs"`` once the duration crosses one minute so the collapsed
+    timeline summary stays compact ("Thought for 1m04s").
+    """
+    if seconds < 1.0:
+        return "<1s"
+    total = int(seconds)
+    if total < 60:
+        return f"{total}s"
+    minutes, secs = divmod(total, 60)
+    return f"{minutes}m{secs:02d}s"
 
 
 def _api_base_url() -> str:
@@ -227,7 +245,13 @@ class BrandMindState(rx.State):
         self.messages = [
             *self.messages,
             ChatMessage(role="user", content=content),
-            ChatMessage(role="agent", content="", is_streaming=True),
+            ChatMessage(
+                role="agent",
+                content="",
+                is_streaming=True,
+                timeline_expanded=True,
+                turn_started_at=time.monotonic(),
+            ),
         ]
         self.is_streaming = True
 
@@ -264,8 +288,7 @@ class BrandMindState(rx.State):
                 self._append_agent_token(chunk.token)
         elif event_name == "streaming_thinking":
             chunk = StreamingThinkingPayload.model_validate(payload)
-            if chunk.token:
-                self._append_agent_thinking(chunk.token)
+            self._append_thinking(chunk.token, chunk.done)
         elif event_name == "tool_call":
             call = ToolCallPayload.model_validate(payload)
             self._append_tool_call(call)
@@ -291,45 +314,77 @@ class BrandMindState(rx.State):
         target.content = f"{target.content}{token}"
         self.messages = [*self.messages[:-1], target]
 
-    def _append_agent_thinking(self, token: str) -> None:
-        """Append a streaming thinking chunk to the active agent message."""
-        if not self.messages:
-            return
-        target = self.messages[-1]
-        if target.role != "agent":
-            return
-        target.thinking = f"{target.thinking}{token}"
-        self.messages = [*self.messages[:-1], target]
+    def _append_thinking(self, token: str, finalised: bool) -> None:
+        """Append a streaming thinking chunk to the chronological timeline.
 
-    def _append_tool_call(self, call: ToolCallPayload) -> None:
-        """Push a new in-progress tool entry under the active agent message."""
-        if not self.messages:
-            return
-        target = self.messages[-1]
-        if target.role != "agent":
-            return
-        target.tool_calls = [
-            *target.tool_calls,
-            ToolCallInfo(tool_name=call.tool_name, arguments=call.arguments),
-        ]
-        self.messages = [*self.messages[:-1], target]
-
-    def _settle_tool_result(self, result: ToolResultPayload) -> None:
-        """Attach a result to the earliest still-running call of the same tool.
-
-        When the agent calls the same tool more than once, each result must
-        settle the oldest unresolved invocation — otherwise a later result
-        overwrites an already-completed call and the earlier one stays stuck
-        on "running" forever in the chat timeline.
+        Consecutive thinking chunks merge into the trailing thinking entry
+        until the backend signals ``done`` for that block; the next thinking
+        event after that opens a new entry. This keeps every distinct
+        reasoning block visible as its own timeline node.
         """
         if not self.messages:
             return
         target = self.messages[-1]
-        if target.role != "agent" or not target.tool_calls:
+        if target.role != "agent":
             return
-        for tool_call in target.tool_calls:
-            if tool_call.tool_name == result.tool_name and tool_call.result == "":
-                tool_call.result = result.result
+        timeline = list(target.timeline)
+        tail = timeline[-1] if timeline else None
+        if tail is not None and tail.kind == "thinking" and not tail.thinking_done:
+            if token:
+                tail.thinking_text = f"{tail.thinking_text}{token}"
+            if finalised:
+                tail.thinking_done = True
+        elif token:
+            timeline.append(
+                TimelineEntry(
+                    kind="thinking",
+                    thinking_text=token,
+                    thinking_done=finalised,
+                )
+            )
+        target.timeline = timeline
+        self.messages = [*self.messages[:-1], target]
+
+    def _append_tool_call(self, call: ToolCallPayload) -> None:
+        """Push a new in-progress tool entry into the reasoning timeline."""
+        if not self.messages:
+            return
+        target = self.messages[-1]
+        if target.role != "agent":
+            return
+        target.timeline = [
+            *target.timeline,
+            TimelineEntry(
+                kind="tool_call",
+                tool_call=ToolCallInfo(
+                    tool_name=call.tool_name,
+                    arguments=call.arguments,
+                ),
+            ),
+        ]
+        self.messages = [*self.messages[:-1], target]
+
+    def _settle_tool_result(self, result: ToolResultPayload) -> None:
+        """Settle the earliest still-running tool entry of the same tool.
+
+        When the agent calls the same tool more than once, each result
+        settles the oldest unresolved invocation — otherwise a later
+        result overwrites an already-completed call and earlier entries
+        stay stuck on "running" forever in the timeline.
+        """
+        if not self.messages:
+            return
+        target = self.messages[-1]
+        if target.role != "agent" or not target.timeline:
+            return
+        for entry in target.timeline:
+            if entry.kind != "tool_call" or entry.tool_call is None:
+                continue
+            if (
+                entry.tool_call.tool_name == result.tool_name
+                and entry.tool_call.result == ""
+            ):
+                entry.tool_call.result = result.result
                 break
         self.messages = [*self.messages[:-1], target]
 
@@ -350,24 +405,47 @@ class BrandMindState(rx.State):
         self.phase_display_labels = dict(metadata.phase_display_labels)
 
     def _finalize_agent_message(self) -> None:
-        """Close the trailing agent message and settle any pending tool pills.
+        """Close the trailing agent message and tidy its reasoning timeline.
 
-        The backend does not always emit a ``tool_result`` for fire-and-forget
-        tools (e.g. ``write_todos``), so once the turn is ``done`` any pill
-        still showing "đang chạy" would be stuck visually. Forcing those to a
-        generic completed result keeps the timeline honest.
+        On stream close: force-settle any tool entries the backend never
+        emitted a ``tool_result`` for (fire-and-forget tools like
+        ``write_todos`` are common), mark any open thinking blocks done,
+        compute the turn duration, and collapse the timeline by default
+        so the chat scroll reads as the final response.
         """
         if not self.messages:
             return
         target = self.messages[-1]
         if target.role != "agent":
             return
-        for tool_call in target.tool_calls:
-            if tool_call.result == "":
-                tool_call.result = "(done)"
+        for entry in target.timeline:
+            if entry.kind == "tool_call" and entry.tool_call is not None:
+                if entry.tool_call.result == "":
+                    entry.tool_call.result = "(done)"
+            elif entry.kind == "thinking" and not entry.thinking_done:
+                entry.thinking_done = True
         if target.is_streaming:
             target.is_streaming = False
+        if target.turn_started_at > 0.0 and target.turn_duration_label == "":
+            elapsed = max(0.0, time.monotonic() - target.turn_started_at)
+            target.turn_duration_label = _format_duration(elapsed)
+        target.timeline_expanded = False
         self.messages = [*self.messages[:-1], target]
+
+    @rx.event
+    def toggle_timeline(self, message_index: int) -> None:
+        """Toggle the collapsed/expanded state of a turn's reasoning timeline."""
+        if message_index < 0 or message_index >= len(self.messages):
+            return
+        target = self.messages[message_index]
+        if target.role != "agent" or not target.timeline:
+            return
+        target.timeline_expanded = not target.timeline_expanded
+        self.messages = [
+            *self.messages[:message_index],
+            target,
+            *self.messages[message_index + 1:],
+        ]
 
     @rx.event(background=True)
     async def restore_session(self, session_id: str) -> None:

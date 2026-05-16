@@ -25,6 +25,33 @@ class ToolCallInfo(BaseModel):
     result: str = ""
 
 
+class TimelineEntry(BaseModel):
+    """One chronological entry in an agent turn's reasoning timeline.
+
+    The chat timeline merges streaming-thinking blocks and tool-call cards
+    into a single ordered list so the UI can render the agent's reasoning
+    trace as one connected vertical thread (Claude / ChatGPT pattern).
+    Exactly one of ``thinking_text`` or ``tool_call`` is populated per
+    entry; the discriminator is ``kind``.
+
+    Attributes:
+        kind (Literal["thinking", "tool_call"]): Which payload field holds
+            this entry's content.
+        thinking_text (str): Accumulated thinking-block text. Empty when
+            ``kind == "tool_call"``.
+        thinking_done (bool): Whether the thinking block has finalised so
+            subsequent ``streaming_thinking`` events should open a new
+            entry instead of appending here.
+        tool_call (ToolCallInfo | None): Tool-call payload. ``None`` when
+            ``kind == "thinking"``.
+    """
+
+    kind: Literal["thinking", "tool_call"]
+    thinking_text: str = ""
+    thinking_done: bool = False
+    tool_call: ToolCallInfo | None = None
+
+
 class BrandStrategyMetadata(BaseModel):
     """Metadata payload mirroring ``server.schemas.session.BrandStrategyMetadata``.
 
@@ -55,16 +82,23 @@ class ChatMessage(BaseModel):
 
     Agent messages accumulate streaming-token chunks into ``content``
     while in flight; ``is_streaming`` flips to ``False`` once the SSE
-    ``done`` event fires for the turn. ``tool_calls`` carries the
-    inline tool-call timeline cards captured for the same turn so the
-    web UI can interleave them above the message body.
+    ``done`` event fires for the turn. ``timeline`` carries the
+    chronologically-ordered reasoning trace (thinking blocks + tool calls
+    interleaved as they arrive on the wire) so the web UI can render a
+    single connected collapsible thread (Claude / ChatGPT pattern).
+    ``turn_started_at`` and ``turn_duration_s`` capture wall-clock
+    duration so the collapsed state can read "Thought for Ns".
+    ``timeline_expanded`` lets the user toggle the collapsed timeline
+    open again after the turn closes.
     """
 
     role: Literal["user", "agent"]
     content: str = ""
-    thinking: str = ""
     is_streaming: bool = False
-    tool_calls: list[ToolCallInfo] = Field(default_factory=list)
+    timeline: list[TimelineEntry] = Field(default_factory=list)
+    turn_started_at: float = 0.0
+    turn_duration_label: str = ""
+    timeline_expanded: bool = True
 
 
 class PhaseAdvancePayload(BaseModel):

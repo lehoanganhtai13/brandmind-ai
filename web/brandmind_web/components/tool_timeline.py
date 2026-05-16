@@ -46,12 +46,22 @@ _TOOL_LABELS: dict[str, str] = {
 }
 
 
-def _humanize(tool_name: rx.Var[str]) -> rx.Var:
-    """Project a raw tool name to its English label, fall back to the raw value."""
+def humanize_tool_label(tool_name: rx.Var[str]) -> rx.Var:
+    """Project a raw tool name to its English label, fall back to the raw value.
+
+    The mapping is unrolled into a chained :func:`rx.cond` ladder because
+    Reflex Vars cannot be looked up against a Python dict at compile time.
+    Used by the reasoning-timeline rows as well as legacy tool pill cards.
+    """
     label: rx.Var = tool_name
     for raw, human in _TOOL_LABELS.items():
         label = rx.cond(tool_name == raw, human, label)
     return label
+
+
+def _humanize(tool_name: rx.Var[str]) -> rx.Var:
+    """Backwards-compatible alias for :func:`humanize_tool_label`."""
+    return humanize_tool_label(tool_name)
 
 
 def tool_call_card(call: rx.Var[ToolCallInfo]) -> rx.Component:

@@ -77,7 +77,7 @@ class TestModels:
         msg = ChatMessage(role="user", content="Em chào Mentor")
         assert msg.role == "user"
         assert msg.is_streaming is False
-        assert msg.tool_calls == []
+        assert msg.timeline == []
 
     def test_phase_advance_payload_required_fields(self):
         payload = PhaseAdvancePayload(

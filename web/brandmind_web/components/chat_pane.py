@@ -106,7 +106,10 @@ def _message_scroll() -> rx.Component:
     """Vertical scroll of message bubbles within a centered reading column."""
     return rx.scroll_area(
         rx.vstack(
-            rx.foreach(BrandMindState.messages, message_bubble),
+            rx.foreach(
+                BrandMindState.messages,
+                lambda msg, idx: message_bubble(msg, idx),
+            ),
             spacing="1",
             align="stretch",
             padding="28px 24px 24px 24px",

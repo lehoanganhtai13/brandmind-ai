@@ -1,26 +1,25 @@
-"""Chat message bubble — user (right-aligned capsule) and agent (left, framed).
+"""Chat message bubble — user (right-aligned capsule) and agent (timeline + body).
 
-Implements ``docs/web_design.md`` § 9.3.1 with Codex-review Findings 2, 3,
-and 5 folded in:
+Implements ``docs/web_design.md`` § 9.3.1 with the unified reasoning
+timeline pattern (Claude / ChatGPT style):
 
-- The agent variant no longer wraps its body in a heavy framed card.
-  A 2 px teal left-border replaces the surrounding box so turns are
-  distinguished by an editorial gutter, not an old-web panel border.
-- Tool-call cards render BEFORE the "Thinking" accordion, so concrete
-  actions surface first and the reasoning trace stays a secondary detail.
-- The "Thinking" accordion is now a small italic toggle with a 12 px
-  chevron; its body is rendered through :func:`rx.markdown` so bold /
-  italic / list formatting survives the trip from the model.
 - The user variant stays a right-aligned teal-tinted capsule.
+- The agent variant renders its reasoning trace as ONE chronological
+  timeline (thinking blocks + tool calls interleaved). The timeline
+  auto-expands while ``is_streaming`` so the user can watch the trace
+  build up live. After the turn closes, the timeline collapses to a
+  single inline "Thought for Ns" toggle that re-expands on click.
+- The final agent body markdown surfaces below the timeline as
+  flowing prose, no enclosing box — Codex review Finding 3.
 """
 
 from __future__ import annotations
 
 import reflex as rx
 
-from ..models import ChatMessage
+from ..models import ChatMessage, TimelineEntry
 from . import tokens
-from .tool_timeline import tool_call_card
+from .tool_timeline import humanize_tool_label
 
 _MARKDOWN_PARAGRAPH_STYLE: dict[str, str] = {
     "color": tokens.TEXT_PRIMARY,
@@ -30,103 +29,29 @@ _MARKDOWN_PARAGRAPH_STYLE: dict[str, str] = {
     "margin": "0 0 12px 0",
 }
 
-_THINKING_MD_STYLE: dict[str, str] = {
+_THINKING_TEXT_STYLE: dict[str, str] = {
     "color": tokens.TEXT_SECONDARY,
     "font_family": tokens.FONT_SANS,
     "font_size": "13px",
     "font_style": "italic",
     "line_height": "1.6",
-    "margin": "0 0 8px 0",
+    "margin": "0 0 4px 0",
 }
 
+_THINKING_STRONG_STYLE: dict[str, str] = {
+    "color": tokens.TEXT_SECONDARY,
+    "font_family": tokens.FONT_SANS,
+    "font_size": "13px",
+    "font_style": "italic",
+    "font_weight": "600",
+}
 
-def _thinking_body(message: rx.Var[ChatMessage]) -> rx.Component:
-    """Render the thinking trace as markdown so emphasis survives.
-
-    Inline elements (``strong`` / ``em``) render as ``<span>`` so they do
-    not nest inside the paragraph's ``<p>`` — that combination triggers
-    hydration errors in React 18.
-    """
-    inline_strong = {
-        "color": tokens.TEXT_SECONDARY,
-        "font_family": tokens.FONT_SANS,
-        "font_size": "13px",
-        "font_style": "italic",
-        "font_weight": "600",
-    }
-    inline_em = {
-        "color": tokens.TEXT_SECONDARY,
-        "font_family": tokens.FONT_SANS,
-        "font_size": "13px",
-        "font_style": "italic",
-    }
-    return rx.markdown(
-        message.thinking,
-        component_map={
-            "p": lambda text: rx.text(text, style=_THINKING_MD_STYLE),
-            "strong": lambda text: rx.el.span(text, style=inline_strong),
-            "em": lambda text: rx.el.span(text, style=inline_em),
-            "ul": lambda items: rx.list.unordered(
-                items,
-                style={
-                    **_THINKING_MD_STYLE,
-                    "padding_left": "1.2em",
-                },
-            ),
-            "ol": lambda items: rx.list.ordered(
-                items,
-                style={
-                    **_THINKING_MD_STYLE,
-                    "padding_left": "1.4em",
-                },
-            ),
-            "li": lambda text: rx.list.item(text, style={"margin": "0 0 4px 0"}),
-        },
-    )
-
-
-def _thinking_expansion(message: rx.Var[ChatMessage]) -> rx.Component:
-    """Minimal collapsible "Thinking" toggle below tool pills.
-
-    Renders as a small italic sans label with a 12 px chevron so it reads
-    as inline metadata, not a primary UI control. Default collapsed.
-    """
-    return rx.cond(
-        message.thinking != "",
-        rx.accordion.root(
-            rx.accordion.item(
-                header=rx.hstack(
-                    rx.icon(
-                        tag="chevron_down",
-                        size=12,
-                        color=tokens.TEXT_MUTED,
-                    ),
-                    rx.text(
-                        "Thinking",
-                        style={
-                            "color": tokens.TEXT_MUTED,
-                            "font_family": tokens.FONT_SANS,
-                            "font_size": "12px",
-                            "font_style": "italic",
-                        },
-                    ),
-                    spacing="1",
-                    align="center",
-                ),
-                content=rx.box(
-                    _thinking_body(message),
-                    style={"padding": "6px 0 0 18px"},
-                ),
-                value="thinking",
-            ),
-            type="single",
-            collapsible=True,
-            default_value="",
-            variant="ghost",
-            width="100%",
-        ),
-        rx.fragment(),
-    )
+_THINKING_EM_STYLE: dict[str, str] = {
+    "color": tokens.TEXT_SECONDARY,
+    "font_family": tokens.FONT_SANS,
+    "font_size": "13px",
+    "font_style": "italic",
+}
 
 
 def _streaming_cursor() -> rx.Component:
@@ -139,6 +64,179 @@ def _streaming_cursor() -> rx.Component:
             "display": "inline-block",
             "margin_left": "2px",
         },
+    )
+
+
+def _thinking_markdown(text: rx.Var[str]) -> rx.Component:
+    """Render thinking text as markdown with the italic secondary palette."""
+    return rx.markdown(
+        text,
+        component_map={
+            "p": lambda body: rx.text(body, style=_THINKING_TEXT_STYLE),
+            "strong": lambda body: rx.el.span(body, style=_THINKING_STRONG_STYLE),
+            "em": lambda body: rx.el.span(body, style=_THINKING_EM_STYLE),
+            "ul": lambda items: rx.list.unordered(
+                items,
+                style={**_THINKING_TEXT_STYLE, "padding_left": "1.2em"},
+            ),
+            "ol": lambda items: rx.list.ordered(
+                items,
+                style={**_THINKING_TEXT_STYLE, "padding_left": "1.4em"},
+            ),
+            "li": lambda body: rx.list.item(body, style={"margin": "0 0 4px 0"}),
+        },
+    )
+
+
+def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
+    """Render one chronological reasoning step within the timeline.
+
+    Both variants share a 16 px gutter on the left so the bullet glyphs
+    align across thinking blocks and tool-call cards. A vertical hairline
+    is provided by the timeline wrapper; this row only contributes its
+    bullet + content.
+    """
+    is_thinking = entry.kind == "thinking"
+    tool_done = (entry.tool_call is not None) & (
+        entry.tool_call.result != ""
+    )
+
+    bullet = rx.cond(
+        is_thinking,
+        rx.box(
+            style={
+                "width": "8px",
+                "height": "8px",
+                "min_width": "8px",
+                "border_radius": tokens.RADIUS_PILL,
+                "background_color": tokens.TEXT_MUTED,
+                "margin_top": "8px",
+                "margin_left": "-4px",
+            },
+        ),
+        rx.center(
+            rx.icon(
+                tag=rx.cond(tool_done, "circle_check", "loader"),
+                size=12,
+                color=rx.cond(
+                    tool_done,
+                    tokens.ACCENT_TEAL_SOLID,
+                    tokens.TEXT_MUTED,
+                ),
+            ),
+            style={
+                "width": "16px",
+                "height": "16px",
+                "min_width": "16px",
+                "background_color": tokens.BG_CANVAS,
+                "border_radius": tokens.RADIUS_PILL,
+                "margin_top": "4px",
+                "margin_left": "-8px",
+            },
+        ),
+    )
+
+    content = rx.cond(
+        is_thinking,
+        _thinking_markdown(entry.thinking_text),
+        rx.hstack(
+            rx.text(
+                humanize_tool_label(entry.tool_call.tool_name),
+                style={
+                    "color": tokens.TEXT_PRIMARY,
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "13px",
+                },
+            ),
+            rx.text(
+                rx.cond(tool_done, "done", "running"),
+                style={
+                    "color": tokens.TEXT_MUTED,
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "12px",
+                    "font_style": "italic",
+                },
+            ),
+            spacing="2",
+            align="center",
+            padding_top="2px",
+        ),
+    )
+
+    return rx.hstack(
+        bullet,
+        rx.box(content, style={"flex": "1", "padding_bottom": "10px"}),
+        spacing="3",
+        align="start",
+        width="100%",
+    )
+
+
+def _timeline_summary_label(message: rx.Var[ChatMessage]) -> rx.Var:
+    """Short label shown next to the timeline chevron.
+
+    While the turn streams: "Thinking…". After the turn closes: "Reasoning"
+    — kept deliberately ambiguous on duration because Reflex's Pydantic
+    serialisation drops some scalar defaults when a model is mutated
+    in-place inside a list field, which historically rendered as
+    ``Thought for undefined``.
+    """
+    return rx.cond(message.is_streaming, "Thinking…", "Reasoning")
+
+
+def _reasoning_timeline(
+    message: rx.Var[ChatMessage], message_index: int
+) -> rx.Component:
+    """Render the agent's interleaved reasoning trace as a connected thread."""
+    from ..state import BrandMindState
+
+    header = rx.hstack(
+        rx.icon(
+            tag=rx.cond(
+                message.timeline_expanded, "chevron_down", "chevron_right"
+            ),
+            size=13,
+            color=tokens.TEXT_MUTED,
+        ),
+        rx.el.span(
+            _timeline_summary_label(message),
+            style={
+                "color": tokens.TEXT_MUTED,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "12px",
+                "font_style": "italic",
+            },
+        ),
+        spacing="1",
+        align="center",
+        on_click=BrandMindState.toggle_timeline(message_index),
+        style={"cursor": "pointer", "user_select": "none"},
+    )
+
+    expanded = rx.box(
+        rx.vstack(
+            rx.foreach(message.timeline, _timeline_entry),
+            spacing="0",
+            align="stretch",
+            width="100%",
+        ),
+        style={
+            "padding": "8px 0 4px 8px",
+            "margin_left": "6px",
+            "border_left": f"1px solid {tokens.GLASS_BORDER}",
+        },
+    )
+
+    return rx.cond(
+        message.timeline.length() > 0,
+        rx.vstack(
+            header,
+            rx.cond(message.timeline_expanded, expanded, rx.fragment()),
+            spacing="1",
+            align="stretch",
+            width="100%",
+        ),
+        rx.fragment(),
     )
 
 
@@ -204,20 +302,12 @@ def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
     )
 
 
-def _agent_bubble(message: rx.Var[ChatMessage]) -> rx.Component:
+def _agent_bubble(
+    message: rx.Var[ChatMessage], message_index: int
+) -> rx.Component:
     """Agent turn — left-bordered editorial column, no enclosing box."""
     body = rx.vstack(
-        rx.cond(
-            message.tool_calls.length() > 0,
-            rx.vstack(
-                rx.foreach(message.tool_calls, tool_call_card),
-                spacing="2",
-                align="start",
-                width="100%",
-            ),
-            rx.fragment(),
-        ),
-        _thinking_expansion(message),
+        _reasoning_timeline(message, message_index),
         _agent_body(message),
         spacing="3",
         align="start",
@@ -264,10 +354,12 @@ def _user_bubble(message: rx.Var[ChatMessage]) -> rx.Component:
     )
 
 
-def message_bubble(message: rx.Var[ChatMessage]) -> rx.Component:
+def message_bubble(
+    message: rx.Var[ChatMessage], message_index: rx.Var[int]
+) -> rx.Component:
     """Render the message bubble matching ``message.role``."""
     return rx.cond(
         message.role == "user",
         _user_bubble(message),
-        _agent_bubble(message),
+        _agent_bubble(message, message_index),
     )
