@@ -91,10 +91,10 @@ def _thinking_markdown(text: rx.Var[str]) -> rx.Component:
 def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
     """Render one chronological reasoning step within the timeline.
 
-    Both variants share a 16 px gutter on the left so the bullet glyphs
-    align across thinking blocks and tool-call cards. A vertical hairline
-    is provided by the timeline wrapper; this row only contributes its
-    bullet + content.
+    The row is ``position: relative`` so the bullet can be absolutely
+    placed centered on the wrapper's left rail. Content sits in the
+    normal flow with a 28 px left padding that clears the bullet
+    column.
     """
     is_thinking = entry.kind == "thinking"
     tool_done = (entry.tool_call is not None) & (
@@ -107,11 +107,11 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
             style={
                 "width": "8px",
                 "height": "8px",
-                "min_width": "8px",
                 "border_radius": tokens.RADIUS_PILL,
                 "background_color": tokens.TEXT_MUTED,
-                "margin_top": "8px",
-                "margin_left": "-4px",
+                "position": "absolute",
+                "left": "-4px",
+                "top": "10px",
             },
         ),
         rx.center(
@@ -127,11 +127,11 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
             style={
                 "width": "16px",
                 "height": "16px",
-                "min_width": "16px",
                 "background_color": tokens.BG_CANVAS,
                 "border_radius": tokens.RADIUS_PILL,
-                "margin_top": "4px",
-                "margin_left": "-8px",
+                "position": "absolute",
+                "left": "-8px",
+                "top": "4px",
             },
         ),
     )
@@ -163,12 +163,15 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
         ),
     )
 
-    return rx.hstack(
+    return rx.box(
         bullet,
-        rx.box(content, style={"flex": "1", "padding_bottom": "10px"}),
-        spacing="3",
-        align="start",
-        width="100%",
+        content,
+        style={
+            "position": "relative",
+            "padding_left": "20px",
+            "padding_bottom": "10px",
+            "width": "100%",
+        },
     )
 
 
@@ -221,8 +224,8 @@ def _reasoning_timeline(
             width="100%",
         ),
         style={
-            "padding": "8px 0 4px 8px",
-            "margin_left": "6px",
+            "padding": "8px 0 4px 0",
+            "margin_left": "10px",
             "border_left": f"1px solid {tokens.GLASS_BORDER}",
         },
     )
