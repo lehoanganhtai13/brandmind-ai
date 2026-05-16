@@ -21,6 +21,9 @@ from core.brand_strategy.session import (
     BrandStrategySession,
     can_sync_to_deliverable_packaging,
     check_brand_brief_phase_section,
+    get_phase_display_label,
+    get_phase_display_labels,
+    get_phase_sequence,
     list_sessions,
     load_session,
     save_session,
@@ -101,6 +104,86 @@ class TestBrandStrategySession:
         session.sync_metadata_to_brief()
         assert session.brief.brand_name == ""
         assert session.brief.scope == ""
+
+
+class TestPhaseSequenceAndDisplayLabels:
+    """Pin the public phase-sequence and display-label helpers consumed by the web UI."""
+
+    def test_phase_sequence_new_brand_skips_phase_0_5(self):
+        sequence = get_phase_sequence("new_brand")
+        assert sequence == [
+            "phase_0",
+            "phase_1",
+            "phase_2",
+            "phase_3",
+            "phase_4",
+            "phase_5",
+        ]
+
+    def test_phase_sequence_refresh_skips_phase_2(self):
+        sequence = get_phase_sequence("refresh")
+        assert sequence == [
+            "phase_0",
+            "phase_0_5",
+            "phase_1",
+            "phase_3",
+            "phase_4",
+            "phase_5",
+        ]
+        assert "phase_2" not in sequence
+
+    def test_phase_sequence_repositioning_includes_all_seven_phases(self):
+        sequence = get_phase_sequence("repositioning")
+        assert sequence == [
+            "phase_0",
+            "phase_0_5",
+            "phase_1",
+            "phase_2",
+            "phase_3",
+            "phase_4",
+            "phase_5",
+        ]
+
+    def test_phase_sequence_full_rebrand_matches_repositioning(self):
+        assert get_phase_sequence("full_rebrand") == get_phase_sequence("repositioning")
+
+    def test_phase_sequence_unknown_scope_is_empty_list(self):
+        assert get_phase_sequence(None) == []
+        assert get_phase_sequence("") == []
+        assert get_phase_sequence("nonexistent_scope") == []
+
+    def test_phase_sequence_returns_copy_not_internal_reference(self):
+        first = get_phase_sequence("new_brand")
+        first.append("mutated")
+        second = get_phase_sequence("new_brand")
+        assert "mutated" not in second
+
+    def test_phase_display_label_returns_vietnamese_canonical(self):
+        assert get_phase_display_label("phase_0") == "Chẩn đoán hiện trạng"
+        assert get_phase_display_label("phase_0_5") == "Audit thương hiệu hiện có"
+        assert get_phase_display_label("phase_2") == "Định vị thương hiệu"
+        assert get_phase_display_label("phase_5") == "KPI & Lộ trình"
+
+    def test_phase_display_label_unknown_phase_falls_back_to_title_case(self):
+        assert get_phase_display_label("phase_99") == "Phase 99"
+
+    def test_phase_display_labels_scoped_filters_to_scope_phases(self):
+        labels = get_phase_display_labels("refresh")
+        assert set(labels.keys()) == {
+            "phase_0",
+            "phase_0_5",
+            "phase_1",
+            "phase_3",
+            "phase_4",
+            "phase_5",
+        }
+        assert "phase_2" not in labels
+        assert labels["phase_0_5"] == "Audit thương hiệu hiện có"
+
+    def test_phase_display_labels_unset_scope_returns_empty_dict(self):
+        assert get_phase_display_labels(None) == {}
+        assert get_phase_display_labels("") == {}
+        assert get_phase_display_labels("nonexistent_scope") == {}
 
 
 class TestBrandBriefPhaseSectionCheck:

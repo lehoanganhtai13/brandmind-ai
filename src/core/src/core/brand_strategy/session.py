@@ -62,6 +62,16 @@ _PHASE_HEADINGS: dict[str, str] = {
     "phase_5": "Phase 5",
 }
 
+_PHASE_DISPLAY_LABELS: dict[str, str] = {
+    "phase_0": "Chẩn đoán hiện trạng",
+    "phase_0_5": "Audit thương hiệu hiện có",
+    "phase_1": "Phân tích thị trường",
+    "phase_2": "Định vị thương hiệu",
+    "phase_3": "Bộ nhận diện",
+    "phase_4": "Truyền thông",
+    "phase_5": "KPI & Lộ trình",
+}
+
 _FINAL_HANDOFF_MARKERS = (
     "final",
     "handoff",
@@ -97,6 +107,69 @@ def get_next_phase(scope: str | None, current_phase: str) -> str | None:
     if idx + 1 >= len(sequence):
         return None
     return sequence[idx + 1]
+
+
+def get_phase_sequence(scope: str | None) -> list[str]:
+    """Return the canonical ordered phase sequence for a brand-strategy scope.
+
+    The web UI sidebar consumes this list so each scope renders only the
+    phases its workflow actually visits — refresh skips Phase 2, repositioning
+    and full_rebrand include Phase 0.5 plus all of 0 through 5.
+
+    Args:
+        scope (str | None): Brand-strategy scope identifier such as
+            ``"new_brand"``, ``"refresh"``, ``"repositioning"``, or
+            ``"full_rebrand"``. ``None`` or unknown scopes produce an
+            empty list rather than raising.
+
+    Returns:
+        sequence (list[str]): Ordered phase keys for the scope; empty when
+        the scope is unset or not in :data:`PHASE_SEQUENCES`.
+    """
+    if not scope or scope not in PHASE_SEQUENCES:
+        return []
+    return list(PHASE_SEQUENCES[scope])
+
+
+def get_phase_display_label(phase: str) -> str:
+    """Return the Vietnamese display label for a canonical phase key.
+
+    The label table is the source of truth for sidebar / progress UI
+    surfaces; the backend mirrors what :file:`docs/web_design.md` § 9.2
+    documents so implementation cannot drift from the design contract.
+
+    Args:
+        phase (str): Phase identifier such as ``"phase_0"`` or
+            ``"phase_0_5"``.
+
+    Returns:
+        label (str): Human-readable Vietnamese label; falls back to a
+        title-cased version of the key when the phase is not in the
+        display table.
+    """
+    return _PHASE_DISPLAY_LABELS.get(phase, phase.replace("_", " ").title())
+
+
+def get_phase_display_labels(scope: str | None) -> dict[str, str]:
+    """Return the phase-key → display-label mapping restricted to ``scope``.
+
+    The dict shape lets the API ship one self-contained payload that the
+    web UI can look up by phase key without a second round trip. Mirrors
+    :func:`get_phase_sequence` so that an unset scope produces an empty
+    payload — the sidebar has nothing to render until classification
+    lands, so shipping the full table would just be noise on the wire.
+
+    Args:
+        scope (str | None): Brand-strategy scope identifier. ``None`` or
+            unknown scopes produce an empty dict.
+
+    Returns:
+        labels (dict[str, str]): Mapping from phase key to display
+        label, restricted to the phases the scope visits; empty when
+        the scope is unset or not in :data:`PHASE_SEQUENCES`.
+    """
+    sequence = get_phase_sequence(scope)
+    return {phase: get_phase_display_label(phase) for phase in sequence}
 
 
 @dataclass(frozen=True)

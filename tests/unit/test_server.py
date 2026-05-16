@@ -158,6 +158,46 @@ class TestSessionManager:
         assert info.metadata.current_phase == "phase_0"
 
     @pytest.mark.asyncio
+    async def test_brand_strategy_metadata_carries_phase_sequence_for_scope(
+        self, manager
+    ):
+        """SessionInfo must expose scope-dependent phase sequence + labels for the web UI."""
+        info = await manager.create_session(SessionMode.BRAND_STRATEGY)
+        session = await manager.get_session(info.session_id)
+        assert session.brand_strategy_session is not None
+        session.brand_strategy_session.scope = "refresh"
+
+        refreshed = session.to_session_info()
+        assert isinstance(refreshed.metadata, BrandStrategyMetadata)
+        assert refreshed.metadata.phase_sequence == [
+            "phase_0",
+            "phase_0_5",
+            "phase_1",
+            "phase_3",
+            "phase_4",
+            "phase_5",
+        ]
+        assert (
+            refreshed.metadata.phase_display_labels["phase_0_5"]
+            == "Audit thương hiệu hiện có"
+        )
+        assert "phase_2" not in refreshed.metadata.phase_display_labels
+
+    @pytest.mark.asyncio
+    async def test_brand_strategy_metadata_unset_scope_returns_empty_phase_lists(
+        self, manager
+    ):
+        """Until a scope is classified, the web UI must see empty sequence/labels."""
+        info = await manager.create_session(SessionMode.BRAND_STRATEGY)
+        session = await manager.get_session(info.session_id)
+
+        snapshot = session.to_session_info()
+        assert isinstance(snapshot.metadata, BrandStrategyMetadata)
+        assert snapshot.metadata.scope is None
+        assert snapshot.metadata.phase_sequence == []
+        assert snapshot.metadata.phase_display_labels == {}
+
+    @pytest.mark.asyncio
     async def test_get_session(self, manager):
         info = await manager.create_session(SessionMode.ASK)
         session = await manager.get_session(info.session_id)

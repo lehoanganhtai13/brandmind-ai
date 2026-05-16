@@ -269,7 +269,7 @@ def create_brand_strategy_agent(
     # letting the advance land. Registered after the context-management
     # middlewares so it runs against the same message window the model
     # just produced, before filesystem and specialist dispatch.
-    content_check_middleware = ContentCheckAdvanceMiddleware()
+    content_check_middleware = ContentCheckAdvanceMiddleware(callback=callback)
     deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
     phase_state_reminder_middleware = PhaseStateReminderMiddleware()
     workspace_hygiene_middleware = WorkspaceBriefHygieneMiddleware()

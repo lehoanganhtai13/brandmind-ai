@@ -27,13 +27,19 @@ class BrandStrategyMetadata(BaseModel):
     """Metadata for brand-strategy sessions.
 
     Reflects the state of BrandStrategySession without exposing
-    internal implementation details.
+    internal implementation details. The web UI consumes the
+    ``phase_sequence`` and ``phase_display_labels`` fields to render
+    the scope-dependent progress sidebar without hard-coding the phase
+    taxonomy on the client; backend stays the canonical source of
+    truth.
     """
 
     current_phase: str
     scope: str | None = None
     brand_name: str | None = None
     completed_phases: list[str] = []
+    phase_sequence: list[str] = []
+    phase_display_labels: dict[str, str] = {}
 
 
 class SessionInfo(BaseModel):

@@ -45,6 +45,10 @@ from core.brand_strategy.session import (
     get_next_phase,
     sync_to_deliverable_packaging_if_ready,
 )
+from shared.agent_middlewares.callback_types import (
+    AgentCallback,
+    PhaseAdvanceEvent,
+)
 from shared.model_clients.llm.google import (
     GoogleAIClientLLM,
     GoogleAIClientLLMConfig,
@@ -315,8 +319,9 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
         judge_model: str = "gemini-3.1-flash-lite-preview",
         thinking_level: str = "low",
         temperature: float = 1.0,
+        callback: AgentCallback | None = None,
     ) -> None:
-        """Configure the judge model used for content verification.
+        """Configure the judge model and optional event-emission callback.
 
         Args:
             judge_model: Google Gemini model identifier used for judging.
@@ -332,11 +337,18 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
                 models and is preferred over lower values here because
                 the judge always produces structured output constrained
                 by :class:`ContentCheckVerdict`.
+            callback: Optional event sink invoked with a
+                :class:`PhaseAdvanceEvent` after a verdict-PASS advance
+                actually mutated ``session.current_phase``. The web UI
+                consumes this event over SSE to update the phase
+                sidebar in real time; CLI and TUI usage that does not
+                pass a callback continues to work unchanged.
         """
         super().__init__()
         self._judge_model = judge_model
         self._thinking_level = thinking_level
         self._temperature = temperature
+        self._callback = callback
         self._llm: GoogleAIClientLLM | None = None
 
     # ---- LLM client (lazy init) --------------------------------------------
@@ -563,6 +575,35 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
             tool_call_id=request.tool_call["id"],
         )
 
+    def _emit_phase_advance_if_changed(self, phase_before: str) -> None:
+        """Emit a phase-advance event when ``session.current_phase`` moved.
+
+        Called after a verdict-PASS run of the downstream ``handler``.
+        Reads the active session and compares its current phase against
+        ``phase_before``; a change means the ``report_progress`` tool
+        successfully mutated state and a UI event is warranted. Misses
+        (no callback, no session, no actual phase change) are silent
+        no-ops so the gate path stays the same shape whether or not a
+        consumer is listening.
+
+        Args:
+            phase_before (str): Snapshot of ``session.current_phase`` taken
+                immediately before the downstream handler ran.
+        """
+        if self._callback is None:
+            return
+        session = get_active_session()
+        if session is None or session.current_phase == phase_before:
+            return
+        self._callback(
+            PhaseAdvanceEvent(
+                from_phase=phase_before,
+                to_phase=session.current_phase,
+                completed_phases=list(session.completed_phases),
+                scope=session.scope or "",
+            )
+        )
+
     @staticmethod
     def _parse_verdict(raw_text: str) -> ContentCheckVerdict:
         """Parse the judge's raw response into a :class:`ContentCheckVerdict`.
@@ -638,7 +679,10 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
                     tool_call_id=request.tool_call["id"],
                 )
         if session is None or session.current_phase not in PHASE_DELIVERABLE_SPECS:
-            return handler(request)
+            phase_before = session.current_phase if session is not None else ""
+            result = handler(request)
+            self._emit_phase_advance_if_changed(phase_before)
+            return result
 
         missing_artifacts = self._phase_5_missing_artifact_categories(session)
         if missing_artifacts:
@@ -646,7 +690,10 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
 
         recent_text = self._extract_recent_ai_text(request.state.get("messages", []))
         if not recent_text:
-            return handler(request)
+            phase_before = session.current_phase
+            result = handler(request)
+            self._emit_phase_advance_if_changed(phase_before)
+            return result
 
         try:
             response = self._get_llm().complete(
@@ -657,10 +704,16 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
             logger.warning(
                 f"ContentCheckAdvance LLM judge failed (sync): {exc}. Allowing advance."
             )
-            return handler(request)
+            phase_before = session.current_phase
+            result = handler(request)
+            self._emit_phase_advance_if_changed(phase_before)
+            return result
 
         if verdict.passes:
-            return handler(request)
+            phase_before = session.current_phase
+            result = handler(request)
+            self._emit_phase_advance_if_changed(phase_before)
+            return result
         return self._rejection(session.current_phase, verdict, request)
 
     async def awrap_tool_call(
@@ -702,7 +755,10 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
                     tool_call_id=request.tool_call["id"],
                 )
         if session is None or session.current_phase not in PHASE_DELIVERABLE_SPECS:
-            return await handler(request)
+            phase_before = session.current_phase if session is not None else ""
+            result = await handler(request)
+            self._emit_phase_advance_if_changed(phase_before)
+            return result
 
         missing_artifacts = self._phase_5_missing_artifact_categories(session)
         if missing_artifacts:
@@ -710,7 +766,10 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
 
         recent_text = self._extract_recent_ai_text(request.state.get("messages", []))
         if not recent_text:
-            return await handler(request)
+            phase_before = session.current_phase
+            result = await handler(request)
+            self._emit_phase_advance_if_changed(phase_before)
+            return result
 
         try:
             response = await self._get_llm().acomplete(
@@ -722,10 +781,16 @@ class ContentCheckAdvanceMiddleware(AgentMiddleware):
                 f"ContentCheckAdvance LLM judge failed (async): {exc}. "
                 "Allowing advance."
             )
-            return await handler(request)
+            phase_before = session.current_phase
+            result = await handler(request)
+            self._emit_phase_advance_if_changed(phase_before)
+            return result
 
         if verdict.passes:
-            return await handler(request)
+            phase_before = session.current_phase
+            result = await handler(request)
+            self._emit_phase_advance_if_changed(phase_before)
+            return result
         return self._rejection(session.current_phase, verdict, request)
 
 

@@ -17,6 +17,8 @@ from langgraph.graph.state import CompiledStateGraph
 
 from core.brand_strategy.session import (
     BrandStrategySession,
+    get_phase_display_labels,
+    get_phase_sequence,
     save_session,
 )
 from server.schemas.enums import SessionMode
@@ -99,6 +101,8 @@ class ManagedSession:
                     scope=bs.scope,
                     brand_name=bs.brand_name,
                     completed_phases=list(bs.completed_phases),
+                    phase_sequence=get_phase_sequence(bs.scope),
+                    phase_display_labels=get_phase_display_labels(bs.scope),
                 )
             )
         else:

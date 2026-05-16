@@ -429,3 +429,152 @@ async def test_unrelated_tool_call_passes_through() -> None:
 
     handler.assert_awaited_once_with(request)
     assert result == "HANDLER_RAN"
+
+
+@pytest.mark.asyncio
+async def test_pass_verdict_emits_phase_advance_event_when_phase_changes() -> None:
+    """After a successful advance, the configured callback receives PhaseAdvanceEvent.
+
+    Web UI consumes this event over SSE to update the phase sidebar in
+    real time. The session is mutated by the underlying handler, so the
+    middleware reads ``current_phase`` after the handler runs to derive
+    the post-advance value.
+    """
+    captured: list[Any] = []
+
+    def callback(event: Any) -> None:
+        captured.append(event)
+
+    middleware = ContentCheckAdvanceMiddleware(callback=callback)
+    request = _build_advance_request(
+        [_ai_message_with_text("Phase 0.5 audit content present.")]
+    )
+
+    session = MagicMock()
+    session.current_phase = "phase_0_5"
+    session.completed_phases = []
+    session.scope = "refresh"
+
+    async def handler(_req: Any) -> str:
+        session.current_phase = "phase_1"
+        session.completed_phases = ["phase_0_5"]
+        return "HANDLER_RAN"
+
+    with (
+        patch(
+            "core.brand_strategy.content_check.get_active_session",
+            return_value=session,
+        ),
+        patch.object(
+            middleware,
+            "_get_llm",
+            return_value=MagicMock(
+                acomplete=AsyncMock(
+                    return_value=MagicMock(
+                        text='{"passes": true, "missing": "", "reasoning": "ok"}'
+                    )
+                )
+            ),
+        ),
+    ):
+        result = await middleware.awrap_tool_call(request, handler)
+
+    assert result == "HANDLER_RAN"
+    assert len(captured) == 1
+    event = captured[0]
+    assert event.type == "phase_advance"
+    assert event.from_phase == "phase_0_5"
+    assert event.to_phase == "phase_1"
+    assert event.completed_phases == ["phase_0_5"]
+    assert event.scope == "refresh"
+
+
+@pytest.mark.asyncio
+async def test_no_callback_means_no_emission_attempt() -> None:
+    """When no callback is configured, the advance path stays silent.
+
+    Pins the default-construction contract so CLI / TUI sessions
+    continue to work unchanged after the web UI feature lands.
+    """
+    middleware = ContentCheckAdvanceMiddleware()
+    request = _build_advance_request(
+        [_ai_message_with_text("Phase 0.5 audit content present.")]
+    )
+
+    session = MagicMock()
+    session.current_phase = "phase_0_5"
+    session.completed_phases = []
+    session.scope = "refresh"
+
+    async def handler(_req: Any) -> str:
+        session.current_phase = "phase_1"
+        session.completed_phases = ["phase_0_5"]
+        return "HANDLER_RAN"
+
+    with (
+        patch(
+            "core.brand_strategy.content_check.get_active_session",
+            return_value=session,
+        ),
+        patch.object(
+            middleware,
+            "_get_llm",
+            return_value=MagicMock(
+                acomplete=AsyncMock(
+                    return_value=MagicMock(
+                        text='{"passes": true, "missing": "", "reasoning": "ok"}'
+                    )
+                )
+            ),
+        ),
+    ):
+        result = await middleware.awrap_tool_call(request, handler)
+
+    assert result == "HANDLER_RAN"
+
+
+@pytest.mark.asyncio
+async def test_phase_unchanged_after_handler_skips_emission() -> None:
+    """When the handler does not advance the phase, no event is emitted.
+
+    Protects against false-positive sidebar flickers when a tool call
+    is routed through the middleware but the underlying advance is
+    rejected downstream (for example because workspace gates fire).
+    """
+    captured: list[Any] = []
+
+    def callback(event: Any) -> None:
+        captured.append(event)
+
+    middleware = ContentCheckAdvanceMiddleware(callback=callback)
+    request = _build_advance_request(
+        [_ai_message_with_text("Phase 0.5 audit content present.")]
+    )
+
+    session = MagicMock()
+    session.current_phase = "phase_0_5"
+    session.completed_phases = []
+    session.scope = "refresh"
+
+    handler = AsyncMock(return_value="HANDLER_RAN")
+
+    with (
+        patch(
+            "core.brand_strategy.content_check.get_active_session",
+            return_value=session,
+        ),
+        patch.object(
+            middleware,
+            "_get_llm",
+            return_value=MagicMock(
+                acomplete=AsyncMock(
+                    return_value=MagicMock(
+                        text='{"passes": true, "missing": "", "reasoning": "ok"}'
+                    )
+                )
+            ),
+        ),
+    ):
+        await middleware.awrap_tool_call(request, handler)
+
+    assert captured == []

@@ -125,6 +125,41 @@ class ModelLoadingEvent(BaseAgentEvent):
     )
 
 
+class PhaseAdvanceEvent(BaseAgentEvent):
+    """Event emitted when a brand-strategy session advances to the next phase.
+
+    Surfaces phase transitions to the web UI sidebar so the progress
+    indicator updates in real time. Emitted by the content-check advance
+    middleware after the underlying ``report_progress(advance=True)`` tool
+    call has mutated session state, so ``to_phase`` and
+    ``completed_phases`` reflect the post-advance values.
+
+    Attributes:
+        from_phase (str): Phase identifier the session advanced FROM, such
+            as ``"phase_2"`` or ``"phase_0_5"``.
+        to_phase (str): Phase identifier the session advanced TO.
+        completed_phases (list[str]): Full post-advance list of completed
+            phase identifiers in chronological order.
+        scope (str): Active brand-strategy scope (``"new_brand"`` /
+            ``"refresh"`` / ``"repositioning"`` / ``"full_rebrand"``).
+            Empty string when the scope is somehow missing — the event
+            is still emitted so the client can decide whether to render
+            anything.
+    """
+
+    type: Literal["phase_advance"] = "phase_advance"
+    from_phase: str = Field(..., description="Phase id the session advanced from")
+    to_phase: str = Field(..., description="Phase id the session advanced to")
+    completed_phases: list[str] = Field(
+        default_factory=list,
+        description="Updated list of completed phase ids in chronological order",
+    )
+    scope: str = Field(
+        default="",
+        description="Active brand-strategy scope; empty if scope not yet set",
+    )
+
+
 # Type alias for callback function
 # Uses base class for polymorphism - can receive any event type
 AgentCallback = Callable[[BaseAgentEvent], None]
