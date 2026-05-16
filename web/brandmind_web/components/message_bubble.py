@@ -88,20 +88,46 @@ def _thinking_markdown(text: rx.Var[str]) -> rx.Component:
     )
 
 
+_RAIL_COLOR: str = "rgba(255, 255, 255, 0.32)"
+
+_RAIL_STYLE: dict[str, str] = {
+    "width": "1px",
+    "background_color": _RAIL_COLOR,
+    "align_self": "center",
+}
+
+
+def _rail_segment(*, flex: bool) -> rx.Component:
+    """One vertical rail span inside a bullet column.
+
+    ``flex=True`` lets the segment grow to fill remaining space below
+    the icon; ``flex=False`` is a fixed 8 px stub used above the icon.
+    """
+    style = {**_RAIL_STYLE}
+    if flex:
+        style["flex"] = "1"
+        style["min_height"] = "12px"
+    else:
+        style["height"] = "8px"
+    return rx.box(style=style)
+
+
 def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
     """Render one chronological reasoning step within the timeline.
 
-    The row is ``position: relative`` so the bullet can be absolutely
-    placed centered on the wrapper's left rail. Content sits in the
-    normal flow with a 28 px left padding that clears the bullet
-    column.
+    The row is a horizontal pair of (bullet column, content). The
+    bullet column is itself a vertical stack of (rail stub, icon, rail
+    fill) so the icon naturally interrupts the rail with a small gap
+    on both sides — the Claude / ChatGPT timeline pattern. Stacking
+    rows with no inter-row spacing makes those segments form one
+    continuous rail through the entire timeline.
     """
     is_thinking = entry.kind == "thinking"
     tool_done = (entry.tool_call is not None) & (
         entry.tool_call.result != ""
     )
 
-    bullet = rx.cond(
+    icon = rx.cond(
         is_thinking,
         rx.box(
             style={
@@ -109,31 +135,32 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
                 "height": "8px",
                 "border_radius": tokens.RADIUS_PILL,
                 "background_color": tokens.TEXT_MUTED,
-                "position": "absolute",
-                "left": "-4px",
-                "top": "10px",
+                "margin": "4px 0",
             },
         ),
-        rx.center(
-            rx.icon(
-                tag=rx.cond(tool_done, "circle_check", "loader"),
-                size=12,
-                color=rx.cond(
-                    tool_done,
-                    tokens.ACCENT_TEAL_SOLID,
-                    tokens.TEXT_MUTED,
-                ),
+        rx.icon(
+            tag=rx.cond(tool_done, "circle_check", "loader"),
+            size=14,
+            color=rx.cond(
+                tool_done,
+                tokens.ACCENT_TEAL_SOLID,
+                tokens.TEXT_MUTED,
             ),
-            style={
-                "width": "16px",
-                "height": "16px",
-                "background_color": tokens.BG_CANVAS,
-                "border_radius": tokens.RADIUS_PILL,
-                "position": "absolute",
-                "left": "-8px",
-                "top": "4px",
-            },
+            style={"margin": "2px 0"},
         ),
+    )
+
+    bullet_column = rx.vstack(
+        _rail_segment(flex=False),
+        icon,
+        _rail_segment(flex=True),
+        spacing="0",
+        align="center",
+        style={
+            "width": "20px",
+            "min_width": "20px",
+            "align_self": "stretch",
+        },
     )
 
     content = rx.cond(
@@ -159,19 +186,21 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
             ),
             spacing="2",
             align="center",
-            padding_top="2px",
         ),
     )
 
-    return rx.box(
-        bullet,
-        content,
-        style={
-            "position": "relative",
-            "padding_left": "20px",
-            "padding_bottom": "10px",
-            "width": "100%",
-        },
+    return rx.hstack(
+        bullet_column,
+        rx.box(
+            content,
+            style={
+                "flex": "1",
+                "padding": "4px 0 10px 0",
+            },
+        ),
+        spacing="3",
+        align="stretch",
+        width="100%",
     )
 
 
@@ -224,9 +253,8 @@ def _reasoning_timeline(
             width="100%",
         ),
         style={
-            "padding": "8px 0 4px 0",
-            "margin_left": "10px",
-            "border_left": f"1px solid {tokens.GLASS_BORDER}",
+            "padding": "4px 0 4px 0",
+            "margin_left": "4px",
         },
     )
 
