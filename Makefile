@@ -1,6 +1,6 @@
 .PHONY: help install install-chatbot install-indexer install-dev install-migration install-all
 .PHONY: add-chatbot add-indexer add-shared add-core add-dev add-migration
-.PHONY: sync update clean test format lint check setup-env
+.PHONY: sync update clean brandmind-reset-home test format lint check setup-env
 .PHONY: services-up services-down services-restart services-logs services-status
 
 # Default target
@@ -113,6 +113,29 @@ clean: ## Clean cache and virtual environment
 	rm -rf .mypy_cache
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
+
+brandmind-reset-home: ## Reset BrandMind runtime data while preserving browser_data by default
+	@home="$${BRANDMIND_HOME:-$$HOME/.brandmind}"; \
+	home="$$(python3 -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).expanduser().resolve())' "$$home")"; \
+	user_home="$$(python3 -c 'from pathlib import Path; print(Path.home().resolve())')"; \
+	if [ -z "$$home" ] || [ "$$home" = "/" ] || [ "$$home" = "$$user_home" ]; then \
+		echo "Refusing to reset unsafe BRANDMIND_HOME=$$home"; \
+		exit 1; \
+	fi; \
+	case "$$home" in \
+		"$$user_home/.brandmind"|*.brandmind|*.brandmind_home) ;; \
+		*) echo "Refusing to reset path that does not look like a BrandMind home: $$home"; exit 1 ;; \
+	esac; \
+	if [ "$(INCLUDE_BROWSER_DATA)" = "true" ]; then \
+		echo "Resetting BrandMind runtime data in $$home, including browser_data"; \
+		rm -rf "$$home"; \
+		mkdir -p "$$home"; \
+	else \
+		echo "Resetting BrandMind runtime data in $$home, preserving browser_data"; \
+		mkdir -p "$$home"; \
+		find "$$home" -mindepth 1 -maxdepth 1 ! -name browser_data -exec rm -rf {} +; \
+	fi; \
+	echo "BrandMind runtime home reset. The next 'brandmind serve' starts fresh."
 
 ## Development
 test: ## Run tests
