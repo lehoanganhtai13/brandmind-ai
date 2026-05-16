@@ -143,40 +143,100 @@ class BrandMindState(rx.State):
     def set_pending_input(self, value: str) -> None:
         """Mirror the InputComposer value into state for the send action.
 
-        Reflex's two-way binding on text inputs requires a state setter;
-        keeping this minimal so the InputComposer stays focused on
-        layout in Phase 3.
+        Drops writes that arrive while a turn is streaming: browsers fire a
+        trailing ``onChange`` with the textarea body (often plus a stray
+        ``\\n``) right after the Enter keydown that triggered the send. If
+        that write were honoured it would re-paint the just-sent message
+        into the now-empty composer and confuse the user.
         """
+        if self.is_streaming:
+            return
         self.pending_input = value
+
+    @rx.event
+    def on_composer_key_down(self, key: str, info: dict):
+        """Send on Enter (no modifier), let Shift+Enter fall through to newline.
+
+        Reflex's :func:`key_event` arg-spec passes the key name plus a
+        ``KeyInputInfo`` dict (``shift_key`` / ``ctrl_key`` / ``alt_key`` /
+        ``meta_key``). Sending only triggers when the user pressed a bare
+        Enter while connected, with non-empty content, and not mid-stream;
+        any modifier (incl. composing Vietnamese accents via IME) falls
+        through to the textarea's native behaviour. The handler flips
+        ``is_streaming`` synchronously so any trailing ``set_pending_input``
+        from the same Enter is dropped by the guard above.
+        """
+        if key != "Enter":
+            return None
+        if (
+            info.get("shift_key")
+            or info.get("ctrl_key")
+            or info.get("alt_key")
+            or info.get("meta_key")
+        ):
+            return None
+        content = self.pending_input.strip()
+        if not self.is_connected or self.is_streaming or not content:
+            return None
+        self.pending_input = ""
+        self.is_streaming = True
+        return BrandMindState.send_message_with(content)
 
     @rx.event(background=True)
     async def send_message(self) -> None:
-        """Stream a turn through ``stream_message`` and dispatch events.
+        """Send the current ``pending_input`` as a chat turn.
 
-        Flow per turn:
-          1. Append a user :class:`ChatMessage` for the request text.
-          2. Append a streaming agent :class:`ChatMessage` and mark
-             ``is_streaming = True`` so the InputComposer disables.
-          3. Iterate SSE events, mutating the in-flight agent message
-             and sidebar state under ``async with self:`` so Reflex
-             serialises against UI reads.
-          4. On ``done`` settle the final response text and metadata,
-             then mark ``is_streaming = False``.
+        Triggered by the Send button click. Snapshots ``pending_input``,
+        clears it, then delegates to :meth:`_stream_turn`.
         """
         async with self:
             content = self.pending_input.strip()
             if not content or self.is_streaming or not self.session_id:
                 return
             self.pending_input = ""
-            self.error_message = ""
-            self.messages = [
-                *self.messages,
-                ChatMessage(role="user", content=content),
-                ChatMessage(role="agent", content="", is_streaming=True),
-            ]
-            self.is_streaming = True
             session_id = self.session_id
+            self._begin_turn(content)
+        await self._stream_turn(session_id, content)
 
+    @rx.event(background=True)
+    async def send_message_with(self, content: str) -> None:
+        """Send a pre-snapshotted message body as a chat turn.
+
+        Called by :meth:`on_composer_key_down` after it has already
+        cleared ``pending_input`` and flipped ``is_streaming`` to ``True``
+        synchronously, so the caller already owns the turn. Skips the
+        ``is_streaming`` precheck because the caller set it; only bails
+        when no session is bound.
+        """
+        async with self:
+            body = content.strip()
+            if not body or not self.session_id:
+                return
+            session_id = self.session_id
+            self._begin_turn(body)
+        await self._stream_turn(session_id, body)
+
+    def _begin_turn(self, content: str) -> None:
+        """Seed the chat scroll with a user turn + streaming agent placeholder.
+
+        Must run inside ``async with self`` so the user bubble and the
+        streaming agent bubble appear in the same render tick.
+        """
+        self.error_message = ""
+        self.messages = [
+            *self.messages,
+            ChatMessage(role="user", content=content),
+            ChatMessage(role="agent", content="", is_streaming=True),
+        ]
+        self.is_streaming = True
+
+    async def _stream_turn(self, session_id: str, content: str) -> None:
+        """Consume the SSE stream for one turn and dispatch each event.
+
+        On ``done`` or ``error`` the agent bubble is finalised and the
+        composer is re-enabled. ``httpx.HTTPError`` surfaces as the
+        in-line error banner without raising.
+        """
         api_url = _api_base_url()
         try:
             async for event in stream_message(api_url, session_id, content):
@@ -254,15 +314,21 @@ class BrandMindState(rx.State):
         self.messages = [*self.messages[:-1], target]
 
     def _settle_tool_result(self, result: ToolResultPayload) -> None:
-        """Attach a result string to the most recent matching tool call."""
+        """Attach a result to the earliest still-running call of the same tool.
+
+        When the agent calls the same tool more than once, each result must
+        settle the oldest unresolved invocation — otherwise a later result
+        overwrites an already-completed call and the earlier one stays stuck
+        on "running" forever in the chat timeline.
+        """
         if not self.messages:
             return
         target = self.messages[-1]
         if target.role != "agent" or not target.tool_calls:
             return
-        for index in range(len(target.tool_calls) - 1, -1, -1):
-            if target.tool_calls[index].tool_name == result.tool_name:
-                target.tool_calls[index].result = result.result
+        for tool_call in target.tool_calls:
+            if tool_call.tool_name == result.tool_name and tool_call.result == "":
+                tool_call.result = result.result
                 break
         self.messages = [*self.messages[:-1], target]
 
@@ -283,13 +349,23 @@ class BrandMindState(rx.State):
         self.phase_display_labels = dict(metadata.phase_display_labels)
 
     def _finalize_agent_message(self) -> None:
-        """Mark the trailing agent message as no longer streaming."""
+        """Close the trailing agent message and settle any pending tool pills.
+
+        The backend does not always emit a ``tool_result`` for fire-and-forget
+        tools (e.g. ``write_todos``), so once the turn is ``done`` any pill
+        still showing "đang chạy" would be stuck visually. Forcing those to a
+        generic completed result keeps the timeline honest.
+        """
         if not self.messages:
             return
         target = self.messages[-1]
-        if target.role != "agent" or not target.is_streaming:
+        if target.role != "agent":
             return
-        target.is_streaming = False
+        for tool_call in target.tool_calls:
+            if tool_call.result == "":
+                tool_call.result = "(hoàn tất)"
+        if target.is_streaming:
+            target.is_streaming = False
         self.messages = [*self.messages[:-1], target]
 
     @rx.event(background=True)

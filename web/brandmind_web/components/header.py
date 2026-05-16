@@ -54,12 +54,12 @@ def _wordmark() -> rx.Component:
 
 
 def _session_caption() -> rx.Component:
-    """Mid-bar caption — brand name + current phase when classified.
+    """Mid-bar caption — brand name + current phase label when classified.
 
-    Empty placeholder text is acceptable on first load: the backend
-    seeds these fields only after the agent classifies the scope, so
-    the caption stays clean until then. Once metadata arrives, the
-    string reads as ``"<brand> · <current phase label>"``.
+    The caption is intentionally blank until the backend classifies the
+    scope. The raw ``phase_0`` ID is not a user-meaningful label, so
+    the phase suffix only renders once ``phase_display_labels`` has
+    been populated (i.e. ``BrandMindState.scope`` is non-empty).
     """
     return rx.hstack(
         rx.cond(
@@ -76,16 +76,12 @@ def _session_caption() -> rx.Component:
             rx.fragment(),
         ),
         rx.cond(
-            BrandMindState.current_phase != "",
+            BrandMindState.scope != "",
             rx.text(
-                rx.cond(
-                    BrandMindState.brand_name != "",
-                    "· ",
-                    "",
-                )
+                rx.cond(BrandMindState.brand_name != "", "· ", "")
                 + BrandMindState.phase_display_labels.get(
                     BrandMindState.current_phase,
-                    BrandMindState.current_phase,
+                    "",
                 ),
                 style={
                     "color": tokens.TEXT_MUTED,

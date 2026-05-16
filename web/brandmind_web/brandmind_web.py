@@ -99,5 +99,11 @@ app = rx.App(
         "background_color": BG_SURFACE_1,
         "color": TEXT_PRIMARY,
     },
+    stylesheets=[
+        "https://fonts.googleapis.com/css2?"
+        "family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&"
+        "family=Geist:wght@400;500;600&"
+        "family=JetBrains+Mono:wght@400;500&display=swap",
+    ],
 )
 app.add_page(index, title="BrandMind")

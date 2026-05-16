@@ -30,6 +30,9 @@ STATE_ERROR_FG = "#ffb4ab"
 STATE_ERROR_BG = "rgba(147, 0, 10, 0.20)"
 STATE_ERROR_BORDER = "#5e1c1c"
 
+FONT_DISPLAY = (
+    '"Fraunces", "Cormorant Garamond", "Times New Roman", Georgia, serif'
+)
 FONT_SANS = (
     '"Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", '
     'Roboto, "Helvetica Neue", Arial, sans-serif'
@@ -37,6 +40,11 @@ FONT_SANS = (
 FONT_MONO = (
     '"JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, '
     "Menlo, monospace"
+)
+
+CANVAS_AMBIENT = (
+    "radial-gradient(ellipse 1200px 700px at 70% -10%, "
+    "rgba(95, 179, 168, 0.05), transparent 65%)"
 )
 
 SIDEBAR_EXPANDED_PX = 240
