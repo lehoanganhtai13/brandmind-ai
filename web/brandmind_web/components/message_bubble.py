@@ -19,7 +19,7 @@ import reflex as rx
 
 from ..models import ChatMessage, TimelineEntry
 from . import tokens
-from .tool_timeline import humanize_tool_label
+from .tool_timeline import humanize_tool_label, tool_icon_tag
 
 _MARKDOWN_PARAGRAPH_STYLE: dict[str, str] = {
     "color": tokens.TEXT_PRIMARY,
@@ -97,22 +97,27 @@ _RAIL_STYLE: dict[str, str] = {
 }
 
 
-def _rail_segment(*, flex: bool) -> rx.Component:
+def _rail_segment(*, flex: bool, height: str = "8px") -> rx.Component:
     """One vertical rail span inside a bullet column.
 
     ``flex=True`` lets the segment grow to fill remaining space below
-    the icon; ``flex=False`` is a fixed 8 px stub used above the icon.
+    the icon; ``flex=False`` is a fixed stub used above the icon. The
+    default 8 px stub plus the row's content padding-top combine to
+    place each icon's vertical centre on the first text line's centre
+    while keeping consecutive icons close enough to read as one trace.
     """
     style = {**_RAIL_STYLE}
     if flex:
         style["flex"] = "1"
-        style["min_height"] = "12px"
+        style["min_height"] = "10px"
     else:
-        style["height"] = "8px"
+        style["height"] = height
     return rx.box(style=style)
 
 
-def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
+def _timeline_entry(
+    entry: rx.Var[TimelineEntry], index: rx.Var[int]
+) -> rx.Component:
     """Render one chronological reasoning step within the timeline.
 
     The row is a horizontal pair of (bullet column, content). The
@@ -120,7 +125,9 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
     fill) so the icon naturally interrupts the rail with a small gap
     on both sides — the Claude / ChatGPT timeline pattern. Stacking
     rows with no inter-row spacing makes those segments form one
-    continuous rail through the entire timeline.
+    continuous rail through the entire timeline. The very first row
+    uses an invisible spacer in place of its rail stub so the trace
+    visibly begins AT the first icon.
     """
     is_thinking = entry.kind == "thinking"
     tool_done = (entry.tool_call is not None) & (
@@ -135,23 +142,29 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
                 "height": "8px",
                 "border_radius": tokens.RADIUS_PILL,
                 "background_color": tokens.TEXT_MUTED,
-                "margin": "4px 0",
+                "margin": "6px 0",
             },
         ),
         rx.icon(
-            tag=rx.cond(tool_done, "circle_check", "loader"),
+            tag=tool_icon_tag(entry.tool_call.tool_name),
             size=14,
             color=rx.cond(
                 tool_done,
                 tokens.ACCENT_TEAL_SOLID,
                 tokens.TEXT_MUTED,
             ),
-            style={"margin": "2px 0"},
+            style={"margin": "6px 0"},
         ),
     )
 
-    bullet_column = rx.vstack(
+    rail_top = rx.cond(
+        index == 0,
+        rx.box(style={"width": "1px", "height": "8px"}),
         _rail_segment(flex=False),
+    )
+
+    bullet_column = rx.vstack(
+        rail_top,
         icon,
         _rail_segment(flex=True),
         spacing="0",
@@ -175,14 +188,18 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
                     "font_size": "13px",
                 },
             ),
-            rx.text(
-                rx.cond(tool_done, "done", "running"),
-                style={
-                    "color": tokens.TEXT_MUTED,
-                    "font_family": tokens.FONT_SANS,
-                    "font_size": "12px",
-                    "font_style": "italic",
-                },
+            rx.cond(
+                tool_done,
+                rx.fragment(),
+                rx.text(
+                    "running",
+                    style={
+                        "color": tokens.TEXT_MUTED,
+                        "font_family": tokens.FONT_SANS,
+                        "font_size": "12px",
+                        "font_style": "italic",
+                    },
+                ),
             ),
             spacing="2",
             align="center",
@@ -195,7 +212,7 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
             content,
             style={
                 "flex": "1",
-                "padding": "4px 0 10px 0",
+                "padding": "11px 0 8px 0",
             },
         ),
         spacing="3",
@@ -207,13 +224,83 @@ def _timeline_entry(entry: rx.Var[TimelineEntry]) -> rx.Component:
 def _timeline_summary_label(message: rx.Var[ChatMessage]) -> rx.Var:
     """Short label shown next to the timeline chevron.
 
-    While the turn streams: "Thinking…". After the turn closes: "Reasoning"
-    — kept deliberately ambiguous on duration because Reflex's Pydantic
-    serialisation drops some scalar defaults when a model is mutated
-    in-place inside a list field, which historically rendered as
-    ``Thought for undefined``.
+    While the turn streams: ``Thinking…``. After it closes: either
+    ``Thought for Ns`` when a duration was captured, or a plain
+    ``Reasoning`` fallback. The truthy check covers both empty
+    strings and the JS ``undefined`` that Reflex emits when a freshly
+    added ``ChatMessage`` field is read from a list whose entries were
+    materialised before the field existed (the historic
+    ``Thought for undefined`` bug).
     """
-    return rx.cond(message.is_streaming, "Thinking…", "Reasoning")
+    closed_label = rx.cond(
+        message.turn_duration_label,
+        "Thought for " + message.turn_duration_label,
+        "Reasoning",
+    )
+    return rx.cond(message.is_streaming, "Thinking…", closed_label)
+
+
+def _final_summary_row(message: rx.Var[ChatMessage]) -> rx.Component:
+    """Closing row that mirrors ChatGPT's "Thought for Ns / Done" cap.
+
+    Rendered inside the expanded timeline body once the turn has
+    stopped streaming and a duration was captured. The row reuses the
+    same bullet-column construction as a regular tool row so the rail
+    continues into a final check icon and stops cleanly.
+    """
+    bullet_column = rx.vstack(
+        _rail_segment(flex=False, height="8px"),
+        rx.icon(
+            tag="circle_check",
+            size=14,
+            color=tokens.ACCENT_TEAL_SOLID,
+            style={"margin": "6px 0"},
+        ),
+        spacing="0",
+        align="center",
+        style={
+            "width": "20px",
+            "min_width": "20px",
+        },
+    )
+
+    content = rx.vstack(
+        rx.text(
+            "Thought for " + message.turn_duration_label,
+            style={
+                "color": tokens.TEXT_PRIMARY,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "13px",
+            },
+        ),
+        rx.text(
+            "Done",
+            style={
+                "color": tokens.TEXT_MUTED,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "12px",
+            },
+        ),
+        spacing="0",
+        align="start",
+    )
+
+    row = rx.hstack(
+        bullet_column,
+        rx.box(
+            content,
+            style={"flex": "1", "padding": "11px 0 4px 0"},
+        ),
+        spacing="3",
+        align="start",
+        width="100%",
+    )
+
+    return rx.cond(
+        message.is_streaming,
+        rx.fragment(),
+        rx.cond(message.turn_duration_label, row, rx.fragment()),
+    )
 
 
 def _reasoning_timeline(
@@ -247,7 +334,11 @@ def _reasoning_timeline(
 
     expanded = rx.box(
         rx.vstack(
-            rx.foreach(message.timeline, _timeline_entry),
+            rx.foreach(
+                message.timeline,
+                lambda entry, idx: _timeline_entry(entry, idx),
+            ),
+            _final_summary_row(message),
             spacing="0",
             align="stretch",
             width="100%",

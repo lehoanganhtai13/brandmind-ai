@@ -45,6 +45,37 @@ _TOOL_LABELS: dict[str, str] = {
     "generate_spreadsheet": "Compose KPI spreadsheet",
 }
 
+_TOOL_ICON_TAGS: dict[str, str] = {
+    "ls": "folder",
+    "read_file": "file_text",
+    "edit_file": "file_pen_line",
+    "grep": "search",
+    "write_todos": "list_checks",
+    "tool_search": "search",
+    "load_tools": "wrench",
+    "unload_tools": "wrench",
+    "task": "users",
+    "report_progress": "arrow_right",
+    "search_knowledge_graph": "search",
+    "search_document_library": "search",
+    "search_web": "globe",
+    "scrape_web_content": "globe",
+    "browse_and_research": "globe",
+    "deep_research": "globe",
+    "analyze_social_profile": "users",
+    "get_search_autocomplete": "search",
+    "generate_image": "image",
+    "edit_image": "image",
+    "export_to_markdown": "file_text",
+    "list_artifacts": "folder",
+    "generate_brand_key": "palette",
+    "generate_document": "file_text",
+    "generate_presentation": "presentation",
+    "generate_spreadsheet": "table_2",
+}
+
+_DEFAULT_TOOL_ICON: str = "code"
+
 
 def humanize_tool_label(tool_name: rx.Var[str]) -> rx.Var:
     """Project a raw tool name to its English label, fall back to the raw value.
@@ -57,6 +88,19 @@ def humanize_tool_label(tool_name: rx.Var[str]) -> rx.Var:
     for raw, human in _TOOL_LABELS.items():
         label = rx.cond(tool_name == raw, human, label)
     return label
+
+
+def tool_icon_tag(tool_name: rx.Var[str]) -> rx.Var:
+    """Project a raw tool name to its Lucide icon tag.
+
+    Falls back to a generic code-fence glyph (``"code"`` / ``</>``) when
+    the tool isn't in the known set so newly added catalog tools still
+    surface with a sensible glyph instead of an empty box.
+    """
+    tag: rx.Var = rx.Var.create(_DEFAULT_TOOL_ICON)
+    for raw, icon in _TOOL_ICON_TAGS.items():
+        tag = rx.cond(tool_name == raw, icon, tag)
+    return tag
 
 
 def _humanize(tool_name: rx.Var[str]) -> rx.Var:
