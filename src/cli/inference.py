@@ -485,6 +485,29 @@ Examples:
         help="Start BrandMind API server (config via BRANDMIND_HOST/PORT in .env)",
     )
 
+    # Mode: web
+    subparsers.add_parser(
+        "web",
+        help=(
+            "Start the BrandMind web UI (Reflex). "
+            "Install with `uv sync --group web` first. "
+            "Backend reached via BRANDMIND_API_URL."
+        ),
+        description=(
+            "Start the BrandMind web UI as a Reflex frontend that talks to "
+            "an already-running `brandmind serve` backend.\n\n"
+            "Environment variables (sensible defaults in .env):\n"
+            "  BRANDMIND_WEB_PORT          Frontend port (default 8501)\n"
+            "  BRANDMIND_WEB_BACKEND_PORT  Reflex state-sync port (default 8502)\n"
+            "  BRANDMIND_API_URL           Backend URL (default localhost:8000)\n\n"
+            "Pre-flight: install Reflex with `uv sync --group web` once.\n"
+            "Then in another shell start the backend: `brandmind serve`.\n"
+            "Open http://localhost:8501 in a browser after Reflex finishes "
+            "compiling."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
     # Mode: browser
     browser_parser = subparsers.add_parser(
         "browser", help="Manage browser agent settings"
@@ -520,6 +543,11 @@ Examples:
         # Serve runs synchronously (uvicorn manages its own event loop)
         # Return early so async_main doesn't try to await it
         return args.mode
+    elif args.mode == "web":
+        # Web mode launches Reflex as a subprocess from `main()` (sync)
+        # for the same reason serve runs sync — Reflex manages its own
+        # event loop + Node.js frontend dev server.
+        return args.mode
     elif args.mode == "brand-strategy":
         from cli.brand_strategy import run_brand_strategy_session
 
@@ -548,6 +576,71 @@ Examples:
     return args.mode
 
 
+def _launch_web_ui() -> None:
+    """Spawn the Reflex frontend / state-sync backend for the web UI.
+
+    Resolves the Reflex project root (``<repo>/web``) relative to this
+    file, builds the ``reflex run`` command with explicit frontend +
+    backend ports drawn from :data:`config.system_config.SETTINGS`, and
+    runs it as a foreground subprocess so Ctrl-C from the user shell
+    terminates Reflex cleanly. ``BRANDMIND_API_URL`` is propagated into
+    the child process so the placeholder page polls the right backend
+    without separate configuration.
+    """
+    import os
+    import shutil
+    import subprocess  # nosec B404
+    import sys
+    from pathlib import Path
+
+    from config.system_config import SETTINGS
+
+    repo_root = Path(__file__).resolve().parents[2]
+    web_dir = repo_root / "web"
+    if not (web_dir / "rxconfig.py").is_file():
+        console.print(
+            "[red]Reflex project not found at "
+            f"{web_dir}/rxconfig.py.[/red] Did the repo move?"
+        )
+        sys.exit(1)
+
+    reflex_cmd = shutil.which("reflex")
+    if reflex_cmd is None:
+        console.print(
+            "[yellow]Reflex is not installed in the active environment.[/yellow]\n"
+            "Install with: [bold]uv sync --group web[/bold]\n"
+            "Then re-run: [bold]brandmind web[/bold]"
+        )
+        sys.exit(1)
+
+    env = os.environ.copy()
+    env.setdefault("BRANDMIND_API_URL", SETTINGS.BRANDMIND_API_URL)
+
+    command = [
+        reflex_cmd,
+        "run",
+        "--frontend-port",
+        str(SETTINGS.BRANDMIND_WEB_PORT),
+        "--backend-port",
+        str(SETTINGS.BRANDMIND_WEB_BACKEND_PORT),
+        "--backend-host",
+        SETTINGS.BRANDMIND_HOST,
+    ]
+    console.print(
+        f"[cyan]Launching BrandMind web UI on "
+        f"http://localhost:{SETTINGS.BRANDMIND_WEB_PORT}[/cyan]\n"
+        f"Backend pollee: [bold]{SETTINGS.BRANDMIND_API_URL}[/bold]\n"
+        f"Start the BrandMind API server in another shell with: "
+        f"[bold]brandmind serve[/bold]"
+    )
+    try:
+        subprocess.run(command, cwd=web_dir, env=env, check=False)  # nosec B603
+    except KeyboardInterrupt:
+        # Reflex propagates Ctrl-C internally; suppress the traceback
+        # so the user gets a clean shell prompt back.
+        return
+
+
 def main() -> None:
     """Synchronous entry point for CLI."""
     import os
@@ -574,6 +667,17 @@ def main() -> None:
 
         app = create_app()
         uvicorn.run(app, host=SETTINGS.BRANDMIND_HOST, port=SETTINGS.BRANDMIND_PORT)
+        return
+
+    # Handle 'web' mode synchronously (Reflex manages its own loop + Node).
+    # Fall through to argparse when --help / -h is present so the user gets
+    # the subcommand's argparse-generated help instead of `reflex run --help`.
+    if (
+        len(sys.argv) >= 2
+        and sys.argv[1] == "web"
+        and not any(arg in {"--help", "-h"} for arg in sys.argv[2:])
+    ):
+        _launch_web_ui()
         return
 
     # Otherwise run the async CLI

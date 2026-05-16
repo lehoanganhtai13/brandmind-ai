@@ -47,6 +47,10 @@ server = [
     "sse-starlette>=2.0.0",
     "uvicorn>=0.34.0",
 ]
+web = [
+    "reflex>=0.8.0",
+    "httpx>=0.28.0",
+]
 migration = [
     "minio>=7.2.20",
     "shared",

@@ -250,3 +250,15 @@ CLAUDE.md
 
 # Thesis reports
 /thesis_reports/
+
+# -----------------------------------------------------------------------------
+# Reflex web UI (web/) — build output + downloaded assets
+# -----------------------------------------------------------------------------
+web/.web/
+web/assets/external/
+web/.states/
+# Reflex auto-init artifacts — regenerated locally on first `reflex run`.
+# We use the top-level pyproject `web` dep group instead of requirements.txt
+# and the top-level .gitignore already covers the build dirs above.
+web/.gitignore
+web/requirements.txt

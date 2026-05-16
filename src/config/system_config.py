@@ -71,6 +71,26 @@ class Settings:
             os.getenv("BRANDMIND_DEBUG_TOOLS", "false").strip().lower() == "true"
         )
 
+        # Web UI settings (`brandmind web`)
+        # `BRANDMIND_WEB_PORT` — Reflex frontend (Next.js dev server) port the
+        #   user opens in their browser. Default 8501 sidesteps the FastAPI
+        #   backend on 8000.
+        # `BRANDMIND_WEB_BACKEND_PORT` — Reflex's own state-sync backend port;
+        #   internal to Reflex, never user-facing. Default 8502 avoids the
+        #   FastAPI server.
+        # `BRANDMIND_API_URL` — URL the web UI uses to reach `brandmind serve`
+        #   over HTTP/SSE. Defaults to localhost + the server port so a stock
+        #   single-machine install works without configuration; override when
+        #   running the web UI in Docker or against a remote backend.
+        self.BRANDMIND_WEB_PORT = int(os.getenv("BRANDMIND_WEB_PORT", 8501))
+        self.BRANDMIND_WEB_BACKEND_PORT = int(
+            os.getenv("BRANDMIND_WEB_BACKEND_PORT", 8502)
+        )
+        self.BRANDMIND_API_URL = os.getenv(
+            "BRANDMIND_API_URL",
+            f"http://localhost:{self.BRANDMIND_PORT}",
+        )
+
         # Vector Database Collection Names
         self.COLLECTION_DOCUMENT_CHUNKS = os.getenv(
             "COLLECTION_DOCUMENT_CHUNKS", "DocumentChunks"
