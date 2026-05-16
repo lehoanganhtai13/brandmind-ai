@@ -187,35 +187,53 @@ where it does not.**
 
 ## 8. Layout grid
 
-### 8.1 Desktop (≥ 1024 px)
+### 8.1 Desktop wide (≥ 1280 px) — default sidebar EXPANDED
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ Header (56 px sticky, glass.bg.subtle)                                        │
+│ [≡] Header (56 px sticky, glass.bg.subtle)                                    │
 ├───────────┬──────────────────────────────────────────────┬───────────────────┤
 │ Phase     │ Chat pane                                    │ Canvas drawer     │
 │ sidebar   │ (max-w 768 px centered)                      │ (slide-in,        │
 │ (240 px)  │                                              │  default 480 px,  │
 │ glass.bg  │ bg.surface.1 (NO glass)                      │  resizable        │
 │ .subtle   │                                              │  30%–70% vw)      │
-│           │                                              │ glass.bg.elevated │
-│           │                                              │                   │
+│ EXPANDED  │                                              │ glass.bg.elevated │
 │           │                                              │                   │
 │           │  Input composer (sticky bottom)              │                   │
 │           │  bg.surface.2                                │                   │
 └───────────┴──────────────────────────────────────────────┴───────────────────┘
 ```
 
-### 8.2 Tablet (768–1023 px)
+### 8.2 Desktop narrow / laptop (1024–1279 px) — default sidebar COLLAPSED
 
-- Sidebar collapses to icon-only rail (56 px). Expand on hover.
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [≡] Header (56 px sticky, glass.bg.subtle)                                    │
+├──────┬────────────────────────────────────────────────────┬──────────────────┤
+│ Rail │ Chat pane (max-w 768 px centered)                  │ Canvas drawer    │
+│ 56 px│ bg.surface.1                                       │ (when open)      │
+│ glass│                                                    │                  │
+│ COLL │  Input composer (sticky bottom)                    │                  │
+└──────┴────────────────────────────────────────────────────┴──────────────────┘
+```
+
+Hover any rail item → tooltip with full phase label. Click sidebar toggle in header → expand to § 8.1 layout.
+
+### 8.3 Tablet (768–1023 px)
+
+- Sidebar forced to collapsed rail (56 px). Header toggle still works to expand temporarily as an overlay (slide-over pattern, scrim behind).
 - Canvas drawer becomes 60% width when open; chat shrinks correspondingly.
 
-### 8.3 Mobile (< 768 px)
+### 8.4 Mobile (< 768 px)
 
-- Sidebar becomes a drawer triggered by a header icon.
+- Sidebar becomes a slide-over drawer triggered by Header `panel-left-open` icon. Drawer covers chat with scrim behind. Auto-dismiss on item-click or scrim-click.
 - Canvas drawer becomes a full-viewport modal.
 - Chat pane drops max-width constraint; goes full-width with `space.3` x-padding.
+
+### 8.5 Persisted state
+
+User-toggled sidebar state stored via `rx.LocalStorage` key `bm.web.sidebar.collapsed: "0" | "1"`. Override the responsive default on subsequent visits. First-ever visit: pick default per breakpoint above. Reset-to-default mechanism: cleared on `Clear site data` only — no in-app reset button in v1.
 
 ## 9. Component inventory
 
@@ -224,19 +242,42 @@ must render, and which design tokens apply.
 
 ### 9.1 Header
 
-- Purpose: brand wordmark + session selector + connected/disconnected status
-  + settings menu.
-- States: connected, disconnected, settings-open.
-- Tokens: `glass.bg.subtle`, `accent.teal.solid` (wordmark), `text.primary`
-  (session name), `text.secondary` (status caption).
+- Purpose: sidebar toggle (leftmost) + brand wordmark + session selector + connected/disconnected status + settings menu.
+- States: connected, disconnected, settings-open, sidebar-expanded, sidebar-collapsed.
+- **Sidebar toggle button** (NEW): Lucide `panel-left-close` icon when sidebar is expanded; `panel-left-open` icon when collapsed. Sits at leftmost edge of header at fixed 40×40 hit area. Click toggles sidebar state and persists the choice via `rx.LocalStorage` key `bm.web.sidebar.collapsed: "0" | "1"`.
+- Tokens: `glass.bg.subtle`, `accent.teal.solid` (wordmark), `text.primary` (session name), `text.secondary` (status caption), `text.secondary` → `text.primary` (toggle icon idle → hover).
 
 ### 9.2 PhaseProgressSidebar
 
-- Purpose: visualise the 6-phase BrandMind workflow (0 → 5, plus optional 0.5
-  for refresh / repositioning scopes).
-- Per-item states: idle, current (accent fill bar on left), completed
-  (checkmark icon), locked (text.muted).
-- Bottom: collapse-to-rail icon button.
+- Purpose: visualise the BrandMind brand-strategy workflow phases — sequence is **scope-dependent**, NOT hardcoded 0→5. Source of truth: `src/core/src/core/brand_strategy/session.py:32 PHASE_SEQUENCES`.
+- **Canonical scope-specific phase sequence** (Vietnamese-first display labels; backend constant `_PHASE_DISPLAY_LABELS` to be added in Task #91 export pipeline):
+
+| Phase key (canonical) | Display label (VI) | Display label (EN tooltip on hover) | Appears in scopes |
+|---|---|---|---|
+| `phase_0` | Chẩn đoán hiện trạng | Diagnosis | all 4 scopes |
+| `phase_0_5` | Audit thương hiệu hiện có | Existing-brand audit | refresh, repositioning, full_rebrand |
+| `phase_1` | Phân tích thị trường | Market intelligence | all 4 scopes |
+| `phase_2` | Định vị thương hiệu | Positioning | new_brand, repositioning, full_rebrand (NOT refresh) |
+| `phase_3` | Bộ nhận diện | Brand identity | all 4 scopes |
+| `phase_4` | Truyền thông | Communication | all 4 scopes |
+| `phase_5` | KPI & Lộ trình | KPI & roadmap | all 4 scopes |
+
+  Concrete sequences rendered by sidebar:
+  - `new_brand` → Phase 0 → 1 → 2 → 3 → 4 → 5 (6 items)
+  - `refresh` → Phase 0 → 0.5 → 1 → 3 → 4 → 5 (6 items — note Phase 2 SKIPPED)
+  - `repositioning` → Phase 0 → 0.5 → 1 → 2 → 3 → 4 → 5 (7 items)
+  - `full_rebrand` → Phase 0 → 0.5 → 1 → 2 → 3 → 4 → 5 (7 items)
+- **Per-item states**:
+  - `completed` — checkmark icon (Lucide `check`) in `accent.teal.solid`; label in `text.primary`.
+  - `current` — accent fill bar on left (4px wide, `accent.teal.solid`); label in `text.primary` bold; phase number in `accent.teal.solid`.
+  - `idle` (future phases) — no decoration; label in `text.muted`; phase number in `text.muted`.
+- **Expanded state** (default ≥ 1280 px): 240 px wide; full phase label + number + status icon visible.
+- **Collapsed state** (default < 1280 px): 56 px wide rail; only the phase number circle + current-state indicator visible; hover tooltip shows full label (Lucide `Tooltip` pattern, 200 ms delay, glass.bg.elevated surface). Click any rail item to expand sidebar AND scroll to that phase.
+- **State sync mechanism**:
+  - Initial render: web calls `GET /api/v1/sessions/{session_id}` and reads `current_phase`, `completed_phases`, `scope`. Backend already exposes these (`src/server/schemas/session.py:26 BrandStrategyMetadata`). Sidebar derives phase sequence from `scope` using the canonical table above (or, after Task #91, from a new `phase_sequence: list[str]` field on `SessionInfo`).
+  - Live updates: web subscribes to SSE stream and listens for a new `PhaseAdvanceEvent` (to be added in Task #91 backend pass; emitted from `ContentCheckAdvanceMiddleware` at `src/core/src/core/brand_strategy/content_check.py:285` when verdict=ADVANCE). Event payload: `{event: "phase_advance", from_phase, to_phase, completed_phases}`.
+  - Fallback if SSE drops: degraded-mode polling of `GET /api/v1/sessions/{session_id}` every 5 s while SSE reconnect is in-flight.
+- **Toggle behavior**: collapse/expand toggled from Header (§ 9.1). Animation: 240 ms ease-out cubic-bezier(0.4, 0, 0.2, 1) on `width`. Items inside use `opacity` transition to avoid jarring layout shift on labels.
 
 ### 9.3 ChatPane
 
@@ -368,20 +409,23 @@ overlays, toasts).
 
 ## 13. Frame inventory for Stitch
 
-The 5 frames the Stitch project must produce, in order of priority for the
-v1 build:
+The 6 frames the Stitch project must produce, in order of priority for the v1 build. **All frames must use the canonical Vietnamese phase labels from § 9.2** — Stitch must not invent labels like "Brand Audit / Positioning / Visual Identity / Tone of Voice / Rollout Strategy". Sidebar toggle button (§ 9.1) is visible in the header of every frame.
 
-| # | Frame name | What it shows | Used by task |
-|---|---|---|---|
-| 1 | `chat_only` | Header + sidebar + chat with 3 sample message bubbles + 1 tool-call timeline card + InputComposer. Canvas hidden. | #91 |
-| 2 | `chat_with_canvas` | Same as `chat_only` plus the CanvasPane open showing ArtifactPanel with 4 sample artifact items. | #92 |
-| 3 | `artifact_viewer_brand_key` | Canvas drawer with the Brand Key image rendered inline (replace with a placeholder rectangle in the design). | #92 |
-| 4 | `artifact_viewer_docx` | Canvas drawer with DocxView — TOC on left, HTML body on right. | #92 |
-| 5 | `degraded_banner` | DegradedBanner red state visible between header and chat; InputComposer disabled. | #93 |
+| # | Frame name | Sidebar state | Persona scope shown | What it shows | Used by task |
+|---|---|---|---|---|---|
+| 1 | `chat_only_expanded` | EXPANDED (240 px) | `new_brand` (Linh) — 6 phases | Header with toggle + expanded sidebar showing "Phase 0 Chẩn đoán hiện trạng → Phase 1 Phân tích thị trường → Phase 2 Định vị thương hiệu (CURRENT) → Phase 3 Bộ nhận diện → Phase 4 Truyền thông → Phase 5 KPI & Lộ trình" + chat with 3 sample message bubbles + 1 tool-call timeline card + InputComposer. Canvas hidden. | #91 |
+| 2 | `chat_with_canvas_expanded` | EXPANDED (240 px) | `repositioning` (Hài) — 7 phases including 0.5 | Same as #1 but with `repositioning` 7-phase sequence (Phase 0 → 0.5 Audit thương hiệu hiện có → 1 → 2 → 3 → 4 (CURRENT) → 5) + CanvasPane open showing ArtifactPanel with 4 sample artifact items (Brand Key one-pager, brand_strategy.docx, strategy_deck.pptx, kpi_tracker.xlsx). | #92 |
+| 3 | `artifact_viewer_brand_key_collapsed` | COLLAPSED (56 px rail) | `new_brand` (Linh) | Header with sidebar-toggle button (showing expand-icon since sidebar is collapsed) + 56 px rail with phase number circles (Phase 5 in current state, prior phases checkmarked) + canvas drawer with the Brand Key 3×3 grid as in current Frame 3. Demonstrates the chat real-estate gain when sidebar collapses. | #92 |
+| 4 | `artifact_viewer_docx_expanded` | EXPANDED (240 px) | `refresh` (Hải) — 6 phases (NOTE Phase 2 SKIPPED) | Sidebar shows `refresh` scope: Phase 0 → 0.5 → Phase 1 → Phase 3 (CURRENT) → Phase 4 → Phase 5 (no Phase 2 entry — proves scope-dependence) + canvas drawer with DocxView — TOC on left, rendered HTML body on right. | #92 |
+| 5 | `degraded_banner_expanded` | EXPANDED (240 px) | `repositioning` (Hài) | Same sidebar as #2 + DegradedBanner red state visible between header and chat + InputComposer disabled + Header right-side shows "OFFLINE" with grey dot. | #93 |
+| 6 | `sidebar_collapsed_showcase` (NEW) | COLLAPSED (56 px rail) | `new_brand` (Linh) | Side-by-side comparison: same chat content as #1 but sidebar collapsed to 56 px rail. One rail item shows hover tooltip surfacing the full label "Phase 2 — Định vị thương hiệu". Demonstrates the toggle interaction visually. | #91 (collapsed-state implementation reference) |
 
-For each frame, the design system tokens above are the only allowed values
-the screen may use. Stitch will receive this doc verbatim plus the frame
-list as the source of truth.
+For each frame, the design system tokens above are the only allowed values the screen may use. Stitch will receive this doc verbatim plus the frame list as the source of truth.
+
+**Stitch generation discipline** (added after first-pass drift on 2026-05-16):
+- Each frame prompt must enumerate the EXACT phase labels from § 9.2 with diacritics intact ("Chẩn đoán hiện trạng", "Định vị thương hiệu", "Bộ nhận diện", "Truyền thông", "KPI & Lộ trình", "Audit thương hiệu hiện có").
+- Each frame prompt must call out the sidebar toggle button position + icon name in the Header.
+- Each frame prompt must specify which scope's phase sequence is rendered (so Stitch does not invent its own product taxonomy).
 
 ## 14. Reference cross-links
 
@@ -408,3 +452,7 @@ list as the source of truth.
 | 8 | Streaming cursor style | 1 s blink, step-start | Common pattern (ChatGPT, Claude.ai); reads as "agent is thinking", not as "input field". |
 | 9 | DocxView TOC | Auto-from-headings | Heading structure is BrandMind's strategy-doc spine (10 sections); TOC navigation is the highest-leverage UX win for stakeholder review. |
 | 10 | PPTX / XLSX inline | Deferred to v2 | LibreOffice / SheetJS each add significant build complexity; download-only is a defensible v1 ceiling. |
+| 11 | Sidebar default state | Responsive — expanded ≥ 1280 px, collapsed < 1280 px; user toggle persisted via `rx.LocalStorage` | Mentoring product needs phase structure visible on first-open to assert value, but on common laptop widths (1280×800 student / dev) a 240 px sidebar starves the chat. Responsive collapse is the honest middle ground; persisted state respects user preference on subsequent visits. |
+| 12 | Phase labels source-of-truth | `docs/web_design.md` § 9.2 canonical table, mirrored into backend `_PHASE_DISPLAY_LABELS` in Task #91 | Code (`session.py:_PHASE_HEADINGS`) currently only has nominal labels ("Phase 0", "Phase 0.5"). Semantic Vietnamese labels live here and will be exported via the API in Task #91 so web is consumer not generator. Vietnamese-first because BrandMind's user personas (Linh, Minh, Hài, Thảo, Hương) are Vietnamese F&B SME marketers. |
+| 13 | Phase advance event mechanism | New SSE `PhaseAdvanceEvent` emitted from `ContentCheckAdvanceMiddleware` + `phase_sequence` field added to `SessionInfo`, both in Task #91 | Backend already tracks `current_phase` / `completed_phases` / `scope` in `BrandStrategySession` and exposes them via `GET /sessions/{id}`. Adding 1 SSE event type + 1 schema field gives push-based sidebar updates without polling; ~40 LOC backend change scheduled in Task #91. |
+| 14 | Stitch frames as visual approval gate, not implementation source | Frames are regenerated when they drift from canonical labels; implementation always reads from `docs/web_design.md` + backend constants, never from Stitch HTML | First-pass Stitch generation (2026-05-16) substituted invented labels ("Brand Audit / Positioning / Visual Identity / Tone of Voice / Rollout Strategy") that did not match `PHASE_SEQUENCES`. User feedback (same date): regenerate frames with stricter prompts pinning canonical labels. Frame discipline now lives in § 13. |
