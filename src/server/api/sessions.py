@@ -256,11 +256,18 @@ def _first_user_text(messages: list[BaseMessage]) -> str | None:
 @router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(
     session_id: str,
+    delete_workspace: bool | None = None,
     manager: SessionManager = Depends(get_session_manager),
 ) -> None:
-    """Delete a session and clean up resources."""
+    """Delete a session and clean up resources.
+
+    When ``delete_workspace`` is supplied it overrides the install-level
+    :data:`SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE` default
+    so the web UI confirm dialog can decide per-request whether the
+    workspace files survive the chat deletion.
+    """
     try:
         await manager.get_session(session_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Session not found")
-    await manager.delete_session(session_id)
+    await manager.delete_session(session_id, delete_workspace=delete_workspace)

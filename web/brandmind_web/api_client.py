@@ -121,9 +121,7 @@ async def list_brand_strategy_sessions(api_base_url: str) -> list[SessionInfo]:
     return [SessionInfo.model_validate(entry) for entry in raw]
 
 
-async def get_session_messages(
-    api_base_url: str, session_id: str
-) -> SessionMessages:
+async def get_session_messages(api_base_url: str, session_id: str) -> SessionMessages:
     """Fetch persisted message history for a session.
 
     Called when the user switches between chats so the scroll can
@@ -192,11 +190,27 @@ async def generate_session_title(
     return SessionInfo.model_validate(response.json())
 
 
-async def delete_session(api_base_url: str, session_id: str) -> None:
-    """Remove a session from the backend."""
+async def delete_session(
+    api_base_url: str,
+    session_id: str,
+    *,
+    delete_workspace: bool | None = None,
+) -> None:
+    """Remove a session from the backend.
+
+    Args:
+        api_base_url (str): Backend base URL.
+        session_id (str): Identifier of the session to remove.
+        delete_workspace (bool | None): When ``True`` the backend also
+            removes the workspace directory; when ``False`` it keeps it;
+            ``None`` defers to the backend's install-level default.
+    """
     url = f"{api_base_url}/api/v1/sessions/{session_id}"
+    params: dict[str, str] = {}
+    if delete_workspace is not None:
+        params["delete_workspace"] = "true" if delete_workspace else "false"
     async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
-        response = await client.delete(url)
+        response = await client.delete(url, params=params)
         response.raise_for_status()
 
 

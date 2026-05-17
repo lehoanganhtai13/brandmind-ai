@@ -280,13 +280,19 @@ class SessionManager:
         )
         return infos
 
-    async def delete_session(self, session_id: str) -> None:
+    async def delete_session(
+        self,
+        session_id: str,
+        delete_workspace: bool | None = None,
+    ) -> None:
         """Delete a session, persisting state and optionally clearing disk.
 
         Brand-strategy state is always saved before eviction so the
-        agent's prior work survives. When
-        :data:`SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE` is
-        true, the matching workspace directory is also removed.
+        agent's prior work survives. The workspace directory is removed
+        when ``delete_workspace`` is explicitly ``True``; an explicit
+        ``False`` keeps it on disk regardless of the install default;
+        ``None`` falls back to
+        :data:`SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE`.
         """
         async with self._registry_lock:
             session = self._sessions.pop(session_id, None)
@@ -294,7 +300,11 @@ class SessionManager:
             return
         bs = session.brand_strategy_session
         save_session(bs)
-        if SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE:
+        if delete_workspace is None:
+            should_delete = SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE
+        else:
+            should_delete = delete_workspace
+        if should_delete:
             _delete_workspace_dir(bs.session_id)
 
     @property

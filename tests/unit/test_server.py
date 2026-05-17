@@ -286,6 +286,56 @@ class TestSessionManager:
         await manager.delete_session(info.session_id)
         assert workspace.exists()
 
+    @pytest.mark.asyncio
+    async def test_delete_workspace_explicit_true_overrides_flag_off(
+        self, manager, tmp_path, monkeypatch
+    ):
+        """Per-request ``delete_workspace=True`` removes the dir."""
+        from server.services import session_manager as sm_module
+
+        monkeypatch.setattr(sm_module, "BRANDMIND_HOME", tmp_path)
+        monkeypatch.setattr(
+            sm_module.SETTINGS,
+            "BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE",
+            False,
+        )
+        info = await manager.create_session(SessionMode.BRAND_STRATEGY)
+        session = await manager.get_session(info.session_id)
+        assert session.brand_strategy_session is not None
+        bs_id = session.brand_strategy_session.session_id
+
+        workspace = tmp_path / "projects" / bs_id / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text("scratch")
+
+        await manager.delete_session(info.session_id, delete_workspace=True)
+        assert not (tmp_path / "projects" / bs_id).exists()
+
+    @pytest.mark.asyncio
+    async def test_delete_workspace_explicit_false_overrides_flag_on(
+        self, manager, tmp_path, monkeypatch
+    ):
+        """Per-request ``delete_workspace=False`` keeps the dir."""
+        from server.services import session_manager as sm_module
+
+        monkeypatch.setattr(sm_module, "BRANDMIND_HOME", tmp_path)
+        monkeypatch.setattr(
+            sm_module.SETTINGS,
+            "BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE",
+            True,
+        )
+        info = await manager.create_session(SessionMode.BRAND_STRATEGY)
+        session = await manager.get_session(info.session_id)
+        assert session.brand_strategy_session is not None
+        bs_id = session.brand_strategy_session.session_id
+
+        workspace = tmp_path / "projects" / bs_id / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text("scratch")
+
+        await manager.delete_session(info.session_id, delete_workspace=False)
+        assert workspace.exists()
+
 
 # ── Agent Factory ────────────────────────────────────────────────────
 

@@ -122,6 +122,7 @@ class BrandMindState(rx.State):
     rename_target: str = ""
     rename_draft: str = ""
     delete_target: str = ""
+    delete_workspace_too: bool = False
 
     artifacts: list[ArtifactRef] = []
     canvas_open: bool = False
@@ -470,11 +471,18 @@ class BrandMindState(rx.State):
         """Surface the delete-confirm modal for the targeted chat."""
         async with self:
             self.delete_target = session_id
+            self.delete_workspace_too = False
 
     @rx.event
     def cancel_delete(self) -> None:
         """Dismiss the delete dialog without removing the chat."""
         self.delete_target = ""
+        self.delete_workspace_too = False
+
+    @rx.event
+    def toggle_delete_workspace_too(self, value: bool) -> None:
+        """Update the dialog's workspace-deletion checkbox."""
+        self.delete_workspace_too = value
 
     @rx.event(background=True)
     async def confirm_delete(self) -> None:
@@ -482,23 +490,33 @@ class BrandMindState(rx.State):
 
         Resets the workspace when the deleted chat is the currently
         active one so the user does not end up streaming into a tombstone.
+        The ``delete_workspace`` flag travels with the API call so the
+        backend can drop the matching workspace directory when the user
+        opted in via the dialog checkbox.
         """
         async with self:
             target = self.delete_target
+            also_delete_workspace = self.delete_workspace_too
         if not target:
             return
         api_url = _api_base_url()
         try:
-            await delete_session(api_url, target)
+            await delete_session(
+                api_url,
+                target,
+                delete_workspace=also_delete_workspace,
+            )
         except httpx.HTTPError as exc:
             logger.warning(f"BrandMind web: delete failed: {exc}")
             async with self:
                 self.error_message = "Could not delete that chat."
                 self.delete_target = ""
+                self.delete_workspace_too = False
             return
         async with self:
             self.sessions = [s for s in self.sessions if s.session_id != target]
             self.delete_target = ""
+            self.delete_workspace_too = False
             if self.session_id == target:
                 self.session_id = ""
                 self.messages = []

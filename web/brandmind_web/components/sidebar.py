@@ -231,9 +231,7 @@ def _chat_row(info: rx.Var[SessionInfo]) -> rx.Component:
         rx.text(
             label,
             style={
-                "color": rx.cond(
-                    is_active, tokens.TEXT_PRIMARY, tokens.TEXT_SECONDARY
-                ),
+                "color": rx.cond(is_active, tokens.TEXT_PRIMARY, tokens.TEXT_SECONDARY),
                 "font_family": tokens.FONT_SANS,
                 "font_size": "13px",
                 "font_weight": rx.cond(is_active, "600", "500"),
@@ -577,6 +575,38 @@ def chat_action_dialogs() -> rx.Component:
                 color=tokens.TEXT_MUTED,
             ),
             rx.hstack(
+                rx.checkbox(
+                    checked=BrandMindState.delete_workspace_too,
+                    on_change=BrandMindState.toggle_delete_workspace_too,
+                    color_scheme="red",
+                ),
+                rx.vstack(
+                    rx.text(
+                        "Also delete workspace files",
+                        size="2",
+                        weight="medium",
+                        color=tokens.TEXT_PRIMARY,
+                    ),
+                    rx.text(
+                        "Removes Brand Brief, Working Notes and Quality "
+                        "Gates under ~/.brandmind/projects/. Permanent.",
+                        size="1",
+                        color=tokens.TEXT_MUTED,
+                    ),
+                    spacing="1",
+                    align="start",
+                ),
+                spacing="3",
+                align="start",
+                margin_top="16px",
+                padding="12px",
+                style={
+                    "background_color": tokens.BG_SURFACE_2,
+                    "border": f"1px solid {tokens.GLASS_BORDER}",
+                    "border_radius": tokens.RADIUS_SM,
+                },
+            ),
+            rx.hstack(
                 rx.alert_dialog.cancel(
                     rx.button(
                         "Cancel",
@@ -599,7 +629,7 @@ def chat_action_dialogs() -> rx.Component:
             style={
                 "background_color": tokens.BG_SURFACE_1,
                 "border": f"1px solid {tokens.GLASS_BORDER}",
-                "max_width": "420px",
+                "max_width": "440px",
             },
         ),
         open=BrandMindState.delete_target != "",
