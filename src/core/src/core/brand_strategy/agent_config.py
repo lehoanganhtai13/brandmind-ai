@@ -51,6 +51,7 @@ def create_brand_strategy_agent(
     from shared.agent_middlewares import (
         EnsureTasksFinishedMiddleware,
         LogModelMessageMiddleware,
+        ProactiveTurnMiddleware,
         WorkspaceBriefHygieneMiddleware,
     )
     from shared.agent_models.retry_gemini import (
@@ -272,6 +273,7 @@ def create_brand_strategy_agent(
     content_check_middleware = ContentCheckAdvanceMiddleware(callback=callback)
     deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
     phase_state_reminder_middleware = PhaseStateReminderMiddleware()
+    proactive_context_middleware = ProactiveTurnMiddleware()
     workspace_hygiene_middleware = WorkspaceBriefHygieneMiddleware()
 
     # Skills middleware + filesystem + workspace (Task 35 + 48)
@@ -348,6 +350,7 @@ def create_brand_strategy_agent(
             context_edit_middleware,
             pre_compact_middleware,  # Task 50: remind at 65%
             msg_summary_middleware,  # Summarize at 80%
+            proactive_context_middleware,
             phase_state_reminder_middleware,
             content_check_middleware,  # Verify agent text before allowing phase advance
             deliverable_dispatch_guard_middleware,
