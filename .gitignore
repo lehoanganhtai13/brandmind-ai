@@ -251,6 +251,9 @@ CLAUDE.md
 # Thesis reports
 /thesis_reports/
 
+# Playwright
+.playwright-mcp
+
 # -----------------------------------------------------------------------------
 # Reflex web UI (web/) — build output + downloaded assets
 # -----------------------------------------------------------------------------
@@ -262,3 +265,4 @@ web/.states/
 # and the top-level .gitignore already covers the build dirs above.
 web/.gitignore
 web/requirements.txt
+web/data/
