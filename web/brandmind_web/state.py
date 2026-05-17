@@ -63,6 +63,9 @@ _GENERATE_TOOL_NAMES: frozenset[str] = frozenset(
 
 _DEFAULT_API_URL = "http://localhost:8000"
 _HEALTH_POLL_INTERVAL_SECONDS = 10
+_HEALTH_POLL_DEGRADED_INTERVAL_SECONDS = 3
+_HEALTH_RECOVERED_BANNER_HOLD_SECONDS = 5.0
+_STREAM_RECONNECT_BACKOFFS_SECONDS: tuple[float, ...] = (1.0, 2.0, 4.0)
 
 
 def _format_duration(seconds: float) -> str:
@@ -129,6 +132,11 @@ class BrandMindState(rx.State):
     docx_error: str = ""
     artifacts_refresh_pending: bool = False
 
+    health_retry_in_flight: bool = False
+    show_recovered_banner: bool = False
+    stream_error_active: bool = False
+    last_failed_turn_content: str = ""
+
     sidebar_collapsed: str = rx.LocalStorage(
         "",
         name="bm.web.sidebar.collapsed",
@@ -170,6 +178,40 @@ class BrandMindState(rx.State):
             if artifact.filename == self.active_artifact_filename:
                 return artifact.category
         return ""
+
+    @rx.var
+    def banner_variant(self) -> str:
+        """Resolve the connectivity banner variant from raw state.
+
+        Returns the empty string when nothing should show — keeps the
+        component tree branch-free. Otherwise picks ``error`` when the
+        backend is unreachable, ``warning`` when a recent SSE turn
+        failed but the backend itself is healthy, or ``recovered`` while
+        the post-recovery hold flag is still set so the user notices
+        the reconnection before the banner fades.
+        """
+        if not self.is_connected:
+            return "error"
+        if self.stream_error_active:
+            return "warning"
+        if self.show_recovered_banner:
+            return "recovered"
+        return ""
+
+    @rx.var
+    def connectivity_message(self) -> str:
+        """Human-readable description for the error variant of the banner.
+
+        Distinguishes between a manual retry in flight and the steady
+        offline state so the user sees the loop is working when they
+        click "Try again".
+        """
+        if self.health_retry_in_flight:
+            return "Retrying connection to BrandMind…"
+        return (
+            "Cannot reach BrandMind backend — start `brandmind serve` or "
+            "wait for the next health check."
+        )
 
     @rx.event
     def toggle_sidebar(self) -> None:
@@ -325,16 +367,12 @@ class BrandMindState(rx.State):
         except httpx.HTTPError as exc:
             logger.warning(f"BrandMind web: chat switch failed: {exc}")
             async with self:
-                self.error_message = (
-                    "Could not load that chat — please try again."
-                )
+                self.error_message = "Could not load that chat — please try again."
             return
         async with self:
             self.session_id = info.session_id
             self._apply_metadata(info.metadata)
-            self.messages = [
-                self._chat_message_from_wire(m) for m in history.messages
-            ]
+            self.messages = [self._chat_message_from_wire(m) for m in history.messages]
             self.error_message = ""
             self._reset_canvas_state()
         await self._refresh_artifacts(info.session_id)
@@ -365,9 +403,7 @@ class BrandMindState(rx.State):
         return info.session_id
 
     @rx.event(background=True)
-    async def open_rename_dialog(
-        self, session_id: str, current_title: str
-    ) -> None:
+    async def open_rename_dialog(self, session_id: str, current_title: str) -> None:
         """Pre-fill the rename dialog with the current title."""
         async with self:
             self.rename_target = session_id
@@ -421,9 +457,7 @@ class BrandMindState(rx.State):
             )
         api_url = _api_base_url()
         try:
-            info = await update_session(
-                api_url, session_id, pinned=not current
-            )
+            info = await update_session(api_url, session_id, pinned=not current)
         except httpx.HTTPError as exc:
             logger.warning(f"BrandMind web: pin toggle failed: {exc}")
             return
@@ -463,9 +497,7 @@ class BrandMindState(rx.State):
                 self.delete_target = ""
             return
         async with self:
-            self.sessions = [
-                s for s in self.sessions if s.session_id != target
-            ]
+            self.sessions = [s for s in self.sessions if s.session_id != target]
             self.delete_target = ""
             if self.session_id == target:
                 self.session_id = ""
@@ -570,9 +602,7 @@ class BrandMindState(rx.State):
             result.append(info)
         return result
 
-    def _reorder_sessions(
-        self, sessions: list[SessionInfo]
-    ) -> list[SessionInfo]:
+    def _reorder_sessions(self, sessions: list[SessionInfo]) -> list[SessionInfo]:
         """Apply the backend's pinned-first ordering locally for snappier UX."""
         return sorted(
             sessions,
@@ -605,19 +635,88 @@ class BrandMindState(rx.State):
 
     @rx.event(background=True)
     async def poll_health(self) -> None:
-        """Mirror backend health into ``is_connected`` on a fixed cadence.
+        """Mirror backend health into ``is_connected`` on a dynamic cadence.
 
-        Lives for the lifetime of the page-mount. The poll cadence is
-        intentionally coarse — the SSE stream is the primary signal of
-        backend availability during an active turn, and the poll only
-        needs to recover state after idle periods.
+        Polls every :data:`_HEALTH_POLL_INTERVAL_SECONDS` while healthy
+        and every :data:`_HEALTH_POLL_DEGRADED_INTERVAL_SECONDS` while
+        degraded so the banner recovers quickly when ``brandmind
+        serve`` comes back online. Records the timestamp of each
+        transition so the banner can hold a "Back online" message for
+        a few seconds after recovery.
         """
         api_url = _api_base_url()
         while True:
             connected = await health_check(api_url)
+            await self._apply_health_result(connected)
+            interval = (
+                _HEALTH_POLL_INTERVAL_SECONDS
+                if connected
+                else _HEALTH_POLL_DEGRADED_INTERVAL_SECONDS
+            )
+            await asyncio.sleep(interval)
+
+    async def _apply_health_result(self, connected: bool) -> None:
+        """Update health-related state, flagging recoveries for the banner.
+
+        Called by :meth:`poll_health` and :meth:`retry_connection`. When
+        the backend transitions from offline to online, the "recovered"
+        banner is held visible for
+        :data:`_HEALTH_RECOVERED_BANNER_HOLD_SECONDS` via a fire-and-
+        forget asyncio task — Reflex computed vars do not observe real
+        time, so the banner needs an explicit state mutation to fade.
+        """
+        async with self:
+            previous = self.is_connected
+            self.is_connected = connected
+            schedule_hide = False
+            if previous != connected and connected:
+                self.show_recovered_banner = True
+                schedule_hide = True
+        if schedule_hide:
+            asyncio.create_task(self._hide_recovered_banner_after_hold())
+
+    async def _hide_recovered_banner_after_hold(self) -> None:
+        """Drop the recovered banner once the visible hold window elapses."""
+        await asyncio.sleep(_HEALTH_RECOVERED_BANNER_HOLD_SECONDS)
+        async with self:
+            self.show_recovered_banner = False
+
+    @rx.event(background=True)
+    async def retry_connection(self) -> None:
+        """Ping the backend immediately, ignoring the polling interval.
+
+        Wired to the "Try again" button in :mod:`degraded_banner`. When
+        the last failing surface was a stream (``stream_error_active``)
+        and the backend is healthy, also clears the stream error flag
+        so the warning variant disappears after the manual retry.
+        """
+        async with self:
+            if self.health_retry_in_flight:
+                return
+            self.health_retry_in_flight = True
+        api_url = _api_base_url()
+        connected = await health_check(api_url)
+        await self._apply_health_result(connected)
+        async with self:
+            self.health_retry_in_flight = False
+            if connected and self.stream_error_active:
+                self.stream_error_active = False
+                self.error_message = ""
+        if connected and self.last_failed_turn_content:
             async with self:
-                self.is_connected = connected
-            await asyncio.sleep(_HEALTH_POLL_INTERVAL_SECONDS)
+                session_id = self.session_id
+                content = self.last_failed_turn_content
+                self.last_failed_turn_content = ""
+            if session_id and content:
+                await self._stream_turn(session_id, content)
+
+    @rx.event(background=True)
+    async def dismiss_stream_error(self) -> None:
+        """Manually clear the stream error flag (e.g. when user types again)."""
+        async with self:
+            self.stream_error_active = False
+            self.error_message = ""
+            self.last_failed_turn_content = ""
 
     @rx.event
     def set_pending_input(self, value: str) -> None:
@@ -727,9 +826,7 @@ class BrandMindState(rx.State):
         """
         api_url = _api_base_url()
         try:
-            info = await generate_session_title(
-                api_url, session_id, message=message
-            )
+            info = await generate_session_title(api_url, session_id, message=message)
         except httpx.HTTPError as exc:
             logger.warning(f"BrandMind web: parallel title gen failed: {exc}")
             return
@@ -759,29 +856,106 @@ class BrandMindState(rx.State):
         self.is_streaming = True
 
     async def _stream_turn(self, session_id: str, content: str) -> None:
-        """Consume the SSE stream for one turn and dispatch each event.
+        """Consume the SSE stream for one turn with exponential-backoff retry.
 
-        On ``done`` or ``error`` the agent bubble is finalised and the
-        composer is re-enabled. ``httpx.HTTPError`` surfaces as the
-        in-line error banner without raising.
+        Reconnect strategy: if :func:`stream_message` raises
+        ``httpx.HTTPError`` before yielding the first event, the
+        connection is treated as transient — sleep, retry, and try
+        again with the same content. Backoff schedule lives in
+        :data:`_STREAM_RECONNECT_BACKOFFS_SECONDS`. Once any event has
+        been received the partial turn is left in place — retrying
+        after partial delivery would create a duplicate turn on the
+        server, so the user is offered the manual retry button instead.
+
+        After every attempt either succeeds (``done`` / ``error`` event)
+        or exhausts the backoff schedule, the agent bubble is finalised
+        and the composer is re-enabled. On final failure the warning
+        banner offers a manual retry that re-runs the same turn after
+        the user confirms.
         """
         api_url = _api_base_url()
-        try:
-            async for event in stream_message(api_url, session_id, content):
-                async with self:
-                    self._dispatch_event(event.event, event.data)
-                    if event.event in {"done", "error"}:
-                        self.is_streaming = False
-                        self._finalize_agent_message()
-                        break
-        except httpx.HTTPError as exc:
-            logger.warning(f"BrandMind web: stream failed: {exc}")
-            async with self:
-                self.is_streaming = False
-                self.error_message = (
-                    "Connection lost mid-send. Please try again."
+        async with self:
+            self.stream_error_active = False
+            self.last_failed_turn_content = ""
+
+        success = False
+        for attempt_index, backoff in enumerate(
+            (0.0, *_STREAM_RECONNECT_BACKOFFS_SECONDS)
+        ):
+            if backoff:
+                logger.info(
+                    f"BrandMind web: SSE reconnect attempt {attempt_index} "
+                    f"after {backoff}s"
                 )
-                self._finalize_agent_message()
+                await asyncio.sleep(backoff)
+            received_any = False
+            try:
+                async for event in stream_message(api_url, session_id, content):
+                    received_any = True
+                    async with self:
+                        self._dispatch_event(event.event, event.data)
+                        if event.event in {"done", "error"}:
+                            self.is_streaming = False
+                            self._finalize_agent_message()
+                            break
+            except httpx.HTTPError as exc:
+                logger.warning(
+                    f"BrandMind web: stream failed (attempt {attempt_index}): {exc}"
+                )
+                if received_any:
+                    await self._mark_stream_failed(content, mid_stream=True)
+                    break
+                if attempt_index == len(_STREAM_RECONNECT_BACKOFFS_SECONDS):
+                    await self._mark_stream_failed(content, mid_stream=False)
+                    break
+                continue
+            else:
+                async with self:
+                    self.stream_error_active = False
+                    self.last_failed_turn_content = ""
+                success = True
+                break
+
+        await self._run_post_turn_followups(session_id, success=success)
+
+    async def _mark_stream_failed(self, content: str, *, mid_stream: bool) -> None:
+        """Surface a stream failure to the user with retry context.
+
+        Args:
+            content (str): The user-message body that failed to stream
+                so the retry path can resend it.
+            mid_stream (bool): ``True`` when at least one event was
+                received before the drop — the user message is already
+                on the server, so retry would duplicate it; the banner
+                wording reflects that.
+        """
+        async with self:
+            self.is_streaming = False
+            self._finalize_agent_message()
+            self.stream_error_active = True
+            self.last_failed_turn_content = content
+            if mid_stream:
+                self.error_message = (
+                    "Connection lost mid-response. The agent may have "
+                    "kept working — refresh the chat to see its final "
+                    "answer."
+                )
+            else:
+                self.error_message = (
+                    "Could not reach the agent. Click try again to resend this message."
+                )
+
+    async def _run_post_turn_followups(self, session_id: str, *, success: bool) -> None:
+        """Refresh sidebar + auto-title + canvas after a turn settles.
+
+        Runs whether the stream succeeded or failed mid-flight so the
+        sidebar's message count still updates when the server already
+        recorded the user turn. ``success`` gates the artifact reveal —
+        a failed stream cannot trust the ``artifacts_refresh_pending``
+        flag because the failing dispatch may have only produced a
+        partial manifest entry.
+        """
+        api_url = _api_base_url()
         try:
             refreshed = await list_brand_strategy_sessions(api_url)
         except httpx.HTTPError as exc:
@@ -793,7 +967,7 @@ class BrandMindState(rx.State):
         async with self:
             artifacts_pending = self.artifacts_refresh_pending
             self.artifacts_refresh_pending = False
-        if artifacts_pending:
+        if success and artifacts_pending:
             await self._refresh_artifacts_and_reveal(session_id)
 
     async def _refresh_artifacts_and_reveal(self, session_id: str) -> None:
@@ -818,9 +992,7 @@ class BrandMindState(rx.State):
             target_category = newest.category
         await self._select_artifact_internal(target_filename, target_category)
 
-    async def _select_artifact_internal(
-        self, filename: str, category: str
-    ) -> None:
+    async def _select_artifact_internal(self, filename: str, category: str) -> None:
         """Apply artifact selection from a non-event-handler caller.
 
         Mirrors :meth:`select_artifact` but written as a plain async
@@ -1019,7 +1191,7 @@ class BrandMindState(rx.State):
         self.messages = [
             *self.messages[:message_index],
             target,
-            *self.messages[message_index + 1:],
+            *self.messages[message_index + 1 :],
         ]
 
     @rx.event(background=True)

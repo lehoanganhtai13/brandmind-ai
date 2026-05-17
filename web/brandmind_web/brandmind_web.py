@@ -12,13 +12,11 @@ import reflex as rx
 
 from .components.canvas_pane import canvas_pane
 from .components.chat_pane import chat_pane
+from .components.degraded_banner import degraded_banner
 from .components.header import header
 from .components.sidebar import chat_action_dialogs, phase_progress_sidebar
 from .components.tokens import (
     BG_SURFACE_1,
-    STATE_ERROR_BG,
-    STATE_ERROR_BORDER,
-    STATE_ERROR_FG,
     TEXT_PRIMARY,
 )
 from .state import BrandMindState
@@ -29,32 +27,6 @@ _CURSOR_BLINK_KEYFRAMES = """
   50%, 100% { opacity: 0; }
 }
 """
-
-
-def _error_banner() -> rx.Component:
-    """Surface ``BrandMindState.error_message`` as a thin top-of-chat banner."""
-    return rx.cond(
-        BrandMindState.error_message != "",
-        rx.hstack(
-            rx.icon(tag="triangle_alert", size=18, color=STATE_ERROR_FG),
-            rx.text(
-                BrandMindState.error_message,
-                style={
-                    "color": STATE_ERROR_FG,
-                    "font_size": "14px",
-                },
-            ),
-            spacing="2",
-            align="center",
-            padding="12px 16px",
-            style={
-                "background_color": STATE_ERROR_BG,
-                "border_bottom": f"1px solid {STATE_ERROR_BORDER}",
-                "width": "100%",
-            },
-        ),
-        rx.fragment(),
-    )
 
 
 def index() -> rx.Component:
@@ -69,7 +41,7 @@ def index() -> rx.Component:
         chat_action_dialogs(),
         canvas_pane(),
         header(),
-        _error_banner(),
+        degraded_banner(),
         rx.hstack(
             phase_progress_sidebar(),
             chat_pane(),
