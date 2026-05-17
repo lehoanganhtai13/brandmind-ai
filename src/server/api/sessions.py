@@ -8,10 +8,13 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from server.dependencies import get_session_manager
 from server.schemas.session import (
     CreateSessionRequest,
+    GenerateTitleRequest,
     SessionInfo,
     SessionMessage,
     SessionMessages,
+    UpdateSessionRequest,
 )
+from server.services.chat_title import generate_chat_title
 from server.services.session_manager import SessionManager
 
 router = APIRouter(tags=["sessions"])
@@ -96,6 +99,80 @@ async def get_session_messages(
             if text:
                 history.append(SessionMessage(role="agent", content=text))
     return SessionMessages(session_id=session_id, messages=history)
+
+
+@router.patch("/sessions/{session_id}")
+async def update_session(
+    session_id: str,
+    body: UpdateSessionRequest,
+    manager: SessionManager = Depends(get_session_manager),
+) -> SessionInfo:
+    """Apply a partial update to a brand-strategy session's UX metadata.
+
+    Powers manual rename + pin from the chat picker. ``None`` fields
+    in the request are left untouched; explicit empty strings clear
+    the title back to the placeholder.
+    """
+    try:
+        session = await manager.get_session(session_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Session not found")
+    bs = session.brand_strategy_session
+    if bs is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Only brand-strategy sessions carry UX metadata",
+        )
+    if body.title is not None:
+        bs.title = body.title.strip()
+    if body.pinned is not None:
+        bs.pinned = bool(body.pinned)
+    return session.to_session_info()
+
+
+@router.post("/sessions/{session_id}/title")
+async def auto_generate_title(
+    session_id: str,
+    body: GenerateTitleRequest | None = None,
+    manager: SessionManager = Depends(get_session_manager),
+) -> SessionInfo:
+    """Generate and persist a 3–4 word title for the session.
+
+    Falls back to the first persisted ``HumanMessage`` when the request
+    body omits ``message``. When Gemini returns an empty response the
+    session is left unchanged so the sidebar keeps its ``Untitled``
+    placeholder rather than locking in a bad label.
+    """
+    try:
+        session = await manager.get_session(session_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Session not found")
+    bs = session.brand_strategy_session
+    if bs is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Only brand-strategy sessions support auto-titling",
+        )
+    source: str | None = body.message if body and body.message else None
+    if source is None:
+        source = _first_user_text(session.messages)
+    if not source:
+        raise HTTPException(
+            status_code=400,
+            detail="No first user message available to title from",
+        )
+    new_title = await generate_chat_title(source)
+    if new_title:
+        bs.title = new_title
+    return session.to_session_info()
+
+
+def _first_user_text(messages: list[BaseMessage]) -> str | None:
+    """Return the text content of the earliest ``HumanMessage`` if any."""
+    for message in messages:
+        if isinstance(message, HumanMessage):
+            return _extract_text_content(message)
+    return None
 
 
 @router.delete("/sessions/{session_id}", status_code=204)

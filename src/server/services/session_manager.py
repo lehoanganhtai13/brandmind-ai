@@ -31,6 +31,20 @@ from server.services.agent_factory import create_agent_for_session
 from shared.agent_middlewares.callback_types import BaseAgentEvent
 
 
+def _is_pinned(info: SessionInfo) -> bool:
+    """Return whether a session's metadata flags it as pinned."""
+    metadata = info.metadata
+    return bool(getattr(metadata, "pinned", False))
+
+
+def _sort_timestamp(info: SessionInfo) -> float:
+    """Return ``-epoch(created_at)`` so newer sessions sort first."""
+    try:
+        return -info.created_at.timestamp()
+    except (AttributeError, OSError, ValueError):
+        return 0.0
+
+
 class EventRouter:
     """Mutable callback that routes middleware events to the current queue.
 
@@ -103,6 +117,8 @@ class ManagedSession:
                     completed_phases=list(bs.completed_phases),
                     phase_sequence=get_phase_sequence(bs.scope),
                     phase_display_labels=get_phase_display_labels(bs.scope),
+                    title=bs.title,
+                    pinned=bs.pinned,
                 )
             )
         else:
@@ -216,9 +232,21 @@ class SessionManager:
         return session.to_session_info()
 
     async def list_sessions(self) -> list[SessionInfo]:
-        """List all active sessions."""
+        """List all active sessions, pinned chats first then newest-first.
+
+        The web sidebar reads this directly; sorting on the server keeps
+        every client (CLI, web, future mobile) consistent without each
+        re-implementing the order.
+        """
         async with self._registry_lock:
-            return [s.to_session_info() for s in self._sessions.values()]
+            infos = [s.to_session_info() for s in self._sessions.values()]
+        infos.sort(
+            key=lambda info: (
+                not _is_pinned(info),
+                _sort_timestamp(info),
+            ),
+        )
+        return infos
 
     async def delete_session(self, session_id: str) -> None:
         """Delete a session and persist brand-strategy state."""

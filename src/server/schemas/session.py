@@ -32,7 +32,8 @@ class BrandStrategyMetadata(BaseModel):
     ``phase_sequence`` and ``phase_display_labels`` fields to render
     the scope-dependent progress sidebar without hard-coding the phase
     taxonomy on the client; backend stays the canonical source of
-    truth.
+    truth. ``title`` and ``pinned`` carry UX state — the sidebar shows
+    the title on each chat row and pins-to-top when ``pinned`` is set.
     """
 
     current_phase: str
@@ -41,6 +42,8 @@ class BrandStrategyMetadata(BaseModel):
     completed_phases: list[str] = []
     phase_sequence: list[str] = []
     phase_display_labels: dict[str, str] = {}
+    title: str = ""
+    pinned: bool = False
 
 
 class SessionInfo(BaseModel):
@@ -79,3 +82,27 @@ class SessionMessages(BaseModel):
 
     session_id: str
     messages: list[SessionMessage]
+
+
+class UpdateSessionRequest(BaseModel):
+    """Partial update for a session's UX-side metadata.
+
+    Both fields are optional so callers can rename, pin, or both in a
+    single PATCH. Server-side default is "leave unchanged" — the
+    handler ignores ``None`` rather than clearing the field.
+    """
+
+    title: str | None = None
+    pinned: bool | None = None
+
+
+class GenerateTitleRequest(BaseModel):
+    """Optional body for the auto-title endpoint.
+
+    ``message`` overrides the persisted first-user-message lookup,
+    useful when the caller wants to title a chat from a draft that
+    has not been streamed yet. When omitted the server reads the
+    first ``HumanMessage`` from the session's stored history.
+    """
+
+    message: str | None = None

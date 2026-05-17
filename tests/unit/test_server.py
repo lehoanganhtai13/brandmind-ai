@@ -424,3 +424,118 @@ class TestAPIRoutes:
         assert [m["role"] for m in history] == ["user", "agent", "user", "agent"]
         assert history[0]["content"] == "Hello"
         assert history[3]["content"] == "Why did the chicken cross the road?"
+
+    def test_patch_session_renames_and_pins(self, client):
+        """PATCH updates title and pinned independently on brand-strategy sessions."""
+        create_resp = client.post(
+            "/api/v1/sessions", json={"mode": "brand-strategy"}
+        )
+        sid = create_resp.json()["session_id"]
+        resp = client.patch(
+            f"/api/v1/sessions/{sid}",
+            json={"title": "Cafe Da Lat launch", "pinned": True},
+        )
+        assert resp.status_code == 200
+        meta = resp.json()["metadata"]
+        assert meta["title"] == "Cafe Da Lat launch"
+        assert meta["pinned"] is True
+        # Partial: send only pinned=False; title must survive.
+        resp = client.patch(f"/api/v1/sessions/{sid}", json={"pinned": False})
+        assert resp.status_code == 200
+        meta = resp.json()["metadata"]
+        assert meta["title"] == "Cafe Da Lat launch"
+        assert meta["pinned"] is False
+
+    def test_patch_session_not_found(self, client):
+        resp = client.patch("/api/v1/sessions/nonexistent", json={"title": "X"})
+        assert resp.status_code == 404
+
+    def test_patch_session_rejects_ask_mode(self, client):
+        """Ask sessions have no UX metadata target, so PATCH 400s rather than silently passing."""
+        create_resp = client.post("/api/v1/sessions", json={"mode": "ask"})
+        sid = create_resp.json()["session_id"]
+        resp = client.patch(f"/api/v1/sessions/{sid}", json={"title": "X"})
+        assert resp.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_auto_title_uses_persisted_first_user_message(
+        self, client, monkeypatch
+    ):
+        """When no body is sent, the endpoint titles from the first HumanMessage."""
+        from langchain_core.messages import HumanMessage
+
+        from server.api import sessions as sessions_module
+
+        async def fake_titler(text: str) -> str:
+            assert text == "Tôi muốn mở một quán cà phê specialty ở Đà Lạt."
+            return "Specialty cafe Da Lat"
+
+        monkeypatch.setattr(
+            sessions_module, "generate_chat_title", fake_titler
+        )
+        create_resp = client.post(
+            "/api/v1/sessions", json={"mode": "brand-strategy"}
+        )
+        sid = create_resp.json()["session_id"]
+        manager = client.app.state.session_manager
+        session = await manager.get_session(sid)
+        session.messages.append(
+            HumanMessage(content="Tôi muốn mở một quán cà phê specialty ở Đà Lạt.")
+        )
+        resp = client.post(f"/api/v1/sessions/{sid}/title")
+        assert resp.status_code == 200
+        assert resp.json()["metadata"]["title"] == "Specialty cafe Da Lat"
+
+    def test_auto_title_with_explicit_message(self, client, monkeypatch):
+        """An explicit `message` in the body overrides the persisted lookup."""
+        from server.api import sessions as sessions_module
+
+        async def fake_titler(text: str) -> str:
+            return text.split()[0] + " brief"
+
+        monkeypatch.setattr(
+            sessions_module, "generate_chat_title", fake_titler
+        )
+        create_resp = client.post(
+            "/api/v1/sessions", json={"mode": "brand-strategy"}
+        )
+        sid = create_resp.json()["session_id"]
+        resp = client.post(
+            f"/api/v1/sessions/{sid}/title",
+            json={"message": "Repositioning a heritage F&B brand"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["metadata"]["title"] == "Repositioning brief"
+
+    def test_auto_title_rejects_ask_mode(self, client):
+        create_resp = client.post("/api/v1/sessions", json={"mode": "ask"})
+        sid = create_resp.json()["session_id"]
+        resp = client.post(f"/api/v1/sessions/{sid}/title")
+        assert resp.status_code == 400
+
+    def test_auto_title_no_source_message(self, client):
+        """Brand-strategy session with no first user message + no body 400s."""
+        create_resp = client.post(
+            "/api/v1/sessions", json={"mode": "brand-strategy"}
+        )
+        sid = create_resp.json()["session_id"]
+        resp = client.post(f"/api/v1/sessions/{sid}/title")
+        assert resp.status_code == 400
+
+    def test_list_sessions_orders_pinned_first(self, client):
+        """list_sessions surfaces pinned chats before unpinned ones."""
+        ids = []
+        for _ in range(3):
+            ids.append(
+                client.post(
+                    "/api/v1/sessions", json={"mode": "brand-strategy"}
+                ).json()["session_id"]
+            )
+        # Pin only the middle one.
+        client.patch(f"/api/v1/sessions/{ids[1]}", json={"pinned": True})
+        resp = client.get("/api/v1/sessions")
+        assert resp.status_code == 200
+        # Filter to just the ones we created so concurrent tests don't pollute.
+        ours = [s for s in resp.json() if s["session_id"] in ids]
+        assert ours[0]["session_id"] == ids[1]
+        assert ours[0]["metadata"]["pinned"] is True

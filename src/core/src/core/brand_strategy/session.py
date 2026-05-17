@@ -482,6 +482,9 @@ class BrandStrategySession(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = ""
 
+    title: str = ""
+    pinned: bool = False
+
     current_phase: str = "phase_0"
     scope: str | None = None
     budget_tier: str | None = None
