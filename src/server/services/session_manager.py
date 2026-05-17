@@ -7,6 +7,7 @@ and provides concurrency control for the _active_session global.
 from __future__ import annotations
 
 import asyncio
+import shutil
 import uuid
 from asyncio import Queue
 from dataclasses import dataclass, field
@@ -14,7 +15,9 @@ from datetime import datetime
 
 from langchain_core.messages import BaseMessage
 from langgraph.graph.state import CompiledStateGraph
+from loguru import logger
 
+from config.system_config import SETTINGS
 from core.brand_strategy.session import (
     BrandStrategySession,
     get_phase_display_labels,
@@ -29,6 +32,7 @@ from server.schemas.session import (
 )
 from server.services.agent_factory import create_agent_for_session
 from shared.agent_middlewares.callback_types import BaseAgentEvent
+from shared.workspace import BRANDMIND_HOME
 
 
 def _is_pinned(info: SessionInfo) -> bool:
@@ -43,6 +47,29 @@ def _sort_timestamp(info: SessionInfo) -> float:
         return -info.created_at.timestamp()
     except (AttributeError, OSError, ValueError):
         return 0.0
+
+
+def _delete_workspace_dir(bs_session_id: str) -> None:
+    """Remove ``~/.brandmind/projects/{bs_session_id}/`` if it is safe to.
+
+    The path-containment guard refuses to follow symlinks or escape
+    the projects root so a corrupted session id cannot delete data
+    outside the BrandMind home directory.
+    """
+    projects_root = (BRANDMIND_HOME / "projects").resolve()
+    target = (projects_root / bs_session_id).resolve()
+    if not target.exists() or not target.is_dir():
+        return
+    try:
+        target.relative_to(projects_root)
+    except ValueError:
+        logger.warning(f"Refusing to delete workspace outside projects root: {target}")
+        return
+    if target == projects_root:
+        logger.warning("Refusing to delete projects root itself")
+        return
+    shutil.rmtree(target)
+    logger.info(f"Removed workspace dir: {target}")
 
 
 class EventRouter:
@@ -197,7 +224,10 @@ class SessionManager:
         """Create a new session with the given mode.
 
         For brand-strategy mode, BrandStrategySession is initialized
-        eagerly so session info has metadata immediately.
+        eagerly so session info has metadata immediately. The API
+        ``session_id`` is forwarded as the brand-strategy session id
+        so the workspace directory and persisted JSON share the
+        identifier the web URL already exposes.
         """
         session_id = str(uuid.uuid4())[:8]
         now = asyncio.get_event_loop().time()
@@ -208,7 +238,9 @@ class SessionManager:
             last_active=now,
         )
         if mode is SessionMode.BRAND_STRATEGY:
-            managed.brand_strategy_session = BrandStrategySession()
+            managed.brand_strategy_session = BrandStrategySession(
+                session_id=session_id,
+            )
 
         async with self._registry_lock:
             self._sessions[session_id] = managed
@@ -249,11 +281,21 @@ class SessionManager:
         return infos
 
     async def delete_session(self, session_id: str) -> None:
-        """Delete a session and persist brand-strategy state."""
+        """Delete a session, persisting state and optionally clearing disk.
+
+        Brand-strategy state is always saved before eviction so the
+        agent's prior work survives. When
+        :data:`SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE` is
+        true, the matching workspace directory is also removed.
+        """
         async with self._registry_lock:
             session = self._sessions.pop(session_id, None)
-        if session is not None and session.brand_strategy_session is not None:
-            save_session(session.brand_strategy_session)
+        if session is None or session.brand_strategy_session is None:
+            return
+        bs = session.brand_strategy_session
+        save_session(bs)
+        if SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE:
+            _delete_workspace_dir(bs.session_id)
 
     @property
     def brand_strategy_lock(self) -> asyncio.Lock:

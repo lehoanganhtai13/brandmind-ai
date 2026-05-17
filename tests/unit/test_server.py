@@ -228,6 +228,64 @@ class TestSessionManager:
         lock = manager.brand_strategy_lock
         assert isinstance(lock, asyncio.Lock)
 
+    @pytest.mark.asyncio
+    async def test_brand_strategy_session_id_matches_api_id(self, manager):
+        """API session_id is forwarded so disk paths share the URL id."""
+        info = await manager.create_session(SessionMode.BRAND_STRATEGY)
+        session = await manager.get_session(info.session_id)
+        assert session.brand_strategy_session is not None
+        assert session.brand_strategy_session.session_id == info.session_id
+
+    @pytest.mark.asyncio
+    async def test_delete_session_clears_workspace_when_flag_on(
+        self, manager, tmp_path, monkeypatch
+    ):
+        """Cleanup runs only with the flag enabled and stays inside projects."""
+        from server.services import session_manager as sm_module
+
+        monkeypatch.setattr(sm_module, "BRANDMIND_HOME", tmp_path)
+        monkeypatch.setattr(
+            sm_module.SETTINGS,
+            "BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE",
+            True,
+        )
+        info = await manager.create_session(SessionMode.BRAND_STRATEGY)
+        session = await manager.get_session(info.session_id)
+        assert session.brand_strategy_session is not None
+        bs_id = session.brand_strategy_session.session_id
+
+        workspace = tmp_path / "projects" / bs_id / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text("scratch")
+
+        await manager.delete_session(info.session_id)
+        assert not (tmp_path / "projects" / bs_id).exists()
+
+    @pytest.mark.asyncio
+    async def test_delete_session_keeps_workspace_when_flag_off(
+        self, manager, tmp_path, monkeypatch
+    ):
+        """Default off path leaves disk untouched for eval-pipeline safety."""
+        from server.services import session_manager as sm_module
+
+        monkeypatch.setattr(sm_module, "BRANDMIND_HOME", tmp_path)
+        monkeypatch.setattr(
+            sm_module.SETTINGS,
+            "BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE",
+            False,
+        )
+        info = await manager.create_session(SessionMode.BRAND_STRATEGY)
+        session = await manager.get_session(info.session_id)
+        assert session.brand_strategy_session is not None
+        bs_id = session.brand_strategy_session.session_id
+
+        workspace = tmp_path / "projects" / bs_id / "workspace"
+        workspace.mkdir(parents=True)
+        (workspace / "brand_brief.md").write_text("scratch")
+
+        await manager.delete_session(info.session_id)
+        assert workspace.exists()
+
 
 # ── Agent Factory ────────────────────────────────────────────────────
 
@@ -339,9 +397,7 @@ class TestAPIRoutes:
         assert resp.json()["mode"] == "ask"
 
     def test_create_brand_strategy_session(self, client):
-        resp = client.post(
-            "/api/v1/sessions", json={"mode": "brand-strategy"}
-        )
+        resp = client.post("/api/v1/sessions", json={"mode": "brand-strategy"})
         assert resp.status_code == 201
         assert resp.json()["metadata"]["current_phase"] == "phase_0"
 
@@ -356,9 +412,7 @@ class TestAPIRoutes:
         assert len(resp.json()) >= 1
 
     def test_get_session(self, client):
-        create_resp = client.post(
-            "/api/v1/sessions", json={"mode": "ask"}
-        )
+        create_resp = client.post("/api/v1/sessions", json={"mode": "ask"})
         sid = create_resp.json()["session_id"]
         resp = client.get(f"/api/v1/sessions/{sid}")
         assert resp.status_code == 200
@@ -369,9 +423,7 @@ class TestAPIRoutes:
         assert resp.status_code == 404
 
     def test_delete_session(self, client):
-        create_resp = client.post(
-            "/api/v1/sessions", json={"mode": "ask"}
-        )
+        create_resp = client.post("/api/v1/sessions", json={"mode": "ask"})
         sid = create_resp.json()["session_id"]
         resp = client.delete(f"/api/v1/sessions/{sid}")
         assert resp.status_code == 204
@@ -382,9 +434,7 @@ class TestAPIRoutes:
 
     def test_get_session_messages_empty(self, client):
         """Brand new session returns empty message history."""
-        create_resp = client.post(
-            "/api/v1/sessions", json={"mode": "ask"}
-        )
+        create_resp = client.post("/api/v1/sessions", json={"mode": "ask"})
         sid = create_resp.json()["session_id"]
         resp = client.get(f"/api/v1/sessions/{sid}/messages")
         assert resp.status_code == 200
@@ -401,21 +451,23 @@ class TestAPIRoutes:
         """Populating a session's message log surfaces through the endpoint."""
         from langchain_core.messages import AIMessage, HumanMessage
 
-        create_resp = client.post(
-            "/api/v1/sessions", json={"mode": "ask"}
-        )
+        create_resp = client.post("/api/v1/sessions", json={"mode": "ask"})
         sid = create_resp.json()["session_id"]
         manager = client.app.state.session_manager
         session = await manager.get_session(sid)
-        session.messages.extend([
-            HumanMessage(content="Hello"),
-            AIMessage(content="Hi there!"),
-            HumanMessage(content="Tell me a joke"),
-            AIMessage(content=[
-                {"type": "text", "text": "Why did the chicken cross the road?"},
-                {"type": "tool_use", "name": "noop", "input": {}},
-            ]),
-        ])
+        session.messages.extend(
+            [
+                HumanMessage(content="Hello"),
+                AIMessage(content="Hi there!"),
+                HumanMessage(content="Tell me a joke"),
+                AIMessage(
+                    content=[
+                        {"type": "text", "text": "Why did the chicken cross the road?"},
+                        {"type": "tool_use", "name": "noop", "input": {}},
+                    ]
+                ),
+            ]
+        )
         resp = client.get(f"/api/v1/sessions/{sid}/messages")
         assert resp.status_code == 200
         body = resp.json()
@@ -427,9 +479,7 @@ class TestAPIRoutes:
 
     def test_patch_session_renames_and_pins(self, client):
         """PATCH updates title and pinned independently on brand-strategy sessions."""
-        create_resp = client.post(
-            "/api/v1/sessions", json={"mode": "brand-strategy"}
-        )
+        create_resp = client.post("/api/v1/sessions", json={"mode": "brand-strategy"})
         sid = create_resp.json()["session_id"]
         resp = client.patch(
             f"/api/v1/sessions/{sid}",
@@ -470,12 +520,8 @@ class TestAPIRoutes:
             assert text == "Tôi muốn mở một quán cà phê specialty ở Đà Lạt."
             return "Specialty cafe Da Lat"
 
-        monkeypatch.setattr(
-            sessions_module, "generate_chat_title", fake_titler
-        )
-        create_resp = client.post(
-            "/api/v1/sessions", json={"mode": "brand-strategy"}
-        )
+        monkeypatch.setattr(sessions_module, "generate_chat_title", fake_titler)
+        create_resp = client.post("/api/v1/sessions", json={"mode": "brand-strategy"})
         sid = create_resp.json()["session_id"]
         manager = client.app.state.session_manager
         session = await manager.get_session(sid)
@@ -493,12 +539,8 @@ class TestAPIRoutes:
         async def fake_titler(text: str) -> str:
             return text.split()[0] + " brief"
 
-        monkeypatch.setattr(
-            sessions_module, "generate_chat_title", fake_titler
-        )
-        create_resp = client.post(
-            "/api/v1/sessions", json={"mode": "brand-strategy"}
-        )
+        monkeypatch.setattr(sessions_module, "generate_chat_title", fake_titler)
+        create_resp = client.post("/api/v1/sessions", json={"mode": "brand-strategy"})
         sid = create_resp.json()["session_id"]
         resp = client.post(
             f"/api/v1/sessions/{sid}/title",
@@ -515,9 +557,7 @@ class TestAPIRoutes:
 
     def test_auto_title_no_source_message(self, client):
         """Brand-strategy session with no first user message + no body 400s."""
-        create_resp = client.post(
-            "/api/v1/sessions", json={"mode": "brand-strategy"}
-        )
+        create_resp = client.post("/api/v1/sessions", json={"mode": "brand-strategy"})
         sid = create_resp.json()["session_id"]
         resp = client.post(f"/api/v1/sessions/{sid}/title")
         assert resp.status_code == 400
@@ -527,9 +567,9 @@ class TestAPIRoutes:
         ids = []
         for _ in range(3):
             ids.append(
-                client.post(
-                    "/api/v1/sessions", json={"mode": "brand-strategy"}
-                ).json()["session_id"]
+                client.post("/api/v1/sessions", json={"mode": "brand-strategy"}).json()[
+                    "session_id"
+                ]
             )
         # Pin only the middle one.
         client.patch(f"/api/v1/sessions/{ids[1]}", json={"pinned": True})
