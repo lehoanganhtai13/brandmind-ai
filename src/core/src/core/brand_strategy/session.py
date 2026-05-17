@@ -15,7 +15,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from langchain_core.messages import messages_from_dict, messages_to_dict
 from pydantic import BaseModel, Field
@@ -471,6 +471,68 @@ def update_strategy_progress(
     return "No changes needed."
 
 
+class PersistedToolCall(BaseModel):
+    """Tool invocation captured for a single agent turn.
+
+    Mirrors the live SSE wire shape so the chat scroll can rebuild the
+    reasoning timeline from disk after a page reload without re-running
+    the model.
+    """
+
+    tool_name: str
+    arguments: dict[str, Any] = Field(default_factory=dict)
+    result: str = ""
+
+
+class PersistedTimelineEntry(BaseModel):
+    """One chronological reasoning-trace entry for an agent turn.
+
+    Either a thinking block (``kind == "thinking"``) or a completed tool
+    call (``kind == "tool_call"``). Exactly one of the payload fields is
+    populated per entry; ``thinking_done`` is implicitly true after the
+    turn closes so the field is intentionally omitted here.
+    """
+
+    kind: Literal["thinking", "tool_call"]
+    thinking_text: str = ""
+    tool_call: PersistedToolCall | None = None
+
+
+class PersistedAgentTurn(BaseModel):
+    """Reasoning timeline + duration captured for one agent message.
+
+    Persisted alongside :class:`BrandStrategySession.messages` so the
+    Nth ``PersistedAgentTurn`` corresponds to the Nth ``AIMessage`` in
+    chronological order. ``duration_label`` is the same short string
+    the web UI renders inside the collapsed "Thought for …" summary.
+    """
+
+    timeline: list[PersistedTimelineEntry] = Field(default_factory=list)
+    duration_label: str = ""
+
+
+def format_turn_duration(seconds: float) -> str:
+    """Format a non-negative elapsed-seconds value as the timeline label.
+
+    Mirrors the web UI's client-side helper so a turn rendered live and
+    a turn rehydrated from disk display the same "Thought for …" cap.
+
+    Args:
+        seconds (float): Wall-clock duration of the agent turn.
+
+    Returns:
+        label (str): Compact human label such as ``"<1s"``, ``"23s"``,
+        or ``"1m04s"``.
+    """
+    if seconds < 1.0:
+        return "<1s"
+    total = int(seconds)
+    if total < 60:
+        return f"{total}s"
+    minutes, secs = divmod(total, 60)
+    return f"{minutes}m{secs:02d}s"
+
+
 class BrandStrategySession(BaseModel):
     """Persistent session state for brand strategy workflow.
 
@@ -493,6 +555,7 @@ class BrandStrategySession(BaseModel):
     completed_phases: list[str] = Field(default_factory=list)
     brief: BrandBrief = Field(default_factory=BrandBrief)
     messages: list[Any] = Field(default_factory=list)
+    agent_traces: list[PersistedAgentTurn] = Field(default_factory=list)
     turn_index: int = 0
     last_advance_turn_index: int | None = None
 

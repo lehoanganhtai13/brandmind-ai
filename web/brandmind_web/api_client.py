@@ -141,6 +141,59 @@ async def get_session_messages(
     return SessionMessages.model_validate(response.json())
 
 
+async def update_session(
+    api_base_url: str,
+    session_id: str,
+    *,
+    title: str | None = None,
+    pinned: bool | None = None,
+) -> SessionInfo:
+    """Patch a session's UX metadata (title / pinned) and return the new state.
+
+    Both fields are optional. Sending ``title=""`` clears the title back
+    to the sidebar placeholder; ``None`` means "leave unchanged".
+    """
+    url = f"{api_base_url}/api/v1/sessions/{session_id}"
+    body: dict = {}
+    if title is not None:
+        body["title"] = title
+    if pinned is not None:
+        body["pinned"] = pinned
+    async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
+        response = await client.patch(url, json=body)
+        response.raise_for_status()
+    return SessionInfo.model_validate(response.json())
+
+
+async def generate_session_title(
+    api_base_url: str,
+    session_id: str,
+    message: str | None = None,
+) -> SessionInfo:
+    """Ask the backend to summarise the first user message into a chat title.
+
+    Returns the updated ``SessionInfo`` so the caller can replace its
+    cached entry in one step. When ``message`` is omitted the backend
+    falls back to the persisted first ``HumanMessage`` on the session.
+    """
+    url = f"{api_base_url}/api/v1/sessions/{session_id}/title"
+    body: dict = {}
+    if message:
+        body["message"] = message
+    async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
+        response = await client.post(url, json=body)
+        response.raise_for_status()
+    return SessionInfo.model_validate(response.json())
+
+
+async def delete_session(api_base_url: str, session_id: str) -> None:
+    """Remove a session from the backend."""
+    url = f"{api_base_url}/api/v1/sessions/{session_id}"
+    async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
+        response = await client.delete(url)
+        response.raise_for_status()
+
+
 async def get_session(api_base_url: str, session_id: str) -> SessionInfo:
     """Fetch the current state of an existing session from the backend.
 

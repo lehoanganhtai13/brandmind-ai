@@ -213,32 +213,62 @@ def _empty_state() -> rx.Component:
 
 
 def _chat_row(info: rx.Var[SessionInfo]) -> rx.Component:
-    """One clickable chat in the picker; teal-tinted when active."""
+    """One chat row: clickable title + meta, hover-revealed actions menu.
+
+    The title falls back to ``Untitled`` while the backend's auto-title
+    job is still pending. The "…" trigger surfaces rename / pin / delete
+    without disturbing the row-level click target that switches chats.
+    """
     is_active = info.session_id == BrandMindState.session_id
-    label = rx.cond(info.metadata.brand_name, info.metadata.brand_name, "Untitled")
+    is_pinned = info.metadata.pinned
+    label = rx.cond(info.metadata.title, info.metadata.title, "Untitled")
     meta = rx.cond(
         info.message_count > 0,
         info.message_count.to_string() + " msgs",
         "No messages yet",
     )
-    return rx.box(
-        rx.vstack(
-            rx.text(
-                label,
-                style={
-                    "color": rx.cond(
-                        is_active, tokens.TEXT_PRIMARY, tokens.TEXT_SECONDARY
-                    ),
-                    "font_family": tokens.FONT_SANS,
-                    "font_size": "13px",
-                    "font_weight": rx.cond(is_active, "600", "500"),
-                    "line_height": "1.3",
-                    "overflow": "hidden",
-                    "text_overflow": "ellipsis",
-                    "white_space": "nowrap",
-                    "width": "100%",
-                },
+    title_text = rx.tooltip(
+        rx.text(
+            label,
+            style={
+                "color": rx.cond(
+                    is_active, tokens.TEXT_PRIMARY, tokens.TEXT_SECONDARY
+                ),
+                "font_family": tokens.FONT_SANS,
+                "font_size": "13px",
+                "font_weight": rx.cond(is_active, "600", "500"),
+                "line_height": "1.3",
+                "overflow": "hidden",
+                "text_overflow": "ellipsis",
+                "white_space": "nowrap",
+                "max_width": "100%",
+            },
+        ),
+        content=label,
+        side="right",
+        delay_duration=300,
+    )
+    title_block = rx.hstack(
+        rx.cond(
+            is_pinned,
+            rx.icon(
+                tag="pin",
+                size=12,
+                color=tokens.ACCENT_TEAL_SOLID,
+                style={"flex_shrink": "0"},
             ),
+            rx.fragment(),
+        ),
+        title_text,
+        spacing="2",
+        align="center",
+        width="100%",
+        style={"min_width": "0"},
+    )
+
+    clickable = rx.box(
+        rx.vstack(
+            title_block,
             rx.text(
                 meta,
                 style={
@@ -251,11 +281,68 @@ def _chat_row(info: rx.Var[SessionInfo]) -> rx.Component:
             spacing="1",
             align="start",
             width="100%",
+            style={"min_width": "0"},
         ),
         on_click=BrandMindState.switch_chat(info.session_id),
         style={
-            "padding": "8px 14px",
             "cursor": "pointer",
+            "flex": "1",
+            "min_width": "0",
+        },
+    )
+
+    menu = rx.menu.root(
+        rx.menu.trigger(
+            rx.icon(
+                tag="ellipsis",
+                size=18,
+                color=tokens.TEXT_SECONDARY,
+            ),
+            style={
+                "padding": "6px",
+                "border_radius": tokens.RADIUS_SM,
+                "cursor": "pointer",
+                "background_color": "transparent",
+                "min_width": "28px",
+                "min_height": "28px",
+                "display": "flex",
+                "align_items": "center",
+                "justify_content": "center",
+                "_hover": {
+                    "background_color": "rgba(255, 255, 255, 0.10)",
+                    "color": tokens.TEXT_PRIMARY,
+                },
+            },
+        ),
+        rx.menu.content(
+            rx.menu.item(
+                "Rename",
+                on_click=BrandMindState.open_rename_dialog(
+                    info.session_id, info.metadata.title
+                ),
+            ),
+            rx.menu.item(
+                rx.cond(is_pinned, "Unpin", "Pin"),
+                on_click=BrandMindState.toggle_pin(info.session_id),
+            ),
+            rx.menu.separator(),
+            rx.menu.item(
+                "Delete",
+                color=tokens.ACCENT_TEAL_SOLID,
+                on_click=BrandMindState.open_delete_dialog(info.session_id),
+            ),
+            align="end",
+        ),
+    )
+
+    return rx.hstack(
+        clickable,
+        menu,
+        spacing="1",
+        align="center",
+        style={
+            "width": "100%",
+            "padding": "8px 10px 8px 14px",
             "border_radius": tokens.RADIUS_SM,
             "background_color": rx.cond(
                 is_active,
@@ -424,6 +511,101 @@ def _section_divider() -> rx.Component:
             "margin": "8px 16px",
         },
     )
+
+
+def chat_action_dialogs() -> rx.Component:
+    """Page-level rename + delete dialogs driven by BrandMindState targets.
+
+    Composed once at the top of the page so the dialog DOM is not
+    duplicated per chat row. Visibility is controlled by the
+    ``rename_target`` / ``delete_target`` state variables.
+    """
+    rename_dialog = rx.dialog.root(
+        rx.dialog.content(
+            rx.dialog.title("Rename chat"),
+            rx.dialog.description(
+                "Pick a label that helps you spot this chat later.",
+                size="2",
+                color=tokens.TEXT_MUTED,
+            ),
+            rx.input(
+                value=BrandMindState.rename_draft,
+                placeholder="Chat title",
+                on_change=BrandMindState.set_rename_draft,
+                style={
+                    "margin_top": "12px",
+                    "background_color": tokens.BG_SURFACE_2,
+                    "color": tokens.TEXT_PRIMARY,
+                    "border": f"1px solid {tokens.GLASS_BORDER}",
+                },
+            ),
+            rx.hstack(
+                rx.button(
+                    "Cancel",
+                    variant="soft",
+                    color_scheme="gray",
+                    on_click=BrandMindState.cancel_rename,
+                ),
+                rx.button(
+                    "Save",
+                    on_click=BrandMindState.confirm_rename,
+                    style={
+                        "background_color": tokens.ACCENT_TEAL_SOLID,
+                        "color": "#003732",
+                    },
+                ),
+                spacing="3",
+                justify="end",
+                margin_top="16px",
+            ),
+            style={
+                "background_color": tokens.BG_SURFACE_1,
+                "border": f"1px solid {tokens.GLASS_BORDER}",
+                "max_width": "420px",
+            },
+        ),
+        open=BrandMindState.rename_target != "",
+        on_open_change=BrandMindState.cancel_rename,
+    )
+    delete_dialog = rx.alert_dialog.root(
+        rx.alert_dialog.content(
+            rx.alert_dialog.title("Delete this chat?"),
+            rx.alert_dialog.description(
+                "The chat and its message history will be removed. "
+                "This cannot be undone.",
+                size="2",
+                color=tokens.TEXT_MUTED,
+            ),
+            rx.hstack(
+                rx.alert_dialog.cancel(
+                    rx.button(
+                        "Cancel",
+                        variant="soft",
+                        color_scheme="gray",
+                        on_click=BrandMindState.cancel_delete,
+                    ),
+                ),
+                rx.alert_dialog.action(
+                    rx.button(
+                        "Delete",
+                        color_scheme="red",
+                        on_click=BrandMindState.confirm_delete,
+                    ),
+                ),
+                spacing="3",
+                justify="end",
+                margin_top="16px",
+            ),
+            style={
+                "background_color": tokens.BG_SURFACE_1,
+                "border": f"1px solid {tokens.GLASS_BORDER}",
+                "max_width": "420px",
+            },
+        ),
+        open=BrandMindState.delete_target != "",
+        on_open_change=BrandMindState.cancel_delete,
+    )
+    return rx.fragment(rename_dialog, delete_dialog)
 
 
 def phase_progress_sidebar() -> rx.Component:

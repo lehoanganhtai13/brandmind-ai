@@ -57,7 +57,8 @@ class BrandStrategyMetadata(BaseModel):
 
     The web UI reads ``phase_sequence`` and ``phase_display_labels`` to
     render the scope-dependent sidebar without hard-coding the canonical
-    phase taxonomy on the client side.
+    phase taxonomy on the client side. ``title`` and ``pinned`` drive
+    the chat-picker row label and pin badge.
     """
 
     current_phase: str = "phase_0"
@@ -66,6 +67,8 @@ class BrandStrategyMetadata(BaseModel):
     completed_phases: list[str] = Field(default_factory=list)
     phase_sequence: list[str] = Field(default_factory=list)
     phase_display_labels: dict[str, str] = Field(default_factory=dict)
+    title: str = ""
+    pinned: bool = False
 
 
 class SessionInfo(BaseModel):
@@ -77,11 +80,45 @@ class SessionInfo(BaseModel):
     metadata: BrandStrategyMetadata = Field(default_factory=BrandStrategyMetadata)
 
 
+class PersistedToolCallWire(BaseModel):
+    """Tool call carried inside a persisted agent turn.
+
+    Receives the same shape the backend ships in its message-history
+    response so the rehydrated timeline can re-render the tool's name,
+    arguments preview, and stringified result without re-running the
+    agent.
+    """
+
+    tool_name: str
+    arguments: dict = Field(default_factory=dict)
+    result: str = ""
+
+
+class PersistedTimelineEntryWire(BaseModel):
+    """One chronological reasoning-trace entry on the wire.
+
+    Mirrors the server-side persisted shape so a rehydrated chat scroll
+    renders the same collapsible thinking + tool-call timeline as the
+    live SSE stream produced at send time.
+    """
+
+    kind: Literal["thinking", "tool_call"]
+    thinking_text: str = ""
+    tool_call: PersistedToolCallWire | None = None
+
+
 class SessionMessage(BaseModel):
-    """One persisted turn from a session's chat history."""
+    """One persisted turn from a session's chat history.
+
+    Agent turns carry the reasoning ``timeline`` and short
+    ``duration_label`` so the rehydrated bubble can show the "Thought
+    for …" summary the user saw live. User turns leave both empty.
+    """
 
     role: Literal["user", "agent"]
     content: str
+    timeline: list[PersistedTimelineEntryWire] = Field(default_factory=list)
+    duration_label: str = ""
 
 
 class SessionMessages(BaseModel):

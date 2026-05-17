@@ -21,7 +21,13 @@ from typing import Literal
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 from loguru import logger
 
-from core.brand_strategy.session import set_active_session
+from core.brand_strategy.session import (
+    PersistedAgentTurn,
+    PersistedTimelineEntry,
+    PersistedToolCall,
+    format_turn_duration,
+    set_active_session,
+)
 from server.schemas.chat import MessageResponse, ToolCallInfo
 from server.schemas.enums import SessionMode
 from server.services.session_manager import ManagedSession, SessionManager
@@ -159,9 +165,7 @@ class _InternalReminderFilter:
                     self._buffer = self._buffer[-keep:] if keep else ""
                     break
 
-                self._buffer = self._buffer[
-                    end_index + len(self._internal_block_end) :
-                ]
+                self._buffer = self._buffer[end_index + len(self._internal_block_end) :]
                 self._inside_internal_block = False
                 self._internal_block_end = _INTERNAL_REMINDER_END
                 continue
@@ -245,7 +249,9 @@ class _InternalReminderFilter:
             self._inside_json_fence = False
             if _looks_like_pseudo_tool_json(text):
                 return ""
-            return self._filter_internal_tool_lines(f"{_JSON_FENCE_START}{text}", final=True)
+            return self._filter_internal_tool_lines(
+                f"{_JSON_FENCE_START}{text}", final=True
+            )
 
         text = self._buffer
         self._buffer = ""
@@ -271,6 +277,134 @@ class _InternalReminderFilter:
                 visible_lines.append(line)
 
         return "".join(visible_lines)
+
+
+class _AgentTurnTraceBuilder:
+    """Accumulate the reasoning timeline for one agent turn.
+
+    The web UI subscribes to live SSE events to draw the timeline while
+    a turn is streaming. After page reload the same shape has to be
+    reconstructable from disk — the live event queue is gone — so the
+    bridge mirrors every thinking chunk and tool call into this builder
+    and snapshots it into :class:`PersistedAgentTurn` when the stream
+    closes.
+
+    The merge rule for thinking blocks matches the client-side
+    ``_append_thinking`` helper in ``web/brandmind_web/state.py``:
+    consecutive thinking chunks roll up into the trailing entry until
+    the producer flips ``done=True``; the next thinking event after
+    that opens a new entry.
+    """
+
+    def __init__(self) -> None:
+        self._entries: list[PersistedTimelineEntry] = []
+        self._thinking_open = False
+
+    def on_thinking(self, token: str, done: bool) -> None:
+        """Fold one streamed thinking chunk into the trailing entry.
+
+        Consecutive thinking tokens with ``done=False`` collapse into a
+        single timeline entry so the rehydrated bubble shows the same
+        reasoning blocks the live stream rendered. A ``done=True`` flag
+        closes the entry so the next thinking chunk opens a fresh one.
+
+        Args:
+            token (str): Visible thinking text just emitted upstream.
+            done (bool): Whether this chunk closes the current thinking
+                block.
+        """
+        if token:
+            if self._thinking_open and self._entries:
+                tail = self._entries[-1]
+                if tail.kind == "thinking":
+                    tail.thinking_text = f"{tail.thinking_text}{token}"
+                else:
+                    self._entries.append(
+                        PersistedTimelineEntry(
+                            kind="thinking",
+                            thinking_text=token,
+                        )
+                    )
+                    self._thinking_open = True
+            else:
+                self._entries.append(
+                    PersistedTimelineEntry(
+                        kind="thinking",
+                        thinking_text=token,
+                    )
+                )
+                self._thinking_open = True
+        if done:
+            self._thinking_open = False
+
+    def on_tool_call(self, tool_name: str, arguments: dict) -> None:
+        """Open a tool entry in the timeline with the args the agent sent.
+
+        Tool calls always close any in-flight thinking block — the SSE
+        stream interleaves the two in chronological order, and the
+        client renders them as separate timeline nodes.
+
+        Args:
+            tool_name (str): Identifier of the dispatched tool.
+            arguments (dict): JSON-serialisable invocation payload.
+        """
+        self._entries.append(
+            PersistedTimelineEntry(
+                kind="tool_call",
+                tool_call=PersistedToolCall(
+                    tool_name=tool_name,
+                    arguments=dict(arguments),
+                ),
+            )
+        )
+        self._thinking_open = False
+
+    def on_tool_result(self, tool_name: str, result: str) -> None:
+        """Settle the earliest still-running tool entry of the same name.
+
+        Mirrors :meth:`BrandMindState._settle_tool_result` so repeated
+        invocations of the same tool resolve in FIFO order — without
+        the oldest-first match the same tool dispatched twice would
+        leave one timeline entry permanently stuck on "running".
+
+        Args:
+            tool_name (str): Identifier of the tool whose result arrived.
+            result (str): Stringified result body.
+        """
+        for entry in self._entries:
+            if entry.kind != "tool_call" or entry.tool_call is None:
+                continue
+            if entry.tool_call.tool_name == tool_name and entry.tool_call.result == "":
+                entry.tool_call.result = result
+                return
+
+    def finalize(self, duration_seconds: float) -> PersistedAgentTurn:
+        """Snapshot the accumulated trace as a persisted-turn record.
+
+        Fills the placeholder ``"(done)"`` result for any tool entry the
+        backend never emitted a ``tool_result`` for (fire-and-forget
+        tools such as ``write_todos`` are common) so the rehydrated UI
+        does not render them as stuck on "running".
+
+        Args:
+            duration_seconds (float): Wall-clock duration of the turn,
+                used to render the collapsed "Thought for …" cap.
+
+        Returns:
+            turn (PersistedAgentTurn): Frozen reasoning trace plus
+            formatted duration label for storage on the session.
+        """
+        for entry in self._entries:
+            if (
+                entry.kind == "tool_call"
+                and entry.tool_call is not None
+                and entry.tool_call.result == ""
+            ):
+                entry.tool_call.result = "(done)"
+        return PersistedAgentTurn(
+            timeline=list(self._entries),
+            duration_label=format_turn_duration(duration_seconds),
+        )
 
 
 async def stream_agent_response(
@@ -441,16 +575,39 @@ async def stream_agent_response(
         # Start producer in background
         producer = asyncio.create_task(_run_astream())
 
+        trace_builder = _AgentTurnTraceBuilder()
+        turn_started_at = asyncio.get_event_loop().time()
+        ai_messages_at_start = sum(
+            1 for m in session.messages if isinstance(m, AIMessage)
+        )
+
         # Consumer: yield events until stream end
         try:
             while True:
                 event = await event_queue.get()
                 if isinstance(event, _StreamEnd):
                     break
+                if isinstance(event, StreamingThinkingEvent):
+                    trace_builder.on_thinking(event.token, event.done)
+                elif isinstance(event, ToolCallEvent):
+                    trace_builder.on_tool_call(event.tool_name, event.arguments)
+                elif isinstance(event, ToolResultEvent):
+                    trace_builder.on_tool_result(event.tool_name, event.result)
                 yield event
         finally:
             if not producer.done():
                 producer.cancel()
+            bs = session.brand_strategy_session
+            if session.mode is SessionMode.BRAND_STRATEGY and bs is not None:
+                ai_messages_now = sum(
+                    1 for m in session.messages if isinstance(m, AIMessage)
+                )
+                if ai_messages_now > ai_messages_at_start:
+                    duration = max(
+                        0.0,
+                        asyncio.get_event_loop().time() - turn_started_at,
+                    )
+                    bs.agent_traces.append(trace_builder.finalize(duration))
 
     finally:
         session.event_router.clear_queue()

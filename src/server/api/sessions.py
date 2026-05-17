@@ -5,17 +5,20 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
+from core.brand_strategy.session import PersistedAgentTurn
 from server.dependencies import get_session_manager
 from server.schemas.session import (
     CreateSessionRequest,
     GenerateTitleRequest,
+    PersistedTimelineEntryWire,
+    PersistedToolCallWire,
     SessionInfo,
     SessionMessage,
     SessionMessages,
     UpdateSessionRequest,
 )
 from server.services.chat_title import generate_chat_title
-from server.services.session_manager import SessionManager
+from server.services.session_manager import ManagedSession, SessionManager
 
 router = APIRouter(tags=["sessions"])
 
@@ -71,6 +74,65 @@ async def get_session(
         raise HTTPException(status_code=404, detail="Session not found")
 
 
+def _agent_traces(session: ManagedSession) -> list[PersistedAgentTurn]:
+    """Return the per-turn reasoning traces stored on a managed session.
+
+    Ask-mode sessions carry no :class:`BrandStrategySession` and so have
+    no traces to expose. Returning an empty list lets the caller iterate
+    uniformly without branching on session mode.
+
+    Args:
+        session (ManagedSession): The session whose traces are queried.
+
+    Returns:
+        traces (list[PersistedAgentTurn]): Ordered persisted traces, or
+        an empty list when no brand-strategy state is bound.
+    """
+    bs = session.brand_strategy_session
+    if bs is None:
+        return []
+    return list(bs.agent_traces)
+
+
+def _trace_to_wire(
+    trace: PersistedAgentTurn,
+) -> tuple[list[PersistedTimelineEntryWire], str]:
+    """Re-shape a persisted agent turn into wire-format response fields.
+
+    The web client deserialises against ``PersistedTimelineEntryWire``
+    rather than the core ``PersistedTimelineEntry`` so the two
+    serialisation surfaces can evolve independently — the wire copy
+    drops fields the client never needs (``thinking_done`` is implicit
+    after rehydration).
+
+    Args:
+        trace (PersistedAgentTurn): Stored reasoning trace for one
+            agent turn.
+
+    Returns:
+        timeline (list[PersistedTimelineEntryWire]): Ordered wire-format
+        entries to embed in the response.
+        duration_label (str): Pre-formatted "Thought for …" label.
+    """
+    entries: list[PersistedTimelineEntryWire] = []
+    for entry in trace.timeline:
+        tool_call_wire: PersistedToolCallWire | None = None
+        if entry.tool_call is not None:
+            tool_call_wire = PersistedToolCallWire(
+                tool_name=entry.tool_call.tool_name,
+                arguments=dict(entry.tool_call.arguments),
+                result=entry.tool_call.result,
+            )
+        entries.append(
+            PersistedTimelineEntryWire(
+                kind=entry.kind,
+                thinking_text=entry.thinking_text,
+                tool_call=tool_call_wire,
+            )
+        )
+    return entries, trace.duration_label
+
+
 @router.get("/sessions/{session_id}/messages")
 async def get_session_messages(
     session_id: str,
@@ -80,15 +142,18 @@ async def get_session_messages(
 
     Powers the web client's "switch chat" affordance — when the user
     picks an older session from the sidebar, the web UI repaints its
-    scroll from this payload. System messages and tool results are
-    omitted because they belong to the live SSE stream, not the
-    saved chat record.
+    scroll from this payload. Each agent turn carries the reasoning
+    trace (thinking blocks plus completed tool calls) captured during
+    the live stream, so the rehydrated bubble shows the same collapsed
+    "Thought for …" summary the user saw at send time.
     """
     try:
         session = await manager.get_session(session_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Session not found")
+    traces = _agent_traces(session)
     history: list[SessionMessage] = []
+    agent_idx = 0
     for raw in session.messages:
         if isinstance(raw, HumanMessage):
             history.append(
@@ -96,8 +161,21 @@ async def get_session_messages(
             )
         elif isinstance(raw, AIMessage):
             text = _extract_text_content(raw)
-            if text:
-                history.append(SessionMessage(role="agent", content=text))
+            if not text:
+                continue
+            timeline: list[PersistedTimelineEntryWire] = []
+            duration_label = ""
+            if agent_idx < len(traces):
+                timeline, duration_label = _trace_to_wire(traces[agent_idx])
+            agent_idx += 1
+            history.append(
+                SessionMessage(
+                    role="agent",
+                    content=text,
+                    timeline=timeline,
+                    duration_label=duration_label,
+                )
+            )
     return SessionMessages(session_id=session_id, messages=history)
 
 

@@ -12,7 +12,7 @@ import reflex as rx
 
 from .components.chat_pane import chat_pane
 from .components.header import header
-from .components.sidebar import phase_progress_sidebar
+from .components.sidebar import chat_action_dialogs, phase_progress_sidebar
 from .components.tokens import (
     BG_SURFACE_1,
     STATE_ERROR_BG,
@@ -65,6 +65,7 @@ def index() -> rx.Component:
     """
     return rx.vstack(
         rx.html(f"<style>{_CURSOR_BLINK_KEYFRAMES}</style>"),
+        chat_action_dialogs(),
         header(),
         _error_banner(),
         rx.hstack(

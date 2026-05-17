@@ -24,18 +24,22 @@ from loguru import logger
 
 from .api_client import (
     create_brand_strategy_session,
+    delete_session,
     extract_final_metadata,
+    generate_session_title,
     get_session,
     get_session_messages,
     health_check,
     list_brand_strategy_sessions,
     stream_message,
+    update_session,
 )
 from .models import (
     BrandStrategyMetadata,
     ChatMessage,
     PhaseAdvancePayload,
     SessionInfo,
+    SessionMessage,
     StreamingThinkingPayload,
     StreamingTokenPayload,
     TimelineEntry,
@@ -98,6 +102,10 @@ class BrandMindState(rx.State):
     is_streaming: bool = False
     pending_input: str = ""
     error_message: str = ""
+
+    rename_target: str = ""
+    rename_draft: str = ""
+    delete_target: str = ""
     sidebar_collapsed: str = rx.LocalStorage(
         "",
         name="bm.web.sidebar.collapsed",
@@ -228,8 +236,7 @@ class BrandMindState(rx.State):
             self.session_id = info.session_id
             self._apply_metadata(info.metadata)
             self.messages = [
-                ChatMessage(role=m.role, content=m.content)
-                for m in history.messages
+                self._chat_message_from_wire(m) for m in history.messages
             ]
             self.error_message = ""
 
@@ -257,6 +264,208 @@ class BrandMindState(rx.State):
         self._apply_metadata(info.metadata)
         self.sessions = [info, *self.sessions]
         return info.session_id
+
+    @rx.event(background=True)
+    async def open_rename_dialog(
+        self, session_id: str, current_title: str
+    ) -> None:
+        """Pre-fill the rename dialog with the current title."""
+        async with self:
+            self.rename_target = session_id
+            self.rename_draft = current_title
+
+    @rx.event
+    def set_rename_draft(self, value: str) -> None:
+        """Mirror the rename input value into state."""
+        self.rename_draft = value
+
+    @rx.event
+    def cancel_rename(self) -> None:
+        """Dismiss the rename dialog without applying changes."""
+        self.rename_target = ""
+        self.rename_draft = ""
+
+    @rx.event(background=True)
+    async def confirm_rename(self) -> None:
+        """Persist the drafted title to the targeted chat."""
+        async with self:
+            target = self.rename_target
+            draft = self.rename_draft.strip()
+        if not target:
+            return
+        api_url = _api_base_url()
+        try:
+            info = await update_session(api_url, target, title=draft)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: rename failed: {exc}")
+            async with self:
+                self.error_message = "Could not rename that chat."
+            return
+        async with self:
+            self.sessions = self._replace_session_in_list(info)
+            self.rename_target = ""
+            self.rename_draft = ""
+
+    @rx.event(background=True)
+    async def toggle_pin(self, session_id: str) -> None:
+        """Flip the pinned flag on a chat and re-sort the sidebar list."""
+        if not session_id:
+            return
+        async with self:
+            current = next(
+                (
+                    s.metadata.pinned
+                    for s in self.sessions
+                    if s.session_id == session_id
+                ),
+                False,
+            )
+        api_url = _api_base_url()
+        try:
+            info = await update_session(
+                api_url, session_id, pinned=not current
+            )
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: pin toggle failed: {exc}")
+            return
+        async with self:
+            self.sessions = self._replace_session_in_list(info)
+            self.sessions = self._reorder_sessions(self.sessions)
+
+    @rx.event(background=True)
+    async def open_delete_dialog(self, session_id: str) -> None:
+        """Surface the delete-confirm modal for the targeted chat."""
+        async with self:
+            self.delete_target = session_id
+
+    @rx.event
+    def cancel_delete(self) -> None:
+        """Dismiss the delete dialog without removing the chat."""
+        self.delete_target = ""
+
+    @rx.event(background=True)
+    async def confirm_delete(self) -> None:
+        """DELETE the targeted chat and rebuild local state.
+
+        Resets the workspace when the deleted chat is the currently
+        active one so the user does not end up streaming into a tombstone.
+        """
+        async with self:
+            target = self.delete_target
+        if not target:
+            return
+        api_url = _api_base_url()
+        try:
+            await delete_session(api_url, target)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: delete failed: {exc}")
+            async with self:
+                self.error_message = "Could not delete that chat."
+                self.delete_target = ""
+            return
+        async with self:
+            self.sessions = [
+                s for s in self.sessions if s.session_id != target
+            ]
+            self.delete_target = ""
+            if self.session_id == target:
+                self.session_id = ""
+                self.messages = []
+                self.scope = ""
+                self.brand_name = ""
+                self.current_phase = "phase_0"
+                self.completed_phases = []
+                self.phase_sequence = []
+                self.phase_display_labels = {}
+
+    def _chat_message_from_wire(self, message: SessionMessage) -> ChatMessage:
+        """Rebuild a :class:`ChatMessage` from a server-side persisted turn.
+
+        Agent turns rehydrate with their full reasoning timeline plus the
+        recorded ``duration_label`` and the ``timeline_expanded=False``
+        flag so the bubble matches the collapsed state a live turn ends
+        in. User turns get an empty timeline and no duration label.
+
+        Args:
+            message (SessionMessage): Persisted turn payload as returned
+                by ``GET /api/v1/sessions/{id}/messages``.
+
+        Returns:
+            chat_message (ChatMessage): Frontend-state-ready bubble
+            wired with content, timeline, and duration metadata.
+        """
+        timeline: list[TimelineEntry] = []
+        for entry in message.timeline:
+            tool_call: ToolCallInfo | None = None
+            if entry.tool_call is not None:
+                tool_call = ToolCallInfo(
+                    tool_name=entry.tool_call.tool_name,
+                    arguments=dict(entry.tool_call.arguments),
+                    result=entry.tool_call.result,
+                )
+            timeline.append(
+                TimelineEntry(
+                    kind=entry.kind,
+                    thinking_text=entry.thinking_text,
+                    thinking_done=True,
+                    tool_call=tool_call,
+                )
+            )
+        return ChatMessage(
+            role=message.role,
+            content=message.content,
+            is_streaming=False,
+            timeline=timeline,
+            turn_duration_label=message.duration_label,
+            timeline_expanded=False,
+        )
+
+    def _replace_session_in_list(self, info: SessionInfo) -> list[SessionInfo]:
+        """Swap ``info`` in for any existing entry with the same id."""
+        replaced = False
+        result: list[SessionInfo] = []
+        for s in self.sessions:
+            if s.session_id == info.session_id:
+                result.append(info)
+                replaced = True
+            else:
+                result.append(s)
+        if not replaced:
+            result.append(info)
+        return result
+
+    def _reorder_sessions(
+        self, sessions: list[SessionInfo]
+    ) -> list[SessionInfo]:
+        """Apply the backend's pinned-first ordering locally for snappier UX."""
+        return sorted(
+            sessions,
+            key=lambda s: (not s.metadata.pinned, sessions.index(s)),
+        )
+
+    async def _auto_title_if_needed(self, session_id: str) -> None:
+        """Trigger Gemini titling after the first turn if the chat is still untitled.
+
+        Called from :meth:`_stream_turn` once the post-turn refresh has
+        landed. Only fires when the picker still shows the chat as
+        title-less so subsequent turns do not re-summarise.
+        """
+        if not session_id:
+            return
+        active = next(
+            (s for s in self.sessions if s.session_id == session_id),
+            None,
+        )
+        if active is None or active.metadata.title:
+            return
+        api_url = _api_base_url()
+        try:
+            info = await generate_session_title(api_url, session_id)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: auto-title failed: {exc}")
+            return
+        async with self:
+            self.sessions = self._replace_session_in_list(info)
 
     @rx.event(background=True)
     async def poll_health(self) -> None:
@@ -323,7 +532,8 @@ class BrandMindState(rx.State):
 
         Triggered by the Send button click. Snapshots ``pending_input``,
         clears it, lazily creates the backend session if none is bound,
-        then delegates to :meth:`_stream_turn`.
+        then delegates to :meth:`_stream_turn` while a title-generation
+        task runs in parallel.
         """
         async with self:
             content = self.pending_input.strip()
@@ -333,7 +543,10 @@ class BrandMindState(rx.State):
             if session_id is None:
                 return
             self.pending_input = ""
+            needs_title = self._chat_is_untitled(session_id)
             self._begin_turn(content)
+        if needs_title:
+            asyncio.create_task(self._title_task(session_id, content))
         await self._stream_turn(session_id, content)
 
     @rx.event(background=True)
@@ -344,7 +557,9 @@ class BrandMindState(rx.State):
         cleared ``pending_input`` and flipped ``is_streaming`` to ``True``
         synchronously, so the caller already owns the turn. Lazily
         creates the backend session if none is bound yet so the chat
-        only materialises on the first real message.
+        only materialises on the first real message. Fires the
+        Gemini titler in parallel so the sidebar label can settle
+        before the agent finishes streaming.
         """
         async with self:
             body = content.strip()
@@ -354,8 +569,38 @@ class BrandMindState(rx.State):
             if session_id is None:
                 self.is_streaming = False
                 return
+            needs_title = self._chat_is_untitled(session_id)
             self._begin_turn(body)
+        if needs_title:
+            asyncio.create_task(self._title_task(session_id, body))
         await self._stream_turn(session_id, body)
+
+    def _chat_is_untitled(self, session_id: str) -> bool:
+        """Whether the matching chat row currently lacks a title."""
+        for info in self.sessions:
+            if info.session_id == session_id:
+                return not info.metadata.title
+        return True
+
+    async def _title_task(self, session_id: str, message: str) -> None:
+        """Fire the Gemini titler off the request thread.
+
+        Runs concurrently with :meth:`_stream_turn` so the sidebar
+        label is replaced as soon as Gemini comes back — usually well
+        before the agent finishes its first turn.
+        """
+        api_url = _api_base_url()
+        try:
+            info = await generate_session_title(
+                api_url, session_id, message=message
+            )
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: parallel title gen failed: {exc}")
+            return
+        if not info.metadata.title:
+            return
+        async with self:
+            self.sessions = self._replace_session_in_list(info)
 
     def _begin_turn(self, content: str) -> None:
         """Seed the chat scroll with a user turn + streaming agent placeholder.
@@ -408,6 +653,7 @@ class BrandMindState(rx.State):
             return
         async with self:
             self.sessions = self._filter_chats(refreshed)
+        await self._auto_title_if_needed(session_id)
 
     def _dispatch_event(self, event_name: str, payload: dict) -> None:
         """Route one SSE event to the matching state mutation."""

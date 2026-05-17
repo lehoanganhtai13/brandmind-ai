@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from server.schemas.enums import SessionMode
 
@@ -63,18 +63,47 @@ class CreateSessionRequest(BaseModel):
     initial_message: str | None = None
 
 
+class PersistedToolCallWire(BaseModel):
+    """Tool call captured for one agent turn, in wire format.
+
+    Mirrors :class:`core.brand_strategy.session.PersistedToolCall` over
+    the API surface so the web UI can deserialise tool invocations from
+    a session's history payload without depending on the core package.
+    """
+
+    tool_name: str
+    arguments: dict = Field(default_factory=dict)
+    result: str = ""
+
+
+class PersistedTimelineEntryWire(BaseModel):
+    """One chronological reasoning-trace entry, in wire format.
+
+    Mirrors :class:`core.brand_strategy.session.PersistedTimelineEntry`
+    so the web UI can deserialise without depending on the core package.
+    """
+
+    kind: Literal["thinking", "tool_call"]
+    thinking_text: str = ""
+    tool_call: PersistedToolCallWire | None = None
+
+
 class SessionMessage(BaseModel):
     """One user-or-agent turn from a session's chat history.
 
     Returned by ``GET /api/v1/sessions/{id}/messages`` so the web UI
-    can repaint a chat scroll when the user switches between
-    persistent sessions. Tool calls and the internal reasoning trace
-    are intentionally not part of this shape — they are stream-only
-    artefacts that do not survive across page reloads.
+    can repaint a chat scroll when the user switches between persistent
+    sessions. Agent turns carry their reasoning trace (thinking blocks
+    plus completed tool calls) and the wall-clock ``duration_label`` so
+    the rehydrated bubble can render the same collapsed "Thought for …"
+    summary the live stream produced. User turns leave both fields
+    empty since they have no reasoning trace of their own.
     """
 
     role: Literal["user", "agent"]
     content: str
+    timeline: list[PersistedTimelineEntryWire] = Field(default_factory=list)
+    duration_label: str = ""
 
 
 class SessionMessages(BaseModel):

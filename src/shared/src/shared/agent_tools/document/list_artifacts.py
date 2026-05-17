@@ -92,16 +92,12 @@ def _phase_5_closure_summary_lines(matches: list[dict]) -> list[str]:
 
     lines = [
         f"Produced artifact types this session: {', '.join(produced_deliverables)}",
-        "Required Phase 5 deliverables: "
-        f"{', '.join(_REQUIRED_PHASE_5_DELIVERABLES)}",
+        f"Required Phase 5 deliverables: {', '.join(_REQUIRED_PHASE_5_DELIVERABLES)}",
     ]
     if missing_categories:
-        lines.append(
-            f"Missing required categories: {', '.join(missing_categories)}"
-        )
+        lines.append(f"Missing required categories: {', '.join(missing_categories)}")
         missing_guidance = "; ".join(
-            _MISSING_DELIVERABLE_GUIDANCE[category]
-            for category in missing_categories
+            _MISSING_DELIVERABLE_GUIDANCE[category] for category in missing_categories
         )
         lines.append(
             "CLOSURE_STATUS: INCOMPLETE — do not tell the user Phase 5 is "
