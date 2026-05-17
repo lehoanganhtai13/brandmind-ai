@@ -99,6 +99,44 @@ def _session_caption() -> rx.Component:
     )
 
 
+def _canvas_toggle() -> rx.Component:
+    """Header button that toggles the canvas drawer.
+
+    Surfaces a small badge over the icon when the active session has
+    artifacts but the drawer is closed — the visual cue tells the user
+    that deliverables are waiting without forcing the drawer open.
+    """
+    return rx.button(
+        rx.hstack(
+            rx.icon(tag="panel_right_open", size=18),
+            rx.cond(
+                BrandMindState.has_artifacts,
+                rx.box(
+                    style={
+                        "width": "6px",
+                        "height": "6px",
+                        "border_radius": tokens.RADIUS_PILL,
+                        "background_color": tokens.ACCENT_TEAL_SOLID,
+                    },
+                ),
+                rx.fragment(),
+            ),
+            spacing="2",
+            align="center",
+        ),
+        on_click=BrandMindState.toggle_canvas,
+        variant="ghost",
+        color_scheme="gray",
+        aria_label="Toggle files canvas",
+        style={
+            "color": tokens.TEXT_SECONDARY,
+            "height": "36px",
+            "padding": "0 10px",
+            "border_radius": tokens.RADIUS_SM,
+        },
+    )
+
+
 def _connection_indicator() -> rx.Component:
     """Right-side connection dot — teal when connected, grey when not.
 
@@ -145,6 +183,7 @@ def header() -> rx.Component:
         rx.spacer(),
         _session_caption(),
         rx.spacer(),
+        _canvas_toggle(),
         _connection_indicator(),
         spacing="3",
         align="center",

@@ -26,17 +26,21 @@ from .api_client import (
     create_brand_strategy_session,
     delete_session,
     extract_final_metadata,
+    fetch_artifact_html,
     generate_session_title,
     get_session,
     get_session_messages,
     health_check,
     list_brand_strategy_sessions,
+    list_session_artifacts,
     stream_message,
     update_session,
 )
 from .models import (
+    ArtifactRef,
     BrandStrategyMetadata,
     ChatMessage,
+    DocxTocEntry,
     PhaseAdvancePayload,
     SessionInfo,
     SessionMessage,
@@ -46,6 +50,15 @@ from .models import (
     ToolCallInfo,
     ToolCallPayload,
     ToolResultPayload,
+)
+
+_GENERATE_TOOL_NAMES: frozenset[str] = frozenset(
+    {
+        "generate_brand_key",
+        "generate_document",
+        "generate_presentation",
+        "generate_spreadsheet",
+    }
 )
 
 _DEFAULT_API_URL = "http://localhost:8000"
@@ -106,6 +119,16 @@ class BrandMindState(rx.State):
     rename_target: str = ""
     rename_draft: str = ""
     delete_target: str = ""
+
+    artifacts: list[ArtifactRef] = []
+    canvas_open: bool = False
+    active_artifact_filename: str = ""
+    docx_html: str = ""
+    docx_toc: list[DocxTocEntry] = []
+    docx_loading: bool = False
+    docx_error: str = ""
+    artifacts_refresh_pending: bool = False
+
     sidebar_collapsed: str = rx.LocalStorage(
         "",
         name="bm.web.sidebar.collapsed",
@@ -121,11 +144,84 @@ class BrandMindState(rx.State):
         """
         return self.sidebar_collapsed == "1"
 
+    @rx.var
+    def has_artifacts(self) -> bool:
+        """Whether the active session has produced any artifact yet."""
+        return len(self.artifacts) > 0
+
+    @rx.var
+    def active_artifact_url(self) -> str:
+        """Backend download URL of the currently-selected artifact.
+
+        Returns an empty string when no artifact is selected so the
+        viewers can branch on truthiness without unwrapping ``None``.
+        Reflex Var rules forbid returning ``None`` from a typed computed
+        var.
+        """
+        for artifact in self.artifacts:
+            if artifact.filename == self.active_artifact_filename:
+                return f"{_api_base_url()}{artifact.download_url}"
+        return ""
+
+    @rx.var
+    def active_artifact_category(self) -> str:
+        """Category string of the active artifact, or empty when none."""
+        for artifact in self.artifacts:
+            if artifact.filename == self.active_artifact_filename:
+                return artifact.category
+        return ""
+
     @rx.event
     def toggle_sidebar(self) -> None:
         """Flip the persisted sidebar preference and re-render dependents."""
         current = self.sidebar_collapsed == "1"
         self.sidebar_collapsed = "0" if current else "1"
+
+    @rx.event
+    def open_canvas(self) -> None:
+        """Reveal the canvas drawer; no-ops when already open."""
+        self.canvas_open = True
+
+    @rx.event
+    def close_canvas(self) -> None:
+        """Slide the canvas drawer out without dropping the artifact list."""
+        self.canvas_open = False
+
+    @rx.event(background=True)
+    async def toggle_canvas(self) -> None:
+        """Flip the canvas drawer open / closed and refresh artifacts on open.
+
+        When the user opens the canvas from the header button while the
+        chat already has artifacts in flight, we pull the latest
+        manifest so the panel reflects every file the agent has emitted
+        so far — not just what the SSE stream surfaced this turn.
+        """
+        async with self:
+            opening = not self.canvas_open
+            self.canvas_open = opening
+            session_id = self.session_id
+        if opening and session_id:
+            await self._refresh_artifacts(session_id)
+
+    @rx.event(background=True)
+    async def select_artifact(self, filename: str) -> None:
+        """Switch the canvas viewer to ``filename`` and load its body if needed.
+
+        For document artifacts the call also fetches the mammoth-rendered
+        HTML so the DocxView can paint without a separate trigger. Other
+        categories render directly from the manifest reference plus the
+        backend download URL.
+
+        Args:
+            filename (str): Basename of the artifact to display.
+        """
+        async with self:
+            target_category = ""
+            for artifact in self.artifacts:
+                if artifact.filename == filename:
+                    target_category = artifact.category
+                    break
+        await self._select_artifact_internal(filename, target_category)
 
     def _filter_chats(self, sessions: list[SessionInfo]) -> list[SessionInfo]:
         """Keep brand-strategy chats with at least one message, plus the active one.
@@ -207,6 +303,7 @@ class BrandMindState(rx.State):
             self.phase_sequence = []
             self.phase_display_labels = {}
             self.error_message = ""
+            self._reset_canvas_state()
 
     @rx.event(background=True)
     async def switch_chat(self, session_id: str) -> None:
@@ -239,6 +336,8 @@ class BrandMindState(rx.State):
                 self._chat_message_from_wire(m) for m in history.messages
             ]
             self.error_message = ""
+            self._reset_canvas_state()
+        await self._refresh_artifacts(info.session_id)
 
     async def _ensure_session(self) -> str | None:
         """Create a brand-strategy session if one is not bound yet.
@@ -377,6 +476,43 @@ class BrandMindState(rx.State):
                 self.completed_phases = []
                 self.phase_sequence = []
                 self.phase_display_labels = {}
+                self._reset_canvas_state()
+
+    def _reset_canvas_state(self) -> None:
+        """Drop every canvas-related reactive var to its initial value.
+
+        Called whenever the workspace pivots to a different chat —
+        chat-switch, start-new-chat, or delete-the-active-chat — so the
+        canvas does not carry artifacts from the previous session into
+        the next one.
+        """
+        self.artifacts = []
+        self.canvas_open = False
+        self.active_artifact_filename = ""
+        self.docx_html = ""
+        self.docx_toc = []
+        self.docx_loading = False
+        self.docx_error = ""
+        self.artifacts_refresh_pending = False
+
+    async def _refresh_artifacts(self, session_id: str) -> None:
+        """Pull the artifact manifest for ``session_id`` and update state.
+
+        Wraps the HTTP error path so the canvas can keep its previous
+        list visible if the refresh fails — better UX than blanking the
+        panel because of a transient network blip.
+
+        Args:
+            session_id (str): Session whose artifacts to refresh.
+        """
+        api_url = _api_base_url()
+        try:
+            artifacts = await list_session_artifacts(api_url, session_id)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: artifact refresh failed: {exc}")
+            return
+        async with self:
+            self.artifacts = artifacts
 
     def _chat_message_from_wire(self, message: SessionMessage) -> ChatMessage:
         """Rebuild a :class:`ChatMessage` from a server-side persisted turn.
@@ -650,10 +786,72 @@ class BrandMindState(rx.State):
             refreshed = await list_brand_strategy_sessions(api_url)
         except httpx.HTTPError as exc:
             logger.debug(f"BrandMind web: post-turn refresh skipped: {exc}")
+        else:
+            async with self:
+                self.sessions = self._filter_chats(refreshed)
+        await self._auto_title_if_needed(session_id)
+        async with self:
+            artifacts_pending = self.artifacts_refresh_pending
+            self.artifacts_refresh_pending = False
+        if artifacts_pending:
+            await self._refresh_artifacts_and_reveal(session_id)
+
+    async def _refresh_artifacts_and_reveal(self, session_id: str) -> None:
+        """Pull the manifest, open the canvas, focus the newest artifact.
+
+        Fires after a turn that produced at least one ``generate_*``
+        ``tool_result`` so the user sees the just-emitted file without
+        clicking the header button. The list is sorted oldest-first on
+        the wire, so the last entry is the freshest; that becomes the
+        active artifact and, for documents, the DOCX HTML pre-loads.
+
+        Args:
+            session_id (str): Session whose artifacts to surface.
+        """
+        await self._refresh_artifacts(session_id)
+        async with self:
+            if not self.artifacts:
+                return
+            newest = self.artifacts[-1]
+            self.canvas_open = True
+            target_filename = newest.filename
+            target_category = newest.category
+        await self._select_artifact_internal(target_filename, target_category)
+
+    async def _select_artifact_internal(
+        self, filename: str, category: str
+    ) -> None:
+        """Apply artifact selection from a non-event-handler caller.
+
+        Mirrors :meth:`select_artifact` but written as a plain async
+        method so internal helpers can reuse the logic without going
+        through Reflex's event dispatch.
+        """
+        async with self:
+            self.active_artifact_filename = filename
+            self.docx_html = ""
+            self.docx_toc = []
+            self.docx_error = ""
+            session_id = self.session_id
+        if category != "documents" or not session_id:
             return
         async with self:
-            self.sessions = self._filter_chats(refreshed)
-        await self._auto_title_if_needed(session_id)
+            self.docx_loading = True
+        api_url = _api_base_url()
+        try:
+            rendered = await fetch_artifact_html(api_url, session_id, filename)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: DOCX render fetch failed: {exc}")
+            async with self:
+                self.docx_loading = False
+                self.docx_error = (
+                    "Could not render this document — try downloading instead."
+                )
+            return
+        async with self:
+            self.docx_html = rendered.html
+            self.docx_toc = list(rendered.toc)
+            self.docx_loading = False
 
     def _dispatch_event(self, event_name: str, payload: dict) -> None:
         """Route one SSE event to the matching state mutation."""
@@ -670,6 +868,8 @@ class BrandMindState(rx.State):
         elif event_name == "tool_result":
             result = ToolResultPayload.model_validate(payload)
             self._settle_tool_result(result)
+            if result.tool_name in _GENERATE_TOOL_NAMES:
+                self.artifacts_refresh_pending = True
         elif event_name == "phase_advance":
             advance = PhaseAdvancePayload.model_validate(payload)
             self._apply_phase_advance(advance)

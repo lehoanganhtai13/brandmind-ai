@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import reflex as rx
 
+from .components.canvas_pane import canvas_pane
 from .components.chat_pane import chat_pane
 from .components.header import header
 from .components.sidebar import chat_action_dialogs, phase_progress_sidebar
@@ -66,6 +67,7 @@ def index() -> rx.Component:
     return rx.vstack(
         rx.html(f"<style>{_CURSOR_BLINK_KEYFRAMES}</style>"),
         chat_action_dialogs(),
+        canvas_pane(),
         header(),
         _error_banner(),
         rx.hstack(

@@ -22,14 +22,16 @@ even when the brand-strategy agent is not running.
 
 from __future__ import annotations
 
+import html
 import json
 import re
 from pathlib import Path
 from typing import Literal
 
+import mammoth
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from shared.agent_tools.document._output_path import _base_dir, _manifest_path
 
@@ -56,7 +58,9 @@ class ArtifactRef(BaseModel):
     Mirrors the manifest record's externally-relevant fields. The
     absolute filesystem path is intentionally omitted so the web UI
     never sees server-side layout; the ``download_url`` is the only
-    handle clients need to fetch the bytes.
+    handle clients need to fetch the bytes. ``size_label`` is a
+    pre-formatted short string the UI renders directly so clients do
+    not need to repeat the unit logic.
     """
 
     session_id: str
@@ -65,8 +69,37 @@ class ArtifactRef(BaseModel):
     tool: str
     filename: str
     size_bytes: int
+    size_label: str
     generated_at: str
     download_url: str
+
+
+class DocxTocEntry(BaseModel):
+    """One heading in the auto-extracted DOCX table of contents.
+
+    Used by the web canvas pane to render a sticky TOC sidebar that
+    anchors into the rendered HTML body. The ``anchor`` value matches
+    the ``id`` attribute mammoth assigns to the heading element.
+    """
+
+    level: int = Field(ge=1, le=6)
+    text: str
+    anchor: str
+
+
+class DocxHtmlResponse(BaseModel):
+    """Response body for the inline DOCX → HTML render endpoint.
+
+    Carries the rendered HTML body plus an extracted heading outline so
+    the web UI can paint both panels without re-parsing the document on
+    the client side. ``warnings`` surfaces mammoth's structural notes
+    (unrecognised styles, fallback substitutions) for debug surfaces;
+    most production renders return an empty list.
+    """
+
+    html: str
+    toc: list[DocxTocEntry] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
 
 
 def _iter_manifest_records() -> list[dict[str, object]]:
@@ -100,6 +133,28 @@ def _iter_manifest_records() -> list[dict[str, object]]:
     return records
 
 
+def _format_size(size_bytes: int) -> str:
+    """Render a byte count as a short ``"38 KB"`` / ``"1.2 MB"`` label.
+
+    The canvas pane shows the value alongside the filename so the user
+    can tell at a glance which deliverable is heaviest; the unit is
+    chosen automatically so the label stays under five characters
+    for the common case.
+
+    Args:
+        size_bytes (int): Raw byte count from the manifest record.
+
+    Returns:
+        label (str): Compact human-readable size such as ``"512 B"``,
+        ``"38 KB"``, or ``"1.2 MB"``.
+    """
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    if size_bytes < 1024 * 1024:
+        return f"{size_bytes // 1024} KB"
+    return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+
 def _record_to_ref(record: dict[str, object]) -> ArtifactRef | None:
     """Project a manifest record into an ``ArtifactRef`` for the API.
 
@@ -125,13 +180,16 @@ def _record_to_ref(record: dict[str, object]) -> ArtifactRef | None:
     if not session_id or not filename:
         return None
 
+    raw_size = record.get("size_bytes", 0) or 0
+    size_bytes = int(raw_size) if isinstance(raw_size, int | float | str) else 0
     return ArtifactRef(
         session_id=session_id,
         brand_name=str(record.get("brand_name", "")),
         category=category,  # type: ignore[arg-type]
         tool=str(record.get("tool", "")),
         filename=filename,
-        size_bytes=int(record.get("size_bytes", 0) or 0),
+        size_bytes=size_bytes,
+        size_label=_format_size(size_bytes),
         generated_at=str(record.get("generated_at", "")),
         download_url=f"/api/v1/artifacts/{session_id}/{filename}",
     )
@@ -255,3 +313,160 @@ def download_artifact(session_id: str, filename: str) -> FileResponse:
         filename=filename,
         content_disposition_type=disposition,
     )
+
+
+_HEADING_OPEN_RE = re.compile(
+    r"<(h[1-6])(\s[^>]*)?>",
+    re.IGNORECASE,
+)
+_ID_ATTR_RE = re.compile(r'\sid="([^"]+)"', re.IGNORECASE)
+_TAG_STRIP_RE = re.compile(r"<[^>]+>")
+_NON_SLUG_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _slugify_anchor(text: str, used: set[str]) -> str:
+    """Slugify ``text`` into a URL-fragment-safe id with collision suffixes.
+
+    Mammoth does not emit ``id`` attributes on headings by default, so
+    the canvas TOC needs to assign its own anchors that the web UI can
+    use as fragment targets. Collisions get a numeric suffix so two
+    headings with identical text remain navigable.
+
+    Args:
+        text (str): Heading inner text after tag stripping.
+        used (set[str]): Anchors already assigned during this render;
+            mutated with the returned anchor before returning.
+
+    Returns:
+        anchor (str): Lowercase slug safe for use as ``id`` and
+            ``href`` fragment, e.g. ``"executive-summary-2"``.
+    """
+    base = _NON_SLUG_RE.sub("-", text.lower()).strip("-") or "heading"
+    candidate = base
+    suffix = 2
+    while candidate in used:
+        candidate = f"{base}-{suffix}"
+        suffix += 1
+    used.add(candidate)
+    return candidate
+
+
+def _extract_toc(body: str) -> tuple[str, list[DocxTocEntry]]:
+    """Inject anchor ids on every heading and return the matching outline.
+
+    Walks the HTML body in document order, finds each ``<hN>`` opening
+    tag, captures the inner text up to the closing tag, and assigns
+    a slug-based ``id`` (preserving any explicit ``id`` mammoth or a
+    custom style map already produced). Returns the rewritten HTML so
+    the rendered body's headings carry stable ids that match the TOC
+    entries the canvas pane links to.
+
+    Args:
+        body (str): Mammoth-rendered HTML body, raw (no outer wrapper).
+
+    Returns:
+        rewritten (str): HTML with ``id`` attributes injected on every
+            heading.
+        toc (list[DocxTocEntry]): Heading outline in document order.
+    """
+    if not body:
+        return "", []
+
+    entries: list[DocxTocEntry] = []
+    used_anchors: set[str] = set()
+    rewritten_parts: list[str] = []
+    cursor = 0
+
+    for match in _HEADING_OPEN_RE.finditer(body):
+        tag = match.group(1).lower()
+        attrs = match.group(2) or ""
+        close_tag = f"</{tag}>"
+        close_idx = body.find(close_tag, match.end())
+        if close_idx == -1:
+            continue
+        inner_html = body[match.end():close_idx]
+        text = html.unescape(_TAG_STRIP_RE.sub("", inner_html).strip())
+        if not text:
+            continue
+
+        existing_id = _ID_ATTR_RE.search(attrs)
+        if existing_id is not None:
+            anchor = existing_id.group(1)
+            used_anchors.add(anchor)
+            new_open = match.group(0)
+        else:
+            anchor = _slugify_anchor(text, used_anchors)
+            new_open = f"<{tag}{attrs} id=\"{anchor}\">"
+
+        rewritten_parts.append(body[cursor:match.start()])
+        rewritten_parts.append(new_open)
+        cursor = match.end()
+        entries.append(
+            DocxTocEntry(
+                level=int(tag[1]),
+                text=text,
+                anchor=anchor,
+            )
+        )
+
+    rewritten_parts.append(body[cursor:])
+    return "".join(rewritten_parts), entries
+
+
+@router.get("/artifacts/{session_id}/{filename}/html")
+def render_artifact_html(session_id: str, filename: str) -> DocxHtmlResponse:
+    """Render a DOCX artifact as sanitised HTML with an extracted TOC.
+
+    Powers the web UI's inline document viewer — the agent's strategy
+    DOCX is converted server-side via ``python-mammoth`` so the client
+    container stays JS-light and the HTML is identical whether the user
+    is on the CLI launch or the Docker deployment. The endpoint reuses
+    the same manifest lookup + path-resolution defence as
+    :func:`download_artifact` so a path-traversal attempt cannot reach a
+    file outside the artifact root.
+
+    Args:
+        session_id (str): Session identifier from the URL segment.
+        filename (str): DOCX artifact basename from the URL segment.
+
+    Returns:
+        response (DocxHtmlResponse): Rendered HTML body, ordered TOC,
+            and any structural warnings mammoth surfaced.
+
+    Raises:
+        HTTPException 400: ``session_id`` / ``filename`` fail the
+            shape-validation regex, or the artifact is not a DOCX.
+        HTTPException 404: no manifest record matches, the manifest
+            path escapes the output root, or the file is missing on
+            disk.
+    """
+    if not _SESSION_ID_RE.match(session_id):
+        raise HTTPException(status_code=400, detail="Invalid session_id")
+    if not _FILENAME_RE.match(filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    if not filename.lower().endswith(".docx"):
+        raise HTTPException(
+            status_code=400,
+            detail="HTML render is only supported for DOCX artifacts",
+        )
+
+    record = _find_manifest_record(session_id, filename)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+
+    file_path = Path(str(record.get("path", ""))).resolve()
+    base = Path(_base_dir()).resolve()
+    try:
+        file_path.relative_to(base)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Artifact file missing on disk")
+
+    with file_path.open("rb") as handle:
+        result = mammoth.convert_to_html(handle)
+
+    raw_html = result.value or ""
+    html_body, toc = _extract_toc(raw_html)
+    warnings = [str(msg) for msg in (result.messages or [])]
+    return DocxHtmlResponse(html=html_body, toc=toc, warnings=warnings)

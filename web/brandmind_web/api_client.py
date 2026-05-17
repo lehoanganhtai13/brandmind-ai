@@ -17,7 +17,13 @@ from dataclasses import dataclass
 import httpx
 from httpx_sse import aconnect_sse
 
-from .models import SessionInfo, SessionMessages, StreamDonePayload
+from .models import (
+    ArtifactRef,
+    DocxHtmlResponse,
+    SessionInfo,
+    SessionMessages,
+    StreamDonePayload,
+)
 
 _HEALTH_TIMEOUT_SECONDS = 3
 _CREATE_TIMEOUT_SECONDS = 10
@@ -217,6 +223,64 @@ async def get_session(api_base_url: str, session_id: str) -> SessionInfo:
         response = await client.get(url)
         response.raise_for_status()
     return SessionInfo.model_validate(response.json())
+
+
+async def list_session_artifacts(
+    api_base_url: str, session_id: str
+) -> list[ArtifactRef]:
+    """Fetch every artifact the backend recorded for one session.
+
+    Powers the canvas pane's artifact list. The backend returns an
+    empty list when the session has produced nothing yet — that is
+    indistinguishable from "unknown session" and the canvas treats
+    both as "no artifacts to show".
+
+    Args:
+        api_base_url (str): Backend base URL without trailing slash.
+        session_id (str): Identifier of the session to query.
+
+    Returns:
+        refs (list[ArtifactRef]): Zero or more artifact references in
+        manifest order (oldest first).
+
+    Raises:
+        httpx.HTTPError: On network failure or non-2xx response.
+    """
+    url = f"{api_base_url}/api/v1/sessions/{session_id}/artifacts"
+    async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
+        response = await client.get(url)
+        response.raise_for_status()
+    raw = response.json()
+    return [ArtifactRef.model_validate(entry) for entry in raw]
+
+
+async def fetch_artifact_html(
+    api_base_url: str, session_id: str, filename: str
+) -> DocxHtmlResponse:
+    """Fetch the server-rendered HTML projection of a DOCX artifact.
+
+    The canvas pane's DocxView consumes this payload to paint both the
+    rendered body and the sticky table of contents without doing any
+    DOCX parsing client-side. Only valid for artifacts of category
+    ``documents``; the backend rejects other categories with 400.
+
+    Args:
+        api_base_url (str): Backend base URL without trailing slash.
+        session_id (str): Owner of the artifact.
+        filename (str): Artifact basename. Must end in ``.docx``.
+
+    Returns:
+        rendered (DocxHtmlResponse): HTML body + heading outline +
+        mammoth warnings for the requested document.
+
+    Raises:
+        httpx.HTTPError: On network failure or non-2xx response.
+    """
+    url = f"{api_base_url}/api/v1/artifacts/{session_id}/{filename}/html"
+    async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
+        response = await client.get(url)
+        response.raise_for_status()
+    return DocxHtmlResponse.model_validate(response.json())
 
 
 async def stream_message(

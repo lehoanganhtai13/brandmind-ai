@@ -128,6 +128,50 @@ class SessionMessages(BaseModel):
     messages: list[SessionMessage] = Field(default_factory=list)
 
 
+class ArtifactRef(BaseModel):
+    """One artifact recorded in the backend manifest.
+
+    Mirrors :class:`server.api.artifacts.ArtifactRef` so the canvas
+    pane can list artifacts without depending on the server package.
+    ``category`` drives which inline viewer is mounted; ``download_url``
+    is the only handle the client needs to fetch the bytes. ``size_label``
+    is a pre-formatted human-readable size (``"38 KB"`` etc.) the UI
+    renders directly so the client does not own the unit logic.
+    """
+
+    session_id: str
+    brand_name: str = ""
+    category: Literal["documents", "presentations", "spreadsheets", "images"]
+    tool: str = ""
+    filename: str
+    size_bytes: int = 0
+    size_label: str = ""
+    generated_at: str = ""
+    download_url: str
+
+
+class DocxTocEntry(BaseModel):
+    """One heading in the auto-extracted DOCX outline."""
+
+    level: int = 1
+    text: str = ""
+    anchor: str = ""
+
+
+class DocxHtmlResponse(BaseModel):
+    """Response body of ``GET /api/v1/artifacts/{id}/{filename}/html``.
+
+    Carries the mammoth-rendered HTML body and the heading outline the
+    canvas pane uses to paint a sticky TOC alongside the document.
+    ``warnings`` is surfaced for diagnostics but the v1 UI does not
+    render it inline.
+    """
+
+    html: str = ""
+    toc: list[DocxTocEntry] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class ChatMessage(BaseModel):
     """One row in the chat scroll — either a user turn or an agent turn.
 
