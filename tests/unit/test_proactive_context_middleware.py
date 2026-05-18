@@ -48,7 +48,13 @@ class _FakeBuilder:
         self.packet = packet
         self.calls: list[tuple[str, str | None]] = []
 
-    def build(self, user_text: str, session_id: str | None = None):
+    def build(
+        self,
+        user_text: str,
+        session_id: str | None = None,
+        *,
+        discovery_needed: bool = False,
+    ):
         """Return the configured packet while capturing call arguments."""
         self.calls.append((user_text, session_id))
         return self.packet
@@ -98,6 +104,46 @@ def test_builder_prioritizes_substantive_user_profile(
     assert packet.ask_budget == 2
     assert "User profile" in rendered
     assert "verify workspace evidence" in rendered
+
+
+def test_builder_adds_generic_discovery_posture_for_early_unknown_project(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Unknown early cases should get process guidance without domain overfit."""
+    monkeypatch.setattr(proactive_mod.workspace_mod, "BRANDMIND_HOME", tmp_path)
+
+    packet = ProactiveContextBuilder().build(
+        "Tôi muốn làm brand strategy cho một thương hiệu mới.",
+        discovery_needed=True,
+    )
+    rendered = packet.to_prompt()
+
+    assert packet.has_content is True
+    assert packet.ask_budget == 1
+    assert packet.initiative_mode == "discover_before_asking"
+    assert "self-discovery pass" in rendered
+    assert "single most decision-changing user-only blocker" in rendered
+
+    lower_rendered = rendered.casefold()
+    for forbidden in ("cafe", "restaurant", "signature", "mây rêu", "nếp nhà"):
+        assert forbidden not in lower_rendered
+
+
+def test_builder_keeps_empty_packet_when_discovery_not_needed(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """No prior context should stay silent outside the early diagnosis trigger."""
+    monkeypatch.setattr(proactive_mod.workspace_mod, "BRANDMIND_HOME", tmp_path)
+
+    packet = ProactiveContextBuilder().build(
+        "Tôi muốn làm brand strategy cho một thương hiệu mới.",
+        discovery_needed=False,
+    )
+
+    assert packet.has_content is False
+    assert packet.to_prompt() == ""
 
 
 def test_builder_ignores_template_only_profile(tmp_path: Path, monkeypatch) -> None:
@@ -179,6 +225,7 @@ def test_builder_finds_related_prior_project_by_brand_name(
     packet = ProactiveContextBuilder().build(
         "Tôi muốn làm brand strategy cho nhà hàng Chuyện Ba Bữa Signature á",
         session_id="current-session",
+        discovery_needed=True,
     )
     rendered = packet.to_prompt()
 

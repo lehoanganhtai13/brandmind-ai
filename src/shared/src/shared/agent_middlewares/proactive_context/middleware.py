@@ -23,7 +23,7 @@ from langchain.agents.middleware.types import (
     ModelRequest,
     ModelResponse,
 )
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from loguru import logger
 
 import shared.workspace as workspace_mod
@@ -76,6 +76,7 @@ class ProactiveContextPacket:
     initiative_mode: Literal[
         "continue_with_memory",
         "collect_then_answer",
+        "discover_before_asking",
         "normal_diagnosis",
     ]
     ask_budget: int
@@ -85,7 +86,11 @@ class ProactiveContextPacket:
     @property
     def has_content(self) -> bool:
         """Return whether the packet carries useful context for this turn."""
-        return bool(self.items or self.prior_matches)
+        return bool(
+            self.items
+            or self.prior_matches
+            or self.initiative_mode == "discover_before_asking"
+        )
 
     def to_prompt(self) -> str:
         """Render the packet as a compact system-context addendum."""
@@ -139,6 +144,33 @@ class ProactiveContextPacket:
                         "target segment, or scope until the user confirms the "
                         "continuity branch, unless one of them is the only "
                         "blocking question."
+                    ),
+                ]
+            )
+        elif self.initiative_mode == "discover_before_asking":
+            lines.extend(
+                [
+                    (
+                        "- This is an early diagnosis turn without a related "
+                        "prior project. Do a self-discovery pass before "
+                        "asking: inventory the user's wording, durable user "
+                        "profile, and current workspace context. Do not "
+                        "launch research or specialist work just to prepare "
+                        "the opening; name optional validation as a follow-up "
+                        "unless the user explicitly asks for it."
+                    ),
+                    (
+                        "- Use your domain understanding to form a tentative "
+                        "working understanding. Keep it explicitly tentative; "
+                        "do not lock scope, private business facts, live "
+                        "market facts, or stakeholder constraints without "
+                        "user confirmation or tool evidence."
+                    ),
+                    (
+                        "- In the user-facing reply, reflect that working "
+                        "understanding naturally and ask the single most "
+                        "decision-changing user-only blocker. Do not turn "
+                        "the opening into a full intake form."
                     ),
                 ]
             )
@@ -208,12 +240,17 @@ class ProactiveContextBuilder:
         self,
         user_text: str,
         session_id: str | None = None,
+        *,
+        discovery_needed: bool = False,
     ) -> ProactiveContextPacket:
         """Build a context packet for the current turn.
 
         Args:
             user_text: Latest user message text.
             session_id: Active BrandMind strategy session id, when available.
+            discovery_needed: Whether runtime state says this is an early
+                diagnosis turn where the agent should self-inventory before
+                asking the user for more information.
 
         Returns:
             A compact packet. Empty packets are valid when no useful memory exists.
@@ -253,8 +290,12 @@ class ProactiveContextBuilder:
             initiative_mode: Literal[
                 "continue_with_memory",
                 "collect_then_answer",
+                "discover_before_asking",
                 "normal_diagnosis",
             ] = "collect_then_answer"
+            ask_budget = 1
+        elif discovery_needed:
+            initiative_mode = "discover_before_asking"
             ask_budget = 1
         elif items:
             initiative_mode = "normal_diagnosis"
@@ -405,8 +446,16 @@ class ProactiveTurnMiddleware(AgentMiddleware):
             if not user_text:
                 return request
 
-            session_id = _active_brand_strategy_session_id()
-            packet = self.builder.build(user_text=user_text, session_id=session_id)
+            session = _active_brand_strategy_session()
+            session_id = getattr(session, "session_id", None)
+            packet = self.builder.build(
+                user_text=user_text,
+                session_id=session_id,
+                discovery_needed=_needs_discovery_posture(
+                    session,
+                    request.messages,
+                ),
+            )
             prompt = packet.to_prompt()
             if not prompt:
                 return request
@@ -416,7 +465,7 @@ class ProactiveTurnMiddleware(AgentMiddleware):
             logger.info(
                 "ProactiveTurnMiddleware injected context: "
                 f"items={len(packet.items)} prior_matches={len(packet.prior_matches)} "
-                f"ask_budget={packet.ask_budget}"
+                f"mode={packet.initiative_mode} ask_budget={packet.ask_budget}"
             )
             return request.override(system_message=system_message)
         except Exception as exc:
@@ -433,8 +482,8 @@ def _latest_user_text(messages: Sequence[object]) -> str:
     return ""
 
 
-def _active_brand_strategy_session_id() -> str | None:
-    """Return the active brand-strategy session id without hard dependency cycles."""
+def _active_brand_strategy_session() -> object | None:
+    """Return the active brand-strategy session without hard dependency cycles."""
     try:
         from core.brand_strategy.session import (  # type: ignore[import-not-found]
             get_active_session,
@@ -442,8 +491,29 @@ def _active_brand_strategy_session_id() -> str | None:
     except ImportError:
         return None
 
-    session = get_active_session()
-    return getattr(session, "session_id", None) if session is not None else None
+    return get_active_session()
+
+
+def _needs_discovery_posture(
+    session: object | None,
+    messages: Sequence[object],
+) -> bool:
+    """Return whether the next turn needs a generic self-discovery nudge."""
+    if session is None:
+        return not any(isinstance(message, AIMessage) for message in messages)
+
+    current_phase = getattr(session, "current_phase", "")
+    scope = getattr(session, "scope", None)
+    completed_phases = getattr(session, "completed_phases", [])
+    turn_index = getattr(session, "turn_index", 0)
+
+    return (
+        current_phase == "phase_0"
+        and not scope
+        and not completed_phases
+        and isinstance(turn_index, int)
+        and turn_index <= 2
+    )
 
 
 def _read_text(path: Path) -> str:

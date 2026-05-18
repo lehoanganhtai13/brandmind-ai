@@ -21,11 +21,13 @@ _MARKET_RESEARCH_SKILL = (
 )
 _ORCHESTRATOR_SKILL = (
     _PROJECT_ROOT
-    / "src/shared/src/shared/agent_skills/brand_strategy/brand-strategy-orchestrator/SKILL.md"
+    / "src/shared/src/shared/agent_skills/brand_strategy"
+    / "brand-strategy-orchestrator/SKILL.md"
 )
 _COMMUNICATION_SKILL = (
     _PROJECT_ROOT
-    / "src/shared/src/shared/agent_skills/brand_strategy/brand-communication-planning/SKILL.md"
+    / "src/shared/src/shared/agent_skills/brand_strategy"
+    / "brand-communication-planning/SKILL.md"
 )
 _PHASE_1_REFERENCE = (
     _PROJECT_ROOT
@@ -133,12 +135,15 @@ def test_main_prompt_has_scope_and_research_sufficiency_guardrails() -> None:
         'do not call `task(subagent_type="market-research")`',
         "search only if truly needed",
         "Do not launch parallel browser deep-dives",
-        "External market and social research tools are not part of the main-agent surface",
+        (
+            "External market and social research tools are not part "
+            "of the main-agent surface"
+        ),
         "Explicit research request override",
         "dispatch one bounded specialist pass",
         "Live browser authorization",
         "LIVE_BROWSER_VERIFICATION_APPROVED",
-        "do not present a \"market pulse\"",
+        'do not present a "market pulse"',
         'use `task(subagent_type="market-research")` before claiming you scanned',
         "dispatch a bounded specialist brief",
     )
@@ -160,7 +165,8 @@ def test_main_prompt_has_chat_process_quality_guardrails() -> None:
         "stakeholder-defense logic",
         "Turn pacing and phase humility",
         "Do not add extra question marks inside examples",
-        "ask at most three blocking questions",
+        "ask the smallest set of blocking questions",
+        "ask one decision-changing blocker",
         "Treat scope as tentative",
         "natural step descriptions",
         "Backstage labels, business language",
@@ -181,7 +187,7 @@ def test_main_prompt_has_chat_process_quality_guardrails() -> None:
         'Say "brand equity audit" instead of "Phase 0.5"',
         "not routed through a state machine",
         "only when the evidence is no longer tentative",
-        "Ask 2-3 structured blocking questions first",
+        "Ask the smallest set of structured blocking questions",
     )
     for phrase in expected_phrases:
         assert phrase in BRAND_STRATEGY_SYSTEM_PROMPT
@@ -197,6 +203,7 @@ def test_orchestrator_skill_keeps_phase_labels_internal() -> None:
     assert "OPENING-TURN GUARD" in skill_text
     assert "do not announce the phase count" in skill_text
     assert 'raw labels such as "Phase 0"' in skill_text
+    assert "ask one decision-changing question" in skill_text
     assert 'Say "brand equity audit" instead of "Phase 0.5"' in skill_text
     assert "Brief the user on the next business task" in skill_text
     assert "`report_progress` is an internal operation, not a chat topic" in (
@@ -204,17 +211,13 @@ def test_orchestrator_skill_keeps_phase_labels_internal() -> None:
     )
     assert "business transition and next decision surface" in skill_text
     assert "Brief the user on Phase N+1" not in skill_text
-    assert "not shown the state machine" in (
-        skill_text
-    )
+    assert "not shown the state machine" in (skill_text)
 
 
 def test_tool_invocation_example_avoids_user_facing_phase_labels() -> None:
     """Natural-language examples should not teach raw phase labels."""
     assert "I've advanced you to Phase 5" not in BRAND_STRATEGY_SYSTEM_PROMPT
-    assert "we are ready to package the deliverables" in (
-        BRAND_STRATEGY_SYSTEM_PROMPT
-    )
+    assert "we are ready to package the deliverables" in (BRAND_STRATEGY_SYSTEM_PROMPT)
 
 
 def test_phase_0_reference_keeps_raw_phase_labels_internal() -> None:
@@ -222,7 +225,10 @@ def test_phase_0_reference_keeps_raw_phase_labels_internal() -> None:
     reference_text = _PHASE_0_REFERENCE.read_text(encoding="utf-8")
 
     assert "Do not announce the full workflow" in reference_text
-    assert "the raw label \"Phase 0\"" in reference_text
+    assert 'the raw label "Phase 0"' in reference_text
+    assert "Staged Question Bank" in reference_text
+    assert "not as a user-facing intake form" in reference_text
+    assert "Do not copy all questions into chat" in reference_text
     assert "working hypothesis" in reference_text
     assert "Internal transition operation" in reference_text
     assert "Keep the tool name and call syntax out of chat" in reference_text
@@ -272,7 +278,7 @@ def test_prompt_surfaces_keep_instruction_language_consistent() -> None:
 
 
 def test_prompt_surfaces_do_not_embed_vietnamese_diacritic_examples() -> None:
-    """Keep prompt instructions in one language; response language is runtime behavior."""
+    """Keep prompt instructions in one language; responses localize at runtime."""
     orchestrator_text = _ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
     communication_text = _COMMUNICATION_SKILL.read_text(encoding="utf-8")
     reference_text = "\n".join(
@@ -334,7 +340,9 @@ def test_main_agent_keeps_external_research_specialist_owned() -> None:
     source_text = _AGENT_CONFIG.read_text(encoding="utf-8")
     main_tools_block = source_text.split("main_agent_tools: list[Any] = [", 1)[1]
     main_tools_block = main_tools_block.split("specialist_research_tools", 1)[0]
-    specialist_block = source_text.split("specialist_research_tools: list[Any] = [", 1)[1]
+    specialist_block = source_text.split("specialist_research_tools: list[Any] = [", 1)[
+        1
+    ]
     specialist_block = specialist_block.split("specialist_generation_tools", 1)[0]
 
     external_tools = (
@@ -348,6 +356,7 @@ def test_main_agent_keeps_external_research_specialist_owned() -> None:
     for tool_name in external_tools:
         assert tool_name not in main_tools_block
         assert tool_name in specialist_block
+
 
 def test_brand_strategy_runtime_does_not_use_tool_warehouse() -> None:
     """Keep the orchestrator runtime free of stale ToolSearch instructions."""
@@ -463,7 +472,7 @@ def test_phase_0_reference_routes_explicit_research_requests() -> None:
     expected_phrases = (
         "Explicit Research Request",
         "dispatch one bounded `market-research` pass",
-        "Do not present a \"market scan\" from KG/doc search alone",
+        'Do not present a "market scan" from KG/doc search alone',
     )
     for phrase in expected_phrases:
         assert phrase in phase_0_text
@@ -479,7 +488,10 @@ def test_market_research_skill_has_input_sufficiency_budget() -> None:
         "top 2-3 most decision-relevant competitors",
         "Respect the orchestrator's assignment budget",
         "Never pass more than 5 queries",
-        "Browser/live social verification is not part of the market-research default surface",
+        (
+            "Browser/live social verification is not part of the "
+            "market-research default surface"
+        ),
         "Stop collecting",
     )
     for phrase in expected_phrases:

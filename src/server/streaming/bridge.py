@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 from asyncio import Queue
 from collections.abc import AsyncGenerator
-from typing import Literal
+from typing import Any, Literal
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 from loguru import logger
@@ -465,6 +465,8 @@ async def stream_agent_response(
         # Accumulates response text so we can update session.messages
         # after streaming completes (astream doesn't return final state).
         accumulated_response: list[str] = []
+        response_segment: list[str] = []
+        hold_response_segments = session.mode is SessionMode.BRAND_STRATEGY
         suppress_internal_tool_lines = session.mode is SessionMode.BRAND_STRATEGY
         response_filter = _InternalReminderFilter(
             suppress_internal_tool_lines=suppress_internal_tool_lines
@@ -473,6 +475,21 @@ async def stream_agent_response(
             suppress_internal_tool_lines=suppress_internal_tool_lines
         )
         filters_flushed = False
+
+        async def _emit_response_text(text: str) -> None:
+            if hold_response_segments:
+                response_segment.append(text)
+                return
+
+            accumulated_response.append(text)
+            await event_queue.put(StreamingTokenEvent(token=text))
+
+        async def _discard_response_segment() -> None:
+            nonlocal response_filter
+            response_segment.clear()
+            response_filter = _InternalReminderFilter(
+                suppress_internal_tool_lines=suppress_internal_tool_lines
+            )
 
         async def _flush_visible_text() -> None:
             nonlocal filters_flushed
@@ -485,8 +502,14 @@ async def stream_agent_response(
 
             response_tail = response_filter.flush()
             if response_tail:
-                accumulated_response.append(response_tail)
-                await event_queue.put(StreamingTokenEvent(token=response_tail))
+                await _emit_response_text(response_tail)
+
+            if hold_response_segments:
+                response_text = "".join(response_segment)
+                if response_text:
+                    accumulated_response.append(response_text)
+                    await event_queue.put(StreamingTokenEvent(token=response_text))
+                response_segment.clear()
 
             filters_flushed = True
 
@@ -528,28 +551,26 @@ async def stream_agent_response(
                                             StreamingThinkingEvent(token="", done=True)
                                         )
                                         thinking_done = True
-                                    accumulated_response.append(visible_text)
-                                    await event_queue.put(
-                                        StreamingTokenEvent(token=visible_text)
-                                    )
+                                    await _emit_response_text(visible_text)
 
                     elif isinstance(chunk.content, str) and chunk.content:
                         visible_text = response_filter.feed(chunk.content)
-                        if not visible_text:
-                            continue
+                        if visible_text:
+                            if not thinking_done:
+                                await event_queue.put(
+                                    StreamingThinkingEvent(token="", done=True)
+                                )
+                                thinking_done = True
+                            await _emit_response_text(visible_text)
+
+                    if chunk.tool_calls:
+                        if hold_response_segments:
+                            await _discard_response_segment()
                         if not thinking_done:
                             await event_queue.put(
                                 StreamingThinkingEvent(token="", done=True)
                             )
                             thinking_done = True
-                        accumulated_response.append(visible_text)
-                        await event_queue.put(StreamingTokenEvent(token=visible_text))
-
-                    if chunk.tool_calls and not thinking_done:
-                        await event_queue.put(
-                            StreamingThinkingEvent(token="", done=True)
-                        )
-                        thinking_done = True
 
                 await _flush_visible_text()
 
@@ -637,26 +658,23 @@ async def collect_agent_response(
     """
     response_tokens: list[str] = []
     tool_calls: list[ToolCallInfo] = []
-    pending_tool: dict[str, str] = {}
+    pending_tool_arguments: dict[str, Any] = {}
 
     async for event in stream_agent_response(session, content, manager):
         if isinstance(event, StreamingTokenEvent):
             if event.token and not event.done:
                 response_tokens.append(event.token)
         elif isinstance(event, ToolCallEvent):
-            pending_tool = {
-                "tool_name": event.tool_name,
-                "arguments": event.arguments,
-            }
+            pending_tool_arguments = event.arguments
         elif isinstance(event, ToolResultEvent):
             tool_calls.append(
                 ToolCallInfo(
                     tool_name=event.tool_name,
-                    arguments=pending_tool.get("arguments", {}),
+                    arguments=pending_tool_arguments,
                     result=event.result,
                 )
             )
-            pending_tool = {}
+            pending_tool_arguments = {}
 
     return MessageResponse(
         response="".join(response_tokens),

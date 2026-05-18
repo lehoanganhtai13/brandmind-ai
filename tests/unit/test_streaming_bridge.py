@@ -23,7 +23,7 @@ from shared.agent_middlewares.callback_types import StreamingTokenEvent
 class _FakeStreamingAgent:
     """Deterministic agent double that streams fixed message chunks."""
 
-    def __init__(self, chunks: list[str]) -> None:
+    def __init__(self, chunks: list[str | AIMessageChunk]) -> None:
         self._chunks = chunks
 
     async def astream(
@@ -33,7 +33,10 @@ class _FakeStreamingAgent:
     ) -> AsyncIterator[tuple[AIMessageChunk, dict[str, object]]]:
         """Yield configured chunks in the same shape as LangGraph streaming."""
         for chunk in self._chunks:
-            yield AIMessageChunk(content=chunk), {}
+            if isinstance(chunk, AIMessageChunk):
+                yield chunk, {}
+            else:
+                yield AIMessageChunk(content=chunk), {}
 
 
 def test_internal_reminder_filter_preserves_plain_text() -> None:
@@ -49,9 +52,7 @@ def test_internal_reminder_filter_removes_complete_block() -> None:
     """Internal reminder blocks should be removed from one streamed chunk."""
     token_filter = _InternalReminderFilter()
 
-    output = token_filter.feed(
-        "A<system-reminder>hidden plan</system-reminder>B"
-    )
+    output = token_filter.feed("A<system-reminder>hidden plan</system-reminder>B")
 
     assert output == "AB"
     assert token_filter.flush() == ""
@@ -80,9 +81,7 @@ def test_internal_filter_removes_complete_pseudo_tool_call() -> None:
     """Pseudo tool-call tags are internal and should not stream to users."""
     token_filter = _InternalReminderFilter()
 
-    output = token_filter.feed(
-        'A<call:default_api:report_progress advance=true />B'
-    )
+    output = token_filter.feed("A<call:default_api:report_progress advance=true />B")
 
     assert output == "AB"
     assert token_filter.flush() == ""
@@ -93,7 +92,7 @@ def test_internal_filter_removes_split_pseudo_tool_call() -> None:
     token_filter = _InternalReminderFilter()
 
     assert token_filter.feed("A<ca") == "A"
-    assert token_filter.feed("ll:default_api:read_file file_path=\"/workspace") == ""
+    assert token_filter.feed('ll:default_api:read_file file_path="/workspace') == ""
     assert token_filter.feed('/brand_brief.md" />B') == "B"
     assert token_filter.flush() == ""
 
@@ -153,9 +152,7 @@ def test_internal_filter_removes_plan_check_blocks() -> None:
     """Plan-check blocks are internal self-checks, not user-facing text."""
     token_filter = _InternalReminderFilter()
 
-    output = token_filter.feed(
-        "A<plan-check>Action: report_progress</plan-check>B"
-    )
+    output = token_filter.feed("A<plan-check>Action: report_progress</plan-check>B")
 
     assert output == "AB"
     assert token_filter.flush() == ""
@@ -324,6 +321,46 @@ async def test_stream_agent_response_filters_brand_strategy_internals() -> None:
 
     assert "".join(tokens) == "AB\nC"
     assert session.messages[-1].content == "AB\nC"
+
+
+@pytest.mark.asyncio
+async def test_stream_agent_response_discards_brand_strategy_pre_tool_text() -> None:
+    """Brand Strategy chat should not persist draft text emitted before tools."""
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.BRAND_STRATEGY,
+        created_at=datetime.now(),
+        last_active=0.0,
+        brand_strategy_session=BrandStrategySession(),
+    )
+    session.agent = cast(
+        CompiledStateGraph,
+        _FakeStreamingAgent(
+            [
+                AIMessageChunk(
+                    content="Draft before tools. ",
+                    tool_call_chunks=[
+                        {
+                            "name": "read_file",
+                            "args": "{}",
+                            "id": "tool-1",
+                            "index": 0,
+                        }
+                    ],
+                ),
+                "Final answer after tools.",
+            ]
+        ),
+    )
+    manager = SessionManager()
+    tokens: list[str] = []
+
+    async for event in stream_agent_response(session, "hello", manager):
+        if isinstance(event, StreamingTokenEvent) and event.token and not event.done:
+            tokens.append(event.token)
+
+    assert "".join(tokens) == "Final answer after tools."
+    assert session.messages[-1].content == "Final answer after tools."
 
 
 @pytest.mark.asyncio

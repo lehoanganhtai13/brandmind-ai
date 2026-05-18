@@ -3,11 +3,14 @@
 ## Mentor Script
 
 ### Opening
-"First, understand the user's business context clearly. This is the Brand Problem Diagnosis step: identify the right problem before solving it. Ask a few focused questions in the user's language."
+"First, understand the user's business context clearly. This is the Brand Problem Diagnosis step: identify the right problem before solving it. In sparse openings, ask one decision-changing question first and collect the rest in later turns."
 
 Do not announce the full workflow, the number of phases, or the raw label "Phase 0" in the opening chat turn. If the situation resembles a known scope, call it a working hypothesis until the user confirms the missing facts.
 
-### Key Questions
+### Staged Question Bank
+
+Use this as an internal diagnosis bank, not as a user-facing intake form. Choose the smallest question set needed for the next decision; in the opening turn, usually choose one. Do not copy all questions into chat.
+
 1. What kind of F&B business is this? (cafe, restaurant, bar, bakery...)
 2. Is this a new brand or an existing brand?
 3. What is the primary goal? (launch, refresh, repositioning, full rebrand, expansion...)
@@ -16,7 +19,7 @@ Do not announce the full workflow, the number of phases, or the raw label "Phase
 
 ### Explicit Research Request
 
-If the user explicitly asks for quick market, competitor, or customer research during diagnosis, dispatch one bounded `market-research` pass before presenting market findings. Keep the brief narrow (2-3 targets or signals, query budget, stop condition), then return to the Phase 0 diagnosis questions. Do not present a "market scan" from KG/doc search alone; KG/doc search grounds theory, not current market evidence.
+If the user explicitly asks for quick market, competitor, or customer research during diagnosis, dispatch one bounded `market-research` pass before presenting market findings. Keep the brief narrow (2-3 targets or signals, query budget, stop condition), then return to the staged diagnosis question bank. Do not present a "market scan" from KG/doc search alone; KG/doc search grounds theory, not current market evidence.
 
 ### Concepts to Explain
 - **5W1H framework** — comprehensive diagnosis backbone: What (business type), Who (target), Where (market/location), When (timeline), Why (brand-strategy need), How (budget/resources)

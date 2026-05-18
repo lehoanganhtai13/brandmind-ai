@@ -22,7 +22,7 @@ Accumulate context in a Brand Brief that grows richer with every phase.
 
 **USER-FACING LANGUAGE**: Phase numbers are internal navigation labels. In chat, translate them into natural step descriptions in the user's language, such as diagnosis, brand equity audit, market research, positioning closure, communication plan, or deliverable packaging, unless the user explicitly asks to see the full workflow map. Say "brand equity audit" instead of "Phase 0.5" when explaining the rebrand-only step. Keep raw phase IDs for tool calls, todos, quality gates, and workspace headings; the user should feel guided through brand-strategy decisions, not shown the state machine.
 
-**OPENING-TURN GUARD**: On the first diagnosis response, do not announce the phase count or say raw labels such as "Phase 0". Start with the business diagnosis, offer at most one tentative hypothesis, and ask the few blocking questions needed for the next decision.
+**OPENING-TURN GUARD**: On the first diagnosis response, do not announce the phase count or say raw labels such as "Phase 0". Start with the business diagnosis, offer at most one tentative hypothesis, and ask only the smallest blocking question set needed for the next decision. In a sparse opening, ask one decision-changing question and stage the remaining diagnosis questions for later.
 
 ## PHASE SEQUENCES
 
