@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sse_starlette import EventSourceResponse
@@ -16,6 +17,7 @@ from server.streaming.bridge import (
     collect_agent_response,
     stream_agent_response,
 )
+from server.streaming.tool_call_matching import ToolCallMatcher
 from shared.agent_middlewares.callback_types import (
     StreamingTokenEvent,
     ToolCallEvent,
@@ -81,7 +83,7 @@ async def _sse_event_generator(
     """
     response_tokens: list[str] = []
     tool_calls: list[ToolCallInfo] = []
-    pending_tool: dict[str, str] = {}
+    pending_tool_arguments: ToolCallMatcher[dict[str, Any]] = ToolCallMatcher()
 
     try:
         async for event in stream_agent_response(session, content, manager):
@@ -94,19 +96,23 @@ async def _sse_event_generator(
                 if event.token and not event.done:
                     response_tokens.append(event.token)
             elif isinstance(event, ToolCallEvent):
-                pending_tool = {
-                    "tool_name": event.tool_name,
-                    "arguments": event.arguments,
-                }
+                pending_tool_arguments.add(
+                    event.tool_name,
+                    dict(event.arguments),
+                    event.tool_call_id,
+                )
             elif isinstance(event, ToolResultEvent):
+                arguments = pending_tool_arguments.pop(
+                    event.tool_name,
+                    event.tool_call_id,
+                )
                 tool_calls.append(
                     ToolCallInfo(
                         tool_name=event.tool_name,
-                        arguments=pending_tool.get("arguments", {}),
+                        arguments=arguments or {},
                         result=event.result,
                     )
                 )
-                pending_tool = {}
 
             # Yield SSE event
             yield {

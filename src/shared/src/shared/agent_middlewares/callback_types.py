@@ -38,6 +38,10 @@ class ToolCallEvent(BaseAgentEvent):
 
     type: Literal["tool_call"] = "tool_call"
     tool_name: str = Field(..., description="Name of the tool being called")
+    tool_call_id: str = Field(
+        default="",
+        description="Provider tool-call id used to match the eventual result",
+    )
     arguments: dict[str, Any] = Field(
         default_factory=dict, description="Tool call arguments"
     )
@@ -48,6 +52,10 @@ class ToolResultEvent(BaseAgentEvent):
 
     type: Literal["tool_result"] = "tool_result"
     tool_name: str = Field(..., description="Name of the tool")
+    tool_call_id: str = Field(
+        default="",
+        description="Provider tool-call id used to match the original call",
+    )
     result: str = Field(..., description="Tool execution result")
 
 

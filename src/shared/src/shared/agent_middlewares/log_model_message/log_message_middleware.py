@@ -294,6 +294,7 @@ class LogModelMessageMiddleware(AgentMiddleware):
             Tool result
         """
         tool_name = request.tool_call.get("name", "unknown_tool")
+        tool_call_id = str(request.tool_call.get("id", ""))
         tool_args = request.tool_call.get("args", {})
 
         # Skip excluded tools
@@ -314,6 +315,7 @@ class LogModelMessageMiddleware(AgentMiddleware):
             self.callback(
                 ToolCallEvent(
                     tool_name=tool_name,
+                    tool_call_id=tool_call_id,
                     arguments=tool_args,
                 )
             )
@@ -345,6 +347,7 @@ class LogModelMessageMiddleware(AgentMiddleware):
                 self.callback(
                     ToolResultEvent(
                         tool_name=tool_name,
+                        tool_call_id=tool_call_id,
                         result=result.text or "",
                     )
                 )

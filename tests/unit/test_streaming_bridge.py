@@ -13,11 +13,18 @@ from server.schemas.enums import SessionMode
 from server.services.session_manager import ManagedSession, SessionManager
 from server.streaming.bridge import (
     _EMPTY_RESPONSE_FALLBACK,
+    _AgentTurnTraceBuilder,
     _InternalReminderFilter,
     collect_agent_response,
     stream_agent_response,
 )
-from shared.agent_middlewares.callback_types import StreamingTokenEvent
+from server.streaming.tool_call_matching import ToolCallMatcher
+from shared.agent_middlewares.callback_types import (
+    BaseAgentEvent,
+    StreamingTokenEvent,
+    ToolCallEvent,
+    ToolResultEvent,
+)
 
 
 class _FakeStreamingAgent:
@@ -46,6 +53,49 @@ def test_internal_reminder_filter_preserves_plain_text() -> None:
     assert token_filter.feed("Xin chào ") == "Xin chào "
     assert token_filter.feed("em.") == "em."
     assert token_filter.flush() == ""
+
+
+def test_tool_call_matcher_pairs_out_of_order_results_by_id() -> None:
+    """Concurrent same-name tool calls should use ids before FIFO fallback."""
+    matcher: ToolCallMatcher[dict[str, str]] = ToolCallMatcher()
+
+    matcher.add("read_file", {"file_path": "/a"}, "call-a")
+    matcher.add("read_file", {"file_path": "/b"}, "call-b")
+
+    assert matcher.pop("read_file", "call-b") == {"file_path": "/b"}
+    assert matcher.pop("read_file", "call-a") == {"file_path": "/a"}
+
+
+def test_tool_call_matcher_keeps_legacy_fifo_fallback() -> None:
+    """Old callback events without ids should still settle oldest-first."""
+    matcher: ToolCallMatcher[dict[str, str]] = ToolCallMatcher()
+
+    matcher.add("read_file", {"file_path": "/a"})
+    matcher.add("read_file", {"file_path": "/b"})
+
+    assert matcher.pop("read_file") == {"file_path": "/a"}
+    assert matcher.pop("read_file") == {"file_path": "/b"}
+
+
+def test_agent_turn_trace_builder_pairs_out_of_order_results_by_id() -> None:
+    """Persisted traces should not attach results to the wrong same-name call."""
+    trace_builder = _AgentTurnTraceBuilder()
+
+    trace_builder.on_tool_call("read_file", {"file_path": "/a"}, "call-a")
+    trace_builder.on_tool_call("read_file", {"file_path": "/b"}, "call-b")
+    trace_builder.on_tool_result("read_file", "B result", "call-b")
+    trace_builder.on_tool_result("read_file", "A result", "call-a")
+
+    turn = trace_builder.finalize(duration_seconds=1.0)
+    first = turn.timeline[0].tool_call
+    second = turn.timeline[1].tool_call
+
+    assert first is not None
+    assert first.arguments == {"file_path": "/a"}
+    assert first.result == "A result"
+    assert second is not None
+    assert second.arguments == {"file_path": "/b"}
+    assert second.result == "B result"
 
 
 def test_internal_reminder_filter_removes_complete_block() -> None:
@@ -412,6 +462,63 @@ async def test_collect_agent_response_returns_sanitized_text() -> None:
 
     assert response.response == "Visible text"
     assert session.messages[-1].content == "Visible text"
+
+
+@pytest.mark.asyncio
+async def test_collect_agent_response_pairs_tool_results_by_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Non-streaming tool-call summaries should survive out-of-order results."""
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.ASK,
+        created_at=datetime.now(),
+        last_active=0.0,
+    )
+    manager = SessionManager()
+    events = [
+        ToolCallEvent(
+            tool_name="read_file",
+            tool_call_id="call-a",
+            arguments={"file_path": "/a"},
+        ),
+        ToolCallEvent(
+            tool_name="read_file",
+            tool_call_id="call-b",
+            arguments={"file_path": "/b"},
+        ),
+        ToolResultEvent(
+            tool_name="read_file",
+            tool_call_id="call-b",
+            result="B result",
+        ),
+        ToolResultEvent(
+            tool_name="read_file",
+            tool_call_id="call-a",
+            result="A result",
+        ),
+        StreamingTokenEvent(token="Done."),
+    ]
+
+    async def fake_stream_agent_response(
+        *_args: object,
+        **_kwargs: object,
+    ) -> AsyncIterator[BaseAgentEvent]:
+        for event in events:
+            yield event
+
+    monkeypatch.setattr(
+        "server.streaming.bridge.stream_agent_response",
+        fake_stream_agent_response,
+    )
+
+    response = await collect_agent_response(session, "hello", manager)
+
+    assert response.response == "Done."
+    assert [(call.arguments, call.result) for call in response.tool_calls] == [
+        ({"file_path": "/b"}, "B result"),
+        ({"file_path": "/a"}, "A result"),
+    ]
 
 
 @pytest.mark.asyncio

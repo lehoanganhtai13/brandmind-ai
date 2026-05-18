@@ -31,6 +31,7 @@ from core.brand_strategy.session import (
 from server.schemas.chat import MessageResponse, ToolCallInfo
 from server.schemas.enums import SessionMode
 from server.services.session_manager import ManagedSession, SessionManager
+from server.streaming.tool_call_matching import ToolCallMatcher
 from shared.agent_middlewares.callback_types import (
     BaseAgentEvent,
     StreamingThinkingEvent,
@@ -298,6 +299,7 @@ class _AgentTurnTraceBuilder:
 
     def __init__(self) -> None:
         self._entries: list[PersistedTimelineEntry] = []
+        self._tool_entries: ToolCallMatcher[PersistedTimelineEntry] = ToolCallMatcher()
         self._thinking_open = False
 
     def on_thinking(self, token: str, done: bool) -> None:
@@ -337,7 +339,12 @@ class _AgentTurnTraceBuilder:
         if done:
             self._thinking_open = False
 
-    def on_tool_call(self, tool_name: str, arguments: dict) -> None:
+    def on_tool_call(
+        self,
+        tool_name: str,
+        arguments: dict,
+        tool_call_id: str = "",
+    ) -> None:
         """Open a tool entry in the timeline with the args the agent sent.
 
         Tool calls always close any in-flight thinking block — the SSE
@@ -347,36 +354,42 @@ class _AgentTurnTraceBuilder:
         Args:
             tool_name (str): Identifier of the dispatched tool.
             arguments (dict): JSON-serialisable invocation payload.
+            tool_call_id (str): Provider id used to match out-of-order
+                result events from concurrent calls of the same tool.
         """
-        self._entries.append(
-            PersistedTimelineEntry(
-                kind="tool_call",
-                tool_call=PersistedToolCall(
-                    tool_name=tool_name,
-                    arguments=dict(arguments),
-                ),
-            )
+        entry = PersistedTimelineEntry(
+            kind="tool_call",
+            tool_call=PersistedToolCall(
+                tool_name=tool_name,
+                arguments=dict(arguments),
+            ),
         )
+        self._entries.append(entry)
+        self._tool_entries.add(tool_name, entry, tool_call_id)
         self._thinking_open = False
 
-    def on_tool_result(self, tool_name: str, result: str) -> None:
-        """Settle the earliest still-running tool entry of the same name.
+    def on_tool_result(
+        self,
+        tool_name: str,
+        result: str,
+        tool_call_id: str = "",
+    ) -> None:
+        """Settle the matching tool entry for one result event.
 
-        Mirrors :meth:`BrandMindState._settle_tool_result` so repeated
-        invocations of the same tool resolve in FIFO order — without
-        the oldest-first match the same tool dispatched twice would
-        leave one timeline entry permanently stuck on "running".
+        Provider ids are the primary correlation key. FIFO by tool name
+        remains as a compatibility fallback for older callback events
+        that did not carry ids.
 
         Args:
             tool_name (str): Identifier of the tool whose result arrived.
             result (str): Stringified result body.
+            tool_call_id (str): Provider id copied from the original
+                tool-call request when available.
         """
-        for entry in self._entries:
-            if entry.kind != "tool_call" or entry.tool_call is None:
-                continue
-            if entry.tool_call.tool_name == tool_name and entry.tool_call.result == "":
-                entry.tool_call.result = result
-                return
+        entry = self._tool_entries.pop(tool_name, tool_call_id)
+        if entry is None or entry.tool_call is None:
+            return
+        entry.tool_call.result = result
 
     def finalize(self, duration_seconds: float) -> PersistedAgentTurn:
         """Snapshot the accumulated trace as a persisted-turn record.
@@ -611,9 +624,17 @@ async def stream_agent_response(
                 if isinstance(event, StreamingThinkingEvent):
                     trace_builder.on_thinking(event.token, event.done)
                 elif isinstance(event, ToolCallEvent):
-                    trace_builder.on_tool_call(event.tool_name, event.arguments)
+                    trace_builder.on_tool_call(
+                        event.tool_name,
+                        event.arguments,
+                        event.tool_call_id,
+                    )
                 elif isinstance(event, ToolResultEvent):
-                    trace_builder.on_tool_result(event.tool_name, event.result)
+                    trace_builder.on_tool_result(
+                        event.tool_name,
+                        event.result,
+                        event.tool_call_id,
+                    )
                 yield event
         finally:
             if not producer.done():
@@ -658,23 +679,30 @@ async def collect_agent_response(
     """
     response_tokens: list[str] = []
     tool_calls: list[ToolCallInfo] = []
-    pending_tool_arguments: dict[str, Any] = {}
+    pending_tool_arguments: ToolCallMatcher[dict[str, Any]] = ToolCallMatcher()
 
     async for event in stream_agent_response(session, content, manager):
         if isinstance(event, StreamingTokenEvent):
             if event.token and not event.done:
                 response_tokens.append(event.token)
         elif isinstance(event, ToolCallEvent):
-            pending_tool_arguments = event.arguments
+            pending_tool_arguments.add(
+                event.tool_name,
+                dict(event.arguments),
+                event.tool_call_id,
+            )
         elif isinstance(event, ToolResultEvent):
+            arguments = pending_tool_arguments.pop(
+                event.tool_name,
+                event.tool_call_id,
+            )
             tool_calls.append(
                 ToolCallInfo(
                     tool_name=event.tool_name,
-                    arguments=pending_tool_arguments,
+                    arguments=arguments or {},
                     result=event.result,
                 )
             )
-            pending_tool_arguments = {}
 
     return MessageResponse(
         response="".join(response_tokens),
