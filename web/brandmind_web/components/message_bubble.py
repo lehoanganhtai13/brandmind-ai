@@ -19,7 +19,7 @@ import reflex as rx
 
 from ..models import ChatMessage, TimelineEntry
 from . import tokens
-from .tool_timeline import humanize_tool_label, tool_icon_tag
+from .tool_timeline import humanize_tool_call_label, tool_call_icon_tag
 
 _MARKDOWN_PARAGRAPH_STYLE: dict[str, str] = {
     "color": tokens.TEXT_PRIMARY,
@@ -115,9 +115,7 @@ def _rail_segment(*, flex: bool, height: str = "8px") -> rx.Component:
     return rx.box(style=style)
 
 
-def _timeline_entry(
-    entry: rx.Var[TimelineEntry], index: rx.Var[int]
-) -> rx.Component:
+def _timeline_entry(entry: rx.Var[TimelineEntry], index: rx.Var[int]) -> rx.Component:
     """Render one chronological reasoning step within the timeline.
 
     The row is a horizontal pair of (bullet column, content). The
@@ -130,9 +128,7 @@ def _timeline_entry(
     visibly begins AT the first icon.
     """
     is_thinking = entry.kind == "thinking"
-    tool_done = (entry.tool_call is not None) & (
-        entry.tool_call.result != ""
-    )
+    tool_done = (entry.tool_call is not None) & (entry.tool_call.result != "")
 
     icon = rx.cond(
         is_thinking,
@@ -146,7 +142,9 @@ def _timeline_entry(
             },
         ),
         rx.icon(
-            tag=tool_icon_tag(entry.tool_call.tool_name),
+            tag=tool_call_icon_tag(
+                entry.tool_call.tool_name, entry.tool_call.arguments
+            ),
             size=14,
             color=rx.cond(
                 tool_done,
@@ -181,7 +179,9 @@ def _timeline_entry(
         _thinking_markdown(entry.thinking_text),
         rx.hstack(
             rx.text(
-                humanize_tool_label(entry.tool_call.tool_name),
+                humanize_tool_call_label(
+                    entry.tool_call.tool_name, entry.tool_call.arguments
+                ),
                 style={
                     "color": tokens.TEXT_PRIMARY,
                     "font_family": tokens.FONT_SANS,
@@ -311,9 +311,7 @@ def _reasoning_timeline(
 
     header = rx.hstack(
         rx.icon(
-            tag=rx.cond(
-                message.timeline_expanded, "chevron_down", "chevron_right"
-            ),
+            tag=rx.cond(message.timeline_expanded, "chevron_down", "chevron_right"),
             size=13,
             color=tokens.TEXT_MUTED,
         ),
@@ -424,9 +422,7 @@ def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
     )
 
 
-def _agent_bubble(
-    message: rx.Var[ChatMessage], message_index: int
-) -> rx.Component:
+def _agent_bubble(message: rx.Var[ChatMessage], message_index: int) -> rx.Component:
     """Agent turn — left-bordered editorial column, no enclosing box."""
     body = rx.vstack(
         _reasoning_timeline(message, message_index),

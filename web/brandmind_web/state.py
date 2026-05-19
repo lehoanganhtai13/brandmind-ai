@@ -1124,23 +1124,31 @@ class BrandMindState(rx.State):
                 tool_call=ToolCallInfo(
                     tool_name=call.tool_name,
                     arguments=call.arguments,
+                    tool_call_id=call.tool_call_id,
                 ),
             ),
         ]
         self.messages = [*self.messages[:-1], target]
 
     def _settle_tool_result(self, result: ToolResultPayload) -> None:
-        """Settle the earliest still-running tool entry of the same tool.
+        """Settle the matching in-progress tool entry with the result text.
 
-        When the agent calls the same tool more than once, each result
-        settles the oldest unresolved invocation — otherwise a later
-        result overwrites an already-completed call and earlier entries
-        stay stuck on "running" forever in the timeline.
+        Prefers ``tool_call_id`` pairing so concurrent invocations of the
+        same tool always settle the exact originating call. When the id
+        is missing (older sessions or providers that do not emit one)
+        the search falls back to the earliest still-running entry with
+        the same ``tool_name`` so a single in-flight invocation still
+        resolves correctly.
         """
         if not self.messages:
             return
         target = self.messages[-1]
         if target.role != "agent" or not target.timeline:
+            return
+        if result.tool_call_id and self._settle_by_tool_call_id(
+            target, result.tool_call_id, result.result
+        ):
+            self.messages = [*self.messages[:-1], target]
             return
         for entry in target.timeline:
             if entry.kind != "tool_call" or entry.tool_call is None:
@@ -1152,6 +1160,28 @@ class BrandMindState(rx.State):
                 entry.tool_call.result = result.result
                 break
         self.messages = [*self.messages[:-1], target]
+
+    def _settle_by_tool_call_id(
+        self,
+        target: ChatMessage,
+        tool_call_id: str,
+        result_text: str,
+    ) -> bool:
+        """Settle the timeline entry whose ``tool_call_id`` matches the result.
+
+        Returns ``True`` when a matching unresolved entry was found and
+        updated so the caller can skip the FIFO fallback.
+        """
+        for entry in target.timeline:
+            if entry.kind != "tool_call" or entry.tool_call is None:
+                continue
+            if (
+                entry.tool_call.tool_call_id == tool_call_id
+                and entry.tool_call.result == ""
+            ):
+                entry.tool_call.result = result_text
+                return True
+        return False
 
     def _apply_phase_advance(self, advance: PhaseAdvancePayload) -> None:
         """Mirror a phase-advance event into the sidebar state."""

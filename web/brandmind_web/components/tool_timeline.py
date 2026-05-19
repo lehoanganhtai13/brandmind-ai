@@ -103,9 +103,73 @@ def tool_icon_tag(tool_name: rx.Var[str]) -> rx.Var:
     return tag
 
 
-def _humanize(tool_name: rx.Var[str]) -> rx.Var:
-    """Backwards-compatible alias for :func:`humanize_tool_label`."""
-    return humanize_tool_label(tool_name)
+def _report_progress_label(arguments: rx.Var) -> rx.Var:
+    """Pick the user-facing label for a :func:`report_progress` invocation.
+
+    ``report_progress`` is a multi-purpose tool: it may set scope or
+    brand name, advance to the next phase, or loop back to a prior
+    phase. The base mapping renders the same "Advance phase" label for
+    every call, which misleads the user when the agent is only updating
+    metadata. This ladder inspects the arguments at render time so the
+    timeline label tracks intent.
+    """
+    return rx.cond(
+        arguments.get("loop_back_to", "") != "",
+        "Loop back to phase",
+        rx.cond(
+            arguments.get("advance", False),
+            "Advance phase",
+            "Update phase metadata",
+        ),
+    )
+
+
+def _report_progress_icon(arguments: rx.Var) -> rx.Var:
+    """Pick the icon for a :func:`report_progress` invocation.
+
+    Mirrors :func:`_report_progress_label` so the glyph reads the same
+    intent the label conveys: an undo arrow when looping back, the
+    forward arrow when advancing, and a pencil when only writing
+    metadata.
+    """
+    return rx.cond(
+        arguments.get("loop_back_to", "") != "",
+        "undo_2",
+        rx.cond(
+            arguments.get("advance", False),
+            "arrow_right",
+            "file_pen_line",
+        ),
+    )
+
+
+def humanize_tool_call_label(tool_name: rx.Var[str], arguments: rx.Var) -> rx.Var:
+    """Project a tool name + arguments pair to its English label.
+
+    Wrapper around :func:`humanize_tool_label` that special-cases tools
+    whose meaning depends on their arguments. Today only
+    ``report_progress`` needs this — see :func:`_report_progress_label`.
+    """
+    base = humanize_tool_label(tool_name)
+    return rx.cond(
+        tool_name == "report_progress",
+        _report_progress_label(arguments),
+        base,
+    )
+
+
+def tool_call_icon_tag(tool_name: rx.Var[str], arguments: rx.Var) -> rx.Var:
+    """Project a tool name + arguments pair to its Lucide icon tag.
+
+    Wrapper around :func:`tool_icon_tag` that special-cases tools whose
+    icon should track a sub-intent encoded in arguments.
+    """
+    base = tool_icon_tag(tool_name)
+    return rx.cond(
+        tool_name == "report_progress",
+        _report_progress_icon(arguments),
+        base,
+    )
 
 
 def tool_call_card(call: rx.Var[ToolCallInfo]) -> rx.Component:
@@ -129,7 +193,7 @@ def tool_call_card(call: rx.Var[ToolCallInfo]) -> rx.Component:
             color=rx.cond(is_done, tokens.ACCENT_TEAL_SOLID, tokens.TEXT_MUTED),
         ),
         rx.text(
-            _humanize(call.tool_name),
+            humanize_tool_call_label(call.tool_name, call.arguments),
             style={
                 "color": tokens.TEXT_SECONDARY,
                 "font_family": tokens.FONT_SANS,

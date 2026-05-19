@@ -18,11 +18,18 @@ from pydantic import BaseModel, Field
 
 
 class ToolCallInfo(BaseModel):
-    """Completed tool call surfaced inline in the chat timeline."""
+    """Completed tool call surfaced inline in the chat timeline.
+
+    ``tool_call_id`` carries the provider id used to pair the result
+    back to the originating call so the live timeline does not rely on
+    FIFO-by-tool-name matching when the agent fires the same tool more
+    than once before any of them returns.
+    """
 
     tool_name: str
     arguments: dict = Field(default_factory=dict)
     result: str = ""
+    tool_call_id: str = ""
 
 
 class TimelineEntry(BaseModel):
@@ -229,6 +236,7 @@ class ToolCallPayload(BaseModel):
 
     tool_name: str
     arguments: dict = Field(default_factory=dict)
+    tool_call_id: str = ""
 
 
 class ToolResultPayload(BaseModel):
@@ -236,6 +244,7 @@ class ToolResultPayload(BaseModel):
 
     tool_name: str
     result: str = ""
+    tool_call_id: str = ""
 
 
 class StreamDonePayload(BaseModel):
