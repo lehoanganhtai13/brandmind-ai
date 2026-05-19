@@ -582,14 +582,14 @@ def chat_action_dialogs() -> rx.Component:
                 ),
                 rx.vstack(
                     rx.text(
-                        "Also delete workspace files",
+                        "Also clear this chat's saved progress",
                         size="2",
                         weight="medium",
                         color=tokens.TEXT_PRIMARY,
                     ),
                     rx.text(
-                        "Removes Brand Brief, Working Notes and Quality "
-                        "Gates under ~/.brandmind/projects/. Permanent.",
+                        "Permanently removes the strategy notes the "
+                        "assistant kept while working on this chat.",
                         size="1",
                         color=tokens.TEXT_MUTED,
                     ),
