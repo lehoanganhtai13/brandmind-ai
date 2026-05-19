@@ -129,8 +129,9 @@ def _report_progress_icon(arguments: rx.Var) -> rx.Var:
 
     Mirrors :func:`_report_progress_label` so the glyph reads the same
     intent the label conveys: an undo arrow when looping back, the
-    forward arrow when advancing, and a pencil when only writing
-    metadata.
+    forward arrow when advancing, and a target reticle when only
+    writing scope or brand metadata so the row does not collide with
+    the pencil glyph used by ``edit_file``.
     """
     return rx.cond(
         arguments.get("loop_back_to", "") != "",
@@ -138,7 +139,7 @@ def _report_progress_icon(arguments: rx.Var) -> rx.Var:
         rx.cond(
             arguments.get("advance", False),
             "arrow_right",
-            "file_pen_line",
+            "target",
         ),
     )
 
