@@ -34,6 +34,23 @@ def _edit_request(old_string: str, new_string: str) -> ToolCallRequest:
     )
 
 
+def _profile_edit_request(user_texts: list[str]) -> ToolCallRequest:
+    return ToolCallRequest(
+        tool_call={
+            "name": "edit_file",
+            "args": {
+                "file_path": "/user/profile.md",
+                "old_string": "## Identity\n- Role: [To be discovered]",
+                "new_string": "## Identity\n- Role: [Chủ doanh nghiệp F&B]",
+            },
+            "id": "call_profile",
+        },
+        tool=None,
+        state={"messages": [HumanMessage(content=text) for text in user_texts]},
+        runtime=None,  # type: ignore[arg-type]
+    )
+
+
 def test_blocks_edit_that_removes_existing_phase_heading() -> None:
     middleware = WorkspaceBriefHygieneMiddleware()
     old_string = "### P - What's next\n## Phase 1: Market Intelligence (COMPLETED)"
@@ -114,7 +131,9 @@ def test_recovers_stale_full_brief_template_replace(tmp_path, monkeypatch) -> No
         return ToolMessage("Error: String not found in file", tool_call_id="call_1")
 
     try:
-        result = middleware.wrap_tool_call(_edit_request(old_string, new_string), handler)
+        result = middleware.wrap_tool_call(
+            _edit_request(old_string, new_string), handler
+        )
     finally:
         set_active_session(None)
 
@@ -137,7 +156,10 @@ def test_recovers_placeholder_full_brief_with_nested_phases_and_syncs_handoff(
     workspace = tmp_path / "projects" / "abc123" / "workspace"
     workspace.mkdir(parents=True)
     brief = workspace / "brand_brief.md"
-    brief.write_text("# Brand Brief\n\n## Phase 0: Business Problem Diagnosis\nOld.", "utf-8")
+    brief.write_text(
+        "# Brand Brief\n\n## Phase 0: Business Problem Diagnosis\nOld.",
+        "utf-8",
+    )
 
     old_string = "# Brand Brief\n(Empty or placeholder content)\n"
     new_string = "\n\n".join(
@@ -289,5 +311,68 @@ def test_ignores_non_brand_brief_edits() -> None:
         lambda req: ToolMessage("ran", tool_call_id=req.tool_call["id"]),
     )
 
+    assert isinstance(result, ToolMessage)
+    assert result.content == "ran"
+
+
+def test_blocks_sparse_first_turn_profile_inference() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    request = _profile_edit_request(
+        ["Tôi muốn làm brand strategy cho nhà hàng Chuyện Ba Bữa Signature á"]
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(request, handler)
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "Cannot edit `/user/profile.md` from a sparse first turn" in str(
+        result.content
+    )
+    assert "tentative observations" in str(result.content)
+
+
+def test_allows_explicit_first_turn_profile_fact() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    request = _profile_edit_request(
+        ["Tôi là founder, ngân sách dự kiến khoảng 80 triệu cho launch."]
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(request, handler)
+
+    assert handler_called is True
+    assert isinstance(result, ToolMessage)
+    assert result.content == "ran"
+
+
+def test_allows_profile_update_after_multiple_user_turns() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    request = _profile_edit_request(
+        [
+            "Tôi muốn làm brand strategy cho một nhà hàng.",
+            "Tôi là founder, đang cần bản trình sếp tuần này.",
+        ]
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(request, handler)
+
+    assert handler_called is True
     assert isinstance(result, ToolMessage)
     assert result.content == "ran"

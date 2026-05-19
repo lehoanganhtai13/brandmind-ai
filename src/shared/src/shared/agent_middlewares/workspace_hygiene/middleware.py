@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
@@ -21,15 +22,30 @@ _BRAND_BRIEF_PATHS = {
     "workspace/brand_brief.md",
 }
 
+_USER_PROFILE_PATHS = {
+    "/user/profile.md",
+    "user/profile.md",
+}
+
 _BROAD_ANCHORS = {"", "---", "---\n"}
-_ANY_PHASE_HEADING_RE = __import__("re").compile(
+_ANY_PHASE_HEADING_RE = re.compile(
     r"^#{2,4}\s+(Phase\s+\d+(?:\.\d+)?\b.*)$",
-    __import__("re").MULTILINE,
+    re.MULTILINE,
+)
+_EXPLICIT_PROFILE_SIGNAL_RE = re.compile(
+    r"\b("
+    r"i am|i'm|my role|i prefer|my preference|budget|deadline|timeline|"
+    r"tôi là|toi la|mình là|minh la|anh là|anh la|em là|em la|"
+    r"vai trò|vai tro|ngân sách|ngan sach|thời hạn|thoi han|"
+    r"deadline|tôi thích|toi thich|mình thích|minh thich|"
+    r"tôi muốn bạn|toi muon ban|mình muốn bạn|minh muon ban"
+    r")\b",
+    re.IGNORECASE,
 )
 
 
 class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
-    """Protect phase headings and normalize duplicate phase sections."""
+    """Protect structured workspace edits from unsafe model mutations."""
 
     @staticmethod
     def _is_brand_brief_edit(request: ToolCallRequest) -> bool:
@@ -39,6 +55,67 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
         file_path = str(args.get("file_path", ""))
         return file_path in _BRAND_BRIEF_PATHS or file_path.endswith(
             "/workspace/brand_brief.md"
+        )
+
+    @staticmethod
+    def _is_user_profile_edit(request: ToolCallRequest) -> bool:
+        if request.tool_call.get("name") != "edit_file":
+            return False
+        args = request.tool_call.get("args", {})
+        file_path = str(args.get("file_path", ""))
+        return file_path in _USER_PROFILE_PATHS or file_path.endswith(
+            "/user/profile.md"
+        )
+
+    @staticmethod
+    def _human_texts(request: ToolCallRequest) -> list[str]:
+        texts: list[str] = []
+        messages = request.state.get("messages", [])
+        for message in messages:
+            message_type = getattr(message, "type", "")
+            class_name = message.__class__.__name__
+            if message_type not in {"human", "user"} and class_name != "HumanMessage":
+                continue
+
+            content = getattr(message, "content", "")
+            if isinstance(content, str):
+                if content.strip():
+                    texts.append(content)
+            elif isinstance(content, list):
+                text = "\n".join(
+                    str(part.get("text", ""))
+                    for part in content
+                    if isinstance(part, dict) and part.get("text")
+                )
+                if text.strip():
+                    texts.append(text)
+            elif isinstance(content, dict):
+                text = str(content.get("text") or content.get("content") or "")
+                if text.strip():
+                    texts.append(text)
+        return texts
+
+    @classmethod
+    def _profile_guard_message(cls, request: ToolCallRequest) -> str | None:
+        if not cls._is_user_profile_edit(request):
+            return None
+
+        human_texts = cls._human_texts(request)
+        if len(human_texts) != 1:
+            return None
+
+        latest_user_text = human_texts[-1]
+        if _EXPLICIT_PROFILE_SIGNAL_RE.search(latest_user_text):
+            return None
+
+        return (
+            "Cannot edit `/user/profile.md` from a sparse first turn: durable "
+            "profile facts must come from explicit user-stated role, preference, "
+            "constraint, or working style. Keep inferences such as likely role, "
+            "industry expertise, language, and communication style in "
+            "`/workspace/working_notes.md` as tentative observations until the "
+            "user confirms them. Continue using the tentative context, and ask "
+            "at most one focused blocker if user input is needed."
         )
 
     @staticmethod
@@ -340,7 +417,14 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
         request: ToolCallRequest,
         handler: Callable[[ToolCallRequest], ToolMessage | Command],
     ) -> ToolMessage | Command:
-        """Guard synchronous brand brief edits."""
+        """Guard synchronous structured workspace edits."""
+        profile_guard_message = self._profile_guard_message(request)
+        if profile_guard_message is not None:
+            return ToolMessage(
+                content=profile_guard_message,
+                tool_call_id=request.tool_call["id"],
+            )
+
         if not self._is_brand_brief_edit(request):
             return handler(request)
 
@@ -367,7 +451,14 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
         request: ToolCallRequest,
         handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Command]],
     ) -> ToolMessage | Command:
-        """Guard asynchronous brand brief edits."""
+        """Guard asynchronous structured workspace edits."""
+        profile_guard_message = self._profile_guard_message(request)
+        if profile_guard_message is not None:
+            return ToolMessage(
+                content=profile_guard_message,
+                tool_call_id=request.tool_call["id"],
+            )
+
         if not self._is_brand_brief_edit(request):
             return await handler(request)
 

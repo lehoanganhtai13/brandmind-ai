@@ -23,7 +23,7 @@ from langchain.agents.middleware.types import (
     ModelRequest,
     ModelResponse,
 )
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from loguru import logger
 
 import shared.workspace as workspace_mod
@@ -33,6 +33,20 @@ ContextSource = Literal[
     "current_workspace",
     "prior_project",
     "inference",
+]
+EvidenceLevel = Literal[
+    "memory_backed",
+    "workspace_backed",
+    "profile_backed",
+    "inferred",
+    "none",
+]
+RecommendedAction = Literal[
+    "continue_from_memory",
+    "synthesize_collected_context",
+    "discover_then_ask",
+    "ask_one_blocker",
+    "normal_diagnosis",
 ]
 
 
@@ -70,6 +84,29 @@ class ProactiveContextItem:
 
 
 @dataclass(frozen=True)
+class ProactiveActionContract:
+    """Stateful next-action guidance for the mentor's imminent response."""
+
+    available_context: tuple[str, ...] = field(default_factory=tuple)
+    working_hypothesis: str = ""
+    evidence_level: EvidenceLevel = "none"
+    collectable_unknowns: tuple[str, ...] = field(default_factory=tuple)
+    user_only_unknowns: tuple[str, ...] = field(default_factory=tuple)
+    recommended_next_action: RecommendedAction = "normal_diagnosis"
+
+    @property
+    def has_content(self) -> bool:
+        """Return whether this contract has useful decision guidance."""
+        return bool(
+            self.available_context
+            or self.working_hypothesis
+            or self.collectable_unknowns
+            or self.user_only_unknowns
+            or self.recommended_next_action != "normal_diagnosis"
+        )
+
+
+@dataclass(frozen=True)
 class ProactiveContextPacket:
     """The context packet injected into the main agent's model call."""
 
@@ -82,6 +119,9 @@ class ProactiveContextPacket:
     ask_budget: int
     items: tuple[ProactiveContextItem, ...] = field(default_factory=tuple)
     prior_matches: tuple[ProactiveProjectMatch, ...] = field(default_factory=tuple)
+    action_contract: ProactiveActionContract = field(
+        default_factory=ProactiveActionContract
+    )
 
     @property
     def has_content(self) -> bool:
@@ -89,6 +129,7 @@ class ProactiveContextPacket:
         return bool(
             self.items
             or self.prior_matches
+            or self.action_contract.has_content
             or self.initiative_mode == "discover_before_asking"
         )
 
@@ -124,10 +165,66 @@ class ProactiveContextPacket:
                 "the phase."
             ),
             (
+                "- Keep inferred user facts out of the durable user profile. "
+                "If a fact comes only from this turn, store it as tentative "
+                "working context until the user confirms it as stable."
+            ),
+            (
                 "- Keep the opening turn as one mentoring moment: working "
                 "understanding plus the next useful question."
             ),
         ]
+        if self.ask_budget <= 1:
+            lines.append(
+                "- Because the next user reply should unblock one decision, "
+                "make the question a single focused blocker. Hold conditional "
+                "follow-up questions for later turns instead of stacking them "
+                "into the same response."
+            )
+
+        if self.action_contract.has_content:
+            lines.extend(
+                [
+                    "",
+                    "## Proactive Action Contract",
+                    (
+                        "- Recommended next action: "
+                        f"{self.action_contract.recommended_next_action}."
+                    ),
+                    f"- Evidence level: {self.action_contract.evidence_level}.",
+                ]
+            )
+            if self.action_contract.available_context:
+                lines.extend(
+                    [
+                        "- Available context to use now: "
+                        + "; ".join(self.action_contract.available_context)
+                        + ".",
+                    ]
+                )
+            if self.action_contract.working_hypothesis:
+                lines.extend(
+                    [
+                        "- Working hypothesis: "
+                        + self.action_contract.working_hypothesis,
+                    ]
+                )
+            if self.action_contract.collectable_unknowns:
+                lines.extend(
+                    [
+                        "- Resolve before asking when practical: "
+                        + "; ".join(self.action_contract.collectable_unknowns)
+                        + ".",
+                    ]
+                )
+            if self.action_contract.user_only_unknowns:
+                lines.extend(
+                    [
+                        "- User-only blockers: "
+                        + "; ".join(self.action_contract.user_only_unknowns)
+                        + ".",
+                    ]
+                )
 
         if self.prior_matches:
             lines.extend(
@@ -242,6 +339,7 @@ class ProactiveContextBuilder:
         session_id: str | None = None,
         *,
         discovery_needed: bool = False,
+        post_tool_context_seen: bool = False,
     ) -> ProactiveContextPacket:
         """Build a context packet for the current turn.
 
@@ -251,6 +349,9 @@ class ProactiveContextBuilder:
             discovery_needed: Whether runtime state says this is an early
                 diagnosis turn where the agent should self-inventory before
                 asking the user for more information.
+            post_tool_context_seen: Whether the latest model call follows tool
+                results, meaning the agent should synthesize collected context
+                before asking generic follow-up questions.
 
         Returns:
             A compact packet. Empty packets are valid when no useful memory exists.
@@ -304,12 +405,120 @@ class ProactiveContextBuilder:
             initiative_mode = "normal_diagnosis"
             ask_budget = 3
 
+        action_contract = self._build_action_contract(
+            initiative_mode=initiative_mode,
+            items=tuple(items),
+            matches=matches,
+            post_tool_context_seen=post_tool_context_seen,
+        )
+
         return ProactiveContextPacket(
             initiative_mode=initiative_mode,
             ask_budget=ask_budget,
             items=tuple(items),
             prior_matches=matches,
+            action_contract=action_contract,
         )
+
+    def _build_action_contract(
+        self,
+        *,
+        initiative_mode: Literal[
+            "continue_with_memory",
+            "collect_then_answer",
+            "discover_before_asking",
+            "normal_diagnosis",
+        ],
+        items: tuple[ProactiveContextItem, ...],
+        matches: tuple[ProactiveProjectMatch, ...],
+        post_tool_context_seen: bool,
+    ) -> ProactiveActionContract:
+        """Build the stateful decision guidance carried by the prompt packet."""
+        available_context = list(_available_context_labels(items, matches))
+        if initiative_mode == "discover_before_asking":
+            available_context.append("latest user wording")
+
+        evidence_level = _evidence_level(items, matches, initiative_mode)
+
+        if post_tool_context_seen:
+            return ProactiveActionContract(
+                available_context=tuple(available_context + ["recent tool results"]),
+                working_hypothesis=(
+                    "Tool results are now part of the context. Use them to "
+                    "produce a grounded synthesis before asking for anything "
+                    "that may already be answered by those results."
+                ),
+                evidence_level=evidence_level,
+                collectable_unknowns=(
+                    "facts already present in recent tool results",
+                    "facts present in workspace or durable profile context",
+                ),
+                user_only_unknowns=(
+                    "the single remaining strategic decision missing from context",
+                ),
+                recommended_next_action="synthesize_collected_context",
+            )
+
+        if matches:
+            return ProactiveActionContract(
+                available_context=tuple(available_context),
+                working_hypothesis=(
+                    "A related project appears to exist. Continue from that "
+                    "memory only after confirming whether the user wants to "
+                    "continue, refine, or restart the prior direction."
+                ),
+                evidence_level=evidence_level,
+                collectable_unknowns=(
+                    "prior workspace notes",
+                    "durable user profile",
+                ),
+                user_only_unknowns=(
+                    "whether this request continues or restarts the prior work",
+                ),
+                recommended_next_action="continue_from_memory",
+            )
+
+        if initiative_mode == "discover_before_asking":
+            return ProactiveActionContract(
+                available_context=tuple(available_context),
+                working_hypothesis=(
+                    "This is an early strategy request. Infer only obvious "
+                    "facts from the user's wording and keep private, live, or "
+                    "stakeholder-specific facts open until confirmed."
+                ),
+                evidence_level=evidence_level,
+                collectable_unknowns=(
+                    "facts implied by the user's wording",
+                    "durable profile and current workspace context",
+                    "bounded internal knowledge when the reply would be generic",
+                ),
+                user_only_unknowns=(
+                    "business goal",
+                    "budget or operating constraint",
+                    "stakeholder decision context",
+                ),
+                recommended_next_action="discover_then_ask",
+            )
+
+        if items:
+            return ProactiveActionContract(
+                available_context=tuple(available_context),
+                working_hypothesis=(
+                    "Some durable context is available. Use it to avoid "
+                    "repeating questions already answered by profile or "
+                    "workspace notes."
+                ),
+                evidence_level=evidence_level,
+                collectable_unknowns=(
+                    "facts already present in profile or workspace notes",
+                ),
+                user_only_unknowns=(
+                    "the next decision-changing detail not present in context",
+                ),
+                recommended_next_action="ask_one_blocker",
+            )
+
+        return ProactiveActionContract()
 
     def _read_profile(self) -> str:
         """Return the user's durable profile text when it contains real data."""
@@ -455,6 +664,7 @@ class ProactiveTurnMiddleware(AgentMiddleware):
                     session,
                     request.messages,
                 ),
+                post_tool_context_seen=_has_recent_tool_results(request.messages),
             )
             prompt = packet.to_prompt()
             if not prompt:
@@ -465,7 +675,8 @@ class ProactiveTurnMiddleware(AgentMiddleware):
             logger.info(
                 "ProactiveTurnMiddleware injected context: "
                 f"items={len(packet.items)} prior_matches={len(packet.prior_matches)} "
-                f"mode={packet.initiative_mode} ask_budget={packet.ask_budget}"
+                f"mode={packet.initiative_mode} ask_budget={packet.ask_budget} "
+                f"action={packet.action_contract.recommended_next_action}"
             )
             return request.override(system_message=system_message)
         except Exception as exc:
@@ -514,6 +725,48 @@ def _needs_discovery_posture(
         and isinstance(turn_index, int)
         and turn_index <= 2
     )
+
+
+def _has_recent_tool_results(messages: Sequence[object]) -> bool:
+    """Return whether the next model call follows tool-result context."""
+    for message in reversed(messages):
+        if isinstance(message, ToolMessage):
+            return True
+        if isinstance(message, HumanMessage):
+            return False
+    return False
+
+
+def _available_context_labels(
+    items: tuple[ProactiveContextItem, ...],
+    matches: tuple[ProactiveProjectMatch, ...],
+) -> tuple[str, ...]:
+    """Return human-readable context labels for the runtime contract."""
+    labels: list[str] = []
+    if any(item.source == "user_profile" for item in items):
+        labels.append("durable user profile")
+    if any(item.source == "current_workspace" for item in items):
+        labels.append("current workspace notes")
+    if matches:
+        labels.append("related prior project memory")
+    return tuple(labels)
+
+
+def _evidence_level(
+    items: tuple[ProactiveContextItem, ...],
+    matches: tuple[ProactiveProjectMatch, ...],
+    initiative_mode: str,
+) -> EvidenceLevel:
+    """Return the strongest evidence tier available to the action contract."""
+    if matches:
+        return "memory_backed"
+    if any(item.source == "current_workspace" for item in items):
+        return "workspace_backed"
+    if any(item.source == "user_profile" for item in items):
+        return "profile_backed"
+    if initiative_mode == "discover_before_asking":
+        return "inferred"
+    return "none"
 
 
 def _read_text(path: Path) -> str:

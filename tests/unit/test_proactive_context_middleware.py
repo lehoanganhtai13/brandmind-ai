@@ -7,10 +7,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
 from core.brand_strategy.session import BrandStrategySession, set_active_session
 from shared.agent_middlewares.proactive_context import (
+    ProactiveActionContract,
     ProactiveContextBuilder,
     ProactiveContextItem,
     ProactiveContextPacket,
@@ -54,9 +55,12 @@ class _FakeBuilder:
         session_id: str | None = None,
         *,
         discovery_needed: bool = False,
+        post_tool_context_seen: bool = False,
     ):
         """Return the configured packet while capturing call arguments."""
-        self.calls.append((user_text, session_id))
+        self.calls.append(
+            (user_text, session_id, discovery_needed, post_tool_context_seen)
+        )
         return self.packet
 
 
@@ -104,6 +108,8 @@ def test_builder_prioritizes_substantive_user_profile(
     assert packet.ask_budget == 2
     assert "User profile" in rendered
     assert "verify workspace evidence" in rendered
+    assert "Recommended next action: ask_one_blocker" in rendered
+    assert "Evidence level: profile_backed" in rendered
 
 
 def test_builder_adds_generic_discovery_posture_for_early_unknown_project(
@@ -122,7 +128,11 @@ def test_builder_adds_generic_discovery_posture_for_early_unknown_project(
     assert packet.has_content is True
     assert packet.ask_budget == 1
     assert packet.initiative_mode == "discover_before_asking"
+    assert packet.action_contract.recommended_next_action == "discover_then_ask"
     assert "self-discovery pass" in rendered
+    assert "## Proactive Action Contract" in rendered
+    assert "single focused blocker" in rendered
+    assert "Resolve before asking when practical" in rendered
     assert "single most decision-changing user-only blocker" in rendered
 
     lower_rendered = rendered.casefold()
@@ -231,10 +241,12 @@ def test_builder_finds_related_prior_project_by_brand_name(
 
     assert packet.ask_budget == 1
     assert packet.initiative_mode == "collect_then_answer"
+    assert packet.action_contract.recommended_next_action == "continue_from_memory"
     assert packet.prior_matches[0].brand_name == "Chuyện Ba Bữa Signature"
     assert "weekday business lunch" in rendered
     assert "needs confirmation: yes" in rendered
     assert "ask exactly one confirmation question" in rendered
+    assert "Recommended next action: continue_from_memory" in rendered
 
 
 def test_builder_skips_current_session_when_matching_prior_projects(
@@ -259,6 +271,28 @@ def test_builder_skips_current_session_when_matching_prior_projects(
     )
 
     assert packet.prior_matches == ()
+
+
+def test_builder_adds_post_tool_synthesis_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """After tool results, context should be synthesized before generic asks."""
+    monkeypatch.setattr(proactive_mod.workspace_mod, "BRANDMIND_HOME", tmp_path)
+
+    packet = ProactiveContextBuilder().build(
+        "Tôi muốn làm brand strategy cho một thương hiệu mới.",
+        discovery_needed=True,
+        post_tool_context_seen=True,
+    )
+    rendered = packet.to_prompt()
+
+    assert (
+        packet.action_contract.recommended_next_action == "synthesize_collected_context"
+    )
+    assert "Recommended next action: synthesize_collected_context" in rendered
+    assert "recent tool results" in rendered
+    assert "Use them to produce a grounded synthesis" in rendered
 
 
 def test_middleware_injects_context_and_active_session_id() -> None:
@@ -294,11 +328,34 @@ def test_middleware_injects_context_and_active_session_id() -> None:
     finally:
         set_active_session(None)
 
-    assert builder.calls == [("Làm tiếp Signature", "active-1")]
+    assert builder.calls == [("Làm tiếp Signature", "active-1", True, False)]
     assert "BASE SYSTEM" in result.system_prompt
     assert "# RUNTIME PROACTIVE CONTEXT" in result.system_prompt
     assert "Ask budget for this response: at most 1" in result.system_prompt
     assert "Chuyện Ba Bữa Signature" in result.system_prompt
+
+
+def test_middleware_marks_post_tool_context_seen() -> None:
+    """Middleware should tell the builder when a model call follows tool output."""
+    packet = ProactiveContextPacket(
+        initiative_mode="discover_before_asking",
+        ask_budget=1,
+        action_contract=ProactiveActionContract(
+            recommended_next_action="synthesize_collected_context",
+        ),
+    )
+    builder = _FakeBuilder(packet)
+    middleware = ProactiveTurnMiddleware(builder=builder)
+    request = _FakeRequest(
+        messages=[
+            HumanMessage(content="Tôi muốn làm brand strategy."),
+            ToolMessage(content="Workspace context loaded.", tool_call_id="tool-1"),
+        ]
+    )
+
+    middleware._inject_context(request)  # noqa: SLF001
+
+    assert builder.calls == [("Tôi muốn làm brand strategy.", None, True, True)]
 
 
 def test_middleware_noops_when_builder_has_no_context() -> None:
