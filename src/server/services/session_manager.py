@@ -74,7 +74,7 @@ def _delete_workspace_dir(bs_session_id: str) -> None:
 
 def _delete_session_file(bs_session_id: str) -> None:
     """Remove the persisted chat record for a deleted brand-strategy session."""
-    filepath = brand_strategy_session_store.SESSIONS_DIR / f"{bs_session_id}.json"
+    filepath = brand_strategy_session_store.get_session_file(bs_session_id)
     try:
         filepath.unlink()
     except FileNotFoundError:

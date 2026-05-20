@@ -444,7 +444,11 @@ async def test_stream_agent_response_persists_brand_strategy_turn(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A completed brand-strategy turn should survive server restart."""
-    monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+    monkeypatch.setattr(
+        brand_strategy_session_store,
+        "BRANDMIND_HOME",
+        tmp_path / "home.brandmind",
+    )
     strategy_session = BrandStrategySession(session_id="test-session")
     session = ManagedSession(
         session_id="test-session",

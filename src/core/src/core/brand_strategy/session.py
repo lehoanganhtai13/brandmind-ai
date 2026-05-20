@@ -32,7 +32,7 @@ from core.brand_strategy.orchestrator.brand_brief import (
 )
 from shared.workspace import BRANDMIND_HOME, ensure_project_workspace
 
-SESSIONS_DIR = Path("data/brand_strategy_sessions")
+SESSION_STORE_RELATIVE_PATH = Path("sessions") / "brand_strategy"
 
 # Phase sequences per scope — defines the required order of phases.
 # Used by report_progress to enforce correct progression.
@@ -599,15 +599,26 @@ class BrandStrategySession(BaseModel):
         self.brief.budget_tier = self.budget_tier or ""
 
 
+def get_sessions_dir() -> Path:
+    """Return the BrandMind-home scoped directory for chat session records."""
+    return BRANDMIND_HOME / SESSION_STORE_RELATIVE_PATH
+
+
+def get_session_file(session_id: str) -> Path:
+    """Return the persistence path for a brand strategy chat session."""
+    return get_sessions_dir() / f"{session_id}.json"
+
+
 def save_session(session: BrandStrategySession) -> Path:
     """Save session to disk.
 
     Uses LangChain's messages_to_dict for proper serialization of
     message objects (HumanMessage, AIMessage with tool_calls, ToolMessage).
     """
-    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    sessions_dir = get_sessions_dir()
+    sessions_dir.mkdir(parents=True, exist_ok=True)
     session.updated_at = datetime.now().isoformat()
-    filepath = SESSIONS_DIR / f"{session.session_id}.json"
+    filepath = get_session_file(session.session_id)
 
     data = session.model_dump()
     data["messages"] = messages_to_dict(session.messages) if session.messages else []
@@ -665,7 +676,7 @@ def load_session(
     Converts serialized message dicts back to LangChain message objects
     via messages_from_dict.
     """
-    filepath = SESSIONS_DIR / f"{session_id}.json"
+    filepath = get_session_file(session_id)
     if not filepath.exists():
         return None
     data = json.loads(filepath.read_text(encoding="utf-8"))
@@ -679,9 +690,10 @@ def load_session(
 
 def list_sessions() -> list[dict[str, Any]]:
     """List all saved sessions."""
-    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    sessions_dir = get_sessions_dir()
+    sessions_dir.mkdir(parents=True, exist_ok=True)
     sessions: list[dict[str, Any]] = []
-    for filepath in sorted(SESSIONS_DIR.glob("*.json"), reverse=True):
+    for filepath in sorted(sessions_dir.glob("*.json"), reverse=True):
         try:
             data = json.loads(filepath.read_text(encoding="utf-8"))
             sessions.append(

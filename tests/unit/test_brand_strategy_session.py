@@ -1052,7 +1052,8 @@ class TestSessionPersistence:
     def test_save_and_load(self, tmp_path, monkeypatch):
         import core.brand_strategy.session as sess_mod
 
-        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", tmp_path)
+        brandmind_home = tmp_path / "home.brandmind"
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", brandmind_home)
 
         session = BrandStrategySession(
             brand_name="Test Café",
@@ -1062,6 +1063,7 @@ class TestSessionPersistence:
         )
         filepath = save_session(session)
         assert filepath.exists()
+        assert filepath.parent == brandmind_home / "sessions" / "brand_strategy"
 
         loaded = load_session(session.session_id)
         assert loaded is not None
@@ -1074,7 +1076,7 @@ class TestSessionPersistence:
     def test_load_nonexistent_returns_none(self, tmp_path, monkeypatch):
         import core.brand_strategy.session as sess_mod
 
-        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path / "home.brandmind")
 
         result = load_session("nonexistent_id")
         assert result is None
@@ -1084,7 +1086,7 @@ class TestSessionPersistence:
 
         import core.brand_strategy.session as sess_mod
 
-        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path / "home.brandmind")
 
         session = BrandStrategySession(session_id="legacy1", brand_name="Legacy")
         data = session.model_dump()
@@ -1106,7 +1108,9 @@ class TestSessionPersistence:
                 "id": "message-2",
             },
         ]
-        (tmp_path / "legacy1.json").write_text(
+        filepath = sess_mod.get_session_file("legacy1")
+        filepath.parent.mkdir(parents=True)
+        filepath.write_text(
             json.dumps(data, ensure_ascii=False),
             encoding="utf-8",
         )
@@ -1120,18 +1124,18 @@ class TestSessionPersistence:
     def test_save_creates_directory(self, tmp_path, monkeypatch):
         import core.brand_strategy.session as sess_mod
 
-        nested = tmp_path / "nested" / "dir"
-        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", nested)
+        brandmind_home = tmp_path / "nested" / "home.brandmind"
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", brandmind_home)
 
         session = BrandStrategySession()
         filepath = save_session(session)
         assert filepath.exists()
-        assert nested.exists()
+        assert sess_mod.get_sessions_dir().exists()
 
     def test_list_sessions(self, tmp_path, monkeypatch):
         import core.brand_strategy.session as sess_mod
 
-        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path / "home.brandmind")
 
         # Save 3 sessions
         for name in ["Brand A", "Brand B", "Brand C"]:
@@ -1146,7 +1150,7 @@ class TestSessionPersistence:
     def test_list_sessions_empty_dir(self, tmp_path, monkeypatch):
         import core.brand_strategy.session as sess_mod
 
-        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path / "home.brandmind")
 
         sessions = list_sessions()
         assert sessions == []
@@ -1154,7 +1158,7 @@ class TestSessionPersistence:
     def test_save_updates_timestamp(self, tmp_path, monkeypatch):
         import core.brand_strategy.session as sess_mod
 
-        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path / "home.brandmind")
 
         session = BrandStrategySession()
         assert session.updated_at == ""
@@ -1164,7 +1168,7 @@ class TestSessionPersistence:
     def test_roundtrip_with_brief_data(self, tmp_path, monkeypatch):
         import core.brand_strategy.session as sess_mod
 
-        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", tmp_path / "home.brandmind")
 
         session = BrandStrategySession(brand_name="X")
         session.save_phase_output("phase_0", {"test_key": "test_value"})
@@ -1173,3 +1177,18 @@ class TestSessionPersistence:
         loaded = load_session(session.session_id)
         assert loaded is not None
         assert loaded.brief.phase_0_output["test_key"] == "test_value"
+
+    def test_reset_home_boundary_clears_saved_sessions(self, tmp_path, monkeypatch):
+        import shutil
+
+        import core.brand_strategy.session as sess_mod
+
+        brandmind_home = tmp_path / "home.brandmind"
+        monkeypatch.setattr(sess_mod, "BRANDMIND_HOME", brandmind_home)
+
+        save_session(BrandStrategySession(brand_name="Reset Me"))
+        assert list_sessions()
+
+        shutil.rmtree(brandmind_home)
+
+        assert list_sessions() == []

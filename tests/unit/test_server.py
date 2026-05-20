@@ -221,7 +221,11 @@ class TestSessionManager:
         monkeypatch,
     ):
         """Server start should restore saved brand-strategy chats into the sidebar."""
-        monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(
+            brand_strategy_session_store,
+            "BRANDMIND_HOME",
+            tmp_path / "home.brandmind",
+        )
         saved = BrandStrategySession(
             session_id="persist1",
             brand_name="Chuyện Ba Bữa Signature",
@@ -256,7 +260,11 @@ class TestSessionManager:
         monkeypatch,
     ):
         """Direct session URLs should recover even before list hydration runs."""
-        monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(
+            brand_strategy_session_store,
+            "BRANDMIND_HOME",
+            tmp_path / "home.brandmind",
+        )
         saved = BrandStrategySession(session_id="lazy1234", brand_name="Lazy Cafe")
         saved.messages = [HumanMessage(content="Xin chào")]
         brand_strategy_session_store.save_session(saved)
@@ -284,16 +292,22 @@ class TestSessionManager:
         monkeypatch,
     ):
         """Deleted chats should not reappear after the next server start."""
-        monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(
+            brand_strategy_session_store,
+            "BRANDMIND_HOME",
+            tmp_path / "home.brandmind",
+        )
         info = await manager.create_session(SessionMode.BRAND_STRATEGY)
         session = await manager.get_session(info.session_id)
         session.messages.append(HumanMessage(content="keep until delete"))
         manager.persist_session(session)
-        assert (tmp_path / f"{info.session_id}.json").exists()
+        assert brand_strategy_session_store.get_session_file(info.session_id).exists()
 
         await manager.delete_session(info.session_id, delete_workspace=False)
 
-        assert not (tmp_path / f"{info.session_id}.json").exists()
+        assert not brand_strategy_session_store.get_session_file(
+            info.session_id,
+        ).exists()
 
     @pytest.mark.asyncio
     async def test_brand_strategy_lock_exists(self, manager):
@@ -504,7 +518,11 @@ class TestAPIRoutes:
 
     @pytest.fixture
     def client(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+        monkeypatch.setattr(
+            brand_strategy_session_store,
+            "BRANDMIND_HOME",
+            tmp_path / "home.brandmind",
+        )
         app = create_app()
         with TestClient(app) as c:
             yield c
