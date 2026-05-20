@@ -126,6 +126,10 @@ brandmind-reset-home: ## Reset BrandMind runtime data while preserving browser_d
 		"$$user_home/.brandmind"|*.brandmind|*.brandmind_home) ;; \
 		*) echo "Refusing to reset path that does not look like a BrandMind home: $$home"; exit 1 ;; \
 	esac; \
+	if pgrep -f "[b]randmind serve" >/dev/null; then \
+		echo "Refusing to reset while 'brandmind serve' is running. Stop the server first so it cannot persist stale in-memory sessions after reset."; \
+		exit 1; \
+	fi; \
 	if [ "$(INCLUDE_BROWSER_DATA)" = "true" ]; then \
 		echo "Resetting BrandMind runtime data in $$home, including browser_data"; \
 		rm -rf "$$home"; \

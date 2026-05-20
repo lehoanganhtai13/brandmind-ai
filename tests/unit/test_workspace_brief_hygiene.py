@@ -17,31 +17,39 @@ _PHASE_5_OLD = "## Phase 5: Strategy Plan & Deliverables (COMPLETED)\nOld.\n\n"
 _PHASE_5_NEW = "## Phase 5: Strategy Plan & Deliverables (COMPLETED)\nNew.\n\n"
 
 
-def _edit_request(old_string: str, new_string: str) -> ToolCallRequest:
+def _edit_request(
+    old_string: str,
+    new_string: str,
+    messages: list[object] | None = None,
+    file_path: str = "/workspace/brand_brief.md",
+) -> ToolCallRequest:
     return ToolCallRequest(
         tool_call={
             "name": "edit_file",
             "args": {
-                "file_path": "/workspace/brand_brief.md",
+                "file_path": file_path,
                 "old_string": old_string,
                 "new_string": new_string,
             },
             "id": "call_1",
         },
         tool=None,
-        state={},
+        state={"messages": messages or []},
         runtime=None,  # type: ignore[arg-type]
     )
 
 
-def _profile_edit_request(user_texts: list[str]) -> ToolCallRequest:
+def _profile_edit_request(
+    user_texts: list[str],
+    new_string: str = "## Identity\n- Role: [Chủ doanh nghiệp F&B]",
+) -> ToolCallRequest:
     return ToolCallRequest(
         tool_call={
             "name": "edit_file",
             "args": {
                 "file_path": "/user/profile.md",
                 "old_string": "## Identity\n- Role: [To be discovered]",
-                "new_string": "## Identity\n- Role: [Chủ doanh nghiệp F&B]",
+                "new_string": new_string,
             },
             "id": "call_profile",
         },
@@ -68,6 +76,470 @@ def test_blocks_edit_that_removes_existing_phase_heading() -> None:
     assert handler_called is False
     assert "preserve existing phase heading" in str(result.content)
     assert "`## Phase 1`" in str(result.content)
+
+
+def test_blocks_unverified_hypothesis_in_objective_findings() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "### O — What we found\n_Research data._"
+    new_string = (
+        "### O — What we found\n"
+        "- Hậu tố Signature thường ám chỉ một phiên bản cao cấp hơn.\n\n"
+        "### A — What we concluded\n"
+        "- Cần xác nhận đây là brand mới hay tái định vị."
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(_edit_request(old_string, new_string), handler)
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "`O — What we found`" in str(result.content)
+    assert "hypotheses" in str(result.content)
+    assert "market-research" in str(result.content)
+
+
+def test_blocks_unsourced_external_findings_in_objective_section() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "### O — What we found\n_Research data._"
+    new_string = (
+        "### O — What we found\n"
+        "- Brand has two branches in District 1.\n\n"
+        "### A — What we concluded\n"
+        "- Repositioning may be the right path."
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(_edit_request(old_string, new_string), handler)
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "current public market facts" in str(result.content)
+
+
+def test_allows_sourced_objective_findings() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "### O — What we found\n_Research data._"
+    new_string = (
+        "### O — What we found\n"
+        '- [O1] Source: market-research returned "official listing for the brand".\n\n'
+        "### A — What we concluded\n"
+        "- Use this verified fact to frame the next question."
+    )
+    messages = [
+        ToolMessage(
+            "The research pass found an official listing for the brand.",
+            tool_call_id="research_1",
+        )
+    ]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(old_string, new_string, messages),
+        handler,
+    )
+
+    assert handler_called is True
+    assert isinstance(result, ToolMessage)
+    assert result.content == "ran"
+
+
+def test_blocks_fabricated_source_marker_in_objective_section() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "### O — What we found\n_Research data._"
+    new_string = (
+        "### O — What we found\n"
+        "- Source: market-research task found a premium branch.\n\n"
+        "### A — What we concluded\n"
+        "- Treat this as repositioning."
+    )
+    messages = [
+        ToolMessage("KG result: Signature is a naming cue.", tool_call_id="kg_1")
+    ]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(old_string, new_string, messages),
+        handler,
+    )
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "Do not fabricate source labels" in str(result.content)
+
+
+def test_allows_objective_section_that_records_no_verified_evidence_yet() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "### O — What we found\n_Research data._"
+    new_string = (
+        "### O — What we found\n"
+        "- No external evidence verified yet.\n\n"
+        "### A — What we concluded\n"
+        "- Keep the opening interpretation tentative."
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(_edit_request(old_string, new_string), handler)
+
+    assert handler_called is True
+    assert isinstance(result, ToolMessage)
+    assert result.content == "ran"
+
+
+def test_blocks_memory_candidate_without_exact_evidence_quote() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "## Memory Candidates\n- Candidate:\n- Evidence quote:\n"
+    new_string = (
+        "## Memory Candidates\n"
+        "- Candidate: Brand operates in HCMC with a premium fusion concept.\n"
+        "- Type: project_context\n"
+        "- Evidence quote: mentioned by user + research.\n"
+        "- Confidence: high\n"
+        "- Stability: durable\n"
+        "- Promotion decision: promote to brand_brief.\n"
+    )
+    messages = [HumanMessage(content="Chuyện Ba Bữa Signature")]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(
+            old_string,
+            new_string,
+            messages,
+            file_path="/workspace/working_notes.md",
+        ),
+        handler,
+    )
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "without source evidence" in str(result.content)
+
+
+def test_allows_memory_candidate_with_exact_evidence_quote() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "## Memory Candidates\n- Candidate:\n- Evidence quote:\n"
+    new_string = (
+        "## Memory Candidates\n"
+        "- Candidate: User asked for Chuyện Ba Bữa Signature strategy.\n"
+        "- Type: project_context\n"
+        '- Evidence quote: User said "Chuyện Ba Bữa Signature".\n'
+        "- Confidence: medium\n"
+        "- Stability: project_scoped\n"
+        "- Promotion decision: keep here.\n"
+    )
+    messages = [HumanMessage(content="Chuyện Ba Bữa Signature")]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(
+            old_string,
+            new_string,
+            messages,
+            file_path="/workspace/working_notes.md",
+        ),
+        handler,
+    )
+
+    assert handler_called is True
+    assert isinstance(result, ToolMessage)
+    assert result.content == "ran"
+
+
+def test_blocks_project_scoped_profile_fact_even_with_exact_quote() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    new_string = (
+        "## Constraints\n"
+        "- Current project budget: 30-40 triệu for Chuyện Ba Bữa Signature.\n"
+        '- Evidence quote: User said "ngân sách có khoảng 30-40 triệu thôi á".\n'
+    )
+    messages = [
+        HumanMessage(
+            content=(
+                "Tôi muốn làm brand strategy cho Chuyện Ba Bữa Signature; "
+                "ngân sách có khoảng 30-40 triệu thôi á"
+            )
+        )
+    ]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _profile_edit_request([messages[0].content], new_string),
+        handler,
+    )
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "project-scoped details" in str(result.content)
+    assert "`/workspace/working_notes.md`" in str(result.content)
+
+
+def test_allows_abstracted_durable_profile_fact_with_project_quote() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    new_string = (
+        "## Identity\n"
+        "- Role: Marketing Executive.\n"
+        '- Evidence quote: User said "tôi là marketing executive của nhà hàng đó á".\n'
+    )
+    messages = [HumanMessage(content="tôi là marketing executive của nhà hàng đó á")]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _profile_edit_request([messages[0].content], new_string),
+        handler,
+    )
+
+    assert handler_called is True
+    assert isinstance(result, ToolMessage)
+    assert result.content == "ran"
+
+
+def test_blocks_user_interaction_pattern_without_source_quote() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = (
+        "## User Interaction Patterns\n"
+        "_Observations about how this user works._\n"
+        "- Learning speed: [Fast/Medium/Slow at grasping concepts]\n"
+    )
+    new_string = (
+        "## User Interaction Patterns\n"
+        "- User quan tâm đến phân khúc Premium/Signature.\n"
+        "- Thích cách tiếp cận trực diện.\n"
+    )
+    messages = [
+        HumanMessage(
+            content="Tôi muốn làm brand strategy cho nhà hàng Chuyện Ba Bữa Signature á"
+        )
+    ]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(
+            old_string,
+            new_string,
+            messages,
+            file_path="/workspace/working_notes.md",
+        ),
+        handler,
+    )
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "inferred user interaction patterns" in str(result.content)
+    assert "Memory Candidates" in str(result.content)
+
+
+def test_allows_user_interaction_pattern_with_exact_source_quote() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "## User Interaction Patterns\n_Observations._"
+    new_string = (
+        "## User Interaction Patterns\n"
+        "- Candidate: User asked for Chuyện Ba Bữa Signature strategy.\n"
+        '- Evidence quote: User said "Chuyện Ba Bữa Signature".\n'
+    )
+    messages = [HumanMessage(content="Chuyện Ba Bữa Signature")]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(
+            old_string,
+            new_string,
+            messages,
+            file_path="/workspace/working_notes.md",
+        ),
+        handler,
+    )
+
+    assert handler_called is True
+    assert isinstance(result, ToolMessage)
+    assert result.content == "ran"
+
+
+def test_blocks_unsourced_public_market_facts_in_working_notes() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "## Inbox\n_Empty._"
+    new_string = (
+        "## Inbox\n"
+        "- [Market Fact] Existing location in District 1, HCMC.\n"
+        "- [Market Fact] TripAdvisor rating is 5.0.\n"
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(
+            old_string,
+            new_string,
+            file_path="/workspace/working_notes.md",
+        ),
+        handler,
+    )
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "current public market facts" in str(result.content)
+    assert "market-research" in str(result.content)
+
+
+def test_blocks_unsourced_public_listing_observations_in_working_notes() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "## Inbox\n_Empty._"
+    new_string = (
+        "## Inbox & Observations\n"
+        '- Brand "Chuyện Ba Bữa" exists as a modern Saigonese concept.\n'
+        '- "Chuyện Ba Bữa Signature" appears as a premium extension in '
+        "public listings.\n"
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(
+            old_string,
+            new_string,
+            file_path="/workspace/working_notes.md",
+        ),
+        handler,
+    )
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "current public market facts" in str(result.content)
+
+
+def test_allows_public_market_facts_with_exact_tool_quote() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "## Inbox\n_Empty._"
+    new_string = (
+        "## Inbox\n"
+        '- Source: market-research returned "TripAdvisor rating is 5.0".\n'
+    )
+    messages = [
+        ToolMessage(
+            "The market-research pass found: TripAdvisor rating is 5.0.",
+            tool_call_id="research_1",
+        )
+    ]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(
+            old_string,
+            new_string,
+            messages,
+            file_path="/workspace/working_notes.md",
+        ),
+        handler,
+    )
+
+    assert handler_called is True
+    assert isinstance(result, ToolMessage)
+    assert result.content == "ran"
+
+
+def test_blocks_public_market_fact_with_unrelated_evidence_quote() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    old_string = "## Inbox\n_Empty._"
+    new_string = (
+        "## Inbox\n"
+        '- Initial research suggests "Chuyện Ba Bữa Signature" operates in '
+        "Ho Chi Minh City with a fusion concept.\n\n"
+        "## Memory Candidates\n"
+        "- Candidate: User asked for Chuyện Ba Bữa Signature strategy.\n"
+        "- Type: project_context\n"
+        '- Evidence quote: User said "Chuyện Ba Bữa Signature".\n'
+        "- Confidence: medium\n"
+        "- Stability: project_scoped\n"
+        "- Promotion decision: keep here.\n"
+    )
+    messages = [HumanMessage(content="Chuyện Ba Bữa Signature")]
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(
+        _edit_request(
+            old_string,
+            new_string,
+            messages,
+            file_path="/workspace/working_notes.md",
+        ),
+        handler,
+    )
+
+    assert isinstance(result, ToolMessage)
+    assert handler_called is False
+    assert "current public market facts" in str(result.content)
 
 
 def test_normalizes_duplicate_phases_after_allowed_edit(tmp_path, monkeypatch) -> None:
@@ -331,13 +803,13 @@ def test_blocks_sparse_first_turn_profile_inference() -> None:
 
     assert isinstance(result, ToolMessage)
     assert handler_called is False
-    assert "Cannot edit `/user/profile.md` from a sparse first turn" in str(
+    assert "Cannot edit `/user/profile.md` without source evidence" in str(
         result.content
     )
-    assert "tentative observations" in str(result.content)
+    assert "memory candidate" in str(result.content)
 
 
-def test_allows_explicit_first_turn_profile_fact() -> None:
+def test_blocks_keyword_profile_update_without_source_quote() -> None:
     middleware = WorkspaceBriefHygieneMiddleware()
     request = _profile_edit_request(
         ["Tôi là founder, ngân sách dự kiến khoảng 80 triệu cho launch."]
@@ -351,18 +823,23 @@ def test_allows_explicit_first_turn_profile_fact() -> None:
 
     result = middleware.wrap_tool_call(request, handler)
 
-    assert handler_called is True
+    assert handler_called is False
     assert isinstance(result, ToolMessage)
-    assert result.content == "ran"
+    assert "without source evidence" in str(result.content)
 
 
-def test_allows_profile_update_after_multiple_user_turns() -> None:
+def test_blocks_project_budget_profile_update_even_with_exact_source_quote() -> None:
     middleware = WorkspaceBriefHygieneMiddleware()
     request = _profile_edit_request(
-        [
-            "Tôi muốn làm brand strategy cho một nhà hàng.",
-            "Tôi là founder, đang cần bản trình sếp tuần này.",
-        ]
+        ["Tôi là founder, ngân sách dự kiến khoảng 80 triệu cho launch."],
+        new_string=(
+            "## Identity\n"
+            "- Role: Founder\n"
+            '- Source: User said "Tôi là founder".\n'
+            "## Constraints\n"
+            "- Budget: khoảng 80 triệu cho launch\n"
+            '- Evidence: User said "ngân sách dự kiến khoảng 80 triệu".'
+        ),
     )
     handler_called = False
 
@@ -373,6 +850,36 @@ def test_allows_profile_update_after_multiple_user_turns() -> None:
 
     result = middleware.wrap_tool_call(request, handler)
 
-    assert handler_called is True
+    assert handler_called is False
     assert isinstance(result, ToolMessage)
-    assert result.content == "ran"
+    assert "project-scoped details" in str(result.content)
+
+
+def test_blocks_ephemeral_project_context_after_multiple_user_turns() -> None:
+    middleware = WorkspaceBriefHygieneMiddleware()
+    request = _profile_edit_request(
+        [
+            "Tôi muốn làm brand strategy cho một nhà hàng.",
+            "Tôi là founder, đang cần bản trình sếp tuần này.",
+        ],
+        new_string=(
+            "## Identity\n"
+            "- Role: Founder\n"
+            '- Evidence: User said "Tôi là founder".\n'
+            "## Working Context\n"
+            "- Needs a boss-facing deck this week\n"
+            '- Evidence: User said "đang cần bản trình sếp tuần này".'
+        ),
+    )
+    handler_called = False
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        nonlocal handler_called
+        handler_called = True
+        return ToolMessage("ran", tool_call_id=request.tool_call["id"])
+
+    result = middleware.wrap_tool_call(request, handler)
+
+    assert handler_called is False
+    assert isinstance(result, ToolMessage)
+    assert "project-scoped details" in str(result.content)

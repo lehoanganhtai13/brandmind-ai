@@ -105,11 +105,12 @@ def test_builder_prioritizes_substantive_user_profile(
     )
     rendered = packet.to_prompt()
 
-    assert packet.ask_budget == 2
     assert "User profile" in rendered
     assert "verify workspace evidence" in rendered
-    assert "Recommended next action: ask_one_blocker" in rendered
+    assert "Recommended next action: ask_needed_blockers" in rendered
     assert "Evidence level: profile_backed" in rendered
+    assert "Question policy: ask only the minimum set of user-only blockers" in rendered
+    assert "`write_file` is not available" in rendered
 
 
 def test_builder_adds_generic_discovery_posture_for_early_unknown_project(
@@ -126,14 +127,29 @@ def test_builder_adds_generic_discovery_posture_for_early_unknown_project(
     rendered = packet.to_prompt()
 
     assert packet.has_content is True
-    assert packet.ask_budget == 1
     assert packet.initiative_mode == "discover_before_asking"
     assert packet.action_contract.recommended_next_action == "discover_then_ask"
-    assert "self-discovery pass" in rendered
+    assert "context-acquisition pass" in rendered
     assert "## Proactive Action Contract" in rendered
-    assert "single focused blocker" in rendered
+    assert "Ask budget" not in rendered
+    assert "fixed one-question cap" in rendered
+    assert "Branching rule" in rendered
+    assert "Phase 0 branch rule" in rendered
+    assert "Evidence grounding policy" in rendered
+    assert "External entity policy" in rendered
+    assert "Public-brand verification policy" in rendered
+    assert "Workspace evidence policy" in rendered
+    assert "Metadata policy" in rendered
+    assert "Scope metadata policy" in rendered
+    assert "Deferral policy" in rendered
     assert "Resolve before asking when practical" in rendered
-    assert "single most decision-changing user-only blocker" in rendered
+    assert "specific brand or project" in rendered
+    assert "market-research" in rendered
+    assert "Unverified hypotheses" in rendered
+    assert "Decision-relevant external unknowns" in rendered
+    assert "scope branch" in rendered
+    assert "target guest, differentiators, budget" in rendered
+    assert "ask only the user-owned blocker(s) needed now" in rendered
 
     lower_rendered = rendered.casefold()
     for forbidden in ("cafe", "restaurant", "signature", "mây rêu", "nếp nhà"):
@@ -203,6 +219,38 @@ def test_builder_ignores_current_workspace_starter_templates(
     assert packet.has_content is False
 
 
+def test_builder_reads_workspace_memory_candidates(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Tentative personalization notes should be available without profile writes."""
+    monkeypatch.setattr(proactive_mod.workspace_mod, "BRANDMIND_HOME", tmp_path)
+    _write_workspace(
+        tmp_path,
+        "current-session",
+        proactive_mod.workspace_mod.BRAND_BRIEF_TEMPLATE,
+        notes=(
+            "# Working Notes\n\n"
+            "## Memory Candidates\n"
+            "- Candidate: User strongly dislikes brittle rule-based overfit.\n"
+            '- Evidence quote: "rule-base sẽ chỉ cover được 1 số rất ít"\n'
+            "- Confidence: high\n"
+            "- Stability: durable\n\n"
+            "## Pending Questions\n"
+            "Confirm whether to promote this candidate to profile.\n"
+        ),
+    )
+
+    packet = ProactiveContextBuilder().build(
+        "Tiếp tục tối ưu BrandMind.",
+        session_id="current-session",
+    )
+    rendered = packet.to_prompt()
+
+    assert "Memory Candidates" in rendered
+    assert "brittle rule-based overfit" in rendered
+
+
 def test_builder_finds_related_prior_project_by_brand_name(
     tmp_path: Path,
     monkeypatch,
@@ -239,13 +287,12 @@ def test_builder_finds_related_prior_project_by_brand_name(
     )
     rendered = packet.to_prompt()
 
-    assert packet.ask_budget == 1
     assert packet.initiative_mode == "collect_then_answer"
     assert packet.action_contract.recommended_next_action == "continue_from_memory"
     assert packet.prior_matches[0].brand_name == "Chuyện Ba Bữa Signature"
     assert "weekday business lunch" in rendered
     assert "needs confirmation: yes" in rendered
-    assert "ask exactly one confirmation question" in rendered
+    assert "ask a compact continuity confirmation" in rendered
     assert "Recommended next action: continue_from_memory" in rendered
 
 
@@ -292,14 +339,22 @@ def test_builder_adds_post_tool_synthesis_contract(
     )
     assert "Recommended next action: synthesize_collected_context" in rendered
     assert "recent tool results" in rendered
-    assert "Use them to produce a grounded synthesis" in rendered
+    assert "ask the scope branch first" in rendered
+    assert "scope branch: new brand, extension, refresh, or repositioning" in rendered
+    assert "audience, budget, differentiation" in rendered
+    assert (
+        "recent tool results only for the facts those tools actually returned"
+        in rendered
+    )
+    assert "name-based brand relationship" in rendered
+    assert "dispatch one bounded `market-research` pass" in rendered
+    assert "if the pass cannot verify the fact" in rendered
 
 
 def test_middleware_injects_context_and_active_session_id() -> None:
     """Middleware should append context using the current session id."""
     packet = ProactiveContextPacket(
         initiative_mode="collect_then_answer",
-        ask_budget=1,
         items=(
             ProactiveContextItem(
                 source="user_profile",
@@ -331,7 +386,7 @@ def test_middleware_injects_context_and_active_session_id() -> None:
     assert builder.calls == [("Làm tiếp Signature", "active-1", True, False)]
     assert "BASE SYSTEM" in result.system_prompt
     assert "# RUNTIME PROACTIVE CONTEXT" in result.system_prompt
-    assert "Ask budget for this response: at most 1" in result.system_prompt
+    assert "Context acquisition policy" in result.system_prompt
     assert "Chuyện Ba Bữa Signature" in result.system_prompt
 
 
@@ -339,7 +394,6 @@ def test_middleware_marks_post_tool_context_seen() -> None:
     """Middleware should tell the builder when a model call follows tool output."""
     packet = ProactiveContextPacket(
         initiative_mode="discover_before_asking",
-        ask_budget=1,
         action_contract=ProactiveActionContract(
             recommended_next_action="synthesize_collected_context",
         ),
@@ -363,7 +417,6 @@ def test_middleware_noops_when_builder_has_no_context() -> None:
     builder = _FakeBuilder(
         ProactiveContextPacket(
             initiative_mode="normal_diagnosis",
-            ask_budget=3,
         )
     )
     middleware = ProactiveTurnMiddleware(builder=builder)

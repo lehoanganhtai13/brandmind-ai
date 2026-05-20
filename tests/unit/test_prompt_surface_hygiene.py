@@ -160,6 +160,11 @@ def test_main_prompt_has_chat_process_quality_guardrails() -> None:
         "Evidence humility",
         "what the user supplied, what a tool/source verified",
         "Do not invent credentials",
+        "Public fact verification",
+        "Keep the source ledger internally",
+        "normal chat does not need visible source labels",
+        "quick public check was inconclusive",
+        "Do not use vague unsourced discovery phrases in any language",
         "Adaptive personalization",
         "interaction patterns across turns",
         "stakeholder-defense logic",
@@ -388,6 +393,12 @@ def test_market_research_prompt_has_assignment_budget() -> None:
         "no more than 3 `search_web` queries",
         "at most 5 queries per call",
         "Browser/live social verification is outside your normal tool surface",
+        "Source-grounding contract for public facts",
+        "must carry the exact source platform/title/URL",
+        "return a compact source ledger",
+        "Put unsourced items in an `Inconclusive` row",
+        "Facts without a source must remain `INCONCLUSIVE`",
+        "INCONCLUSIVE",
     )
     for phrase in expected_phrases:
         assert phrase in MARKET_RESEARCH_SYSTEM_PROMPT

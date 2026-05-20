@@ -70,6 +70,10 @@ class Settings:
         self.BRANDMIND_DEBUG_TOOLS = (
             os.getenv("BRANDMIND_DEBUG_TOOLS", "false").strip().lower() == "true"
         )
+        self.BRANDMIND_MAIN_AGENT_MODEL = os.getenv(
+            "BRANDMIND_MAIN_AGENT_MODEL",
+            "",
+        ).strip()
         # Default off so eval pipelines reading workspace dirs are not
         # surprised by disappearing files; web UI installs opt in.
         self.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE = (

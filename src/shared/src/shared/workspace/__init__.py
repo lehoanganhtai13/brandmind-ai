@@ -107,6 +107,16 @@ _Observations about how this user works. Update at each phase transition._
 - Knowledge gaps: [What topics need more explanation]
 - Strengths: [What user already understands well]
 
+## Memory Candidates
+_Tentative personalization observations._
+_Promote to /user/profile.md only with source evidence._
+- Candidate:
+- Type: [preference / working_style / constraint / project_context / inferred_pattern]
+- Evidence quote:
+- Confidence: [low / medium / high]
+- Stability: [temporary / project_scoped / durable]
+- Promotion decision: [keep here / ask confirmation / promote / reject]
+
 ## Pending Questions
 _Questions posed to user awaiting response. Decisions needing user input._
 

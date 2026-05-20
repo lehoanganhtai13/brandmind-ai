@@ -45,7 +45,7 @@ RecommendedAction = Literal[
     "continue_from_memory",
     "synthesize_collected_context",
     "discover_then_ask",
-    "ask_one_blocker",
+    "ask_needed_blockers",
     "normal_diagnosis",
 ]
 
@@ -88,10 +88,15 @@ class ProactiveActionContract:
     """Stateful next-action guidance for the mentor's imminent response."""
 
     available_context: tuple[str, ...] = field(default_factory=tuple)
+    source_backed_context: tuple[str, ...] = field(default_factory=tuple)
     working_hypothesis: str = ""
     evidence_level: EvidenceLevel = "none"
     collectable_unknowns: tuple[str, ...] = field(default_factory=tuple)
     user_only_unknowns: tuple[str, ...] = field(default_factory=tuple)
+    deferrable_unknowns: tuple[str, ...] = field(default_factory=tuple)
+    unverified_hypotheses: tuple[str, ...] = field(default_factory=tuple)
+    decision_relevant_external_unknowns: tuple[str, ...] = field(default_factory=tuple)
+    verification_routes: tuple[str, ...] = field(default_factory=tuple)
     recommended_next_action: RecommendedAction = "normal_diagnosis"
 
     @property
@@ -99,9 +104,14 @@ class ProactiveActionContract:
         """Return whether this contract has useful decision guidance."""
         return bool(
             self.available_context
+            or self.source_backed_context
             or self.working_hypothesis
             or self.collectable_unknowns
             or self.user_only_unknowns
+            or self.deferrable_unknowns
+            or self.unverified_hypotheses
+            or self.decision_relevant_external_unknowns
+            or self.verification_routes
             or self.recommended_next_action != "normal_diagnosis"
         )
 
@@ -116,7 +126,6 @@ class ProactiveContextPacket:
         "discover_before_asking",
         "normal_diagnosis",
     ]
-    ask_budget: int
     items: tuple[ProactiveContextItem, ...] = field(default_factory=tuple)
     prior_matches: tuple[ProactiveProjectMatch, ...] = field(default_factory=tuple)
     action_contract: ProactiveActionContract = field(
@@ -150,13 +159,73 @@ class ProactiveContextPacket:
             "## Decision Policy",
             f"- Initiative mode: {self.initiative_mode}.",
             (
-                f"- Ask budget for this response: at most "
-                f"{self.ask_budget} user question(s)."
+                "- Context acquisition policy: before asking the user, separate "
+                "what is already known, what can be collected or verified with "
+                "available context/tools, what only the user can answer, and "
+                "what can safely wait."
             ),
             (
-                "- Ask only for user-only information that remains unresolved "
-                "after this packet. Do not ask generic intake questions "
-                "already answered here."
+                "- Evidence grounding policy: classify every decision-relevant "
+                "claim before using it as strategy context: user-supplied fact, "
+                "workspace/prior memory, KG/document-verified theory, "
+                "specialist-verified market fact, or hypothesis."
+            ),
+            (
+                "- External entity policy: named public brands, competitors, "
+                "locations, branches, openings, pricing, reviews, and market "
+                "relationships are external facts. If one changes the strategic "
+                "route, verify it through a bounded specialist pass or clearly "
+                "label it as an unverified hypothesis and ask for confirmation."
+            ),
+            (
+                "- Public-brand verification policy: when the opening names a "
+                "specific public-facing brand or venue and no prior workspace "
+                "source verifies the relationship, prefer one bounded "
+                "`market-research` pass for the route-changing fact before "
+                "asking the user. Keep the brief narrow: existence, current "
+                "branch/parent relationship, location/category, and stop after "
+                "2-3 sources or no clear source. If the specialist cannot "
+                "verify it, say the point remains unverified and ask the user "
+                "to confirm."
+            ),
+            (
+                "- Question policy: ask only the minimum set of user-only "
+                "blockers needed to avoid choosing the wrong path. This is not "
+                "a fixed one-question cap; ask one blocker when one is enough, "
+                "and ask multiple only when they are truly needed now."
+            ),
+            (
+                "- Branching rule: when one answer determines which later "
+                "questions are relevant, ask that branching question first and "
+                "defer the downstream intake items."
+            ),
+            (
+                "- Phase 0 branch rule: if project scope is still ambiguous, "
+                "treat scope classification as the first branch. Do not bundle "
+                "audience, budget, differentiation, or operating-stage intake "
+                "with that branch unless the user asked for a fast intake."
+            ),
+            (
+                "- Metadata policy: if the user clearly names a brand or "
+                "project, call `report_progress(brand_name=...)` to anchor "
+                "workspace metadata. Do not infer scope or advance phase until "
+                "the user confirms the branch."
+            ),
+            (
+                "- Scope metadata policy: once the user answers the scope "
+                "branch, call `report_progress(scope=...)` before continuing. "
+                "This records the route; it is not a phase advance."
+            ),
+            (
+                "- Deferral policy: after asking the branch question, do not "
+                "append optional extra intake requests. Keep those items in "
+                "deferrable context or workspace notes for later turns."
+            ),
+            (
+                "- Workspace evidence policy: put first-party user facts in "
+                "`S`, verified source/tool findings in `O`, and assumptions or "
+                "name-based interpretations in `A` or `Ideas & Hypotheses`. "
+                "Do not write hypotheses into `O — What we found`."
             ),
             (
                 "- Treat prior-project context as reusable memory, not as fresh "
@@ -165,22 +234,24 @@ class ProactiveContextPacket:
                 "the phase."
             ),
             (
-                "- Keep inferred user facts out of the durable user profile. "
-                "If a fact comes only from this turn, store it as tentative "
-                "working context until the user confirms it as stable."
+                "- Personalization memory: proactively notice user preferences, "
+                "working style, constraints, and repeated patterns. Save durable "
+                "profile memory only with source evidence; route tentative, "
+                "project-scoped, or inferred observations to working notes as "
+                "memory candidates."
+            ),
+            (
+                "- Workspace mutation policy: use `read_file` before changing "
+                "workspace files and update existing files with `edit_file`. "
+                "`write_file` is not available in BrandMind strategy sessions. "
+                "Edit the smallest exact section you just read; do not build "
+                "an `old_string` that skips intervening headings."
             ),
             (
                 "- Keep the opening turn as one mentoring moment: working "
                 "understanding plus the next useful question."
             ),
         ]
-        if self.ask_budget <= 1:
-            lines.append(
-                "- Because the next user reply should unblock one decision, "
-                "make the question a single focused blocker. Hold conditional "
-                "follow-up questions for later turns instead of stacking them "
-                "into the same response."
-            )
 
         if self.action_contract.has_content:
             lines.extend(
@@ -199,6 +270,14 @@ class ProactiveContextPacket:
                     [
                         "- Available context to use now: "
                         + "; ".join(self.action_contract.available_context)
+                        + ".",
+                    ]
+                )
+            if self.action_contract.source_backed_context:
+                lines.extend(
+                    [
+                        "- Source-backed context: "
+                        + "; ".join(self.action_contract.source_backed_context)
                         + ".",
                     ]
                 )
@@ -225,6 +304,40 @@ class ProactiveContextPacket:
                         + ".",
                     ]
                 )
+            if self.action_contract.deferrable_unknowns:
+                lines.extend(
+                    [
+                        "- Deferrable context: "
+                        + "; ".join(self.action_contract.deferrable_unknowns)
+                        + ".",
+                    ]
+                )
+            if self.action_contract.unverified_hypotheses:
+                lines.extend(
+                    [
+                        "- Unverified hypotheses: "
+                        + "; ".join(self.action_contract.unverified_hypotheses)
+                        + ".",
+                    ]
+                )
+            if self.action_contract.decision_relevant_external_unknowns:
+                lines.extend(
+                    [
+                        "- Decision-relevant external unknowns: "
+                        + "; ".join(
+                            self.action_contract.decision_relevant_external_unknowns
+                        )
+                        + ".",
+                    ]
+                )
+            if self.action_contract.verification_routes:
+                lines.extend(
+                    [
+                        "- Verification routes: "
+                        + "; ".join(self.action_contract.verification_routes)
+                        + ".",
+                    ]
+                )
 
         if self.prior_matches:
             lines.extend(
@@ -232,9 +345,9 @@ class ProactiveContextPacket:
                     (
                         "- Related prior projects were found. Start from that "
                         "memory: acknowledge the known direction, state the "
-                        "most useful 1-2 facts, and ask exactly one "
-                        "confirmation question about whether to continue, "
-                        "refine, or restart from that prior work."
+                        "most useful 1-2 facts, and ask a compact continuity "
+                        "confirmation before treating the old direction as "
+                        "current."
                     ),
                     (
                         "- Defer standard intake items such as status, budget, "
@@ -249,12 +362,21 @@ class ProactiveContextPacket:
                 [
                     (
                         "- This is an early diagnosis turn without a related "
-                        "prior project. Do a self-discovery pass before "
+                        "prior project. Run a context-acquisition pass before "
                         "asking: inventory the user's wording, durable user "
-                        "profile, and current workspace context. Do not "
-                        "launch research or specialist work just to prepare "
-                        "the opening; name optional validation as a follow-up "
-                        "unless the user explicitly asks for it."
+                        "profile, current workspace context, and bounded "
+                        "internal knowledge. When the user names a specific "
+                        "brand or project, use available local project memory "
+                        "and knowledge/search tools when that prevents a "
+                        "generic reply. Avoid expensive specialist work unless "
+                        "the next decision depends on it."
+                    ),
+                    (
+                        "- If the opening names a specific public brand, "
+                        "competitor, location, or branch relationship, treat "
+                        "that relationship as unverified until a user or source "
+                        "confirms it. A name can inspire a hypothesis, but it "
+                        "does not prove market reality."
                     ),
                     (
                         "- Use your domain understanding to form a tentative "
@@ -265,9 +387,9 @@ class ProactiveContextPacket:
                     ),
                     (
                         "- In the user-facing reply, reflect that working "
-                        "understanding naturally and ask the single most "
-                        "decision-changing user-only blocker. Do not turn "
-                        "the opening into a full intake form."
+                        "understanding naturally and ask only the user-owned "
+                        "blocker(s) needed now. Do not turn the opening into "
+                        "a full intake form."
                     ),
                 ]
             )
@@ -394,16 +516,12 @@ class ProactiveContextBuilder:
                 "discover_before_asking",
                 "normal_diagnosis",
             ] = "collect_then_answer"
-            ask_budget = 1
         elif discovery_needed:
             initiative_mode = "discover_before_asking"
-            ask_budget = 1
         elif items:
             initiative_mode = "normal_diagnosis"
-            ask_budget = 2
         else:
             initiative_mode = "normal_diagnosis"
-            ask_budget = 3
 
         action_contract = self._build_action_contract(
             initiative_mode=initiative_mode,
@@ -414,7 +532,6 @@ class ProactiveContextBuilder:
 
         return ProactiveContextPacket(
             initiative_mode=initiative_mode,
-            ask_budget=ask_budget,
             items=tuple(items),
             prior_matches=matches,
             action_contract=action_contract,
@@ -441,20 +558,60 @@ class ProactiveContextBuilder:
         evidence_level = _evidence_level(items, matches, initiative_mode)
 
         if post_tool_context_seen:
-            return ProactiveActionContract(
-                available_context=tuple(available_context + ["recent tool results"]),
-                working_hypothesis=(
+            if initiative_mode == "discover_before_asking":
+                user_only_unknowns = (
+                    "scope branch: new brand, extension, refresh, or repositioning",
+                )
+                deferrable_unknowns = (
+                    "audience, budget, differentiation, operating stage, "
+                    "and challenge details",
+                )
+                working_hypothesis = (
+                    "Tool results are now part of the context. Use them to "
+                    "state a grounded working hypothesis, then ask the scope "
+                    "branch first because downstream intake depends on it."
+                )
+            else:
+                user_only_unknowns = (
+                    "remaining strategic decision(s) that tool results and "
+                    "memory cannot answer",
+                )
+                deferrable_unknowns = (
+                    "standard intake details that do not change the "
+                    "immediate next step",
+                )
+                working_hypothesis = (
                     "Tool results are now part of the context. Use them to "
                     "produce a grounded synthesis before asking for anything "
                     "that may already be answered by those results."
+                )
+            return ProactiveActionContract(
+                available_context=tuple(available_context + ["recent tool results"]),
+                source_backed_context=(
+                    "recent tool results only for the facts those tools "
+                    "actually returned",
                 ),
+                working_hypothesis=working_hypothesis,
                 evidence_level=evidence_level,
                 collectable_unknowns=(
                     "facts already present in recent tool results",
                     "facts present in workspace or durable profile context",
                 ),
-                user_only_unknowns=(
-                    "the single remaining strategic decision missing from context",
+                user_only_unknowns=user_only_unknowns,
+                deferrable_unknowns=deferrable_unknowns,
+                unverified_hypotheses=(
+                    "name-based brand relationship, premium/flagship cues, "
+                    "or public-market assumptions not present in tool results",
+                ),
+                decision_relevant_external_unknowns=(
+                    "current public brand/branch/location facts when they "
+                    "change the strategy route",
+                ),
+                verification_routes=(
+                    "dispatch one bounded `market-research` pass for live "
+                    "business facts that determine scope; if the pass cannot "
+                    "verify the fact, say the interpretation is tentative and "
+                    "ask the user to confirm",
                 ),
                 recommended_next_action="synthesize_collected_context",
             )
@@ -462,6 +619,7 @@ class ProactiveContextBuilder:
         if matches:
             return ProactiveActionContract(
                 available_context=tuple(available_context),
+                source_backed_context=("related prior workspace memory",),
                 working_hypothesis=(
                     "A related project appears to exist. Continue from that "
                     "memory only after confirming whether the user wants to "
@@ -473,7 +631,11 @@ class ProactiveContextBuilder:
                     "durable user profile",
                 ),
                 user_only_unknowns=(
-                    "whether this request continues or restarts the prior work",
+                    "whether this request continues, refines, or restarts "
+                    "the prior work",
+                ),
+                deferrable_unknowns=(
+                    "budget or target-segment details until continuity is clear",
                 ),
                 recommended_next_action="continue_from_memory",
             )
@@ -481,6 +643,10 @@ class ProactiveContextBuilder:
         if initiative_mode == "discover_before_asking":
             return ProactiveActionContract(
                 available_context=tuple(available_context),
+                source_backed_context=(
+                    "latest user wording",
+                    "durable profile or workspace excerpts when present",
+                ),
                 working_hypothesis=(
                     "This is an early strategy request. Infer only obvious "
                     "facts from the user's wording and keep private, live, or "
@@ -490,12 +656,34 @@ class ProactiveContextBuilder:
                 collectable_unknowns=(
                     "facts implied by the user's wording",
                     "durable profile and current workspace context",
-                    "bounded internal knowledge when the reply would be generic",
+                    "bounded internal knowledge or local search when the "
+                    "reply would be generic",
+                    "current public brand, branch, competitor, or location "
+                    "facts when they would change the strategic route",
                 ),
                 user_only_unknowns=(
-                    "business goal",
-                    "budget or operating constraint",
-                    "stakeholder decision context",
+                    "scope branch when new, extension, refresh, or "
+                    "repositioning is unclear",
+                    "constraint that would make the next step unsafe if unknown",
+                ),
+                deferrable_unknowns=(
+                    "target guest, differentiators, budget, operating stage, "
+                    "and challenge details until the scope branch is answered",
+                ),
+                unverified_hypotheses=(
+                    "name-based interpretation of brand tier, format, branch "
+                    "relationship, or positioning cue",
+                ),
+                decision_relevant_external_unknowns=(
+                    "whether a named public brand, branch, competitor, or "
+                    "location fact is currently true",
+                ),
+                verification_routes=(
+                    "prefer one bounded `market-research` specialist pass when "
+                    "a named public brand, branch, competitor, or location fact "
+                    "would determine the route; if verification is unavailable "
+                    "or inconclusive, label the point as a hypothesis and ask "
+                    "the user to confirm",
                 ),
                 recommended_next_action="discover_then_ask",
             )
@@ -503,6 +691,7 @@ class ProactiveContextBuilder:
         if items:
             return ProactiveActionContract(
                 available_context=tuple(available_context),
+                source_backed_context=tuple(available_context),
                 working_hypothesis=(
                     "Some durable context is available. Use it to avoid "
                     "repeating questions already answered by profile or "
@@ -513,9 +702,12 @@ class ProactiveContextBuilder:
                     "facts already present in profile or workspace notes",
                 ),
                 user_only_unknowns=(
-                    "the next decision-changing detail not present in context",
+                    "decision-changing detail(s) not present in context",
                 ),
-                recommended_next_action="ask_one_blocker",
+                deferrable_unknowns=(
+                    "details already answered by profile or workspace notes",
+                ),
+                recommended_next_action="ask_needed_blockers",
             )
 
         return ProactiveActionContract()
@@ -611,7 +803,11 @@ class ProactiveContextBuilder:
                 "Working notes excerpt:\n"
                 + _extract_useful_sections(
                     notes,
-                    ("User Interaction Patterns", "Pending Questions"),
+                    (
+                        "User Interaction Patterns",
+                        "Memory Candidates",
+                        "Pending Questions",
+                    ),
                     max_chars=max_chars // 2,
                 )
             )
@@ -675,7 +871,7 @@ class ProactiveTurnMiddleware(AgentMiddleware):
             logger.info(
                 "ProactiveTurnMiddleware injected context: "
                 f"items={len(packet.items)} prior_matches={len(packet.prior_matches)} "
-                f"mode={packet.initiative_mode} ask_budget={packet.ask_budget} "
+                f"mode={packet.initiative_mode} "
                 f"action={packet.action_contract.recommended_next_action}"
             )
             return request.override(system_message=system_message)

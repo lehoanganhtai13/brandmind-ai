@@ -37,6 +37,7 @@ def create_brand_strategy_agent(
         SummarizationMiddleware,
         ToolRetryMiddleware,
     )
+    from loguru import logger
 
     from config.system_config import SETTINGS
     from core.brand_strategy.content_check import (
@@ -44,12 +45,18 @@ def create_brand_strategy_agent(
         DeliverableDispatchGuardMiddleware,
         PhaseStateReminderMiddleware,
     )
+    from core.brand_strategy.model_profiles import (
+        UnsupportedBrandStrategyModelError,
+        get_default_brand_strategy_main_model_profile,
+        resolve_brand_strategy_main_model_profile,
+    )
     from core.brand_strategy.subagents import (
         create_brand_strategy_subagent_middleware,
     )
     from prompts.brand_strategy import BRAND_STRATEGY_SYSTEM_PROMPT
     from shared.agent_middlewares import (
         EnsureTasksFinishedMiddleware,
+        EvidenceGroundingMiddleware,
         LogModelMessageMiddleware,
         ProactiveTurnMiddleware,
         WorkspaceBriefHygieneMiddleware,
@@ -146,15 +153,23 @@ def create_brand_strategy_agent(
         )
 
     # Initialize model
+    try:
+        model_profile = resolve_brand_strategy_main_model_profile(
+            SETTINGS.BRANDMIND_MAIN_AGENT_MODEL,
+        )
+    except UnsupportedBrandStrategyModelError as exc:
+        logger.warning(f"{exc} Falling back to BrandMind default model.")
+        model_profile = get_default_brand_strategy_main_model_profile()
+
     model = RetryChatGoogleGenerativeAI(
         google_api_key=SETTINGS.GEMINI_API_KEY,
-        model="gemini-3-flash-preview",
-        temperature=1.0,
-        thinking_level="high",
-        max_output_tokens=8000,
-        include_thoughts=True,
+        model=model_profile.model_id,
+        temperature=model_profile.temperature,
+        thinking_level=model_profile.thinking_level,
+        max_output_tokens=model_profile.max_output_tokens,
+        include_thoughts=model_profile.include_thoughts,
     )
-    model_context_window = 262144  # 256K tokens
+    model_context_window = model_profile.context_window
 
     # ---- Brand Strategy Tools ----
     # The tool set is split into three groups so delegation boundaries are
@@ -274,6 +289,7 @@ def create_brand_strategy_agent(
     deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
     phase_state_reminder_middleware = PhaseStateReminderMiddleware()
     proactive_context_middleware = ProactiveTurnMiddleware()
+    evidence_grounding_middleware = EvidenceGroundingMiddleware()
     workspace_hygiene_middleware = WorkspaceBriefHygieneMiddleware()
 
     # Skills middleware + filesystem + workspace (Task 35 + 48)
@@ -348,12 +364,13 @@ def create_brand_strategy_agent(
         system_prompt=system_prompt,
         middleware=[
             context_edit_middleware,
-            pre_compact_middleware,  # Task 50: remind at 65%
-            msg_summary_middleware,  # Summarize at 80%
+            pre_compact_middleware,
+            msg_summary_middleware,
             proactive_context_middleware,
             phase_state_reminder_middleware,
-            content_check_middleware,  # Verify agent text before allowing phase advance
+            content_check_middleware,
             deliverable_dispatch_guard_middleware,
+            evidence_grounding_middleware,
             workspace_hygiene_middleware,
             fs_middleware,
             skills_middleware,

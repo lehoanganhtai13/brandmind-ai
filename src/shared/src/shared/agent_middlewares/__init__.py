@@ -1,3 +1,4 @@
+from .evidence_grounding import EvidenceGroundingMiddleware
 from .log_model_message import LogModelMessageMiddleware
 from .pre_compact_notes import PreCompactNotesMiddleware
 from .proactive_context import ProactiveTurnMiddleware
@@ -8,6 +9,7 @@ from .workspace_injection import WorkspaceInjectionMiddleware
 
 __all__ = [
     "EnsureTasksFinishedMiddleware",
+    "EvidenceGroundingMiddleware",
     "LogModelMessageMiddleware",
     "PreCompactNotesMiddleware",
     "ProactiveTurnMiddleware",
