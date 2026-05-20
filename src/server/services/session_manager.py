@@ -18,11 +18,11 @@ from langgraph.graph.state import CompiledStateGraph
 from loguru import logger
 
 from config.system_config import SETTINGS
+from core.brand_strategy import session as brand_strategy_session_store
 from core.brand_strategy.session import (
     BrandStrategySession,
     get_phase_display_labels,
     get_phase_sequence,
-    save_session,
 )
 from server.schemas.enums import SessionMode
 from server.schemas.session import (
@@ -70,6 +70,23 @@ def _delete_workspace_dir(bs_session_id: str) -> None:
         return
     shutil.rmtree(target)
     logger.info(f"Removed workspace dir: {target}")
+
+
+def _delete_session_file(bs_session_id: str) -> None:
+    """Remove the persisted chat record for a deleted brand-strategy session."""
+    filepath = brand_strategy_session_store.SESSIONS_DIR / f"{bs_session_id}.json"
+    try:
+        filepath.unlink()
+    except FileNotFoundError:
+        return
+
+
+def _parse_created_at(value: str) -> datetime:
+    """Parse a persisted ISO timestamp, falling back to now for old files."""
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return datetime.now()
 
 
 class EventRouter:
@@ -204,7 +221,8 @@ class SessionManager:
         self._cleanup_task: asyncio.Task[None] | None = None
 
     async def start(self) -> None:
-        """Start background cleanup task."""
+        """Hydrate persisted brand-strategy chats and start cleanup."""
+        await self._hydrate_persisted_brand_strategy_sessions()
         self._cleanup_task = asyncio.create_task(self._cleanup_loop())
 
     async def stop(self) -> None:
@@ -216,8 +234,7 @@ class SessionManager:
             except asyncio.CancelledError:
                 pass
         for session in self._sessions.values():
-            if session.brand_strategy_session is not None:
-                save_session(session.brand_strategy_session)
+            self.persist_session(session)
         self._sessions.clear()
 
     async def create_session(self, mode: SessionMode) -> SessionInfo:
@@ -254,6 +271,10 @@ class SessionManager:
         """
         async with self._registry_lock:
             session = self._sessions.get(session_id)
+            if session is None:
+                session = self._load_persisted_brand_strategy_session(session_id)
+                if session is not None:
+                    self._sessions[session_id] = session
         if session is None:
             raise KeyError(f"Session {session_id} not found")
         return session
@@ -285,27 +306,34 @@ class SessionManager:
         session_id: str,
         delete_workspace: bool | None = None,
     ) -> None:
-        """Delete a session, persisting state and optionally clearing disk.
+        """Delete a session record and optionally clear its workspace.
 
-        Brand-strategy state is always saved before eviction so the
-        agent's prior work survives. The workspace directory is removed
-        when ``delete_workspace`` is explicitly ``True``; an explicit
-        ``False`` keeps it on disk regardless of the install default;
-        ``None`` falls back to
-        :data:`SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE`.
+        Explicit deletion removes the chat record so it will not reappear
+        after a server restart. The workspace directory is removed when
+        ``delete_workspace`` is explicitly ``True``; an explicit ``False``
+        keeps it on disk regardless of the install default; ``None``
+        falls back to the configured install default.
         """
         async with self._registry_lock:
             session = self._sessions.pop(session_id, None)
         if session is None or session.brand_strategy_session is None:
             return
         bs = session.brand_strategy_session
-        save_session(bs)
+        _delete_session_file(bs.session_id)
         if delete_workspace is None:
             should_delete = SETTINGS.BRANDMIND_DELETE_WORKSPACE_ON_CHAT_DELETE
         else:
             should_delete = delete_workspace
         if should_delete:
             _delete_workspace_dir(bs.session_id)
+
+    def persist_session(self, session: ManagedSession) -> None:
+        """Persist a brand-strategy session after syncing chat history."""
+        bs = session.brand_strategy_session
+        if bs is None:
+            return
+        bs.messages = list(session.messages)
+        brand_strategy_session_store.save_session(bs)
 
     @property
     def brand_strategy_lock(self) -> asyncio.Lock:
@@ -331,5 +359,38 @@ class SessionManager:
                 ]
                 for sid in expired:
                     session = self._sessions.pop(sid)
-                    if session.brand_strategy_session is not None:
-                        save_session(session.brand_strategy_session)
+                    self.persist_session(session)
+
+    async def _hydrate_persisted_brand_strategy_sessions(self) -> None:
+        """Load saved brand-strategy sessions into the in-memory registry."""
+        restored = 0
+        async with self._registry_lock:
+            for summary in brand_strategy_session_store.list_sessions():
+                session_id = summary.get("session_id")
+                if not isinstance(session_id, str) or session_id in self._sessions:
+                    continue
+                managed = self._load_persisted_brand_strategy_session(session_id)
+                if managed is None:
+                    continue
+                self._sessions[session_id] = managed
+                restored += 1
+        if restored:
+            logger.info(f"Hydrated {restored} persisted brand-strategy sessions")
+
+    def _load_persisted_brand_strategy_session(
+        self,
+        session_id: str,
+    ) -> ManagedSession | None:
+        """Create an in-memory session wrapper from a saved JSON record."""
+        bs = brand_strategy_session_store.load_session(session_id)
+        if bs is None:
+            return None
+        now = asyncio.get_event_loop().time()
+        return ManagedSession(
+            session_id=bs.session_id,
+            mode=SessionMode.BRAND_STRATEGY,
+            created_at=_parse_created_at(bs.created_at),
+            last_active=now,
+            messages=list(bs.messages),
+            brand_strategy_session=bs,
+        )

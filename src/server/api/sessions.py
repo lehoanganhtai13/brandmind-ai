@@ -205,6 +205,7 @@ async def update_session(
         bs.title = body.title.strip()
     if body.pinned is not None:
         bs.pinned = bool(body.pinned)
+    manager.persist_session(session)
     return session.to_session_info()
 
 
@@ -242,6 +243,7 @@ async def auto_generate_title(
     new_title = await generate_chat_title(source)
     if new_title:
         bs.title = new_title
+        manager.persist_session(session)
     return session.to_session_info()
 
 

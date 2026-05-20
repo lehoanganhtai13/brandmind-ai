@@ -15,7 +15,10 @@ from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
+from langchain_core.messages import AIMessage, HumanMessage
 
+from core.brand_strategy import session as brand_strategy_session_store
+from core.brand_strategy.session import BrandStrategySession
 from server.main import create_app
 from server.schemas.chat import MessageResponse, ToolCallInfo
 from server.schemas.enums import SessionMode, SSEEventType
@@ -32,14 +35,9 @@ from server.services.agent_factory import (
 )
 from server.services.session_manager import (
     EventRouter,
-    ManagedSession,
     SessionManager,
 )
-from shared.agent_middlewares.callback_types import (
-    StreamingTokenEvent,
-    ToolCallEvent,
-)
-
+from shared.agent_middlewares.callback_types import StreamingTokenEvent
 
 # ── SessionMode Enum ─────────────────────────────────────────────────
 
@@ -161,7 +159,7 @@ class TestSessionManager:
     async def test_brand_strategy_metadata_carries_phase_sequence_for_scope(
         self, manager
     ):
-        """SessionInfo must expose scope-dependent phase sequence + labels for the web UI."""
+        """SessionInfo must expose scope-specific phase sequence and labels."""
         info = await manager.create_session(SessionMode.BRAND_STRATEGY)
         session = await manager.get_session(info.session_id)
         assert session.brand_strategy_session is not None
@@ -217,11 +215,85 @@ class TestSessionManager:
         assert len(sessions) == 2
 
     @pytest.mark.asyncio
+    async def test_start_hydrates_persisted_brand_strategy_sessions(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        """Server start should restore saved brand-strategy chats into the sidebar."""
+        monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+        saved = BrandStrategySession(
+            session_id="persist1",
+            brand_name="Chuyện Ba Bữa Signature",
+            title="Signature strategy",
+        )
+        saved.messages = [
+            HumanMessage(content="Tôi muốn làm brand strategy."),
+            AIMessage(content="Mình bắt đầu từ chẩn đoán nhé."),
+        ]
+        brand_strategy_session_store.save_session(saved)
+
+        fresh_manager = SessionManager(ttl_seconds=5)
+        await fresh_manager.start()
+        try:
+            sessions = await fresh_manager.list_sessions()
+            restored_info = next(
+                info for info in sessions if info.session_id == "persist1"
+            )
+            assert restored_info.message_count == 2
+            assert isinstance(restored_info.metadata, BrandStrategyMetadata)
+            assert restored_info.metadata.brand_name == "Chuyện Ba Bữa Signature"
+
+            restored = await fresh_manager.get_session("persist1")
+            assert [message.type for message in restored.messages] == ["human", "ai"]
+        finally:
+            await fresh_manager.stop()
+
+    @pytest.mark.asyncio
+    async def test_get_session_lazily_hydrates_persisted_brand_strategy_session(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        """Direct session URLs should recover even before list hydration runs."""
+        monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+        saved = BrandStrategySession(session_id="lazy1234", brand_name="Lazy Cafe")
+        saved.messages = [HumanMessage(content="Xin chào")]
+        brand_strategy_session_store.save_session(saved)
+
+        fresh_manager = SessionManager(ttl_seconds=5)
+
+        restored = await fresh_manager.get_session("lazy1234")
+
+        assert restored.brand_strategy_session is not None
+        assert restored.brand_strategy_session.brand_name == "Lazy Cafe"
+        assert restored.messages[0].content == "Xin chào"
+
+    @pytest.mark.asyncio
     async def test_delete_session(self, manager):
         info = await manager.create_session(SessionMode.ASK)
         await manager.delete_session(info.session_id)
         with pytest.raises(KeyError):
             await manager.get_session(info.session_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_session_removes_persisted_brand_strategy_record(
+        self,
+        manager,
+        tmp_path,
+        monkeypatch,
+    ):
+        """Deleted chats should not reappear after the next server start."""
+        monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+        info = await manager.create_session(SessionMode.BRAND_STRATEGY)
+        session = await manager.get_session(info.session_id)
+        session.messages.append(HumanMessage(content="keep until delete"))
+        manager.persist_session(session)
+        assert (tmp_path / f"{info.session_id}.json").exists()
+
+        await manager.delete_session(info.session_id, delete_workspace=False)
+
+        assert not (tmp_path / f"{info.session_id}.json").exists()
 
     @pytest.mark.asyncio
     async def test_brand_strategy_lock_exists(self, manager):
@@ -431,7 +503,8 @@ class TestAPIRoutes:
     """Verify FastAPI route behavior."""
 
     @pytest.fixture
-    def client(self):
+    def client(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
         app = create_app()
         with TestClient(app) as c:
             yield c
@@ -551,7 +624,7 @@ class TestAPIRoutes:
         assert resp.status_code == 404
 
     def test_patch_session_rejects_ask_mode(self, client):
-        """Ask sessions have no UX metadata target, so PATCH 400s rather than silently passing."""
+        """Ask sessions have no UX metadata target, so PATCH returns 400."""
         create_resp = client.post("/api/v1/sessions", json={"mode": "ask"})
         sid = create_resp.json()["session_id"]
         resp = client.patch(f"/api/v1/sessions/{sid}", json={"title": "X"})

@@ -107,7 +107,7 @@ class TestBrandStrategySession:
 
 
 class TestPhaseSequenceAndDisplayLabels:
-    """Pin the public phase-sequence and display-label helpers consumed by the web UI."""
+    """Pin phase-sequence and display-label helpers consumed by the web UI."""
 
     def test_phase_sequence_new_brand_skips_phase_0_5(self):
         sequence = get_phase_sequence("new_brand")
@@ -1078,6 +1078,44 @@ class TestSessionPersistence:
 
         result = load_session("nonexistent_id")
         assert result is None
+
+    def test_load_legacy_message_shape(self, tmp_path, monkeypatch):
+        import json
+
+        import core.brand_strategy.session as sess_mod
+
+        monkeypatch.setattr(sess_mod, "SESSIONS_DIR", tmp_path)
+
+        session = BrandStrategySession(session_id="legacy1", brand_name="Legacy")
+        data = session.model_dump()
+        data["messages"] = [
+            {
+                "content": "Xin chào",
+                "additional_kwargs": {},
+                "response_metadata": {},
+                "type": "human",
+                "name": None,
+                "id": "message-1",
+            },
+            {
+                "content": "Chào bạn.",
+                "additional_kwargs": {},
+                "response_metadata": {},
+                "type": "ai",
+                "name": None,
+                "id": "message-2",
+            },
+        ]
+        (tmp_path / "legacy1.json").write_text(
+            json.dumps(data, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+        loaded = load_session("legacy1")
+
+        assert loaded is not None
+        assert [message.type for message in loaded.messages] == ["human", "ai"]
+        assert loaded.messages[0].content == "Xin chào"
 
     def test_save_creates_directory(self, tmp_path, monkeypatch):
         import core.brand_strategy.session as sess_mod

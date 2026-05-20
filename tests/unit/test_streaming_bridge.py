@@ -8,6 +8,7 @@ import pytest
 from langchain_core.messages import AIMessageChunk
 from langgraph.graph.state import CompiledStateGraph
 
+from core.brand_strategy import session as brand_strategy_session_store
 from core.brand_strategy.session import BrandStrategySession, get_active_session
 from server.schemas.enums import SessionMode
 from server.services.session_manager import ManagedSession, SessionManager
@@ -435,6 +436,35 @@ async def test_stream_agent_response_marks_brand_strategy_user_turn() -> None:
 
     assert strategy_session.turn_index == 1
     assert get_active_session() is None
+
+
+@pytest.mark.asyncio
+async def test_stream_agent_response_persists_brand_strategy_turn(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A completed brand-strategy turn should survive server restart."""
+    monkeypatch.setattr(brand_strategy_session_store, "SESSIONS_DIR", tmp_path)
+    strategy_session = BrandStrategySession(session_id="test-session")
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.BRAND_STRATEGY,
+        created_at=datetime.now(),
+        last_active=0.0,
+        brand_strategy_session=strategy_session,
+    )
+    session.agent = cast(CompiledStateGraph, _FakeStreamingAgent(["Xin chào."]))
+    manager = SessionManager()
+
+    async for _event in stream_agent_response(session, "start", manager):
+        pass
+
+    restored = brand_strategy_session_store.load_session("test-session")
+    assert restored is not None
+    assert [message.type for message in restored.messages] == ["human", "ai"]
+    assert restored.messages[0].content == "start"
+    assert restored.messages[1].content == "Xin chào."
+    assert len(restored.agent_traces) == 1
 
 
 @pytest.mark.asyncio

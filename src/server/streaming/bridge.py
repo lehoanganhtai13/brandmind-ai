@@ -650,6 +650,7 @@ async def stream_agent_response(
                         asyncio.get_event_loop().time() - turn_started_at,
                     )
                     bs.agent_traces.append(trace_builder.finalize(duration))
+                    manager.persist_session(session)
 
     finally:
         session.event_router.clear_queue()

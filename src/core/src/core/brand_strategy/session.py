@@ -17,7 +17,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-from langchain_core.messages import messages_from_dict, messages_to_dict
+from langchain_core.messages import (
+    AIMessage,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+    messages_from_dict,
+    messages_to_dict,
+)
 from pydantic import BaseModel, Field
 
 from core.brand_strategy.orchestrator.brand_brief import (
@@ -612,6 +619,44 @@ def save_session(session: BrandStrategySession) -> Path:
     return filepath
 
 
+def _legacy_message_from_dict(message: dict[str, Any]) -> Any:
+    """Rebuild messages saved before LangChain's ``messages_to_dict`` shape."""
+    message_type = message.get("type")
+    kwargs = {
+        "content": message.get("content", ""),
+        "additional_kwargs": message.get("additional_kwargs") or {},
+        "response_metadata": message.get("response_metadata") or {},
+        "name": message.get("name"),
+        "id": message.get("id"),
+    }
+    if message_type == "human":
+        return HumanMessage(**kwargs)
+    if message_type == "ai":
+        return AIMessage(**kwargs)
+    if message_type == "system":
+        return SystemMessage(**kwargs)
+    if message_type == "tool":
+        return ToolMessage(
+            **kwargs,
+            tool_call_id=str(message.get("tool_call_id") or ""),
+        )
+    return message
+
+
+def _restore_messages(raw_messages: list[Any]) -> list[Any]:
+    """Restore current and legacy persisted LangChain message records."""
+    if not raw_messages:
+        return []
+    first = raw_messages[0]
+    if isinstance(first, dict) and "data" not in first:
+        return [
+            _legacy_message_from_dict(message)
+            for message in raw_messages
+            if isinstance(message, dict)
+        ]
+    return messages_from_dict(raw_messages)
+
+
 def load_session(
     session_id: str,
 ) -> Optional[BrandStrategySession]:
@@ -627,7 +672,7 @@ def load_session(
 
     raw_messages = data.pop("messages", [])
     session = BrandStrategySession(**data)
-    session.messages = messages_from_dict(raw_messages) if raw_messages else []
+    session.messages = _restore_messages(raw_messages)
 
     return session
 
