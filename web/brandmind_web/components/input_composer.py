@@ -17,6 +17,7 @@ import reflex as rx
 
 from ..state import BrandMindState
 from . import tokens
+from .model_picker import model_picker
 
 
 def _send_disabled() -> rx.Var:
@@ -34,6 +35,30 @@ def input_composer() -> rx.Component:
         BrandMindState.is_connected,
         "Message BrandMind — Enter to send, Shift+Enter for newline.",
         "Reconnecting...",
+    )
+
+    footer = rx.hstack(
+        model_picker(),
+        rx.spacer(),
+        rx.button(
+            rx.icon(tag="arrow_up", size=16),
+            on_click=BrandMindState.send_message,
+            disabled=_send_disabled(),
+            style={
+                "background_color": tokens.ACCENT_TEAL_SOLID,
+                "color": "#003732",
+                "width": "32px",
+                "height": "32px",
+                "min_width": "32px",
+                "padding": "0",
+                "border_radius": tokens.RADIUS_PILL,
+                "cursor": "pointer",
+            },
+        ),
+        align="center",
+        spacing="2",
+        padding="6px 10px 10px 12px",
+        style={"width": "100%"},
     )
 
     composer_card = rx.box(
@@ -56,30 +81,14 @@ def input_composer() -> rx.Component:
                 "border": "none",
                 "outline": "none",
                 "box_shadow": "none",
-                "padding": "14px 56px 14px 18px",
+                "padding": "14px 18px 6px 18px",
                 "resize": "none",
             },
         ),
-        rx.button(
-            rx.icon(tag="arrow_up", size=16),
-            on_click=BrandMindState.send_message,
-            disabled=_send_disabled(),
-            style={
-                "position": "absolute",
-                "right": "10px",
-                "bottom": "10px",
-                "background_color": tokens.ACCENT_TEAL_SOLID,
-                "color": "#003732",
-                "width": "32px",
-                "height": "32px",
-                "min_width": "32px",
-                "padding": "0",
-                "border_radius": tokens.RADIUS_PILL,
-                "cursor": "pointer",
-            },
-        ),
+        footer,
         style={
-            "position": "relative",
+            "display": "flex",
+            "flex_direction": "column",
             "width": "100%",
             "max_width": "880px",
             "margin": "0 auto",

@@ -20,6 +20,7 @@ from httpx_sse import aconnect_sse
 from .models import (
     ArtifactRef,
     DocxHtmlResponse,
+    MainAgentModelOption,
     SessionInfo,
     SessionMessages,
     StreamDonePayload,
@@ -70,7 +71,11 @@ async def health_check(api_base_url: str) -> bool:
         return False
 
 
-async def create_brand_strategy_session(api_base_url: str) -> SessionInfo:
+async def create_brand_strategy_session(
+    api_base_url: str,
+    *,
+    model_id: str | None = None,
+) -> SessionInfo:
     """Create a fresh brand-strategy session on the backend.
 
     The web UI calls this once per browser session before the user
@@ -81,6 +86,9 @@ async def create_brand_strategy_session(api_base_url: str) -> SessionInfo:
 
     Args:
         api_base_url (str): Backend base URL.
+        model_id (str | None): Optional main-agent model profile key
+            the picker has selected. ``None`` leaves the choice to the
+            server-side default.
 
     Returns:
         info (SessionInfo): The newly-created session metadata.
@@ -89,11 +97,38 @@ async def create_brand_strategy_session(api_base_url: str) -> SessionInfo:
         httpx.HTTPError: On network failure or non-2xx response.
     """
     url = f"{api_base_url}/api/v1/sessions"
-    payload = {"mode": "brand-strategy"}
+    payload: dict[str, str | None] = {"mode": "brand-strategy"}
+    if model_id:
+        payload["model_id"] = model_id
     async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
         response = await client.post(url, json=payload)
         response.raise_for_status()
     return SessionInfo.model_validate(response.json())
+
+
+async def list_main_agent_models(api_base_url: str) -> list[MainAgentModelOption]:
+    """Fetch supported main-agent model profiles for the picker.
+
+    Surfaces the canonical ``model_id`` + ``display_name`` + ``is_default``
+    list the backend ships so the picker UI stays a pure projection of
+    server configuration; new supported models register on the backend
+    and appear in the picker without a web release.
+
+    Args:
+        api_base_url (str): Backend base URL.
+
+    Returns:
+        options (list[MainAgentModelOption]): Supported main-agent
+        profiles in canonical order.
+
+    Raises:
+        httpx.HTTPError: On network failure or non-2xx response.
+    """
+    url = f"{api_base_url}/api/v1/brand-strategy/models"
+    async with httpx.AsyncClient(timeout=_HEALTH_TIMEOUT_SECONDS) as client:
+        response = await client.get(url)
+        response.raise_for_status()
+    return [MainAgentModelOption.model_validate(item) for item in response.json()]
 
 
 async def list_brand_strategy_sessions(api_base_url: str) -> list[SessionInfo]:

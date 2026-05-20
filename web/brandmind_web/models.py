@@ -65,7 +65,8 @@ class BrandStrategyMetadata(BaseModel):
     The web UI reads ``phase_sequence`` and ``phase_display_labels`` to
     render the scope-dependent sidebar without hard-coding the canonical
     phase taxonomy on the client side. ``title`` and ``pinned`` drive
-    the chat-picker row label and pin badge.
+    the chat-picker row label and pin badge. ``main_agent_model`` lets
+    the picker reflect the locked profile when the chat already started.
     """
 
     current_phase: str = "phase_0"
@@ -76,6 +77,22 @@ class BrandStrategyMetadata(BaseModel):
     phase_display_labels: dict[str, str] = Field(default_factory=dict)
     title: str = ""
     pinned: bool = False
+    main_agent_model: str = ""
+
+
+class MainAgentModelOption(BaseModel):
+    """One supported main-agent profile surfaced by the discovery endpoint.
+
+    Mirrors ``server.api.brand_strategy.MainModelOption`` so the picker
+    can render an option list without depending on the server package.
+    ``description`` is the short trade-off blurb the picker shows
+    underneath the display name.
+    """
+
+    model_id: str
+    display_name: str
+    description: str = ""
+    is_default: bool = False
 
 
 class SessionInfo(BaseModel):

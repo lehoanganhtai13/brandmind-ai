@@ -32,6 +32,7 @@ from .api_client import (
     get_session_messages,
     health_check,
     list_brand_strategy_sessions,
+    list_main_agent_models,
     list_session_artifacts,
     stream_message,
     update_session,
@@ -41,6 +42,7 @@ from .models import (
     BrandStrategyMetadata,
     ChatMessage,
     DocxTocEntry,
+    MainAgentModelOption,
     PhaseAdvancePayload,
     SessionInfo,
     SessionMessage,
@@ -118,6 +120,11 @@ class BrandMindState(rx.State):
     is_streaming: bool = False
     pending_input: str = ""
     error_message: str = ""
+
+    available_models: list[MainAgentModelOption] = []
+    selected_model_id: str = ""
+    locked_model_id: str = ""
+    model_picker_open: bool = False
 
     rename_target: str = ""
     rename_draft: str = ""
@@ -214,11 +221,73 @@ class BrandMindState(rx.State):
             "wait for the next health check."
         )
 
+    @rx.var
+    def picker_is_locked(self) -> bool:
+        """Whether the model picker should refuse selection changes.
+
+        Locked once the active chat has committed a model — either by
+        sending the first user message (``locked_model_id`` set by
+        :meth:`_apply_metadata`) or while a turn is streaming so the
+        user cannot swap mid-flight.
+        """
+        return bool(self.locked_model_id) or self.is_streaming
+
+    @rx.var
+    def picker_active_model_id(self) -> str:
+        """Model id the picker pill should render as the current choice.
+
+        Prefers the locked profile so a rehydrated chat shows the model
+        that is actually driving it; falls back to the user's pending
+        selection for a fresh draft chat.
+        """
+        return self.locked_model_id or self.selected_model_id
+
+    @rx.var
+    def picker_active_model_label(self) -> str:
+        """Display label matching :attr:`picker_active_model_id`."""
+        active_id = self.locked_model_id or self.selected_model_id
+        for option in self.available_models:
+            if option.model_id == active_id:
+                return option.display_name
+        return active_id
+
     @rx.event
     def toggle_sidebar(self) -> None:
         """Flip the persisted sidebar preference and re-render dependents."""
         current = self.sidebar_collapsed == "1"
         self.sidebar_collapsed = "0" if current else "1"
+
+    @rx.event
+    def toggle_model_picker(self) -> None:
+        """Open or close the model-picker popover.
+
+        Refuses to open when the picker is locked so the disabled-pill
+        affordance does not surface a list the user cannot act on.
+        """
+        if self.picker_is_locked and not self.model_picker_open:
+            return
+        self.model_picker_open = not self.model_picker_open
+
+    @rx.event
+    def close_model_picker(self) -> None:
+        """Close the popover without changing the selection."""
+        self.model_picker_open = False
+
+    @rx.event
+    def select_model(self, model_id: str) -> None:
+        """Set the user's intent for the next-new-chat model and close.
+
+        Silently ignored when the picker is locked or when the model id
+        is not present in :attr:`available_models` — these branches
+        would otherwise let the picker drift away from a server-known
+        profile.
+        """
+        if self.picker_is_locked:
+            return
+        if not any(option.model_id == model_id for option in self.available_models):
+            return
+        self.selected_model_id = model_id
+        self.model_picker_open = False
 
     @rx.event
     def open_canvas(self) -> None:
@@ -291,7 +360,10 @@ class BrandMindState(rx.State):
         which polluted the backend with empty drafts every reload. The
         page now boots into "no chat selected" — the user picks an
         existing chat from the sidebar or starts a new one by sending
-        a first message.
+        a first message. Also fetches the supported model profile list
+        so the picker reflects what the backend will accept; failure
+        is non-fatal because the picker is allowed to degrade to a
+        single-option read-only badge.
         """
         api_url = _api_base_url()
         try:
@@ -304,8 +376,20 @@ class BrandMindState(rx.State):
                     "Backend unreachable — start `brandmind serve` and retry."
                 )
             return
+        try:
+            options = await list_main_agent_models(api_url)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: model list fetch failed: {exc}")
+            options = []
+        default_model_id = next(
+            (option.model_id for option in options if option.is_default),
+            options[0].model_id if options else "",
+        )
         async with self:
             self.sessions = self._filter_chats(sessions)
+            self.available_models = options
+            if not self.selected_model_id:
+                self.selected_model_id = default_model_id
             self.is_connected = True
             self.error_message = ""
 
@@ -346,6 +430,8 @@ class BrandMindState(rx.State):
             self.phase_sequence = []
             self.phase_display_labels = {}
             self.error_message = ""
+            self.locked_model_id = ""
+            self.model_picker_open = False
             self._reset_canvas_state()
 
     @rx.event(background=True)
@@ -385,13 +471,18 @@ class BrandMindState(rx.State):
         backend is unreachable. Called by :meth:`send_message` and
         :meth:`send_message_with` so the first user message is what
         materialises the chat on the backend — empty drafts never
-        leak into the picker.
+        leak into the picker. The model picker's current
+        ``selected_model_id`` is forwarded to the backend so the chat
+        is pinned to that profile from the first send.
         """
         if self.session_id:
             return self.session_id
         api_url = _api_base_url()
         try:
-            info = await create_brand_strategy_session(api_url)
+            info = await create_brand_strategy_session(
+                api_url,
+                model_id=self.selected_model_id or None,
+            )
         except httpx.HTTPError as exc:
             logger.warning(f"BrandMind web: lazy session create failed: {exc}")
             self.error_message = (
@@ -1191,13 +1282,23 @@ class BrandMindState(rx.State):
             self.scope = advance.scope
 
     def _apply_metadata(self, metadata: BrandStrategyMetadata) -> None:
-        """Refresh sidebar + identity state from a full metadata payload."""
+        """Refresh sidebar + identity state from a full metadata payload.
+
+        ``main_agent_model`` is treated as the locked profile when the
+        server returns a non-empty value — switching chats then
+        reflects the picker as read-only on the locked option without
+        clobbering ``selected_model_id`` (which represents the user's
+        intent for the next new chat).
+        """
         self.current_phase = metadata.current_phase
         self.completed_phases = list(metadata.completed_phases)
         self.scope = metadata.scope or ""
         self.brand_name = metadata.brand_name or ""
         self.phase_sequence = list(metadata.phase_sequence)
         self.phase_display_labels = dict(metadata.phase_display_labels)
+        self.locked_model_id = metadata.main_agent_model or ""
+        if self.locked_model_id and not self.selected_model_id:
+            self.selected_model_id = self.locked_model_id
 
     def _finalize_agent_message(self) -> None:
         """Close the trailing agent message and tidy its reasoning timeline.
