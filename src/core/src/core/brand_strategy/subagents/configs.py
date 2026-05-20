@@ -41,6 +41,11 @@ DOCUMENT_GENERATOR_TOOLS = [
     "export_to_markdown",
 ]
 
+MARKET_RESEARCH_MAX_OUTPUT_TOKENS = 16000
+SOCIAL_MEDIA_MAX_OUTPUT_TOKENS = 12000
+CREATIVE_STUDIO_MAX_OUTPUT_TOKENS = 7000
+DOCUMENT_GENERATOR_MAX_OUTPUT_TOKENS = 12000
+
 
 def create_subagent_models() -> dict[str, RetryChatGoogleGenerativeAI]:
     """Create model instances for each sub-agent type.
@@ -55,7 +60,7 @@ def create_subagent_models() -> dict[str, RetryChatGoogleGenerativeAI]:
             model="gemini-2.5-flash-lite",
             temperature=0.1,
             thinking_budget=2000,
-            max_output_tokens=8000,
+            max_output_tokens=MARKET_RESEARCH_MAX_OUTPUT_TOKENS,
             include_thoughts=False,
         ),
         # Social Media Analyst: Gemini 3 Flash — vision capable for social images
@@ -64,7 +69,7 @@ def create_subagent_models() -> dict[str, RetryChatGoogleGenerativeAI]:
             model="gemini-3-flash-preview",
             temperature=1.0,
             thinking_level="medium",
-            max_output_tokens=8000,
+            max_output_tokens=SOCIAL_MEDIA_MAX_OUTPUT_TOKENS,
             include_thoughts=False,
         ),
         # Creative Studio: Gemini 3 Flash — vision capable, evaluates generated images
@@ -73,7 +78,7 @@ def create_subagent_models() -> dict[str, RetryChatGoogleGenerativeAI]:
             model="gemini-3-flash-preview",
             temperature=1.0,
             thinking_level="medium",
-            max_output_tokens=5000,
+            max_output_tokens=CREATIVE_STUDIO_MAX_OUTPUT_TOKENS,
             include_thoughts=False,
         ),
         # Document Generator: Gemini 2.5 Flash Lite — cheap, structured output
@@ -82,7 +87,7 @@ def create_subagent_models() -> dict[str, RetryChatGoogleGenerativeAI]:
             model="gemini-2.5-flash-lite",
             temperature=0.1,
             thinking_budget=2000,
-            max_output_tokens=10000,
+            max_output_tokens=DOCUMENT_GENERATOR_MAX_OUTPUT_TOKENS,
             include_thoughts=False,
         ),
     }

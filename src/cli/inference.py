@@ -18,7 +18,10 @@ Examples:
 
 import argparse
 import asyncio
-from typing import Callable, Optional
+from pathlib import Path
+from typing import Callable, Optional, Sequence
+from urllib.error import URLError
+from urllib.request import urlopen
 
 from loguru import logger
 from rich.console import Console
@@ -26,6 +29,14 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 console = Console()
+
+_SERVE_PID_FILE = "brandmind-serve.pid"
+_SERVE_LOG_FILE = "brandmind-serve.log"
+_SERVE_HEALTH_TIMEOUT_SECONDS = 1.0
+_SERVE_STARTUP_WAIT_SECONDS = 15.0
+_SERVE_STOP_WAIT_SECONDS = 10.0
+_SERVE_LOG_FOLLOW_INTERVAL_SECONDS = 0.5
+_SERVE_DEFAULT_LOG_TAIL_LINES = 100
 
 
 def create_qa_agent(
@@ -397,6 +408,379 @@ async def run_browser_reset_mode() -> None:
         console.print("[yellow]Reset aborted.[/yellow]")
 
 
+def _serve_state_dir() -> Path:
+    """Return the BrandMind server control directory under BRANDMIND_HOME."""
+    from shared import workspace as workspace_mod
+
+    return workspace_mod.BRANDMIND_HOME / "server"
+
+
+def _serve_pid_path() -> Path:
+    """Return the detached server pid-file path."""
+    return _serve_state_dir() / _SERVE_PID_FILE
+
+
+def _serve_log_path() -> Path:
+    """Return the detached server log-file path."""
+    return _serve_state_dir() / _SERVE_LOG_FILE
+
+
+def _read_detached_pid(pid_path: Path | None = None) -> int | None:
+    """Read the tracked detached server pid if present and valid."""
+    path = pid_path or _serve_pid_path()
+    try:
+        raw_pid = path.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return None
+    except OSError:
+        return None
+
+    try:
+        return int(raw_pid)
+    except ValueError:
+        return None
+
+
+def _is_pid_running(pid: int) -> bool:
+    """Return whether the process id appears alive on this host."""
+    import os
+
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _remove_stale_pid_file(pid_path: Path | None = None) -> None:
+    """Delete a stale pid file without failing the command."""
+    path = pid_path or _serve_pid_path()
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        console.print(f"[yellow]Could not remove stale pid file: {exc}[/yellow]")
+
+
+def _serve_health_url(host: str, port: int) -> str:
+    """Build a local health URL for a configured server bind address."""
+    probe_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
+    return f"http://{probe_host}:{port}/api/v1/health"
+
+
+def _server_health_ok(host: str, port: int) -> bool:
+    """Return whether the configured server health endpoint responds."""
+    url = _serve_health_url(host, port)
+    try:
+        with urlopen(url, timeout=_SERVE_HEALTH_TIMEOUT_SECONDS) as response:
+            return 200 <= response.status < 300
+    except (OSError, URLError):
+        return False
+
+
+def _run_uvicorn_server() -> None:
+    """Run the BrandMind API server in the foreground."""
+    import uvicorn
+
+    from config.system_config import SETTINGS
+    from server.main import create_app
+
+    app = create_app()
+    uvicorn.run(app, host=SETTINGS.BRANDMIND_HOST, port=SETTINGS.BRANDMIND_PORT)
+
+
+def _start_detached_server() -> None:
+    """Start `brandmind serve` in the background and record its pid."""
+    import os
+    import subprocess  # nosec B404
+    import sys
+    import time
+
+    from config.system_config import SETTINGS
+
+    state_dir = _serve_state_dir()
+    state_dir.mkdir(parents=True, exist_ok=True)
+    pid_path = _serve_pid_path()
+    log_path = _serve_log_path()
+
+    tracked_pid = _read_detached_pid(pid_path)
+    if tracked_pid and _is_pid_running(tracked_pid):
+        health_url = _serve_health_url(
+            SETTINGS.BRANDMIND_HOST,
+            SETTINGS.BRANDMIND_PORT,
+        )
+        console.print(
+            "[yellow]BrandMind server is already tracked as running "
+            f"(pid {tracked_pid}).[/yellow]\n"
+            f"Health: {health_url}\n"
+            f"Log: {log_path}"
+        )
+        return
+    if tracked_pid:
+        _remove_stale_pid_file(pid_path)
+
+    if _server_health_ok(SETTINGS.BRANDMIND_HOST, SETTINGS.BRANDMIND_PORT):
+        console.print(
+            "[yellow]BrandMind server already responds on the configured port, "
+            "but it is not tracked by a detached pid file.[/yellow]\n"
+            "Stop that foreground process before starting a detached server."
+        )
+        return
+
+    command = [sys.executable, "-m", "cli.inference", "serve"]
+    env = os.environ.copy()
+    with log_path.open("ab") as log_file:
+        process = subprocess.Popen(  # nosec B603
+            command,
+            cwd=Path.cwd(),
+            env=env,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+    pid_path.write_text(f"{process.pid}\n", encoding="utf-8")
+
+    deadline = time.monotonic() + _SERVE_STARTUP_WAIT_SECONDS
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            _remove_stale_pid_file(pid_path)
+            console.print(
+                "[red]BrandMind detached server exited during startup.[/red]\n"
+                f"Check log: {log_path}"
+            )
+            return
+        if _server_health_ok(SETTINGS.BRANDMIND_HOST, SETTINGS.BRANDMIND_PORT):
+            health_url = _serve_health_url(
+                SETTINGS.BRANDMIND_HOST,
+                SETTINGS.BRANDMIND_PORT,
+            )
+            console.print(
+                "[green]BrandMind server started in detached mode.[/green]\n"
+                f"PID: {process.pid}\n"
+                f"Health: {health_url}\n"
+                f"Log: {log_path}"
+            )
+            return
+        time.sleep(0.25)
+
+    console.print(
+        "[yellow]BrandMind detached server started but is still warming up.[/yellow]\n"
+        f"PID: {process.pid}\n"
+        f"Log: {log_path}\n"
+        "Run `brandmind serve --status` to check readiness."
+    )
+
+
+def _terminate_process_group(pid: int) -> None:
+    """Terminate a detached process group, falling back to the pid only."""
+    import os
+    import signal
+
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    except OSError:
+        os.kill(pid, signal.SIGTERM)
+
+
+def _kill_process_group(pid: int) -> None:
+    """Kill a detached process group, falling back to the pid only."""
+    import os
+    import signal
+
+    try:
+        os.killpg(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        return
+    except OSError:
+        os.kill(pid, signal.SIGKILL)
+
+
+def _stop_detached_server() -> None:
+    """Stop the tracked detached BrandMind server if one exists."""
+    import time
+
+    pid_path = _serve_pid_path()
+    pid = _read_detached_pid(pid_path)
+    if pid is None:
+        console.print("[yellow]No detached BrandMind server pid file found.[/yellow]")
+        return
+
+    if not _is_pid_running(pid):
+        _remove_stale_pid_file(pid_path)
+        console.print("[yellow]Removed stale BrandMind server pid file.[/yellow]")
+        return
+
+    _terminate_process_group(pid)
+    deadline = time.monotonic() + _SERVE_STOP_WAIT_SECONDS
+    while time.monotonic() < deadline:
+        if not _is_pid_running(pid):
+            _remove_stale_pid_file(pid_path)
+            console.print("[green]BrandMind detached server stopped.[/green]")
+            return
+        time.sleep(0.2)
+
+    _kill_process_group(pid)
+    _remove_stale_pid_file(pid_path)
+    console.print("[yellow]BrandMind detached server was force-stopped.[/yellow]")
+
+
+def _print_detached_status() -> None:
+    """Print detached server pid and health status."""
+    from config.system_config import SETTINGS
+
+    pid_path = _serve_pid_path()
+    log_path = _serve_log_path()
+    pid = _read_detached_pid(pid_path)
+    health_ok = _server_health_ok(SETTINGS.BRANDMIND_HOST, SETTINGS.BRANDMIND_PORT)
+    health_url = _serve_health_url(SETTINGS.BRANDMIND_HOST, SETTINGS.BRANDMIND_PORT)
+
+    if pid is not None and _is_pid_running(pid):
+        health_text = "healthy" if health_ok else "not ready"
+        console.print(
+            f"[green]BrandMind detached server pid {pid} is running.[/green]\n"
+            f"Health: {health_text} ({health_url})\n"
+            f"Log: {log_path}"
+        )
+        return
+
+    if pid is not None:
+        _remove_stale_pid_file(pid_path)
+        console.print("[yellow]Removed stale BrandMind server pid file.[/yellow]")
+
+    if health_ok:
+        console.print(
+            "[yellow]BrandMind server responds, but no detached pid is "
+            "tracked.[/yellow]\n"
+            f"Health: {health_url}"
+        )
+        return
+
+    console.print("[dim]BrandMind detached server is not running.[/dim]")
+
+
+def _read_log_tail(log_path: Path, lines: int) -> list[str]:
+    """Read the last N lines from a detached server log file."""
+    from collections import deque
+
+    if lines <= 0:
+        return []
+
+    with log_path.open("r", encoding="utf-8", errors="replace") as log_file:
+        return list(deque(log_file, maxlen=lines))
+
+
+def _print_server_logs(*, follow: bool, tail_lines: int) -> None:
+    """Print detached server logs, optionally following new lines."""
+    import time
+
+    log_path = _serve_log_path()
+    if not log_path.exists():
+        console.print(
+            "[yellow]No BrandMind server log file found.[/yellow]\n"
+            f"Expected: {log_path}\n"
+            "Start a detached server with: brandmind serve --detach"
+        )
+        return
+
+    for line in _read_log_tail(log_path, tail_lines):
+        console.print(line.rstrip("\n"), markup=False, highlight=False)
+
+    if not follow:
+        return
+
+    console.print(
+        f"[dim]Following BrandMind server log: {log_path} (Ctrl-C to stop)[/dim]"
+    )
+    try:
+        with log_path.open("r", encoding="utf-8", errors="replace") as log_file:
+            log_file.seek(0, 2)
+            while True:
+                line = log_file.readline()
+                if line:
+                    console.print(
+                        line.rstrip("\n"),
+                        markup=False,
+                        highlight=False,
+                    )
+                    continue
+                time.sleep(_SERVE_LOG_FOLLOW_INTERVAL_SECONDS)
+    except KeyboardInterrupt:
+        console.print("[dim]Stopped following BrandMind server log.[/dim]")
+
+
+def _run_serve_command(argv: Sequence[str]) -> None:
+    """Run foreground, detached, stop, or status behavior for `brandmind serve`."""
+    parser = argparse.ArgumentParser(
+        prog="brandmind serve",
+        description="Start or manage the BrandMind API server.",
+    )
+    parser.add_argument(
+        "--detach",
+        "-d",
+        action="store_true",
+        help="Start the API server in the background and write a pid file.",
+    )
+    parser.add_argument(
+        "--stop",
+        action="store_true",
+        help="Stop the tracked detached API server.",
+    )
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help="Show tracked detached server status and health.",
+    )
+    parser.add_argument(
+        "--logs",
+        action="store_true",
+        help="Print detached server logs.",
+    )
+    parser.add_argument(
+        "--follow",
+        "-f",
+        action="store_true",
+        help="Follow detached server logs after printing the current tail.",
+    )
+    parser.add_argument(
+        "--tail",
+        type=int,
+        default=_SERVE_DEFAULT_LOG_TAIL_LINES,
+        help=(
+            "Number of log lines to print with --logs "
+            f"(default: {_SERVE_DEFAULT_LOG_TAIL_LINES})."
+        ),
+    )
+    args = parser.parse_args(list(argv))
+
+    selected_actions = sum(
+        bool(flag) for flag in (args.detach, args.stop, args.status, args.logs)
+    )
+    if selected_actions > 1:
+        parser.error("Choose only one of --detach, --stop, --status, or --logs.")
+    if args.follow and not args.logs:
+        parser.error("--follow can only be used with --logs.")
+    if args.tail < 0:
+        parser.error("--tail must be zero or greater.")
+
+    if args.stop:
+        _stop_detached_server()
+    elif args.status:
+        _print_detached_status()
+    elif args.logs:
+        _print_server_logs(follow=args.follow, tail_lines=args.tail)
+    elif args.detach:
+        _start_detached_server()
+    else:
+        _run_uvicorn_server()
+
+
 async def async_main() -> None:
     """
     Main CLI entry point for inference operations.
@@ -480,9 +864,45 @@ Examples:
     )
 
     # Mode: serve
-    subparsers.add_parser(
+    serve_parser = subparsers.add_parser(
         "serve",
         help="Start BrandMind API server (config via BRANDMIND_HOST/PORT in .env)",
+    )
+    serve_parser.add_argument(
+        "--detach",
+        "-d",
+        action="store_true",
+        help="Start the API server in the background and write a pid file.",
+    )
+    serve_parser.add_argument(
+        "--stop",
+        action="store_true",
+        help="Stop the tracked detached API server.",
+    )
+    serve_parser.add_argument(
+        "--status",
+        action="store_true",
+        help="Show tracked detached server status and health.",
+    )
+    serve_parser.add_argument(
+        "--logs",
+        action="store_true",
+        help="Print detached server logs.",
+    )
+    serve_parser.add_argument(
+        "--follow",
+        "-f",
+        action="store_true",
+        help="Follow detached server logs after printing the current tail.",
+    )
+    serve_parser.add_argument(
+        "--tail",
+        type=int,
+        default=_SERVE_DEFAULT_LOG_TAIL_LINES,
+        help=(
+            "Number of log lines to print with --logs "
+            f"(default: {_SERVE_DEFAULT_LOG_TAIL_LINES})."
+        ),
     )
 
     # Mode: web
@@ -660,13 +1080,7 @@ def main() -> None:
 
     # Handle 'serve' mode synchronously (uvicorn runs its own loop)
     if len(sys.argv) >= 2 and sys.argv[1] == "serve":
-        import uvicorn
-
-        from config.system_config import SETTINGS
-        from server.main import create_app
-
-        app = create_app()
-        uvicorn.run(app, host=SETTINGS.BRANDMIND_HOST, port=SETTINGS.BRANDMIND_PORT)
+        _run_serve_command(sys.argv[2:])
         return
 
     # Handle 'web' mode synchronously (Reflex manages its own loop + Node).
