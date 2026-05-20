@@ -540,11 +540,49 @@ class TestAPIRoutes:
     def test_create_brand_strategy_session(self, client):
         resp = client.post("/api/v1/sessions", json={"mode": "brand-strategy"})
         assert resp.status_code == 201
-        assert resp.json()["metadata"]["current_phase"] == "phase_0"
+        body = resp.json()
+        assert body["metadata"]["current_phase"] == "phase_0"
+        assert body["metadata"]["main_agent_model"] == ""
+
+    def test_create_brand_strategy_session_with_model_id(self, client):
+        resp = client.post(
+            "/api/v1/sessions",
+            json={"mode": "brand-strategy", "model_id": "gemini-3-flash"},
+        )
+        assert resp.status_code == 201
+        body = resp.json()
+        assert body["metadata"]["main_agent_model"] == "gemini-3-flash"
+
+    def test_create_brand_strategy_session_rejects_unsupported_model(self, client):
+        resp = client.post(
+            "/api/v1/sessions",
+            json={
+                "mode": "brand-strategy",
+                "model_id": "gemini-3.1-pro-preview",
+            },
+        )
+        assert resp.status_code == 400
+        detail = resp.json().get("detail", "")
+        assert "Unsupported BrandMind main-agent model" in detail
 
     def test_create_invalid_mode(self, client):
         resp = client.post("/api/v1/sessions", json={"mode": "invalid"})
         assert resp.status_code == 422
+
+    def test_list_main_agent_models_endpoint(self, client):
+        resp = client.get("/api/v1/brand-strategy/models")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert isinstance(body, list)
+        model_ids = [entry["model_id"] for entry in body]
+        assert model_ids == ["gemini-3.5-flash", "gemini-3-flash"]
+        defaults = [entry for entry in body if entry["is_default"]]
+        assert len(defaults) == 1
+        assert defaults[0]["model_id"] == "gemini-3.5-flash"
+        assert defaults[0]["display_name"] == "Gemini 3.5 Flash"
+        descriptions = {entry["model_id"]: entry["description"] for entry in body}
+        assert descriptions["gemini-3.5-flash"]
+        assert descriptions["gemini-3-flash"]
 
     def test_list_sessions(self, client):
         client.post("/api/v1/sessions", json={"mode": "ask"})

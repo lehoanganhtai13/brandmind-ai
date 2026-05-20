@@ -554,6 +554,8 @@ class BrandStrategySession(BaseModel):
     title: str = ""
     pinned: bool = False
 
+    main_agent_model: str = ""
+
     current_phase: str = "phase_0"
     scope: str | None = None
     budget_tier: str | None = None

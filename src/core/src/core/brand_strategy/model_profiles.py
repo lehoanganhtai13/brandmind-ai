@@ -17,10 +17,16 @@ class UnsupportedBrandStrategyModelError(ValueError):
 
 @dataclass(frozen=True)
 class BrandStrategyMainModelProfile:
-    """Runtime configuration for a supported BrandMind main-agent model."""
+    """Runtime configuration for a supported BrandMind main-agent model.
+
+    ``description`` is the short user-facing copy the model picker shows
+    underneath the display name so junior marketers can pick the right
+    profile without having to know the underlying model trade-offs.
+    """
 
     model_id: str
     display_name: str
+    description: str = ""
     provider: str = "google"
     temperature: float = 1.0
     thinking_level: str = "high"
@@ -33,10 +39,12 @@ BRAND_STRATEGY_MAIN_MODEL_PROFILES = {
     "gemini-3.5-flash": BrandStrategyMainModelProfile(
         model_id="gemini-3.5-flash",
         display_name="Gemini 3.5 Flash",
+        description="Best for full brand-strategy work",
     ),
     "gemini-3-flash": BrandStrategyMainModelProfile(
         model_id="gemini-3-flash-preview",
         display_name="Gemini 3 Flash",
+        description="Faster, lighter responses",
     ),
 }
 
@@ -59,3 +67,25 @@ def resolve_brand_strategy_main_model_profile(
             f"Unsupported BrandMind main-agent model: {normalized_model_id}. "
             f"Supported models: {supported}."
         ) from exc
+
+
+def list_supported_brand_strategy_main_models() -> list[
+    tuple[str, BrandStrategyMainModelProfile]
+]:
+    """Return the supported (public_key, profile) pairs in canonical order.
+
+    The public key is what callers echo back into
+    :func:`resolve_brand_strategy_main_model_profile`; it is distinct
+    from ``profile.model_id`` which carries the internal Google API
+    model identifier. This helper drives the web model picker so the
+    UI is fed by backend configuration rather than hard-coded names.
+
+    Returns:
+        pairs (list[tuple[str, BrandStrategyMainModelProfile]]): supported
+        main-agent options, ordered to match
+        ``SUPPORTED_BRAND_STRATEGY_MAIN_MODELS``.
+    """
+    return [
+        (public_key, BRAND_STRATEGY_MAIN_MODEL_PROFILES[public_key])
+        for public_key in SUPPORTED_BRAND_STRATEGY_MAIN_MODELS
+    ]

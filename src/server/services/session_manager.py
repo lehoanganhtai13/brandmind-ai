@@ -163,6 +163,7 @@ class ManagedSession:
                     phase_display_labels=get_phase_display_labels(bs.scope),
                     title=bs.title,
                     pinned=bs.pinned,
+                    main_agent_model=bs.main_agent_model,
                 )
             )
         else:
@@ -237,14 +238,22 @@ class SessionManager:
             self.persist_session(session)
         self._sessions.clear()
 
-    async def create_session(self, mode: SessionMode) -> SessionInfo:
+    async def create_session(
+        self,
+        mode: SessionMode,
+        model_id: str | None = None,
+    ) -> SessionInfo:
         """Create a new session with the given mode.
 
         For brand-strategy mode, BrandStrategySession is initialized
         eagerly so session info has metadata immediately. The API
         ``session_id`` is forwarded as the brand-strategy session id
         so the workspace directory and persisted JSON share the
-        identifier the web URL already exposes.
+        identifier the web URL already exposes. ``model_id`` pins the
+        main-agent profile when supplied — the API layer validates the
+        id before calling this method, so any non-empty value is
+        assumed supported here. ``None`` defers the choice to the
+        configured default at agent construction time.
         """
         session_id = str(uuid.uuid4())[:8]
         now = asyncio.get_event_loop().time()
@@ -257,6 +266,7 @@ class SessionManager:
         if mode is SessionMode.BRAND_STRATEGY:
             managed.brand_strategy_session = BrandStrategySession(
                 session_id=session_id,
+                main_agent_model=model_id or "",
             )
 
         async with self._registry_lock:

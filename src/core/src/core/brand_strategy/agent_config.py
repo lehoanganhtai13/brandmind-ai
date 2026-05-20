@@ -152,10 +152,18 @@ def create_brand_strategy_agent(
             loop_back_to=loop_back_to,
         )
 
-    # Initialize model
+    # Initialize model — per-session pin takes precedence over the
+    # configured default so the web picker can lock a chat to a
+    # specific profile while existing callers without an active
+    # session id fall back to the env default.
+    active_session = get_active_session()
+    pinned_model_id = (
+        active_session.main_agent_model if active_session is not None else ""
+    )
+    configured_model_id = pinned_model_id or SETTINGS.BRANDMIND_MAIN_AGENT_MODEL
     try:
         model_profile = resolve_brand_strategy_main_model_profile(
-            SETTINGS.BRANDMIND_MAIN_AGENT_MODEL,
+            configured_model_id,
         )
     except UnsupportedBrandStrategyModelError as exc:
         logger.warning(f"{exc} Falling back to BrandMind default model.")

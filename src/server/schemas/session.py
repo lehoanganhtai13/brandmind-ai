@@ -34,6 +34,9 @@ class BrandStrategyMetadata(BaseModel):
     taxonomy on the client; backend stays the canonical source of
     truth. ``title`` and ``pinned`` carry UX state — the sidebar shows
     the title on each chat row and pins-to-top when ``pinned`` is set.
+    ``main_agent_model`` exposes the picker selection so the web can
+    show which profile is driving the session and lock the picker on
+    rehydration.
     """
 
     current_phase: str
@@ -44,6 +47,7 @@ class BrandStrategyMetadata(BaseModel):
     phase_display_labels: dict[str, str] = {}
     title: str = ""
     pinned: bool = False
+    main_agent_model: str = ""
 
 
 class SessionInfo(BaseModel):
@@ -57,10 +61,18 @@ class SessionInfo(BaseModel):
 
 
 class CreateSessionRequest(BaseModel):
-    """Request body for creating a new session."""
+    """Request body for creating a new session.
+
+    ``model_id`` optionally pins a brand-strategy session to a
+    specific main-agent profile from
+    :func:`core.brand_strategy.model_profiles.list_supported_brand_strategy_main_models`.
+    Leave it unset to fall back to the server's configured default.
+    The field is ignored for non brand-strategy modes.
+    """
 
     mode: SessionMode
     initial_message: str | None = None
+    model_id: str | None = None
 
 
 class PersistedToolCallWire(BaseModel):

@@ -7,6 +7,7 @@ from core.brand_strategy.model_profiles import (
     SUPPORTED_BRAND_STRATEGY_MAIN_MODELS,
     UnsupportedBrandStrategyModelError,
     get_default_brand_strategy_main_model_profile,
+    list_supported_brand_strategy_main_models,
     resolve_brand_strategy_main_model_profile,
 )
 
@@ -55,3 +56,17 @@ def test_resolve_main_model_profile_rejects_unsupported_model() -> None:
     assert "Unsupported BrandMind main-agent model" in str(exc.value)
     assert "gemini-3.5-flash" in str(exc.value)
     assert "gemini-3-flash-preview" not in str(exc.value)
+
+
+def test_list_supported_main_models_pairs_public_key_with_profile() -> None:
+    pairs = list_supported_brand_strategy_main_models()
+
+    public_keys = [public_key for public_key, _ in pairs]
+    assert public_keys == list(SUPPORTED_BRAND_STRATEGY_MAIN_MODELS)
+
+    by_key = {public_key: profile for public_key, profile in pairs}
+    assert by_key["gemini-3.5-flash"].display_name == "Gemini 3.5 Flash"
+    assert by_key["gemini-3-flash"].display_name == "Gemini 3 Flash"
+    assert by_key["gemini-3-flash"].model_id == "gemini-3-flash-preview"
+    assert by_key["gemini-3.5-flash"].description
+    assert by_key["gemini-3-flash"].description

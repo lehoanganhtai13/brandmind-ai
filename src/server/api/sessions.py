@@ -5,8 +5,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 
+from core.brand_strategy.model_profiles import (
+    UnsupportedBrandStrategyModelError,
+    resolve_brand_strategy_main_model_profile,
+)
 from core.brand_strategy.session import PersistedAgentTurn
 from server.dependencies import get_session_manager
+from server.schemas.enums import SessionMode
 from server.schemas.session import (
     CreateSessionRequest,
     GenerateTitleRequest,
@@ -50,8 +55,24 @@ async def create_session(
     body: CreateSessionRequest,
     manager: SessionManager = Depends(get_session_manager),
 ) -> SessionInfo:
-    """Create a new session with the specified mode."""
-    return await manager.create_session(body.mode)
+    """Create a new session with the specified mode.
+
+    Brand-strategy sessions accept an optional ``model_id`` pinning the
+    main-agent profile for this chat. The field is validated up-front
+    against
+    :func:`core.brand_strategy.model_profiles.resolve_brand_strategy_main_model_profile`
+    so unsupported model ids fail with a clean 400 before any session
+    state is mutated. Non brand-strategy modes ignore the field.
+    """
+    if body.mode == SessionMode.BRAND_STRATEGY and body.model_id:
+        try:
+            resolve_brand_strategy_main_model_profile(body.model_id)
+        except UnsupportedBrandStrategyModelError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return await manager.create_session(
+        body.mode,
+        model_id=body.model_id,
+    )
 
 
 @router.get("/sessions")
