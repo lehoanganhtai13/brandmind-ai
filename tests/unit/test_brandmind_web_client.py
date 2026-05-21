@@ -34,6 +34,10 @@ from brandmind_web.models import (  # noqa: E402
     ToolCallInfo,
     ToolCallPayload,
     ToolResultPayload,
+    UserProfileOption,
+    UserProfileSettings,
+    UserProfileSettingsOptions,
+    UserProfileSettingsPayload,
 )
 
 
@@ -51,7 +55,13 @@ class TestModels:
             "current_phase": "phase_4",
             "scope": "repositioning",
             "brand_name": "Quán Phở Hài",
-            "completed_phases": ["phase_0", "phase_0_5", "phase_1", "phase_2", "phase_3"],
+            "completed_phases": [
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+            ],
             "phase_sequence": [
                 "phase_0",
                 "phase_0_5",
@@ -252,3 +262,74 @@ class TestCreateBrandStrategySession:
         assert captured["json"] == {"mode": "brand-strategy"}
         assert info.session_id == "sess-1"
         assert info.metadata.current_phase == "phase_0"
+
+
+def test_user_profile_settings_defaults_match_backend_safe_fallback() -> None:
+    """Defaults mirror BrandMind's backend safe-fallback for an empty install."""
+    settings = UserProfileSettings()
+
+    assert settings.job_domain == "unknown"
+    assert settings.role == "unknown"
+    assert settings.experience_years == "unknown"
+    assert settings.brand_strategy_familiarity == "unknown"
+    assert settings.mentoring_style == "balanced"
+    assert settings.stakeholder_context == "unknown"
+    assert settings.onboarding_completed is False
+    assert settings.updated_at is None
+
+
+def test_user_profile_option_accepts_empty_description() -> None:
+    """Options with no description still validate cleanly."""
+    option = UserProfileOption(value="fb", label="F&B")
+
+    assert option.value == "fb"
+    assert option.label == "F&B"
+    assert option.description == ""
+
+
+def test_user_profile_settings_options_defaults_to_empty_lists() -> None:
+    """Empty defaults let the dialog render before the backend round-trip."""
+    options = UserProfileSettingsOptions()
+
+    assert options.job_domain == []
+    assert options.role == []
+    assert options.experience_years == []
+    assert options.brand_strategy_familiarity == []
+    assert options.mentoring_style == []
+    assert options.stakeholder_context == []
+
+
+def test_user_profile_settings_payload_round_trips_representative_response() -> None:
+    """A backend-shaped payload validates end-to-end without data loss."""
+    raw = {
+        "settings": {
+            "job_domain": "fb",
+            "role": "marketing_executive",
+            "experience_years": "1_3",
+            "brand_strategy_familiarity": "comfortable",
+            "mentoring_style": "compact_first",
+            "stakeholder_context": "boss",
+            "onboarding_completed": True,
+            "updated_at": "2026-05-21T00:00:00+00:00",
+        },
+        "options": {
+            "job_domain": [
+                {"value": "fb", "label": "F&B", "description": "Food and beverage."},
+                {"value": "retail", "label": "Retail", "description": ""},
+            ],
+            "role": [],
+            "experience_years": [],
+            "brand_strategy_familiarity": [],
+            "mentoring_style": [],
+            "stakeholder_context": [],
+        },
+        "profile_markdown": "# User Profile\n\n<!-- managed -->\n",
+    }
+
+    payload = UserProfileSettingsPayload.model_validate(raw)
+
+    assert payload.settings.job_domain == "fb"
+    assert payload.settings.onboarding_completed is True
+    assert payload.options.job_domain[0].label == "F&B"
+    assert payload.options.job_domain[0].description == "Food and beverage."
+    assert payload.profile_markdown.startswith("# User Profile")

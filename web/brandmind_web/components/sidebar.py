@@ -500,6 +500,70 @@ def _phases_section() -> rx.Component:
     )
 
 
+def _settings_footer() -> rx.Component:
+    """Sidebar bottom row that opens the Settings dialog.
+
+    Pinned to the bottom of the rail via ``margin_top: auto`` on the
+    enclosing vstack spacer. In the collapsed rail the row reduces to a
+    single gear-icon button so the affordance survives the 56-px width.
+    """
+    return rx.cond(
+        BrandMindState.sidebar_is_collapsed,
+        rx.center(
+            rx.button(
+                rx.icon(tag="settings", size=18, color=tokens.TEXT_SECONDARY),
+                on_click=BrandMindState.open_settings,
+                variant="ghost",
+                aria_label="Open settings",
+                style={
+                    "width": "32px",
+                    "height": "32px",
+                    "padding": "0",
+                    "border_radius": tokens.RADIUS_PILL,
+                    "cursor": "pointer",
+                    "_hover": {
+                        "background_color": "rgba(255, 255, 255, 0.04)",
+                    },
+                },
+            ),
+            width="100%",
+            padding="12px 0 16px 0",
+        ),
+        rx.box(
+            rx.button(
+                rx.hstack(
+                    rx.icon(tag="settings", size=16, color=tokens.TEXT_SECONDARY),
+                    rx.text(
+                        "Settings",
+                        style={
+                            "color": tokens.TEXT_SECONDARY,
+                            "font_family": tokens.FONT_SANS,
+                            "font_size": "13px",
+                            "font_weight": "500",
+                        },
+                    ),
+                    spacing="2",
+                    align="center",
+                ),
+                on_click=BrandMindState.open_settings,
+                variant="ghost",
+                style={
+                    "width": "100%",
+                    "justify_content": "flex-start",
+                    "padding": "10px 12px",
+                    "border_radius": tokens.RADIUS_SM,
+                    "cursor": "pointer",
+                    "_hover": {
+                        "background_color": "rgba(255, 255, 255, 0.04)",
+                    },
+                },
+            ),
+            padding="8px 12px 16px 12px",
+            width="100%",
+        ),
+    )
+
+
 def _section_divider() -> rx.Component:
     """Hairline between the Chats and Phases sections."""
     return rx.box(
@@ -639,11 +703,13 @@ def chat_action_dialogs() -> rx.Component:
 
 
 def phase_progress_sidebar() -> rx.Component:
-    """Render the collapsible sidebar with both Chats and Phases sections."""
+    """Render the collapsible sidebar with chats, phases, and the Settings footer."""
     return rx.vstack(
         _chats_section(),
         _section_divider(),
         _phases_section(),
+        rx.box(flex="1", width="100%"),
+        _settings_footer(),
         spacing="0",
         align="stretch",
         style={

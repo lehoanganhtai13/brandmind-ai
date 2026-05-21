@@ -14,9 +14,12 @@ from .components.canvas_pane import canvas_pane
 from .components.chat_pane import chat_pane
 from .components.degraded_banner import degraded_banner
 from .components.header import header
+from .components.onboarding_dialog import onboarding_dialog
+from .components.settings_dialog import settings_dialog
 from .components.sidebar import chat_action_dialogs, phase_progress_sidebar
 from .components.tokens import (
     BG_SURFACE_1,
+    FONT_SANS,
     TEXT_PRIMARY,
 )
 from .state import BrandMindState
@@ -39,6 +42,8 @@ def index() -> rx.Component:
     return rx.vstack(
         rx.html(f"<style>{_CURSOR_BLINK_KEYFRAMES}</style>"),
         chat_action_dialogs(),
+        settings_dialog(),
+        onboarding_dialog(),
         canvas_pane(),
         header(),
         degraded_banner(),
@@ -73,11 +78,13 @@ app = rx.App(
     style={
         "background_color": BG_SURFACE_1,
         "color": TEXT_PRIMARY,
+        "font_family": FONT_SANS,
     },
     stylesheets=[
         "https://fonts.googleapis.com/css2?"
         "family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&"
         "family=Geist:wght@400;500;600&"
+        "family=Manrope:wght@400;500;600;700&"
         "family=JetBrains+Mono:wght@400;500&display=swap",
     ],
 )

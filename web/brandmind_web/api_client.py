@@ -24,6 +24,8 @@ from .models import (
     SessionInfo,
     SessionMessages,
     StreamDonePayload,
+    UserProfileSettings,
+    UserProfileSettingsPayload,
 )
 
 _HEALTH_TIMEOUT_SECONDS = 3
@@ -396,3 +398,60 @@ def extract_final_metadata(done_payload: dict) -> StreamDonePayload:
         payload (StreamDonePayload): The validated final-state payload.
     """
     return StreamDonePayload.model_validate(done_payload)
+
+
+async def get_user_profile_settings(
+    api_base_url: str,
+) -> UserProfileSettingsPayload:
+    """Fetch saved onboarding settings and option metadata from the backend.
+
+    Returns the current ``UserProfileSettings`` plus the option lists
+    the dialog needs to render each dropdown. The web UI never invents
+    option labels; everything user-facing comes from this payload so a
+    backend label change does not require a web release.
+
+    Args:
+        api_base_url (str): Backend base URL.
+
+    Returns:
+        payload (UserProfileSettingsPayload): Settings, option lists,
+        and the prompt-facing managed-block markdown.
+
+    Raises:
+        httpx.HTTPError: On network failure or non-2xx response.
+    """
+    url = f"{api_base_url}/api/v1/brand-strategy/user-profile/settings"
+    async with httpx.AsyncClient(timeout=_HEALTH_TIMEOUT_SECONDS) as client:
+        response = await client.get(url)
+        response.raise_for_status()
+    return UserProfileSettingsPayload.model_validate(response.json())
+
+
+async def save_user_profile_settings(
+    api_base_url: str,
+    settings: UserProfileSettings,
+) -> UserProfileSettingsPayload:
+    """Persist onboarding settings and return the refreshed payload.
+
+    Forwards the structured ``UserProfileSettings`` to the backend,
+    which refreshes ``profile.md`` and returns the updated settings
+    plus the re-rendered managed block. The web UI swaps its local
+    snapshot for the server response so any backend-side normalisation
+    (timestamps, canonical defaults) is reflected immediately.
+
+    Args:
+        api_base_url (str): Backend base URL.
+        settings (UserProfileSettings): The values to persist.
+
+    Returns:
+        payload (UserProfileSettingsPayload): Server-confirmed settings,
+        option lists, and refreshed profile markdown.
+
+    Raises:
+        httpx.HTTPError: On network failure or non-2xx response.
+    """
+    url = f"{api_base_url}/api/v1/brand-strategy/user-profile/settings"
+    async with httpx.AsyncClient(timeout=_CREATE_TIMEOUT_SECONDS) as client:
+        response = await client.put(url, json=settings.model_dump())
+        response.raise_for_status()
+    return UserProfileSettingsPayload.model_validate(response.json())

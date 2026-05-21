@@ -30,10 +30,12 @@ from .api_client import (
     generate_session_title,
     get_session,
     get_session_messages,
+    get_user_profile_settings,
     health_check,
     list_brand_strategy_sessions,
     list_main_agent_models,
     list_session_artifacts,
+    save_user_profile_settings,
     stream_message,
     update_session,
 )
@@ -52,6 +54,8 @@ from .models import (
     ToolCallInfo,
     ToolCallPayload,
     ToolResultPayload,
+    UserProfileSettings,
+    UserProfileSettingsOptions,
 )
 
 _GENERATE_TOOL_NAMES: frozenset[str] = frozenset(
@@ -130,6 +134,19 @@ class BrandMindState(rx.State):
     rename_draft: str = ""
     delete_target: str = ""
     delete_workspace_too: bool = False
+
+    profile_settings: UserProfileSettings = UserProfileSettings()
+    profile_settings_options: UserProfileSettingsOptions = UserProfileSettingsOptions()
+    profile_settings_draft: UserProfileSettings = UserProfileSettings()
+    profile_settings_saving: bool = False
+    profile_settings_error: str = ""
+    settings_dialog_open: bool = False
+    settings_dialog_section: str = "personalization"
+    onboarding_open: bool = False
+    onboarding_has_auto_opened: str = rx.LocalStorage(
+        "",
+        name="bm.web.onboarding.auto_opened",
+    )
 
     artifacts: list[ArtifactRef] = []
     canvas_open: bool = False
@@ -385,11 +402,26 @@ class BrandMindState(rx.State):
             (option.model_id for option in options if option.is_default),
             options[0].model_id if options else "",
         )
+        try:
+            profile_payload = await get_user_profile_settings(api_url)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: profile settings fetch failed: {exc}")
+            profile_payload = None
         async with self:
             self.sessions = self._filter_chats(sessions)
             self.available_models = options
             if not self.selected_model_id:
                 self.selected_model_id = default_model_id
+            if profile_payload is not None:
+                self.profile_settings = profile_payload.settings
+                self.profile_settings_options = profile_payload.options
+                self.profile_settings_draft = profile_payload.settings.model_copy()
+                if (
+                    not profile_payload.settings.onboarding_completed
+                    and not self.onboarding_has_auto_opened
+                ):
+                    self.onboarding_open = True
+                    self.onboarding_has_auto_opened = "1"
             self.is_connected = True
             self.error_message = ""
 
@@ -618,6 +650,136 @@ class BrandMindState(rx.State):
                 self.phase_sequence = []
                 self.phase_display_labels = {}
                 self._reset_canvas_state()
+
+    @rx.event
+    def open_settings(self) -> None:
+        """Open the Settings dialog seeded with the saved snapshot.
+
+        Clones the saved settings into the draft so an in-progress edit
+        can be cancelled without mutating the persisted state.
+        """
+        self.profile_settings_draft = self.profile_settings.model_copy()
+        self.profile_settings_error = ""
+        self.settings_dialog_open = True
+
+    @rx.event
+    def close_settings(self) -> None:
+        """Dismiss the Settings dialog and discard any unsaved edits."""
+        self.settings_dialog_open = False
+        self.profile_settings_draft = self.profile_settings.model_copy()
+        self.profile_settings_error = ""
+
+    @rx.event
+    def close_onboarding(self) -> None:
+        """Dismiss the onboarding modal without saving.
+
+        The local ``onboarding_has_auto_opened`` flag stays set so the
+        modal does not auto-reappear; the user can still revisit the
+        form via Settings.
+        """
+        self.onboarding_open = False
+        self.profile_settings_draft = self.profile_settings.model_copy()
+        self.profile_settings_error = ""
+
+    @rx.event
+    def set_settings_dialog_section(self, section: str) -> None:
+        """Switch the visible content panel inside the Settings dialog."""
+        self.settings_dialog_section = section
+
+    @rx.event
+    def update_setting_field(self, field: str, value: str) -> None:
+        """Patch one field on the in-flight settings draft.
+
+        The dialog dropdowns call this on every change so the draft
+        accumulates edits without touching the saved snapshot until the
+        user explicitly saves.
+        """
+        allowed = {
+            "job_domain",
+            "role",
+            "experience_years",
+            "brand_strategy_familiarity",
+            "mentoring_style",
+            "stakeholder_context",
+        }
+        if field not in allowed:
+            return
+        self.profile_settings_draft = self.profile_settings_draft.model_copy(
+            update={field: value}
+        )
+
+    @rx.event(background=True)
+    async def save_profile_settings(self) -> None:
+        """Persist the draft, replace the saved snapshot, and close dialogs.
+
+        ``onboarding_completed`` is forced to true on save so the user
+        does not see the first-run modal again after explicitly setting
+        their preferences. On HTTP failure the draft is preserved and
+        an inline error message is surfaced.
+        """
+        async with self:
+            if self.profile_settings_saving:
+                return
+            self.profile_settings_saving = True
+            self.profile_settings_error = ""
+            payload = self.profile_settings_draft.model_copy(
+                update={"onboarding_completed": True}
+            )
+        api_url = _api_base_url()
+        try:
+            result = await save_user_profile_settings(api_url, payload)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: profile settings save failed: {exc}")
+            async with self:
+                self.profile_settings_saving = False
+                self.profile_settings_error = (
+                    "Could not save — backend unreachable. Try again in a moment."
+                )
+            return
+        async with self:
+            self.profile_settings = result.settings
+            self.profile_settings_options = result.options
+            self.profile_settings_draft = result.settings.model_copy()
+            self.profile_settings_saving = False
+            self.settings_dialog_open = False
+            self.onboarding_open = False
+            self.onboarding_has_auto_opened = "1"
+
+    @rx.event(background=True)
+    async def skip_onboarding(self) -> None:
+        """Close the onboarding modal and persist defaults as accepted.
+
+        Saves the current draft (or pristine defaults if untouched) with
+        ``onboarding_completed=true`` so future loads no longer auto-open
+        the modal. The user can still revisit and refine values later
+        via the Settings entry in the sidebar.
+        """
+        async with self:
+            if self.profile_settings_saving:
+                return
+            self.profile_settings_saving = True
+            self.profile_settings_error = ""
+            payload = self.profile_settings_draft.model_copy(
+                update={"onboarding_completed": True}
+            )
+        api_url = _api_base_url()
+        try:
+            result = await save_user_profile_settings(api_url, payload)
+        except httpx.HTTPError as exc:
+            logger.warning(f"BrandMind web: skip onboarding save failed: {exc}")
+            async with self:
+                self.profile_settings_saving = False
+                self.onboarding_open = False
+                self.onboarding_has_auto_opened = "1"
+                self.profile_settings_error = ""
+            return
+        async with self:
+            self.profile_settings = result.settings
+            self.profile_settings_options = result.options
+            self.profile_settings_draft = result.settings.model_copy()
+            self.profile_settings_saving = False
+            self.onboarding_open = False
+            self.onboarding_has_auto_opened = "1"
 
     def _reset_canvas_state(self) -> None:
         """Drop every canvas-related reactive var to its initial value.

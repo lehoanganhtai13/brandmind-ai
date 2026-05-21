@@ -30,16 +30,17 @@ STATE_ERROR_FG = "#ffb4ab"
 STATE_ERROR_BG = "rgba(147, 0, 10, 0.20)"
 STATE_ERROR_BORDER = "#5e1c1c"
 
-FONT_DISPLAY = (
-    '"Fraunces", "Cormorant Garamond", "Times New Roman", Georgia, serif'
-)
+FONT_DISPLAY = '"Fraunces", "Cormorant Garamond", "Times New Roman", Georgia, serif'
 FONT_SANS = (
     '"Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", '
     'Roboto, "Helvetica Neue", Arial, sans-serif'
 )
+FONT_DIALOG = (
+    '"Manrope", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", '
+    'Roboto, "Helvetica Neue", Arial, sans-serif'
+)
 FONT_MONO = (
-    '"JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, '
-    "Menlo, monospace"
+    '"JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace'
 )
 
 CANVAS_AMBIENT = (
@@ -60,7 +61,4 @@ RADIUS_PILL = "9999px"
 DRAWER_EASING = "cubic-bezier(0.2, 0.8, 0.3, 1)"
 DRAWER_DURATION_MS = 280
 
-SHADOW_DRAWER = (
-    "-24px 0 48px rgba(0, 0, 0, 0.45), "
-    "-2px 0 0 rgba(255, 255, 255, 0.04)"
-)
+SHADOW_DRAWER = "-24px 0 48px rgba(0, 0, 0, 0.45), -2px 0 0 rgba(255, 255, 255, 0.04)"

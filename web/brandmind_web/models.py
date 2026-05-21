@@ -196,6 +196,72 @@ class DocxHtmlResponse(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class UserProfileOption(BaseModel):
+    """One option for a profile-settings dropdown.
+
+    Mirrors :class:`shared.workspace.profile_settings.UserProfileOption`
+    so the settings + onboarding forms can render dropdowns without
+    duplicating the canonical option list on the client.
+    """
+
+    value: str
+    label: str
+    description: str = ""
+
+
+class UserProfileSettings(BaseModel):
+    """Onboarding personalization settings synced with the backend.
+
+    Mirrors :class:`shared.workspace.profile_settings.UserProfileSettings`.
+    Each field carries the public enum value (e.g. ``"fb"``,
+    ``"comfortable"``) rather than the enum itself so the wire shape
+    stays string-only. Defaults match the backend's safe fallback
+    (``BALANCED`` mentoring density + ``UNKNOWN`` for the rest) so the
+    dialog can render before the backend round-trip completes.
+    """
+
+    job_domain: str = "unknown"
+    role: str = "unknown"
+    experience_years: str = "unknown"
+    brand_strategy_familiarity: str = "unknown"
+    mentoring_style: str = "balanced"
+    stakeholder_context: str = "unknown"
+    onboarding_completed: bool = False
+    updated_at: str | None = None
+
+
+class UserProfileSettingsOptions(BaseModel):
+    """Option lists for the six profile-settings dropdowns.
+
+    Mirrors :class:`shared.workspace.profile_settings.UserProfileSettingsOptions`
+    so the dialog projects the backend-owned label and description for
+    each option without re-stating the copy on the client side.
+    """
+
+    job_domain: list[UserProfileOption] = Field(default_factory=list)
+    role: list[UserProfileOption] = Field(default_factory=list)
+    experience_years: list[UserProfileOption] = Field(default_factory=list)
+    brand_strategy_familiarity: list[UserProfileOption] = Field(default_factory=list)
+    mentoring_style: list[UserProfileOption] = Field(default_factory=list)
+    stakeholder_context: list[UserProfileOption] = Field(default_factory=list)
+
+
+class UserProfileSettingsPayload(BaseModel):
+    """Response envelope for the user-profile settings endpoints.
+
+    Both ``GET`` and ``PUT /api/v1/brand-strategy/user-profile/settings``
+    return this shape. ``profile_markdown`` is the prompt-facing managed
+    block the agent will read and is shown in the dialog as a read-only
+    preview for users who want to verify what context is being persisted.
+    """
+
+    settings: UserProfileSettings = Field(default_factory=UserProfileSettings)
+    options: UserProfileSettingsOptions = Field(
+        default_factory=UserProfileSettingsOptions,
+    )
+    profile_markdown: str = ""
+
+
 class ChatMessage(BaseModel):
     """One row in the chat scroll — either a user turn or an agent turn.
 
