@@ -384,7 +384,7 @@ def _extract_toc(body: str) -> tuple[str, list[DocxTocEntry]]:
         close_idx = body.find(close_tag, match.end())
         if close_idx == -1:
             continue
-        inner_html = body[match.end():close_idx]
+        inner_html = body[match.end() : close_idx]
         text = html.unescape(_TAG_STRIP_RE.sub("", inner_html).strip())
         if not text:
             continue
@@ -396,9 +396,9 @@ def _extract_toc(body: str) -> tuple[str, list[DocxTocEntry]]:
             new_open = match.group(0)
         else:
             anchor = _slugify_anchor(text, used_anchors)
-            new_open = f"<{tag}{attrs} id=\"{anchor}\">"
+            new_open = f'<{tag}{attrs} id="{anchor}">'
 
-        rewritten_parts.append(body[cursor:match.start()])
+        rewritten_parts.append(body[cursor : match.start()])
         rewritten_parts.append(new_open)
         cursor = match.end()
         entries.append(

@@ -78,9 +78,7 @@ _OBJECTIVE_PROVENANCE_RE = re.compile(
     r"(?:source|evidence|verified|tool result|research source|"
     r"nguồn|nguon|bằng chứng|bang chung)\s*:\s*(.+?)\s*$"
 )
-_MEMORY_CANDIDATE_SIGNAL_RE = re.compile(
-    r"(?im)^\s*-\s*Candidate:\s*(?!$|\[)(.+?)\s*$"
-)
+_MEMORY_CANDIDATE_SIGNAL_RE = re.compile(r"(?im)^\s*-\s*Candidate:\s*(?!$|\[)(.+?)\s*$")
 _USER_INTERACTION_TEMPLATE_LINE_RE = re.compile(
     r"(?i)^\s*-\s*(Learning speed|Decision style|Engagement level|"
     r"Knowledge gaps|Strengths)\s*:\s*\[.+\]\s*$"
@@ -853,8 +851,8 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
                 tool_call_id=request.tool_call["id"],
             )
 
-        user_interaction_guard_message = (
-            self._user_interaction_pattern_guard_message(request)
+        user_interaction_guard_message = self._user_interaction_pattern_guard_message(
+            request
         )
         if user_interaction_guard_message is not None:
             return ToolMessage(
@@ -919,8 +917,8 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
                 tool_call_id=request.tool_call["id"],
             )
 
-        user_interaction_guard_message = (
-            self._user_interaction_pattern_guard_message(request)
+        user_interaction_guard_message = self._user_interaction_pattern_guard_message(
+            request
         )
         if user_interaction_guard_message is not None:
             return ToolMessage(

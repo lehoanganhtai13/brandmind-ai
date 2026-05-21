@@ -93,7 +93,7 @@ _RETRY_MARKET_RESEARCH_RENDER_REMINDER = (
     "A market-research pass has happened in this turn. In the next user-facing "
     "answer, run a source-ledger check before writing any public detail. If "
     "the specialist result says `NO_SOURCE_LEDGER_DETECTED`, do not say you "
-    "\"found\", \"observed\", or \"researched\" concrete public facts; say the "
+    '"found", "observed", or "researched" concrete public facts; say the '
     "quick public check was not conclusive enough to treat those details as "
     "verified. If it says `SOURCE_MARKERS_DETECTED`, use only details that are "
     "directly tied to a named source/URL/platform in that result. Keep the "
@@ -106,7 +106,7 @@ _RETRY_MARKET_RESEARCH_RENDER_REMINDER = (
 _RETRY_OPENING_RESEARCH_REMINDER = (
     "## Opening Public-Brand Research\n"
     "The user's opening names a specific public-facing F&B project. Before "
-    "answering, call `task(subagent_type=\"market-research\", description=...)` "
+    'answering, call `task(subagent_type="market-research", description=...)` '
     "with a narrow validation brief: check whether the named venue/brand has "
     "current public evidence, what the public relationship to the base brand "
     "appears to be, and what source-backed facts are safe to use. Limit the "
@@ -330,15 +330,11 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
 
             tool_calls = getattr(message, "tool_calls", None) or []
             for tool_call in tool_calls:
-                if EvidenceGroundingMiddleware._tool_call_is_market_research(
-                    tool_call
-                ):
+                if EvidenceGroundingMiddleware._tool_call_is_market_research(tool_call):
                     return True
             additional_kwargs = getattr(message, "additional_kwargs", {}) or {}
             for tool_call in additional_kwargs.get("tool_calls", []) or []:
-                if EvidenceGroundingMiddleware._tool_call_is_market_research(
-                    tool_call
-                ):
+                if EvidenceGroundingMiddleware._tool_call_is_market_research(tool_call):
                     return True
             if EvidenceGroundingMiddleware._tool_message_is_market_research_boundary(
                 message
@@ -348,9 +344,7 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
 
     @staticmethod
     def _latest_human_text(request: ModelRequest) -> str:
-        messages = request.state.get("messages", []) or getattr(
-            request, "messages", []
-        )
+        messages = request.state.get("messages", []) or getattr(request, "messages", [])
         for message in reversed(messages):
             if isinstance(message, dict):
                 message_type = str(
