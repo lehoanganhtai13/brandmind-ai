@@ -17,16 +17,23 @@ from .sidebar import _PHASE_DISPLAY_EN
 
 
 def _sidebar_toggle() -> rx.Component:
-    """Render the sidebar collapse / expand button."""
+    """Render the sidebar collapse / expand button.
+
+    Uses the chevron-free ``panel_left`` glyph for both states so the
+    affordance reads as a friendly panel handle (Gemini / ChatGPT
+    pattern) rather than a directional arrow that suggests motion the
+    user did not request.
+    """
     return rx.button(
-        rx.cond(
-            BrandMindState.sidebar_is_collapsed,
-            rx.icon(tag="panel_left_open", size=18),
-            rx.icon(tag="panel_left_close", size=18),
-        ),
+        rx.icon(tag="panel_left", size=18),
         on_click=BrandMindState.toggle_sidebar,
         variant="ghost",
         color_scheme="gray",
+        aria_label=rx.cond(
+            BrandMindState.sidebar_is_collapsed,
+            "Open sidebar",
+            "Close sidebar",
+        ),
         style={
             "color": tokens.TEXT_SECONDARY,
             "width": "36px",
@@ -108,7 +115,7 @@ def _canvas_toggle() -> rx.Component:
     """
     return rx.button(
         rx.hstack(
-            rx.icon(tag="panel_right_open", size=18),
+            rx.icon(tag="panel_right", size=18),
             rx.cond(
                 BrandMindState.has_artifacts,
                 rx.box(

@@ -83,6 +83,22 @@ def _option_row(option: rx.Var[MainAgentModelOption]) -> rx.Component:
             "height": "auto",
             "min_height": "0",
             "align_items": "flex-start",
+            "background_color": "transparent",
+            "color": tokens.TEXT_PRIMARY,
+            "&[data-highlighted]": {
+                "background_color": tokens.ACCENT_TEAL_MUTED,
+                "color": tokens.TEXT_PRIMARY,
+                "outline": "none",
+            },
+            "&:hover": {
+                "background_color": tokens.ACCENT_TEAL_MUTED,
+                "color": tokens.TEXT_PRIMARY,
+            },
+            "&:focus": {
+                "background_color": tokens.ACCENT_TEAL_MUTED,
+                "color": tokens.TEXT_PRIMARY,
+                "outline": "none",
+            },
         },
     )
 
