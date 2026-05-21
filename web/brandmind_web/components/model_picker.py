@@ -43,9 +43,9 @@ def _option_row(option: rx.Var[MainAgentModelOption]) -> rx.Component:
                 style={
                     "color": tokens.TEXT_MUTED,
                     "font_family": tokens.FONT_SANS,
-                    "font_size": "11px",
+                    "font_size": "12px",
                     "line_height": "1.4",
-                    "margin_top": "2px",
+                    "margin_top": "6px",
                 },
             ),
             rx.fragment(),
@@ -77,9 +77,12 @@ def _option_row(option: rx.Var[MainAgentModelOption]) -> rx.Component:
         row,
         on_click=BrandMindState.select_model(option.model_id),
         style={
-            "padding": "10px 12px",
+            "padding": "12px 14px",
             "border_radius": tokens.RADIUS_SM,
             "cursor": "pointer",
+            "height": "auto",
+            "min_height": "0",
+            "align_items": "flex-start",
         },
     )
 

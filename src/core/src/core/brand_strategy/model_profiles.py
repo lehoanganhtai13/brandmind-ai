@@ -39,12 +39,12 @@ BRAND_STRATEGY_MAIN_MODEL_PROFILES = {
     "gemini-3.5-flash": BrandStrategyMainModelProfile(
         model_id="gemini-3.5-flash",
         display_name="Gemini 3.5 Flash",
-        description="Best for full brand-strategy work",
+        description="Best for deep strategy sessions",
     ),
     "gemini-3-flash": BrandStrategyMainModelProfile(
         model_id="gemini-3-flash-preview",
         display_name="Gemini 3 Flash",
-        description="Faster, lighter responses",
+        description="Fast full strategy at lower cost",
     ),
 }
 
