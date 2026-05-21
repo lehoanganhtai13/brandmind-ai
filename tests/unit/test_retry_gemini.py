@@ -63,6 +63,55 @@ async def test_agenerate_retries_malformed_function_call_response(
 
 
 @pytest.mark.asyncio
+async def test_agenerate_retries_empty_terminal_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Retry a final Gemini message that has no content and no tool call."""
+    empty = ChatResult(
+        generations=[
+            ChatGeneration(
+                message=AIMessage(
+                    content="",
+                    response_metadata={"finish_reason": "STOP"},
+                )
+            )
+        ]
+    )
+    success = ChatResult(
+        generations=[
+            ChatGeneration(
+                message=AIMessage(
+                    content="source ledger",
+                    response_metadata={"finish_reason": "STOP"},
+                )
+            )
+        ]
+    )
+    calls = 0
+
+    async def fake_agenerate(
+        self: ChatGoogleGenerativeAI,
+        messages: list[BaseMessage],
+        *args: Any,
+        **kwargs: Any,
+    ) -> ChatResult:
+        nonlocal calls
+        calls += 1
+        return empty if calls == 1 else success
+
+    monkeypatch.setattr(ChatGoogleGenerativeAI, "_agenerate", fake_agenerate)
+    model = RetryChatGoogleGenerativeAI(
+        google_api_key="test-key",
+        model="gemini-2.5-flash-lite",
+    )
+
+    result = await model._agenerate([HumanMessage(content="Research this brand")])
+
+    assert result == success
+    assert calls == 2
+
+
+@pytest.mark.asyncio
 async def test_astream_retries_malformed_function_call_before_yield(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

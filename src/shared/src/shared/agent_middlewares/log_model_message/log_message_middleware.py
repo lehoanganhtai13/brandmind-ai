@@ -158,6 +158,33 @@ class LogModelMessageMiddleware(AgentMiddleware):
             text = text[: self._DEBUG_TRUNCATE_RESULT] + "...<truncated>"
         logger.info(f"🔬 DEBUG TOOL_RESULT [{tool_name}]\n{text}")
 
+    @staticmethod
+    def _extract_tool_result_text(result: ToolMessage | Command) -> str | None:
+        """Return textual tool output from direct or command-wrapped results.
+
+        DeepAgents sub-agent delegation returns a ``Command`` whose update
+        contains a ``ToolMessage`` for the parent agent. Treating only direct
+        ``ToolMessage`` instances as results makes the UI trace show
+        ``"(done)"`` for sub-agent calls even though the orchestrator received
+        a real handoff. This helper keeps observability aligned with the
+        actual parent-agent context.
+        """
+        if isinstance(result, ToolMessage):
+            return result.text or ""
+
+        update = getattr(result, "update", None)
+        if not isinstance(update, dict):
+            return None
+
+        messages = update.get("messages")
+        if not isinstance(messages, list):
+            return None
+
+        for message in reversed(messages):
+            if isinstance(message, ToolMessage):
+                return message.text or ""
+        return None
+
     def wrap_model_call(
         self,
         request: ModelRequest,
@@ -255,12 +282,14 @@ class LogModelMessageMiddleware(AgentMiddleware):
             # Execute tool
             result = handler(request)
 
-            if self._debug_tool_calls and hasattr(result, "text"):
-                self._emit_debug_tool_result(tool_name, result.text)
+            result_text = self._extract_tool_result_text(result)
+
+            if self._debug_tool_calls and result_text is not None:
+                self._emit_debug_tool_result(tool_name, result_text)
 
             # Log result
-            if self.log_tool_results and hasattr(result, "text"):
-                content = result.text
+            if self.log_tool_results and result_text is not None:
+                content = result_text
                 if content:
                     # Truncate if needed
                     if self.truncate_tool_results > 0:
@@ -339,21 +368,23 @@ class LogModelMessageMiddleware(AgentMiddleware):
             # Execute tool - all nested calls can use context
             result = await handler(request)
 
-            if self._debug_tool_calls and hasattr(result, "text"):
-                self._emit_debug_tool_result(tool_name, result.text)
+            result_text = self._extract_tool_result_text(result)
+
+            if self._debug_tool_calls and result_text is not None:
+                self._emit_debug_tool_result(tool_name, result_text)
 
             # Emit tool_result event (Pydantic model)
-            if self.callback and hasattr(result, "text"):
+            if self.callback and result_text is not None:
                 self.callback(
                     ToolResultEvent(
                         tool_name=tool_name,
                         tool_call_id=tool_call_id,
-                        result=result.text or "",
+                        result=result_text,
                     )
                 )
             # Fallback to loguru logging
-            elif self.log_tool_results and hasattr(result, "text"):
-                content = result.text
+            elif self.log_tool_results and result_text is not None:
+                content = result_text
                 if content:
                     # Truncate if needed
                     if self.truncate_tool_results > 0:

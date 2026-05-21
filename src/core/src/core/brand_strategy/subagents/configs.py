@@ -54,12 +54,12 @@ def create_subagent_models() -> dict[str, RetryChatGoogleGenerativeAI]:
         Dict mapping sub-agent name to configured model instance.
     """
     return {
-        # Market Research: Gemini 2.5 Flash Lite — cheap, fast, good at data gathering
+        # Market Research: Gemini 3 Flash — reliable tool-use source ledgers
         "market-research": RetryChatGoogleGenerativeAI(
             google_api_key=SETTINGS.GEMINI_API_KEY,
-            model="gemini-2.5-flash-lite",
-            temperature=0.1,
-            thinking_budget=2000,
+            model="gemini-3-flash-preview",
+            temperature=1.0,
+            thinking_level="medium",
             max_output_tokens=MARKET_RESEARCH_MAX_OUTPUT_TOKENS,
             include_thoughts=False,
         ),

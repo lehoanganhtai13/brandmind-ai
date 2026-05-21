@@ -27,3 +27,11 @@ def test_subagent_models_use_role_specific_output_budgets() -> None:
         models["document-generator"].max_output_tokens
         == DOCUMENT_GENERATOR_MAX_OUTPUT_TOKENS
     )
+
+
+def test_market_research_uses_tool_reliable_gemini_3_flash() -> None:
+    """Market research needs reliable source-ledger handoff, not cheapest output."""
+    models = create_subagent_models()
+
+    assert models["market-research"].model == "gemini-3-flash-preview"
+    assert models["market-research"].thinking_level == "medium"

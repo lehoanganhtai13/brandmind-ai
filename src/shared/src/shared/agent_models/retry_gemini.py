@@ -36,6 +36,24 @@ def _has_malformed_function_call(result: ChatResult) -> bool:
     return False
 
 
+def _message_has_payload(message: Any) -> bool:
+    """Return whether a generated message has content or tool intent."""
+    content = getattr(message, "content", "")
+    if content:
+        return True
+    if getattr(message, "tool_call_chunks", None):
+        return True
+    return bool(getattr(message, "tool_calls", None))
+
+
+def _has_empty_terminal_response(result: ChatResult) -> bool:
+    """Return whether Gemini produced no content and no tool calls."""
+    return not any(
+        _message_has_payload(getattr(generation, "message", None))
+        for generation in result.generations
+    )
+
+
 def _chunk_has_payload(chunk: ChatGenerationChunk) -> bool:
     """Return whether a streaming chunk contains usable user-visible payload."""
     message = getattr(chunk, "message", None)
@@ -134,6 +152,10 @@ class RetryChatGoogleGenerativeAI(ChatGoogleGenerativeAI):
                 if _has_malformed_function_call(result):
                     raise RetryableGeminiResponseError(
                         "Gemini returned MALFORMED_FUNCTION_CALL"
+                    )
+                if _has_empty_terminal_response(result):
+                    raise RetryableGeminiResponseError(
+                        "Gemini returned empty response without content or tool calls"
                     )
                 return result
 
