@@ -102,37 +102,134 @@ def _empty_state() -> rx.Component:
     )
 
 
-_AUTO_SCROLL_SCRIPT = """
-(function attach() {
-  const viewport = document.querySelector('[data-bm-chat-scroll]');
-  if (!viewport) {
-    window.requestAnimationFrame(attach);
-    return;
-  }
-  if (viewport.__bmAutoScroll) return;
-  viewport.__bmAutoScroll = true;
-  const THRESHOLD_PX = 96;
-  let pinned = true;
-  const nearBottom = () =>
-    viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight
-      < THRESHOLD_PX;
-  viewport.addEventListener(
-    'scroll',
-    () => { pinned = nearBottom(); },
-    { passive: true }
-  );
-  const stick = () => {
-    if (pinned) {
-      viewport.scrollTop = viewport.scrollHeight;
+_TABLE_BULLET_SCRIPT = """
+(function bootstrap() {
+  if (window.__bmTableBulletsBootstrap) return;
+  window.__bmTableBulletsBootstrap = true;
+  function extractMarker(group) {
+    const first = group[0];
+    if (!first || first.nodeType !== 3) return null;
+    const v = first.nodeValue;
+    let m = v.match(/^(\\s*)(\\*|•)\\s+/);
+    if (m) {
+      first.nodeValue = v.slice(m[0].length);
+      return { marker: '•', kind: 'bullet' };
     }
-  };
-  new MutationObserver(stick).observe(viewport, {
+    m = v.match(/^(\\s*)(\\d+)\\.\\s+/);
+    if (m) {
+      first.nodeValue = v.slice(m[0].length);
+      return { marker: m[2] + '.', kind: 'numbered' };
+    }
+    return null;
+  }
+  function fixCell(cell) {
+    if (cell.__bmBulletsFixed) return;
+    cell.__bmBulletsFixed = true;
+    const groups = [[]];
+    Array.from(cell.childNodes).forEach(node => {
+      if (node.nodeType === 1 && node.tagName === 'BR') {
+        groups.push([]);
+      } else {
+        groups[groups.length - 1].push(node);
+      }
+    });
+    if (groups.length === 1 && groups[0].length === 0) return;
+    const blocks = groups
+      .filter(g => g.length > 0)
+      .map(group => ({ group, meta: extractMarker(group) }));
+    let bulletSeen = false;
+    blocks.forEach(b => {
+      if (b.meta && b.meta.kind === 'bullet') bulletSeen = true;
+      if (b.meta && b.meta.kind === 'numbered' && bulletSeen) {
+        b.meta.kind = 'sub-numbered';
+      }
+    });
+    while (cell.firstChild) cell.removeChild(cell.firstChild);
+    blocks.forEach(({ group, meta }) => {
+      if (!meta) {
+        const plain = document.createElement('div');
+        group.forEach(n => plain.appendChild(n));
+        cell.appendChild(plain);
+        return;
+      }
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'flex-start';
+      row.style.gap = meta.kind === 'bullet' ? '0.4em' : '0.3em';
+      row.style.marginTop = meta.kind === 'bullet' ? '2px' : '1px';
+      if (meta.kind === 'sub-numbered') {
+        row.style.marginLeft = '1.5em';
+      }
+      const marker = document.createElement('span');
+      marker.textContent = meta.marker;
+      marker.style.flex = '0 0 auto';
+      if (meta.kind !== 'bullet') {
+        marker.style.minWidth = '1.05em';
+        marker.style.fontVariantNumeric = 'tabular-nums';
+      }
+      const body = document.createElement('span');
+      body.style.flex = '1 1 auto';
+      body.style.minWidth = '0';
+      group.forEach(n => body.appendChild(n));
+      row.appendChild(marker);
+      row.appendChild(body);
+      cell.appendChild(row);
+    });
+  }
+  function scan() {
+    document.querySelectorAll(
+      '[data-bm-chat-scroll] td, [data-bm-chat-scroll] th'
+    ).forEach(fixCell);
+  }
+  scan();
+  new MutationObserver(scan).observe(document.body, {
     childList: true,
     subtree: true,
-    characterData: true,
   });
-  new ResizeObserver(stick).observe(viewport);
-  stick();
+})();
+"""
+
+
+_AUTO_SCROLL_SCRIPT = """
+(function bootstrap() {
+  if (window.__bmAutoScrollBootstrap) return;
+  window.__bmAutoScrollBootstrap = true;
+  const THRESHOLD_PX = 96;
+  function attachTo(viewport) {
+    if (!viewport || viewport.__bmAutoScroll) return;
+    viewport.__bmAutoScroll = true;
+    let pinned = true;
+    const nearBottom = () =>
+      viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight
+        < THRESHOLD_PX;
+    viewport.addEventListener(
+      'scroll',
+      () => { pinned = nearBottom(); },
+      { passive: true }
+    );
+    const stick = () => {
+      if (pinned) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+    };
+    new MutationObserver(stick).observe(viewport, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    new ResizeObserver(stick).observe(viewport);
+    stick();
+  }
+  function scan() {
+    document
+      .querySelectorAll('[data-bm-chat-scroll]')
+      .forEach(attachTo);
+  }
+  scan();
+  new MutationObserver(scan).observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 })();
 """
 
@@ -140,13 +237,17 @@ _AUTO_SCROLL_SCRIPT = """
 def _message_scroll() -> rx.Component:
     """Vertical scroll of message bubbles within a centered reading column.
 
-    A small client-side script pins the scroll to the bottom while the
-    agent streams tokens or appends timeline entries, mirroring the
-    ChatGPT / Gemini behaviour: the viewport stays glued to the latest
-    chunk unless the user scrolls up to read earlier content, in which
-    case auto-scroll backs off until they return to the bottom.
+    Uses a plain ``rx.box`` (instead of Radix ``scroll_area``) so the
+    scrolling element itself carries ``data-bm-chat-scroll`` — the
+    auto-scroll script can then attach directly without having to guess
+    which descendant Radix designates as the viewport. A small
+    client-side script pins the scroll to the bottom while the agent
+    streams tokens or appends timeline entries, mirroring the ChatGPT /
+    Gemini behaviour: the viewport stays glued to the latest chunk
+    unless the user scrolls up to read earlier content, in which case
+    auto-scroll backs off until they return to the bottom.
     """
-    return rx.scroll_area(
+    return rx.box(
         rx.vstack(
             rx.foreach(
                 BrandMindState.messages,
@@ -159,13 +260,27 @@ def _message_scroll() -> rx.Component:
             width="100%",
             margin_x="auto",
         ),
-        type="auto",
-        scrollbars="vertical",
         custom_attrs={"data-bm-chat-scroll": "true"},
         style={
             "flex": "1",
             "min_height": "0",
             "width": "100%",
+            "overflow_y": "auto",
+            "overflow_x": "hidden",
+            "scrollbar_width": "thin",
+            "scrollbar_color": "rgba(255, 255, 255, 0.18) transparent",
+            "&::-webkit-scrollbar": {"width": "10px"},
+            "&::-webkit-scrollbar-track": {"background": "transparent"},
+            "&::-webkit-scrollbar-thumb": {
+                "background": "rgba(255, 255, 255, 0.16)",
+                "border_radius": "8px",
+                "border": "2px solid transparent",
+                "background_clip": "padding-box",
+            },
+            "&::-webkit-scrollbar-thumb:hover": {
+                "background": "rgba(255, 255, 255, 0.26)",
+                "background_clip": "padding-box",
+            },
         },
     )
 
@@ -189,7 +304,10 @@ def chat_pane() -> rx.Component:
         flex="1",
         width="100%",
         height="100%",
-        on_mount=rx.call_script(_AUTO_SCROLL_SCRIPT),
+        on_mount=[
+            rx.call_script(_AUTO_SCROLL_SCRIPT),
+            rx.call_script(_TABLE_BULLET_SCRIPT),
+        ],
         style={
             "background_color": tokens.BG_CANVAS,
             "background_image": tokens.CANVAS_AMBIENT,

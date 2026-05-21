@@ -139,7 +139,8 @@ brandmind-reset-home: ## Reset BrandMind runtime data while preserving browser_d
 		mkdir -p "$$home"; \
 		find "$$home" -mindepth 1 -maxdepth 1 ! -name browser_data -exec rm -rf {} +; \
 	fi; \
-	echo "BrandMind runtime home reset. The next 'brandmind serve' starts fresh."
+	echo "BrandMind runtime home reset. The next 'brandmind serve' starts fresh."; \
+	echo "Tip: open http://localhost:8501/?force_onboarding=1 in your browser to re-trigger the onboarding modal — this overrides the per-browser LocalStorage guard that prevents repeat auto-open."
 
 ## Development
 test: ## Run tests

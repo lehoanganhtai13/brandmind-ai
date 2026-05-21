@@ -53,25 +53,49 @@ def _phase_number(phase_key: rx.Var) -> rx.Var:
     return glyph
 
 
+def _phase_glyph(phase_key: rx.Var, color: rx.Var, base_size: str) -> rx.Component:
+    """Render the phase pill's glyph with vertical metrics tuned per character.
+
+    The half-phase ``½`` (U+00BD) sits above the cap height of the digits it
+    neighbours, so a flat ``align-items: center`` row leaves it visually
+    high. Bumping its size + nudging it down a hair restores parity with
+    the digit set on the same row.
+    """
+    base_style = {
+        "font_family": tokens.FONT_SANS,
+        "font_weight": "600",
+        "line_height": "1",
+        "color": color,
+        "display": "inline-block",
+    }
+    return rx.cond(
+        phase_key == "phase_0_5",
+        rx.el.span(
+            "½",
+            style={
+                **base_style,
+                "font_size": "15px",
+                "transform": "translateY(1px)",
+                "font_variant_numeric": "stacked-fractions",
+            },
+        ),
+        rx.el.span(
+            _phase_number(phase_key),
+            style={**base_style, "font_size": base_size},
+        ),
+    )
+
+
 def _expanded_row(phase_key: rx.Var) -> rx.Component:
     """One row in the expanded sidebar — number pill + label."""
     is_current = phase_key == BrandMindState.current_phase
     is_done = BrandMindState.completed_phases.contains(phase_key)
 
     pill = rx.box(
-        rx.el.span(
-            _phase_number(phase_key),
-            style={
-                "font_family": tokens.FONT_SANS,
-                "font_size": "12px",
-                "font_weight": "600",
-                "line_height": "1",
-                "color": rx.cond(
-                    is_current | is_done,
-                    "#003732",
-                    tokens.TEXT_SECONDARY,
-                ),
-            },
+        _phase_glyph(
+            phase_key,
+            rx.cond(is_current | is_done, "#003732", tokens.TEXT_SECONDARY),
+            "12px",
         ),
         style={
             "width": "26px",
@@ -123,19 +147,10 @@ def _collapsed_rail_item(phase_key: rx.Var) -> rx.Component:
     is_done = BrandMindState.completed_phases.contains(phase_key)
 
     pill = rx.box(
-        rx.el.span(
-            _phase_number(phase_key),
-            style={
-                "font_family": tokens.FONT_SANS,
-                "font_size": "12px",
-                "font_weight": "600",
-                "line_height": "1",
-                "color": rx.cond(
-                    is_current | is_done,
-                    "#003732",
-                    tokens.TEXT_SECONDARY,
-                ),
-            },
+        _phase_glyph(
+            phase_key,
+            rx.cond(is_current | is_done, "#003732", tokens.TEXT_SECONDARY),
+            "12px",
         ),
         style={
             "width": "28px",
@@ -158,10 +173,16 @@ def _collapsed_rail_item(phase_key: rx.Var) -> rx.Component:
         },
     )
 
-    return rx.tooltip(
-        rx.center(pill, width="100%", padding_y="6px"),
-        content=_phase_label(phase_key),
-        side="right",
+    return rx.flex(
+        rx.tooltip(
+            pill,
+            content=_phase_label(phase_key),
+            side="right",
+        ),
+        width="100%",
+        justify="center",
+        align="center",
+        padding_y="6px",
     )
 
 

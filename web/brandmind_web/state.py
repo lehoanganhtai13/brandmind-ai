@@ -122,6 +122,7 @@ class BrandMindState(rx.State):
     messages: list[ChatMessage] = []
     sessions: list[SessionInfo] = []
     is_streaming: bool = False
+    streaming_session_id: str = ""
     pending_input: str = ""
     error_message: str = ""
 
@@ -416,6 +417,13 @@ class BrandMindState(rx.State):
                 self.profile_settings = profile_payload.settings
                 self.profile_settings_options = profile_payload.options
                 self.profile_settings_draft = profile_payload.settings.model_copy()
+                force_param = (
+                    self.router.page.params.get("force_onboarding", "")
+                    if hasattr(self, "router")
+                    else ""
+                )
+                if force_param in {"1", "true", "yes"}:
+                    self.onboarding_has_auto_opened = ""
                 if (
                     not profile_payload.settings.onboarding_completed
                     and not self.onboarding_has_auto_opened
@@ -471,13 +479,15 @@ class BrandMindState(rx.State):
         """Load metadata and message history for an existing chat.
 
         Repaints the chat scroll plus the phase sidebar from server
-        truth. Refuses to switch while a turn is mid-stream so the
-        SSE consumer cannot land events on a swapped-out target.
+        truth. Switching is allowed while another chat is streaming:
+        the in-flight stream keeps running server-side, the dispatch
+        layer drops paint while its target is not in view, and the
+        composer stays globally disabled until the stream completes.
         """
         if not session_id:
             return
         async with self:
-            if self.is_streaming or session_id == self.session_id:
+            if session_id == self.session_id:
                 return
         api_url = _api_base_url()
         try:
@@ -1050,7 +1060,7 @@ class BrandMindState(rx.State):
                 return
             self.pending_input = ""
             needs_title = self._chat_is_untitled(session_id)
-            self._begin_turn(content)
+            self._begin_turn(content, session_id)
         if needs_title:
             asyncio.create_task(self._title_task(session_id, content))
         await self._stream_turn(session_id, content)
@@ -1076,7 +1086,7 @@ class BrandMindState(rx.State):
                 self.is_streaming = False
                 return
             needs_title = self._chat_is_untitled(session_id)
-            self._begin_turn(body)
+            self._begin_turn(body, session_id)
         if needs_title:
             asyncio.create_task(self._title_task(session_id, body))
         await self._stream_turn(session_id, body)
@@ -1106,11 +1116,14 @@ class BrandMindState(rx.State):
         async with self:
             self.sessions = self._replace_session_in_list(info)
 
-    def _begin_turn(self, content: str) -> None:
+    def _begin_turn(self, content: str, session_id: str) -> None:
         """Seed the chat scroll with a user turn + streaming agent placeholder.
 
         Must run inside ``async with self`` so the user bubble and the
-        streaming agent bubble appear in the same render tick.
+        streaming agent bubble appear in the same render tick. Records
+        ``streaming_session_id`` so SSE events that arrive after the
+        user has switched the view to another chat can be dropped at
+        the dispatch layer instead of corrupting the visible chat.
         """
         self.error_message = ""
         self.messages = [
@@ -1125,6 +1138,7 @@ class BrandMindState(rx.State):
             ),
         ]
         self.is_streaming = True
+        self.streaming_session_id = session_id
 
     async def _stream_turn(self, session_id: str, content: str) -> None:
         """Consume the SSE stream for one turn with exponential-backoff retry.
@@ -1297,7 +1311,16 @@ class BrandMindState(rx.State):
             self.docx_loading = False
 
     def _dispatch_event(self, event_name: str, payload: dict) -> None:
-        """Route one SSE event to the matching state mutation."""
+        """Route one SSE event to the matching state mutation.
+
+        When the user has switched the view to a different chat while
+        this stream is mid-flight, drop paint for everything except
+        the stream's own terminal markers. The agent's response keeps
+        being persisted server-side; the user sees it next time they
+        navigate back and the chat is re-fetched from the server.
+        """
+        if self.streaming_session_id and self.streaming_session_id != self.session_id:
+            return
         if event_name == "streaming_token":
             chunk = StreamingTokenPayload.model_validate(payload)
             if chunk.token:
@@ -1469,8 +1492,16 @@ class BrandMindState(rx.State):
         emitted a ``tool_result`` for (fire-and-forget tools like
         ``write_todos`` are common), mark any open thinking blocks done,
         compute the turn duration, and collapse the timeline by default
-        so the chat scroll reads as the final response.
+        so the chat scroll reads as the final response. The
+        ``streaming_session_id`` is always cleared so the global
+        ``is_streaming`` lock can release; if the user has switched the
+        view to a different chat, the message-list mutation is skipped
+        (the visible chat is not the stream target).
         """
+        streamed_id = self.streaming_session_id
+        self.streaming_session_id = ""
+        if streamed_id and streamed_id != self.session_id:
+            return
         if not self.messages:
             return
         target = self.messages[-1]

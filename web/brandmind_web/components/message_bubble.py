@@ -29,6 +29,40 @@ _MARKDOWN_PARAGRAPH_STYLE: dict[str, str] = {
     "margin": "0 0 12px 0",
 }
 
+_MARKDOWN_TABLE_STYLE: dict[str, str] = {
+    "width": "100%",
+    "border_collapse": "collapse",
+    "margin": "8px 0 16px 0",
+    "font_family": tokens.FONT_SANS,
+    "font_size": "14px",
+    "line_height": "1.55",
+    "color": tokens.TEXT_PRIMARY,
+    "border": f"1px solid {tokens.GLASS_BORDER}",
+    "border_radius": tokens.RADIUS_MD,
+    "overflow": "hidden",
+}
+
+_MARKDOWN_TABLE_TH_STYLE: dict = {
+    "text_align": "left",
+    "vertical_align": "top",
+    "padding": "10px 14px",
+    "font_weight": "600",
+    "color": tokens.TEXT_PRIMARY,
+    "background_color": tokens.BG_SURFACE_2,
+    "border_right": f"1px solid {tokens.GLASS_BORDER}",
+    "border_bottom": f"1px solid {tokens.GLASS_BORDER}",
+    "&:last-child": {"border_right": "none"},
+}
+
+_MARKDOWN_TABLE_TD_STYLE: dict = {
+    "text_align": "left",
+    "vertical_align": "top",
+    "padding": "10px 14px",
+    "color": tokens.TEXT_PRIMARY,
+    "border_right": f"1px solid {tokens.GLASS_BORDER}",
+    "&:last-child": {"border_right": "none"},
+}
+
 _THINKING_TEXT_STYLE: dict[str, str] = {
     "color": tokens.TEXT_SECONDARY,
     "font_family": tokens.FONT_SANS,
@@ -414,6 +448,27 @@ def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
                         "padding": "1px 6px",
                         "border_radius": tokens.RADIUS_SM,
                     },
+                ),
+                "table": lambda children: rx.el.table(
+                    children,
+                    style=_MARKDOWN_TABLE_STYLE,
+                ),
+                "thead": lambda children: rx.el.thead(children),
+                "tbody": lambda children: rx.el.tbody(children),
+                "tr": lambda children: rx.el.tr(
+                    children,
+                    style={
+                        "border_bottom": f"1px solid {tokens.GLASS_BORDER}",
+                        "&:last-child": {"border_bottom": "none"},
+                    },
+                ),
+                "th": lambda children: rx.el.th(
+                    children,
+                    style=_MARKDOWN_TABLE_TH_STYLE,
+                ),
+                "td": lambda children: rx.el.td(
+                    children,
+                    style=_MARKDOWN_TABLE_TD_STYLE,
                 ),
             },
         ),
