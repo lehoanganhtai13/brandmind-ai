@@ -102,8 +102,50 @@ def _empty_state() -> rx.Component:
     )
 
 
+_AUTO_SCROLL_SCRIPT = """
+(function attach() {
+  const viewport = document.querySelector('[data-bm-chat-scroll]');
+  if (!viewport) {
+    window.requestAnimationFrame(attach);
+    return;
+  }
+  if (viewport.__bmAutoScroll) return;
+  viewport.__bmAutoScroll = true;
+  const THRESHOLD_PX = 96;
+  let pinned = true;
+  const nearBottom = () =>
+    viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight
+      < THRESHOLD_PX;
+  viewport.addEventListener(
+    'scroll',
+    () => { pinned = nearBottom(); },
+    { passive: true }
+  );
+  const stick = () => {
+    if (pinned) {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
+  };
+  new MutationObserver(stick).observe(viewport, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+  new ResizeObserver(stick).observe(viewport);
+  stick();
+})();
+"""
+
+
 def _message_scroll() -> rx.Component:
-    """Vertical scroll of message bubbles within a centered reading column."""
+    """Vertical scroll of message bubbles within a centered reading column.
+
+    A small client-side script pins the scroll to the bottom while the
+    agent streams tokens or appends timeline entries, mirroring the
+    ChatGPT / Gemini behaviour: the viewport stays glued to the latest
+    chunk unless the user scrolls up to read earlier content, in which
+    case auto-scroll backs off until they return to the bottom.
+    """
     return rx.scroll_area(
         rx.vstack(
             rx.foreach(
@@ -119,6 +161,7 @@ def _message_scroll() -> rx.Component:
         ),
         type="auto",
         scrollbars="vertical",
+        custom_attrs={"data-bm-chat-scroll": "true"},
         style={
             "flex": "1",
             "min_height": "0",
@@ -128,7 +171,12 @@ def _message_scroll() -> rx.Component:
 
 
 def chat_pane() -> rx.Component:
-    """Render the ChatPane — message scroll + sticky InputComposer."""
+    """Render the ChatPane — message scroll + sticky InputComposer.
+
+    The ``on_mount`` hook boots the auto-scroll observer; the script
+    polls until the message viewport appears in the DOM so it survives
+    the empty-state ↔ scroll-area swap when the first message lands.
+    """
     return rx.vstack(
         rx.cond(
             BrandMindState.messages.length() == 0,
@@ -141,6 +189,7 @@ def chat_pane() -> rx.Component:
         flex="1",
         width="100%",
         height="100%",
+        on_mount=rx.call_script(_AUTO_SCROLL_SCRIPT),
         style={
             "background_color": tokens.BG_CANVAS,
             "background_image": tokens.CANVAS_AMBIENT,
