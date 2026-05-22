@@ -418,8 +418,14 @@ def update_strategy_progress(
                 "Cannot advance: the brand brief is missing completed/current "
                 f"phase coverage in {location}. Add or restore these markdown "
                 f"sections in `/workspace/brand_brief.md`: {missing_headings}. "
-                "Each section should contain a concise SOAP summary. Then retry "
-                "report_progress(advance=True)."
+                "Each section should contain a concise SOAP summary. Do not "
+                "continue into the next phase, ask next-phase questions, or "
+                "describe next-phase work until this retry succeeds. First make "
+                "one targeted `edit_file` repair for the missing section(s), then "
+                "retry `report_progress(advance=True)`. If the anchor cannot be "
+                "patched in one edit, tell the user the workspace save needs "
+                "repair and continue the current phase without calling "
+                "`report_progress` again in this turn."
             )
 
         next_phase = get_next_phase(session.scope, session.current_phase)

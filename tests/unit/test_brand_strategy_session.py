@@ -308,6 +308,9 @@ class TestUpdateStrategyProgress:
         assert "`## Phase 0: ...`" in result
         assert "`## Phase 0.5: ...`" in result
         assert "`## Phase 1: ...`" in result
+        assert "Do not continue into the next phase" in result
+        assert "one targeted `edit_file` repair" in result
+        assert "without calling `report_progress` again" in result
         assert session.current_phase == "phase_2"
 
     def test_advance_hint_uses_bounded_workspace_edits(self, tmp_path, monkeypatch):
