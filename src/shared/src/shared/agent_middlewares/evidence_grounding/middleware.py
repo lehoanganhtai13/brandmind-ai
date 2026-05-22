@@ -80,11 +80,27 @@ _SOURCE_PLATFORM_RE = re.compile(
     r")\b"
 )
 _SOURCE_HEADER_RE = re.compile(r"(?i)\b(source|nguồn|nguon|url|platform|status)\b")
-_SOURCE_LEDGER_AVAILABLE_NOTE = (
-    "\n\nSource ledger status: SOURCE_MARKERS_DETECTED. Use only the public "
-    "details that appear directly beside those source markers. Demote any "
-    "public detail that is not tied to a source marker into a hypothesis or an "
-    "open confirmation question."
+_QUOTE_LABEL_RE = re.compile(
+    r"(?im)^\s*(?:[-*]\s*)?"
+    r"(?:quote|snippet|evidence quote|exact quote|source quote|trích dẫn|"
+    r"trich dan|đoạn trích|doan trich)\s*:\s*(.+?)\s*$"
+)
+_QUOTE_HEADER_RE = re.compile(
+    r"(?i)\b(quote|snippet|evidence quote|exact quote|trích|trich|đoạn trích|"
+    r"doan trich)\b"
+)
+_SOURCE_QUOTE_LEDGER_AVAILABLE_NOTE = (
+    "\n\nSource ledger status: SOURCE_QUOTE_LEDGER_DETECTED. Use only the public "
+    "details that appear directly beside a source marker and exact quote or "
+    "snippet. Demote any public detail that is not tied to both into a "
+    "hypothesis or an open confirmation question."
+)
+_SOURCE_MARKERS_ONLY_NOTE = (
+    "\n\nSource ledger status: SOURCE_MARKERS_ONLY_DETECTED. The specialist "
+    "named a source, URL, platform, or query, but did not provide exact "
+    "quote/snippet support for each public fact. Treat public details as "
+    "tentative unless the fact itself is directly supported by the returned "
+    "source text."
 )
 _SOURCE_LEDGER_MISSING_NOTE = (
     "\n\nSource ledger status: NO_SOURCE_LEDGER_DETECTED. Treat this specialist "
@@ -107,13 +123,15 @@ _RETRY_MARKET_RESEARCH_RENDER_REMINDER = (
     "the specialist result says `NO_SOURCE_LEDGER_DETECTED`, do not say you "
     '"found", "observed", or "researched" concrete public facts; say the '
     "quick public check was not conclusive enough to treat those details as "
-    "verified. If it says `SOURCE_MARKERS_DETECTED`, use only details that are "
-    "directly tied to a named source/URL/platform in that result. Keep the "
-    "source ledger internal unless the user asks for sources or the fact must "
-    "be defended to stakeholders. Do not use vague unsourced discovery phrases "
-    "in any language as a substitute for source grounding. Keep the turn "
-    "useful: anchor the brand, give the safest working hypothesis, and ask only "
-    "the branch/blocker needed now."
+    "verified. If it says `SOURCE_MARKERS_ONLY_DETECTED`, use the source as a "
+    "directional clue only and avoid precise public facts unless the exact "
+    "supporting text is present. If it says `SOURCE_QUOTE_LEDGER_DETECTED`, use "
+    "only details that are directly tied to a named source/URL/platform and "
+    "quote/snippet in that result. Keep the source ledger internal unless the "
+    "user asks for sources or the fact must be defended to stakeholders. Do not "
+    "use vague unsourced discovery phrases in any language as a substitute for "
+    "source grounding. Keep the turn useful: anchor the brand, give the safest "
+    "working hypothesis, and ask only the branch/blocker needed now."
 )
 _RETRY_SOCIAL_MEDIA_RENDER_REMINDER = (
     "## Social Media Evidence Render\n"
@@ -136,10 +154,11 @@ _RETRY_OPENING_RESEARCH_REMINDER = (
     "current public evidence, what the public relationship to the base brand "
     "appears to be, and what source-backed facts are safe to use. Limit the "
     "brief to 2-3 search sources and require a compact source ledger: public "
-    "fact, source/platform/URL, and status. If a fact cannot be sourced in that "
-    "budget, the ledger should mark it `INCONCLUSIVE`. After the specialist "
-    "returns, anchor the brand name, state only source-backed findings or "
-    "clearly marked hypotheses, and ask the scope branch/blocker."
+    "fact, source/platform/URL or query, exact quote/snippet, and status. If a "
+    "fact cannot be sourced with an exact quote or snippet in that budget, the "
+    "ledger should mark it `INCONCLUSIVE`. After the specialist returns, anchor "
+    "the brand name, state only quote-backed findings or clearly marked "
+    "hypotheses, and ask the scope branch/blocker."
 )
 
 
@@ -221,13 +240,84 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
         return False
 
     @classmethod
+    def _has_usable_quote_marker(cls, content: str) -> bool:
+        for match in _QUOTE_LABEL_RE.finditer(content):
+            if cls._is_usable_quote(match.group(1)):
+                return True
+
+        quote_indices: set[int] = set()
+        source_indices: set[int] = set()
+        for line in content.splitlines():
+            if "|" not in line:
+                continue
+
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if len(cells) < 3:
+                continue
+            if all(set(cell) <= {"-", ":"} for cell in cells if cell):
+                continue
+
+            header_quote_indices = {
+                index
+                for index, cell in enumerate(cells)
+                if _QUOTE_HEADER_RE.search(cell)
+            }
+            header_source_indices = {
+                index
+                for index, cell in enumerate(cells)
+                if _SOURCE_HEADER_RE.search(cell)
+            }
+            if header_quote_indices and header_source_indices:
+                quote_indices = header_quote_indices
+                source_indices = header_source_indices
+                continue
+
+            if quote_indices and len(cells) > max(quote_indices | source_indices):
+                quote_text = " ".join(cells[index] for index in quote_indices)
+                source_text = " ".join(cells[index] for index in source_indices)
+                if cls._is_usable_quote(quote_text) and (
+                    _URL_RE.search(source_text)
+                    or _SOURCE_PLATFORM_RE.search(source_text)
+                    or not cls._is_placeholder_source(source_text)
+                ):
+                    return True
+
+            if len(cells) >= 4 and any(
+                cls._is_usable_quote(cell) for cell in cells[2:]
+            ):
+                source_cells = cells[1:-1] or cells[1:]
+                if any(
+                    _URL_RE.search(cell) or _SOURCE_PLATFORM_RE.search(cell)
+                    for cell in source_cells
+                ):
+                    return True
+        return False
+
+    @staticmethod
+    def _is_usable_quote(value: str) -> bool:
+        stripped = value.strip(" |:-").strip()
+        if len(stripped) < 8 or _SOURCE_PLACEHOLDER_RE.search(stripped):
+            return False
+        if _QUOTE_HEADER_RE.search(stripped) or _SOURCE_HEADER_RE.search(stripped):
+            return False
+        return any(character.isalpha() for character in stripped)
+
+    @classmethod
     def _market_research_source_ledger_note(cls, content: str) -> str:
+        if cls._has_usable_source_marker(content) and cls._has_usable_quote_marker(
+            content
+        ):
+            logger.info(
+                "EvidenceGroundingMiddleware marked market-research result "
+                "SOURCE_QUOTE_LEDGER_DETECTED"
+            )
+            return _SOURCE_QUOTE_LEDGER_AVAILABLE_NOTE
         if cls._has_usable_source_marker(content):
             logger.info(
                 "EvidenceGroundingMiddleware marked market-research result "
-                "SOURCE_MARKERS_DETECTED"
+                "SOURCE_MARKERS_ONLY_DETECTED"
             )
-            return _SOURCE_LEDGER_AVAILABLE_NOTE
+            return _SOURCE_MARKERS_ONLY_NOTE
         logger.info(
             "EvidenceGroundingMiddleware marked market-research result "
             "NO_SOURCE_LEDGER_DETECTED"
@@ -400,8 +490,14 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
         texts = cls._market_research_result_texts(request)
         if not texts:
             return "NO_SOURCE_LEDGER_DETECTED"
+        if any(
+            cls._has_usable_source_marker(text)
+            and cls._has_usable_quote_marker(text)
+            for text in texts
+        ):
+            return "SOURCE_QUOTE_LEDGER_DETECTED"
         if any(cls._has_usable_source_marker(text) for text in texts):
-            return "SOURCE_MARKERS_DETECTED"
+            return "SOURCE_MARKERS_ONLY_DETECTED"
         return "NO_SOURCE_LEDGER_DETECTED"
 
     @classmethod

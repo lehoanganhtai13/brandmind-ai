@@ -116,7 +116,7 @@ def test_appends_boundary_to_market_research_task_result() -> None:
     assert "Found two public listings." in str(result.content)
     assert "Market-research evidence boundary:" in str(result.content)
     assert "source, URL, platform" in str(result.content)
-    assert "source ledger available internally" in str(result.content)
+    assert "Treat this specialist result as inconclusive" in str(result.content)
     assert "inconclusive" in str(result.content)
     assert "NO_SOURCE_LEDGER_DETECTED" in str(result.content)
 
@@ -146,7 +146,7 @@ def test_appends_boundary_to_social_media_task_result() -> None:
     assert "evidence gaps or hypotheses" in str(result.content)
 
 
-def test_marks_market_research_result_with_source_markers() -> None:
+def test_marks_market_research_result_with_source_markers_only() -> None:
     middleware = EvidenceGroundingMiddleware()
 
     def handler(request: ToolCallRequest) -> ToolMessage:
@@ -164,10 +164,33 @@ def test_marks_market_research_result_with_source_markers() -> None:
     result = middleware.wrap_tool_call(request, handler)
 
     assert isinstance(result, ToolMessage)
-    assert "SOURCE_MARKERS_DETECTED" in str(result.content)
-    assert "Use only the public details that appear directly beside" in str(
-        result.content
-    )
+    assert "SOURCE_MARKERS_ONLY_DETECTED" in str(result.content)
+    assert "did not provide exact quote/snippet support" in str(result.content)
+
+
+def test_marks_market_research_result_with_source_quote_ledger() -> None:
+    middleware = EvidenceGroundingMiddleware()
+
+    def handler(request: ToolCallRequest) -> ToolMessage:
+        return ToolMessage(
+            "| Public fact | Source/URL | Exact quote/snippet | Status |\n"
+            "| --- | --- | --- | --- |\n"
+            "| Signature listing exists | Google Maps https://example.test | "
+            '"Chuyện Ba Bữa Signature is listed at Saigon Marina IFC" | Verified |',
+            tool_call_id="call_1",
+        )
+
+    request = _tool_request("task")
+    request.tool_call["args"] = {
+        "subagent_type": "market-research",
+        "description": "Validate Chuyện Ba Bữa Signature.",
+    }
+
+    result = middleware.wrap_tool_call(request, handler)
+
+    assert isinstance(result, ToolMessage)
+    assert "SOURCE_QUOTE_LEDGER_DETECTED" in str(result.content)
+    assert "source marker and exact quote or snippet" in str(result.content)
 
 
 def test_injects_opening_restaurant_research_before_model_call() -> None:
@@ -280,7 +303,8 @@ def test_injects_market_research_render_reminder_after_dispatch() -> None:
         isinstance(message, SystemMessage)
         and "Market Research Evidence Render" in str(message.content)
         and "NO_SOURCE_LEDGER_DETECTED" in str(message.content)
-        and "SOURCE_MARKERS_DETECTED" in str(message.content)
+        and "SOURCE_MARKERS_ONLY_DETECTED" in str(message.content)
+        and "SOURCE_QUOTE_LEDGER_DETECTED" in str(message.content)
         and "source ledger internal" in str(message.content)
         and "vague unsourced discovery phrases" in str(message.content)
         and "Detected specialist source ledger status: NO_SOURCE_LEDGER_DETECTED"
@@ -423,7 +447,7 @@ def test_detects_market_research_dispatch_from_tool_boundary() -> None:
     )
 
 
-def test_render_reminder_detects_source_marker_from_task_result() -> None:
+def test_render_reminder_detects_source_marker_only_from_task_result() -> None:
     middleware = EvidenceGroundingMiddleware()
     dispatch = AIMessage(content="")
     dispatch.tool_calls = [
@@ -448,7 +472,41 @@ def test_render_reminder_detects_source_marker_from_task_result() -> None:
     assert result is response
     assert any(
         isinstance(message, SystemMessage)
-        and "Detected specialist source ledger status: SOURCE_MARKERS_DETECTED"
+        and "Detected specialist source ledger status: SOURCE_MARKERS_ONLY_DETECTED"
+        in str(message.content)
+        for message in request.messages
+    )
+
+
+def test_render_reminder_detects_source_quote_ledger_from_task_result() -> None:
+    middleware = EvidenceGroundingMiddleware()
+    dispatch = AIMessage(content="")
+    dispatch.tool_calls = [
+        {
+            "name": "task",
+            "args": {"subagent_type": "market-research"},
+            "id": "call_research",
+        }
+    ]
+    tool_result = ToolMessage(
+        "| Public fact | Source/URL | Exact quote/snippet | Status |\n"
+        "| --- | --- | --- | --- |\n"
+        "| listing exists | Google Maps https://example.test | "
+        '"Chuyện Ba Bữa Signature appears in the listing" | Verified |',
+        tool_call_id="call_research",
+    )
+    request = _model_request([dispatch, tool_result])
+    response = _model_response("Render reminder expected.")
+
+    def handler(model_request: Any) -> Any:
+        return response
+
+    result = middleware.wrap_model_call(request, handler)
+
+    assert result is response
+    assert any(
+        isinstance(message, SystemMessage)
+        and "Detected specialist source ledger status: SOURCE_QUOTE_LEDGER_DETECTED"
         in str(message.content)
         for message in request.messages
     )

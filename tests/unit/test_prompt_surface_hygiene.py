@@ -395,9 +395,10 @@ def test_market_research_prompt_has_assignment_budget() -> None:
         "Browser/live social verification is outside your normal tool surface",
         "Source-grounding contract for public facts",
         "must carry the exact source platform/title/URL",
+        "exact quote/snippet",
         "return a compact source ledger",
-        "Put unsourced items in an `Inconclusive` row",
-        "Facts without a source must remain `INCONCLUSIVE`",
+        "Put unsourced or quote-less items in an `Inconclusive` row",
+        "Facts without exact quote/snippet support must remain `INCONCLUSIVE`",
         "INCONCLUSIVE",
     )
     for phrase in expected_phrases:
