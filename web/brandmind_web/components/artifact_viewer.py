@@ -4,8 +4,10 @@ Mounts one of four sub-views based on the active artifact's category:
 
 * ``images`` → Brand Key one-pager rendered inline via ``<img>``.
 * ``documents`` → DOCX body rendered server-side via ``python-mammoth``.
-* ``presentations`` / ``spreadsheets`` → Download card (v1 deferral —
-  see ``docs/web_design.md`` § 9.5.4 + § 9.5.5).
+* ``presentations`` / ``spreadsheets`` → calm "no inline preview" card
+  pointing the user back at the per-row download chip on the file
+  list. The download itself lives on the artifact-panel row so the
+  viewer does not repeat the affordance.
 
 The viewer reads :class:`BrandMindState.active_artifact_filename`,
 ``active_artifact_url``, and ``active_artifact_category`` so siblings
@@ -19,12 +21,17 @@ import reflex as rx
 from ..state import BrandMindState
 from . import tokens
 
-_DOCX_BODY_CSS = """
-.bm-docx-body { color: #e8eef0; font-family: """ + tokens.FONT_SANS + """; }
+_DOCX_BODY_CSS = (
+    """
+.bm-docx-body { color: #e8eef0; font-family: """
+    + tokens.FONT_SANS
+    + """; }
 .bm-docx-body h1, .bm-docx-body h2, .bm-docx-body h3,
 .bm-docx-body h4, .bm-docx-body h5, .bm-docx-body h6 {
   color: #e8eef0;
-  font-family: """ + tokens.FONT_DISPLAY + """;
+  font-family: """
+    + tokens.FONT_DISPLAY
+    + """;
   font-weight: 500;
   letter-spacing: -0.005em;
   margin: 1.6em 0 0.6em 0;
@@ -54,7 +61,9 @@ _DOCX_BODY_CSS = """
 .bm-docx-body code {
   background: #1f262d;
   border-radius: 4px;
-  font-family: """ + tokens.FONT_MONO + """;
+  font-family: """
+    + tokens.FONT_MONO
+    + """;
   font-size: 12px;
   padding: 1px 6px;
 }
@@ -72,6 +81,7 @@ _DOCX_BODY_CSS = """
 .bm-docx-body th { background: #1f262d; color: #e8eef0; font-weight: 500; }
 .bm-docx-body a { color: #5fb3a8; text-decoration: underline; }
 """
+)
 
 
 def _image_view() -> rx.Component:
@@ -199,50 +209,139 @@ def _docx_error() -> rx.Component:
     )
 
 
-def _docx_view() -> rx.Component:
-    """Sticky-TOC + scrollable HTML body for a DOCX artifact.
+def _docx_toc_sidebar() -> rx.Component:
+    """Collapsible outline panel on the left of the DOCX body.
 
-    The TOC sidebar sticks to the left while the body scrolls so the
-    user never loses their place in long strategy documents. When the
-    document has no headings the TOC collapses out so the body gets
-    the full drawer width.
+    Header carries the ``CONTENTS`` caption plus a close button so the
+    user can dismiss the panel without leaving the document. Anchor
+    links inside the list scroll the body to the matching heading.
+    """
+    return rx.box(
+        rx.vstack(
+            rx.hstack(
+                rx.text(
+                    "CONTENTS",
+                    style={
+                        "color": tokens.TEXT_MUTED,
+                        "font_family": tokens.FONT_SANS,
+                        "font_size": "10px",
+                        "font_weight": "600",
+                        "letter_spacing": "0.08em",
+                    },
+                ),
+                rx.spacer(),
+                rx.button(
+                    rx.icon(tag="x", size=14),
+                    on_click=BrandMindState.toggle_docx_toc,
+                    variant="ghost",
+                    color_scheme="gray",
+                    aria_label="Hide outline",
+                    style={
+                        "color": tokens.TEXT_MUTED,
+                        "width": "24px",
+                        "height": "24px",
+                        "padding": "0",
+                        "border_radius": tokens.RADIUS_SM,
+                        "_hover": {
+                            "background_color": tokens.BG_SURFACE_2,
+                            "color": tokens.TEXT_PRIMARY,
+                        },
+                    },
+                ),
+                spacing="2",
+                align="center",
+                width="100%",
+                padding="0 4px 8px 8px",
+            ),
+            rx.foreach(
+                BrandMindState.docx_toc,
+                _docx_toc_entry,
+            ),
+            spacing="0",
+            align="stretch",
+            padding="20px 12px",
+        ),
+        style={
+            "width": "220px",
+            "flex": "0 0 220px",
+            "border_right": f"1px solid {tokens.GLASS_BORDER}",
+            "background_color": tokens.BG_SURFACE_1,
+            "overflow_y": "auto",
+            "max_height": "100%",
+        },
+    )
+
+
+def _docx_outline_chip() -> rx.Component:
+    """Floating "Outline" pill that opens the TOC sidebar.
+
+    Sits at the top-left of the document body when the outline is
+    closed so the user has a discoverable, dismissable handle without
+    permanent left-rail chrome eating the reading column. Rendered
+    only when the current document actually has headings the TOC can
+    point at.
+    """
+    return rx.cond(
+        BrandMindState.docx_toc.length() > 0,
+        rx.button(
+            rx.icon(tag="list", size=14),
+            rx.text(
+                "Outline",
+                style={
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "12px",
+                    "font_weight": "500",
+                    "letter_spacing": "0.01em",
+                },
+            ),
+            on_click=BrandMindState.toggle_docx_toc,
+            variant="ghost",
+            color_scheme="gray",
+            aria_label="Show outline",
+            style={
+                "position": "absolute",
+                "top": "16px",
+                "left": "16px",
+                "z_index": "1",
+                "color": tokens.TEXT_SECONDARY,
+                "background_color": tokens.GLASS_BG_ELEVATED,
+                "backdrop_filter": "blur(12px)",
+                "border": f"1px solid {tokens.GLASS_BORDER}",
+                "height": "32px",
+                "padding": "0 12px",
+                "border_radius": tokens.RADIUS_PILL,
+                "cursor": "pointer",
+                "transition": "color 120ms ease, background-color 120ms ease",
+                "_hover": {
+                    "background_color": tokens.BG_SURFACE_2,
+                    "color": tokens.TEXT_PRIMARY,
+                },
+            },
+        ),
+        rx.fragment(),
+    )
+
+
+def _docx_view() -> rx.Component:
+    """Body-first DOCX reader with on-demand outline sidebar.
+
+    The document body claims the full canvas width by default so a
+    reader can scan the strategy without competing chrome. A small
+    "Outline" pill in the body's top-left reveals the heading
+    sidebar when the user wants a map of the document; the sidebar
+    carries its own close button so the user can collapse it back to
+    full-width reading. When the DOCX has no headings, the pill
+    stays hidden so the surface does not promise an outline that
+    doesn't exist.
     """
     body = rx.hstack(
         rx.cond(
-            BrandMindState.docx_toc.length() > 0,
-            rx.box(
-                rx.vstack(
-                    rx.text(
-                        "CONTENTS",
-                        style={
-                            "color": tokens.TEXT_MUTED,
-                            "font_family": tokens.FONT_SANS,
-                            "font_size": "10px",
-                            "font_weight": "600",
-                            "letter_spacing": "0.08em",
-                            "padding": "0 8px 8px 8px",
-                        },
-                    ),
-                    rx.foreach(
-                        BrandMindState.docx_toc,
-                        _docx_toc_entry,
-                    ),
-                    spacing="0",
-                    align="stretch",
-                    padding="20px 12px",
-                ),
-                style={
-                    "width": "220px",
-                    "flex": "0 0 220px",
-                    "border_right": f"1px solid {tokens.GLASS_BORDER}",
-                    "background_color": tokens.BG_SURFACE_1,
-                    "overflow_y": "auto",
-                    "max_height": "100%",
-                },
-            ),
+            BrandMindState.docx_toc_open & (BrandMindState.docx_toc.length() > 0),
+            _docx_toc_sidebar(),
             rx.fragment(),
         ),
         rx.box(
+            _docx_outline_chip(),
             rx.html(
                 BrandMindState.docx_html,
                 class_name="bm-docx-body",
@@ -253,6 +352,7 @@ def _docx_view() -> rx.Component:
                 },
             ),
             style={
+                "position": "relative",
                 "flex": "1",
                 "min_width": "0",
                 "overflow_y": "auto",
@@ -276,26 +376,41 @@ def _docx_view() -> rx.Component:
     )
 
 
-def _download_card(category_label: str, blurb: str) -> rx.Component:
-    """Card view for PPTX / XLSX artifacts (v1 download-only).
+def _download_card(
+    category_label: str, icon_tag: str, native_app_hint: str
+) -> rx.Component:
+    """Calm "preview not available" card for PPTX / XLSX artifacts.
 
-    Inline rendering for these categories is deferred to v2 per
-    ``docs/web_design.md`` § 9.5.4 + § 9.5.5. The card explains the
-    deferral, surfaces the file metadata, and offers a download
-    button that drops the file via the existing artifact endpoint.
+    The download CTA itself lives on each artifact row in the list
+    pane, so this surface only needs to explain why the panel is not
+    rendering the file inline and point at the native application
+    that opens it. Repeating a big teal Download button here would be
+    a duplicate affordance.
 
     Args:
-        category_label (str): Human label shown above the filename
-            ("Executive deck" / "KPI tracker").
-        blurb (str): Short explanation of why inline render is not
-            available in v1.
+        category_label (str): Uppercase caption shown above the
+            filename ("Executive deck" / "KPI tracker").
+        icon_tag (str): Lucide icon for the artifact type — kept the
+            same shape as the artifact-row icon so the user reads
+            "same file, just no preview" rather than "different
+            surface".
+        native_app_hint (str): Short sentence naming the apps that
+            open this file type, so the user knows what they'll need.
     """
     return rx.center(
         rx.vstack(
-            rx.icon(
-                tag="cloud_download",
-                size=40,
-                color=tokens.ACCENT_TEAL_SOLID,
+            rx.box(
+                rx.icon(tag=icon_tag, size=28),
+                style={
+                    "color": tokens.ACCENT_TEAL_SOLID,
+                    "display": "flex",
+                    "align_items": "center",
+                    "justify_content": "center",
+                    "width": "64px",
+                    "height": "64px",
+                    "border_radius": tokens.RADIUS_LG,
+                    "background_color": "rgba(95, 179, 168, 0.10)",
+                },
             ),
             rx.text(
                 category_label,
@@ -313,49 +428,44 @@ def _download_card(category_label: str, blurb: str) -> rx.Component:
                 style={
                     "color": tokens.TEXT_PRIMARY,
                     "font_family": tokens.FONT_SANS,
-                    "font_size": "16px",
+                    "font_size": "15px",
                     "font_weight": "500",
                     "max_width": "440px",
                     "text_align": "center",
                     "word_break": "break-all",
+                    "line_height": "1.4",
                 },
             ),
             rx.text(
-                blurb,
+                "No inline preview for this file type. " + native_app_hint,
                 style={
                     "color": tokens.TEXT_MUTED,
                     "font_family": tokens.FONT_SANS,
                     "font_size": "13px",
                     "line_height": "1.55",
-                    "max_width": "420px",
+                    "max_width": "380px",
                     "text_align": "center",
                 },
             ),
-            rx.link(
-                rx.button(
-                    rx.icon(tag="download", size=18),
-                    rx.text(
-                        "Download to view",
-                        style={
-                            "font_family": tokens.FONT_SANS,
-                            "font_size": "14px",
-                            "font_weight": "500",
-                        },
-                    ),
+            rx.hstack(
+                rx.icon(
+                    tag="arrow_left",
+                    size=14,
+                    color=tokens.TEXT_MUTED,
+                ),
+                rx.text(
+                    "Use the download icon on the file list to save a copy.",
                     style={
-                        "background_color": tokens.ACCENT_TEAL_SOLID,
-                        "color": tokens.BG_CANVAS,
-                        "padding": "10px 18px",
-                        "border_radius": tokens.RADIUS_MD,
-                        "_hover": {
-                            "background_color": "#4ea69a",
-                        },
+                        "color": tokens.TEXT_MUTED,
+                        "font_family": tokens.FONT_SANS,
+                        "font_size": "12px",
+                        "font_style": "italic",
                     },
                 ),
-                href=BrandMindState.active_artifact_url,
-                is_external=True,
+                spacing="2",
+                align="center",
             ),
-            spacing="4",
+            spacing="3",
             align="center",
         ),
         flex="1",
@@ -410,18 +520,16 @@ def artifact_viewer() -> rx.Component:
                 "presentations",
                 _download_card(
                     "Executive deck",
-                    "Inline slide rendering is coming in BrandMind v2. "
-                    "Download the deck to review the full pitch in "
-                    "Keynote or PowerPoint.",
+                    "presentation",
+                    "Open the .pptx in PowerPoint or Keynote.",
                 ),
             ),
             (
                 "spreadsheets",
                 _download_card(
                     "KPI tracker",
-                    "Inline spreadsheet rendering is coming in BrandMind "
-                    "v2. Download the workbook to review the KPI grid in "
-                    "Numbers or Excel.",
+                    "table_2",
+                    "Open the .xlsx in Excel or Numbers.",
                 ),
             ),
             _empty_viewer(),

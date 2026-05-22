@@ -468,16 +468,34 @@ def _remove_stale_pid_file(pid_path: Path | None = None) -> None:
 
 
 def _serve_health_url(host: str, port: int) -> str:
-    """Build a local health URL for a configured server bind address."""
-    probe_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
+    """Build a local health URL for a configured server bind address.
+
+    The ``"0.0.0.0"`` / ``"::"`` strings here are config values to
+    recognize, not bind directives. Bandit's B104 rule flags the
+    literal because it cannot tell the comparison from a bind; the
+    ``nosec`` annotation marks the audit decision explicitly.
+    """
+    probe_host = (
+        "127.0.0.1" if host in {"0.0.0.0", "::"} else host  # nosec B104
+    )
     return f"http://{probe_host}:{port}/api/v1/health"
 
 
 def _server_health_ok(host: str, port: int) -> bool:
-    """Return whether the configured server health endpoint responds."""
+    """Return whether the configured server health endpoint responds.
+
+    The ``urlopen`` call below is invoked with a URL built entirely
+    from :func:`_serve_health_url`, which hard-codes the ``http://``
+    scheme around a sanitized host + integer port + fixed path. No
+    portion of the URL is influenced by remote input, so B310's
+    ``file://`` / custom-scheme concern does not apply; the
+    ``nosec`` annotation records the audit.
+    """
     url = _serve_health_url(host, port)
     try:
-        with urlopen(url, timeout=_SERVE_HEALTH_TIMEOUT_SECONDS) as response:
+        with urlopen(  # nosec B310
+            url, timeout=_SERVE_HEALTH_TIMEOUT_SECONDS
+        ) as response:
             return 200 <= response.status < 300
     except (OSError, URLError):
         return False

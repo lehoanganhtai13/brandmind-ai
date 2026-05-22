@@ -1,15 +1,13 @@
-"""CanvasPane — slide-in drawer hosting the artifact list and inline viewer.
+"""CanvasPane — side-by-side workspace viewer that cohabits the chat.
 
-The drawer mounts as a fixed-position layer on the right edge of the
-viewport so it overlays the chat instead of resizing it — the chat
-scroll never reflows when the drawer opens or closes, which keeps
-streaming tokens smooth. Glass-on-backdrop styling per
-``docs/web_design.md`` § 7.1; slide animation per § 10
-(280 ms cubic-bezier).
-
-The drawer keeps an "open" mode (transform: translateX(0)) and a
-closed mode (transform: translateX(100%)) so the React tree stays
-mounted across toggles, eliminating remount jank.
+The pane mounts as a flex sibling of the chat column inside the main
+hstack and animates its width between 0 (closed) and ``min(720px,
+50%)`` (open). The inner stack switches between two modes based on
+whether an artifact is selected: list mode shows the full-width file
+roster, viewer mode shows the rendered artifact. The list ↔ viewer
+swap mirrors the Claude Cowork pattern so the user always sees the
+content surface at its natural width instead of competing for space
+inside a two-column split.
 """
 
 from __future__ import annotations
@@ -21,9 +19,21 @@ from . import tokens
 from .artifact_panel import artifact_panel
 from .artifact_viewer import artifact_viewer
 
+_HEADER_ICON_BUTTON = {
+    "color": tokens.TEXT_SECONDARY,
+    "background_color": "transparent",
+    "padding": "8px",
+    "border_radius": tokens.RADIUS_MD,
+    "cursor": "pointer",
+    "_hover": {
+        "background_color": tokens.BG_SURFACE_2,
+        "color": tokens.TEXT_PRIMARY,
+    },
+}
 
-def _drawer_header() -> rx.Component:
-    """Sticky header inside the canvas drawer — title + close button."""
+
+def _list_mode_header() -> rx.Component:
+    """Header when the canvas is in the file-list mode."""
     return rx.hstack(
         rx.vstack(
             rx.text(
@@ -37,20 +47,12 @@ def _drawer_header() -> rx.Component:
                 },
             ),
             rx.text(
-                rx.cond(
-                    BrandMindState.active_artifact_filename != "",
-                    BrandMindState.active_artifact_filename,
-                    "Brand-strategy deliverables for this session.",
-                ),
+                "Brand-strategy deliverables for this session.",
                 style={
                     "color": tokens.TEXT_MUTED,
                     "font_family": tokens.FONT_SANS,
                     "font_size": "12px",
                     "line_height": "1.4",
-                    "overflow": "hidden",
-                    "text_overflow": "ellipsis",
-                    "white_space": "nowrap",
-                    "max_width": "440px",
                 },
             ),
             spacing="1",
@@ -63,20 +65,10 @@ def _drawer_header() -> rx.Component:
             on_click=BrandMindState.close_canvas,
             variant="ghost",
             aria_label="Close canvas",
-            style={
-                "color": tokens.TEXT_SECONDARY,
-                "background_color": "transparent",
-                "padding": "8px",
-                "border_radius": tokens.RADIUS_MD,
-                "cursor": "pointer",
-                "_hover": {
-                    "background_color": tokens.BG_SURFACE_2,
-                    "color": tokens.TEXT_PRIMARY,
-                },
-            },
+            style=_HEADER_ICON_BUTTON,
         ),
         spacing="3",
-        align="start",
+        align="center",
         padding="14px 18px",
         width="100%",
         style={
@@ -88,107 +80,164 @@ def _drawer_header() -> rx.Component:
     )
 
 
-def _drawer_body() -> rx.Component:
-    """Two-column body — list on the left, viewer on the right.
+def _viewer_mode_header() -> rx.Component:
+    """Header when the canvas is in the file-viewer mode.
 
-    The list column has a fixed width so the viewer stays the
-    "content surface" the user reads from. When no artifact is active
-    the viewer shows its empty-state hint; once the user clicks a
-    row the viewer swaps in the category-specific render.
+    Mirrors the Claude Cowork pattern: a back chevron returns to the
+    file list, the active filename centers as the document title, and
+    the X closes the whole canvas. The back action is the primary
+    affordance — it keeps the user inside the workspace surface; X is
+    reserved for dismissing the panel entirely.
     """
     return rx.hstack(
-        rx.box(
-            artifact_panel(),
-            style={
-                "width": "260px",
-                "flex": "0 0 260px",
-                "border_right": f"1px solid {tokens.GLASS_BORDER}",
-                "background_color": tokens.BG_SURFACE_1,
-                "overflow_y": "auto",
-                "height": "100%",
-            },
+        rx.button(
+            rx.icon(tag="arrow-left", size=18),
+            on_click=BrandMindState.back_to_artifact_list,
+            variant="ghost",
+            aria_label="Back to files",
+            style=_HEADER_ICON_BUTTON,
         ),
-        rx.box(
-            artifact_viewer(),
+        rx.text(
+            BrandMindState.active_artifact_filename,
             style={
+                "color": tokens.TEXT_PRIMARY,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "14px",
+                "font_weight": "500",
+                "letter_spacing": "-0.005em",
+                "line_height": "1.4",
+                "overflow": "hidden",
+                "text_overflow": "ellipsis",
+                "white_space": "nowrap",
                 "flex": "1",
                 "min_width": "0",
-                "height": "100%",
-                "display": "flex",
-                "flex_direction": "column",
-                "background_color": tokens.BG_CANVAS,
             },
         ),
-        spacing="0",
-        align="stretch",
-        flex="1",
+        rx.button(
+            rx.icon(tag="x", size=18),
+            on_click=BrandMindState.close_canvas,
+            variant="ghost",
+            aria_label="Close canvas",
+            style=_HEADER_ICON_BUTTON,
+        ),
+        spacing="3",
+        align="center",
+        padding="12px 14px",
         width="100%",
         style={
+            "border_bottom": f"1px solid {tokens.GLASS_BORDER}",
+            "background_color": tokens.GLASS_BG_ELEVATED,
+            "backdrop_filter": "blur(18px)",
+            "flex": "0 0 auto",
+        },
+    )
+
+
+def _drawer_header() -> rx.Component:
+    """Sticky header that switches shape between list and viewer modes.
+
+    List mode renders the "Files" title plus a close button. Viewer
+    mode swaps in the back-arrow + active filename + close button so
+    the user can return to the list without dismissing the canvas.
+    """
+    return rx.cond(
+        BrandMindState.active_artifact_filename != "",
+        _viewer_mode_header(),
+        _list_mode_header(),
+    )
+
+
+def _drawer_body() -> rx.Component:
+    """Single-pane body that swaps between list mode and viewer mode.
+
+    Claude-Cowork pattern: while no file is selected, the file list
+    occupies the entire canvas pane width. The moment the user clicks
+    a row, the list is replaced by the file viewer, giving the rendered
+    content (Brand Key image / strategy DOCX / PPTX / KPI XLSX) the
+    full panel space. The back-arrow in the header returns to list
+    mode without closing the canvas.
+    """
+    return rx.box(
+        rx.cond(
+            BrandMindState.active_artifact_filename != "",
+            artifact_viewer(),
+            artifact_panel(),
+        ),
+        style={
+            "flex": "1",
+            "min_width": "0",
             "min_height": "0",
+            "width": "100%",
+            "height": "100%",
+            "display": "flex",
+            "flex_direction": "column",
+            "background_color": rx.cond(
+                BrandMindState.active_artifact_filename != "",
+                tokens.BG_CANVAS,
+                tokens.BG_SURFACE_1,
+            ),
+            "overflow_y": "auto",
+            "overflow_x": "hidden",
         },
     )
 
 
 def canvas_pane() -> rx.Component:
-    """Fixed-position right-side drawer hosting the artifact UI.
+    """Side-by-side workspace viewer that cohabits the chat column.
 
-    Renders unconditionally (so the React tree stays mounted across
-    open/close cycles); the ``transform`` CSS controls whether the
-    drawer sits onscreen. A semi-transparent backdrop fades in behind
-    the drawer when open so the user gets a quick way to dismiss it
-    via clicking outside.
+    Mounts as a flex sibling of the chat column inside the page's main
+    horizontal row. When closed, the panel collapses its width to ``0``;
+    when open, it expands to ``CANVAS_DRAWER_PX`` (with a 360 px min and
+    a 60% max so chat is never starved). The inner stack always stays
+    in the DOM at its natural width and is clipped by ``overflow:
+    hidden`` on the collapsing container — that keeps the open/close
+    transition smooth even though the content's intrinsic size doesn't
+    change. The chat column carries ``flex: 1; min-width: 0`` so it
+    absorbs the squeeze as the canvas appears.
+
+    The Claude Cowork-style cohabitation removes the modal scrim — both
+    panels are interactive at the same time. The X button in the canvas
+    header remains the only dismiss affordance.
     """
-    backdrop = rx.box(
-        on_click=BrandMindState.close_canvas,
-        style={
-            "position": "fixed",
-            "top": "0",
-            "left": "0",
-            "right": "0",
-            "bottom": "0",
-            "background_color": "rgba(0, 0, 0, 0.32)",
-            "opacity": rx.cond(BrandMindState.canvas_open, "1", "0"),
-            "pointer_events": rx.cond(
-                BrandMindState.canvas_open, "auto", "none"
+    return rx.box(
+        rx.box(
+            rx.vstack(
+                _drawer_header(),
+                _drawer_body(),
+                spacing="0",
+                align="stretch",
+                width="100%",
+                height="100%",
             ),
-            "transition": (
-                f"opacity {tokens.DRAWER_DURATION_MS}ms {tokens.DRAWER_EASING}"
-            ),
-            "z_index": "40",
-        },
-    )
-    drawer = rx.box(
-        rx.vstack(
-            _drawer_header(),
-            _drawer_body(),
-            spacing="0",
-            align="stretch",
-            width="100%",
-            height="100%",
+            style={
+                "width": f"{tokens.CANVAS_DRAWER_PX}px",
+                "min_width": "360px",
+                "max_width": "100%",
+                "height": "100%",
+                "display": "flex",
+                "flex_direction": "column",
+                "background_color": tokens.GLASS_BG_ELEVATED,
+                "backdrop_filter": "blur(22px) saturate(140%)",
+                "border_left": f"1px solid {tokens.GLASS_BORDER}",
+                "box_shadow": tokens.SHADOW_DRAWER,
+            },
         ),
         style={
-            "position": "fixed",
-            "top": "0",
-            "right": "0",
-            "bottom": "0",
-            "width": f"{tokens.CANVAS_DRAWER_PX}px",
-            "max_width": "92vw",
-            "background_color": tokens.GLASS_BG_ELEVATED,
-            "backdrop_filter": "blur(22px) saturate(140%)",
-            "border_left": f"1px solid {tokens.GLASS_BORDER}",
-            "box_shadow": tokens.SHADOW_DRAWER,
-            "transform": rx.cond(
+            "width": rx.cond(
                 BrandMindState.canvas_open,
-                "translateX(0)",
-                "translateX(100%)",
+                f"min({tokens.CANVAS_DRAWER_PX}px, 50%)",
+                "0",
             ),
+            "min_width": rx.cond(BrandMindState.canvas_open, "360px", "0"),
+            "max_width": "60%",
+            "height": "100%",
+            "overflow": "hidden",
+            "flex_shrink": "0",
             "transition": (
-                f"transform {tokens.DRAWER_DURATION_MS}ms "
+                f"width {tokens.DRAWER_DURATION_MS}ms "
+                f"{tokens.DRAWER_EASING}, "
+                f"min-width {tokens.DRAWER_DURATION_MS}ms "
                 f"{tokens.DRAWER_EASING}"
             ),
-            "z_index": "50",
-            "display": "flex",
-            "flex_direction": "column",
         },
     )
-    return rx.fragment(backdrop, drawer)

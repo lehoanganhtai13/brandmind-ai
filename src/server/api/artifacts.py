@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Literal
 
 import mammoth
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -50,6 +50,8 @@ _FILENAME_RE = re.compile(
 _INLINE_CATEGORIES = {"images"}
 
 ArtifactCategory = Literal["documents", "presentations", "spreadsheets", "images"]
+
+_DispositionOverride = Literal["inline", "attachment"]
 
 
 class ArtifactRef(BaseModel):
@@ -259,7 +261,29 @@ def list_session_artifacts(session_id: str) -> list[ArtifactRef]:
 
 
 @router.get("/artifacts/{session_id}/{filename}")
-def download_artifact(session_id: str, filename: str) -> FileResponse:
+def download_artifact(
+    session_id: str,
+    filename: str,
+    disposition: _DispositionOverride | None = Query(
+        default=None,
+        description=(
+            "Optional override for the response ``Content-Disposition`` "
+            "header. When omitted the endpoint serves images as "
+            "``inline`` and every other category as ``attachment`` — "
+            "the defaults that let the in-canvas image viewer render "
+            "via ``<img>`` while binary categories still trigger a "
+            "download on direct navigation. Set ``attachment`` from a "
+            "download chip to force the browser to save the file even "
+            "for image categories where the default would be inline; "
+            "this is the cross-origin-safe download mechanism because "
+            "the header is authoritative even when the HTML5 "
+            "``download`` attribute is stripped by the browser. "
+            "``inline`` is accepted symmetrically so a future inline "
+            "preview surface for documents would not require a "
+            "separate endpoint."
+        ),
+    ),
+) -> FileResponse:
     """Stream a single artifact file by ``(session_id, filename)`` lookup.
 
     The two URL segments are validated as opaque manifest keys and
@@ -267,18 +291,27 @@ def download_artifact(session_id: str, filename: str) -> FileResponse:
     path is read from the manifest record itself and required to
     resolve under ``$BRANDMIND_OUTPUT_DIR`` before serving — this is
     the defense-in-depth check that catches both ``..`` traversal and
-    symlinks pointing outside the base.
+    symlinks pointing outside the base. The ``disposition`` query
+    parameter is a presentation-layer override only; it does not
+    influence which file is served or who may serve it, so the
+    security posture is unchanged from the no-param call.
 
     Args:
         session_id (str): Session identifier from the URL segment.
         filename (str): Artifact basename from the URL segment.
+        disposition (_DispositionOverride | None): Optional explicit
+            ``Content-Disposition`` type. When ``None`` (default) the
+            endpoint falls back to the per-category default — images
+            inline, everything else attachment.
 
     Returns:
-        response (FileResponse): Streamed artifact bytes. ``images``
-            are served with ``inline`` content disposition so they
-            render in ``<img>`` tags; every other category uses the
-            FastAPI default ``attachment`` disposition so direct links
-            trigger a download.
+        response (FileResponse): Streamed artifact bytes carrying
+            ``Content-Disposition`` set to either the explicit
+            ``disposition`` query value (when provided) or the
+            per-category default — ``inline`` for images so the
+            in-canvas ``<img>`` viewer renders without download
+            semantics, ``attachment`` for documents / presentations /
+            spreadsheets so direct links trigger a download.
 
     Raises:
         HTTPException 400: ``session_id`` or ``filename`` fails the
@@ -286,6 +319,9 @@ def download_artifact(session_id: str, filename: str) -> FileResponse:
         HTTPException 404: no manifest record matches the
             ``(session_id, filename)`` pair, the manifest path escapes
             the output root, or the file is missing on disk.
+        HTTPException 422: ``disposition`` is present but not one of
+            the allowed values — FastAPI rejects the request before
+            the handler body runs.
     """
     if not _SESSION_ID_RE.match(session_id):
         raise HTTPException(status_code=400, detail="Invalid session_id")
@@ -307,11 +343,16 @@ def download_artifact(session_id: str, filename: str) -> FileResponse:
         raise HTTPException(status_code=404, detail="Artifact file missing on disk")
 
     category = str(record.get("category", ""))
-    disposition = "inline" if category in _INLINE_CATEGORIES else "attachment"
+    if disposition is not None:
+        resolved_disposition = disposition
+    elif category in _INLINE_CATEGORIES:
+        resolved_disposition = "inline"
+    else:
+        resolved_disposition = "attachment"
     return FileResponse(
         path=file_path,
         filename=filename,
-        content_disposition_type=disposition,
+        content_disposition_type=resolved_disposition,
     )
 
 

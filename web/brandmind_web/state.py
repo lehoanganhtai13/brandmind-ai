@@ -156,6 +156,8 @@ class BrandMindState(rx.State):
     docx_toc: list[DocxTocEntry] = []
     docx_loading: bool = False
     docx_error: str = ""
+    docx_toc_open: bool = False
+    artifacts_seen_count: int = 0
     artifacts_refresh_pending: bool = False
 
     health_retry_in_flight: bool = False
@@ -182,6 +184,23 @@ class BrandMindState(rx.State):
     def has_artifacts(self) -> bool:
         """Whether the active session has produced any artifact yet."""
         return len(self.artifacts) > 0
+
+    @rx.var
+    def has_unseen_artifacts(self) -> bool:
+        """Whether the canvas has files the user has not acknowledged yet.
+
+        Drives the notification badge on the canvas-toggle button. The
+        count is snapshotted to ``artifacts_seen_count`` each time the
+        user CLOSES the canvas (see :meth:`toggle_canvas`) — so once
+        they have looked at the file list, the badge stays off until a
+        new artifact arrives, instead of pinging every time the canvas
+        is dismissed.
+
+        Returns:
+            unseen (bool): ``True`` when the artifact manifest has grown
+            beyond what the user has acknowledged, ``False`` otherwise.
+        """
+        return self.artifacts_seen_count < len(self.artifacts)
 
     @rx.var
     def active_artifact_url(self) -> str:
@@ -314,8 +333,42 @@ class BrandMindState(rx.State):
 
     @rx.event
     def close_canvas(self) -> None:
-        """Slide the canvas drawer out without dropping the artifact list."""
+        """Slide the canvas drawer out without dropping the artifact list.
+
+        Snapshots ``artifacts_seen_count`` to the current list length
+        so the notification badge on the header toggle treats every
+        file the user just had open as acknowledged. Mirrors the
+        close branch of :meth:`toggle_canvas` — both the header X and
+        the in-canvas X reach this handler, and either path must
+        update the seen count or the badge would falsely re-ping on
+        the very next render.
+        """
         self.canvas_open = False
+        self.artifacts_seen_count = len(self.artifacts)
+
+    @rx.event
+    def back_to_artifact_list(self) -> None:
+        """Return from the artifact viewer to the file-list mode.
+
+        The Claude-Cowork workspace pattern keeps the canvas open and
+        only swaps the inner pane between list and viewer. Clearing
+        ``active_artifact_filename`` flips the conditional render in
+        ``canvas_pane`` so the file list takes the full canvas width
+        again. The chat layout next to the canvas is unaffected.
+        """
+        self.active_artifact_filename = ""
+
+    @rx.event
+    def toggle_docx_toc(self) -> None:
+        """Show or hide the DOCX outline sidebar inside the viewer.
+
+        The outline defaults closed so the document body claims the
+        full canvas width on open. The user opens it via the "Outline"
+        chip in the body's top-left and dismisses it via the close
+        button inside the sidebar header. Selecting a different
+        artifact resets the flag (see ``_select_artifact_internal``).
+        """
+        self.docx_toc_open = not self.docx_toc_open
 
     @rx.event(background=True)
     async def toggle_canvas(self) -> None:
@@ -325,11 +378,19 @@ class BrandMindState(rx.State):
         chat already has artifacts in flight, we pull the latest
         manifest so the panel reflects every file the agent has emitted
         so far — not just what the SSE stream surfaced this turn.
+
+        Closing the canvas snapshots ``artifacts_seen_count`` to the
+        current list length so the notification badge on the toggle
+        treats every file the user just looked at as acknowledged. The
+        badge re-appears only when a new artifact arrives later — see
+        :attr:`has_unseen_artifacts`.
         """
         async with self:
             opening = not self.canvas_open
             self.canvas_open = opening
             session_id = self.session_id
+            if not opening:
+                self.artifacts_seen_count = len(self.artifacts)
         if opening and session_id:
             await self._refresh_artifacts(session_id)
 
@@ -806,6 +867,8 @@ class BrandMindState(rx.State):
         self.docx_toc = []
         self.docx_loading = False
         self.docx_error = ""
+        self.docx_toc_open = False
+        self.artifacts_seen_count = 0
         self.artifacts_refresh_pending = False
 
     async def _refresh_artifacts(self, session_id: str) -> None:
@@ -1289,6 +1352,7 @@ class BrandMindState(rx.State):
             self.docx_html = ""
             self.docx_toc = []
             self.docx_error = ""
+            self.docx_toc_open = False
             session_id = self.session_id
         if category != "documents" or not session_id:
             return

@@ -109,76 +109,68 @@ def _session_caption() -> rx.Component:
 def _canvas_toggle() -> rx.Component:
     """Header button that toggles the canvas drawer.
 
-    Surfaces a small badge over the icon when the active session has
-    artifacts but the drawer is closed — the visual cue tells the user
-    that deliverables are waiting without forcing the drawer open.
+    Surfaces a top-right notification badge over the icon only when
+    the session has artifacts the user has not yet acknowledged AND
+    the canvas drawer is closed. Acknowledgement is tracked through
+    ``BrandMindState.artifacts_seen_count`` (see
+    :meth:`BrandMindState.toggle_canvas` for the snapshot rule on
+    close), so opening the canvas once dismisses the pip and it
+    re-appears only when a NEW artifact arrives — matching the
+    Slack / iMessage / GitHub-bell "unread content waiting" mental
+    model rather than a static "files exist" indicator. Connection
+    state has no header counterpart here: ``degraded_banner`` already
+    surfaces the loud-error case and the composer disables itself
+    when offline, so a permanent "Connected" pill would be pure
+    happy-path noise.
     """
+    show_badge = BrandMindState.has_unseen_artifacts & ~BrandMindState.canvas_open
     return rx.button(
-        rx.hstack(
+        rx.box(
             rx.icon(tag="panel_right", size=18),
             rx.cond(
-                BrandMindState.has_artifacts,
+                show_badge,
                 rx.box(
                     style={
-                        "width": "6px",
-                        "height": "6px",
+                        "position": "absolute",
+                        "top": "-3px",
+                        "right": "-3px",
+                        "width": "9px",
+                        "height": "9px",
                         "border_radius": tokens.RADIUS_PILL,
                         "background_color": tokens.ACCENT_TEAL_SOLID,
+                        "box_shadow": (
+                            f"0 0 0 2px {tokens.GLASS_BG_SUBTLE}, "
+                            "0 0 8px rgba(95, 179, 168, 0.45)"
+                        ),
+                        "pointer_events": "none",
                     },
                 ),
                 rx.fragment(),
             ),
-            spacing="2",
-            align="center",
+            style={
+                "position": "relative",
+                "display": "inline-flex",
+                "align_items": "center",
+                "justify_content": "center",
+                "width": "20px",
+                "height": "20px",
+            },
         ),
         on_click=BrandMindState.toggle_canvas,
         variant="ghost",
         color_scheme="gray",
-        aria_label="Toggle files canvas",
+        aria_label=rx.cond(
+            show_badge,
+            "Toggle files canvas — new files available",
+            "Toggle files canvas",
+        ),
         style={
             "color": tokens.TEXT_SECONDARY,
+            "width": "36px",
             "height": "36px",
-            "padding": "0 10px",
+            "padding": "0",
             "border_radius": tokens.RADIUS_SM,
         },
-    )
-
-
-def _connection_indicator() -> rx.Component:
-    """Right-side connection dot — teal when connected, grey when not.
-
-    Status label rendered in sentence-case sans (Finding 1) so the
-    indicator reads as a refined status pill, not a terminal banner.
-    """
-    return rx.hstack(
-        rx.box(
-            style={
-                "width": "8px",
-                "height": "8px",
-                "border_radius": tokens.RADIUS_PILL,
-                "background_color": rx.cond(
-                    BrandMindState.is_connected,
-                    tokens.ACCENT_TEAL_SOLID,
-                    tokens.TEXT_MUTED,
-                ),
-            },
-        ),
-        rx.text(
-            rx.cond(BrandMindState.is_connected, "Connected", "Offline"),
-            style={
-                "color": rx.cond(
-                    BrandMindState.is_connected,
-                    tokens.ACCENT_TEAL_SOLID,
-                    tokens.TEXT_MUTED,
-                ),
-                "font_family": tokens.FONT_SANS,
-                "font_size": "12px",
-                "font_weight": "500",
-                "letter_spacing": "0.01em",
-            },
-        ),
-        spacing="2",
-        align="center",
     )
 
 
@@ -191,7 +183,6 @@ def header() -> rx.Component:
         _session_caption(),
         rx.spacer(),
         _canvas_toggle(),
-        _connection_indicator(),
         spacing="3",
         align="center",
         padding_x="20px",

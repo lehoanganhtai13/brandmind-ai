@@ -301,8 +301,8 @@ def chat_pane() -> rx.Component:
         input_composer(),
         spacing="0",
         align="stretch",
-        flex="1",
-        width="100%",
+        flex="1 1 0",
+        min_width="0",
         height="100%",
         on_mount=[
             rx.call_script(_AUTO_SCROLL_SCRIPT),

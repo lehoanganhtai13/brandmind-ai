@@ -491,8 +491,7 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
         if not texts:
             return "NO_SOURCE_LEDGER_DETECTED"
         if any(
-            cls._has_usable_source_marker(text)
-            and cls._has_usable_quote_marker(text)
+            cls._has_usable_source_marker(text) and cls._has_usable_quote_marker(text)
             for text in texts
         ):
             return "SOURCE_QUOTE_LEDGER_DETECTED"

@@ -20,9 +20,7 @@ from server.main import create_app
 
 
 @pytest.fixture
-def output_root(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Iterator[Path]:
+def output_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     """Point ``BRANDMIND_OUTPUT_DIR`` at a clean per-test directory.
 
     ``_base_dir()`` re-reads the environment on every call, so the
@@ -45,9 +43,7 @@ def client(output_root: Path) -> Iterator[TestClient]:
         yield test_client
 
 
-def _write_manifest(
-    output_root: Path, records: list[dict[str, object]]
-) -> None:
+def _write_manifest(output_root: Path, records: list[dict[str, object]]) -> None:
     """Write one JSONL line per record to the manifest file."""
     manifest = output_root / ".manifest.jsonl"
     with manifest.open("w", encoding="utf-8") as handle:
@@ -66,16 +62,12 @@ def _stub_artifact(output_root: Path, category: str, filename: str) -> Path:
 class TestListSessionArtifacts:
     """Behavior of ``GET /api/v1/sessions/{session_id}/artifacts``."""
 
-    def test_returns_empty_when_manifest_missing(
-        self, client: TestClient
-    ) -> None:
+    def test_returns_empty_when_manifest_missing(self, client: TestClient) -> None:
         resp = client.get("/api/v1/sessions/abc123/artifacts")
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_filters_by_session_id(
-        self, client: TestClient, output_root: Path
-    ) -> None:
+    def test_filters_by_session_id(self, client: TestClient, output_root: Path) -> None:
         path_a = _stub_artifact(output_root, "documents", "a.docx")
         path_b = _stub_artifact(output_root, "documents", "b.docx")
         _write_manifest(
@@ -154,9 +146,7 @@ class TestListSessionArtifacts:
         assert len(payload) == 1
         assert payload[0]["category"] == "documents"
 
-    def test_rejects_invalid_session_id_shape(
-        self, client: TestClient
-    ) -> None:
+    def test_rejects_invalid_session_id_shape(self, client: TestClient) -> None:
         resp = client.get("/api/v1/sessions/abc..123/artifacts")
         assert resp.status_code == 400
 
@@ -267,6 +257,89 @@ class TestDownloadArtifact:
         assert resp.status_code == 200
         assert "attachment" in resp.headers.get("content-disposition", "")
 
+    def test_disposition_override_attachment_for_image(
+        self, client: TestClient, output_root: Path
+    ) -> None:
+        """Image with ``?disposition=attachment`` flips from inline to attachment.
+
+        Proves the cross-origin-safe download path: the chip URL on
+        the web UI appends this query param so the browser receives
+        ``Content-Disposition: attachment`` even though the image
+        category defaults to ``inline`` for the in-canvas viewer.
+        """
+        path = _stub_artifact(output_root, "images", "brand_key.png")
+        _write_manifest(
+            output_root,
+            [
+                {
+                    "session_id": "s_alpha",
+                    "brand_name": "Alpha",
+                    "category": "images",
+                    "tool": "generate_brand_key",
+                    "filename": "brand_key.png",
+                    "path": str(path),
+                    "size_bytes": path.stat().st_size,
+                    "generated_at": "2026-05-16T10:00:00+07:00",
+                }
+            ],
+        )
+        resp = client.get(
+            "/api/v1/artifacts/s_alpha/brand_key.png?disposition=attachment",
+        )
+        assert resp.status_code == 200
+        assert "attachment" in resp.headers.get("content-disposition", "")
+        assert "inline" not in resp.headers.get("content-disposition", "")
+
+    def test_disposition_override_inline_for_pptx(
+        self, client: TestClient, output_root: Path
+    ) -> None:
+        """``?disposition=inline`` works symmetrically for non-image categories.
+
+        Confirms the override is bidirectional: a download category
+        can be served inline if a future surface needs that (e.g. a
+        PDF preview pane). Today no client uses this path, but the
+        symmetry keeps the API honest and avoids a special-cased
+        attachment-only escape hatch.
+        """
+        path = _stub_artifact(output_root, "presentations", "deck.pptx")
+        _write_manifest(
+            output_root,
+            [
+                {
+                    "session_id": "s_alpha",
+                    "brand_name": "Alpha",
+                    "category": "presentations",
+                    "tool": "generate_presentation",
+                    "filename": "deck.pptx",
+                    "path": str(path),
+                    "size_bytes": path.stat().st_size,
+                    "generated_at": "2026-05-16T10:00:00+07:00",
+                }
+            ],
+        )
+        resp = client.get(
+            "/api/v1/artifacts/s_alpha/deck.pptx?disposition=inline",
+        )
+        assert resp.status_code == 200
+        assert "inline" in resp.headers.get("content-disposition", "")
+        assert "attachment" not in resp.headers.get("content-disposition", "")
+
+    def test_invalid_disposition_returns_422(
+        self, client: TestClient, output_root: Path
+    ) -> None:
+        """An unknown ``disposition`` value is rejected before handler runs.
+
+        FastAPI validates ``Literal["inline", "attachment"]`` on the
+        query parameter, so a junk value never reaches the handler
+        body and the response is a clean 422 instead of a 500 or an
+        ambiguous default. The artifact does not need to exist for
+        this check because validation happens first.
+        """
+        resp = client.get(
+            "/api/v1/artifacts/s_alpha/brand_key.png?disposition=bogus",
+        )
+        assert resp.status_code == 422
+
     def test_404_when_session_id_unknown(
         self, client: TestClient, output_root: Path
     ) -> None:
@@ -349,9 +422,7 @@ class TestDownloadArtifact:
                 }
             ],
         )
-        resp = client.get(
-            "/api/v1/artifacts/s_alpha/brand_key_an_privée.jpeg"
-        )
+        resp = client.get("/api/v1/artifacts/s_alpha/brand_key_an_privée.jpeg")
         assert resp.status_code == 200
         assert resp.content == b"FAKE_BINARY_PAYLOAD"
 

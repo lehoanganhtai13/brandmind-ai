@@ -44,12 +44,12 @@ def index() -> rx.Component:
         chat_action_dialogs(),
         settings_dialog(),
         onboarding_dialog(),
-        canvas_pane(),
         header(),
         degraded_banner(),
         rx.hstack(
             phase_progress_sidebar(),
             chat_pane(),
+            canvas_pane(),
             spacing="0",
             align="stretch",
             style={
