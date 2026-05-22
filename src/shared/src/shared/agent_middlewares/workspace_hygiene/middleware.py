@@ -113,10 +113,24 @@ _PROJECT_SCOPED_PROFILE_RE = re.compile(
     r"location|địa chỉ|dia chi|view|menu|customer segment|tệp khách|tep khach"
     r")\b"
 )
+_GUARD_RECOVERY_GUIDANCE = (
+    "\n\nRecovery guidance: the file was not changed. Do not retry the same "
+    "edit unchanged. Preserve useful but unverified points in "
+    "`/workspace/working_notes.md` under `Ideas & Hypotheses` or "
+    "`Evidence Gaps` with confidence and reason, or ask for the missing "
+    "confirmation, then continue the user-facing flow."
+)
 
 
 class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
     """Protect structured workspace edits from unsafe model mutations."""
+
+    @staticmethod
+    def _blocked_tool_message(content: str, tool_call_id: str) -> ToolMessage:
+        return ToolMessage(
+            content=content + _GUARD_RECOVERY_GUIDANCE,
+            tool_call_id=tool_call_id,
+        )
 
     @staticmethod
     def _is_brand_brief_edit(request: ToolCallRequest) -> bool:
@@ -839,34 +853,34 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
         """Guard synchronous structured workspace edits."""
         profile_guard_message = self._profile_guard_message(request)
         if profile_guard_message is not None:
-            return ToolMessage(
-                content=profile_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                profile_guard_message,
+                str(request.tool_call["id"]),
             )
 
         memory_candidate_guard_message = self._memory_candidate_guard_message(request)
         if memory_candidate_guard_message is not None:
-            return ToolMessage(
-                content=memory_candidate_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                memory_candidate_guard_message,
+                str(request.tool_call["id"]),
             )
 
         user_interaction_guard_message = self._user_interaction_pattern_guard_message(
             request
         )
         if user_interaction_guard_message is not None:
-            return ToolMessage(
-                content=user_interaction_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                user_interaction_guard_message,
+                str(request.tool_call["id"]),
             )
 
         public_market_fact_guard_message = self._public_market_fact_guard_message(
             request
         )
         if public_market_fact_guard_message is not None:
-            return ToolMessage(
-                content=public_market_fact_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                public_market_fact_guard_message,
+                str(request.tool_call["id"]),
             )
 
         if not self._is_brand_brief_edit(request):
@@ -874,16 +888,16 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
 
         objective_guard_message = self._objective_evidence_guard_message(request)
         if objective_guard_message is not None:
-            return ToolMessage(
-                content=objective_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                objective_guard_message,
+                str(request.tool_call["id"]),
             )
 
         guard_message = self._heading_guard_message(request)
         if guard_message is not None:
-            return ToolMessage(
-                content=guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                guard_message,
+                str(request.tool_call["id"]),
             )
 
         broad_replace_result = self._intercept_broad_replace_all(request)
@@ -905,34 +919,34 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
         """Guard asynchronous structured workspace edits."""
         profile_guard_message = self._profile_guard_message(request)
         if profile_guard_message is not None:
-            return ToolMessage(
-                content=profile_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                profile_guard_message,
+                str(request.tool_call["id"]),
             )
 
         memory_candidate_guard_message = self._memory_candidate_guard_message(request)
         if memory_candidate_guard_message is not None:
-            return ToolMessage(
-                content=memory_candidate_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                memory_candidate_guard_message,
+                str(request.tool_call["id"]),
             )
 
         user_interaction_guard_message = self._user_interaction_pattern_guard_message(
             request
         )
         if user_interaction_guard_message is not None:
-            return ToolMessage(
-                content=user_interaction_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                user_interaction_guard_message,
+                str(request.tool_call["id"]),
             )
 
         public_market_fact_guard_message = self._public_market_fact_guard_message(
             request
         )
         if public_market_fact_guard_message is not None:
-            return ToolMessage(
-                content=public_market_fact_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                public_market_fact_guard_message,
+                str(request.tool_call["id"]),
             )
 
         if not self._is_brand_brief_edit(request):
@@ -940,16 +954,16 @@ class WorkspaceBriefHygieneMiddleware(AgentMiddleware):
 
         objective_guard_message = self._objective_evidence_guard_message(request)
         if objective_guard_message is not None:
-            return ToolMessage(
-                content=objective_guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                objective_guard_message,
+                str(request.tool_call["id"]),
             )
 
         guard_message = self._heading_guard_message(request)
         if guard_message is not None:
-            return ToolMessage(
-                content=guard_message,
-                tool_call_id=request.tool_call["id"],
+            return self._blocked_tool_message(
+                guard_message,
+                str(request.tool_call["id"]),
             )
 
         broad_replace_result = self._intercept_broad_replace_all(request)

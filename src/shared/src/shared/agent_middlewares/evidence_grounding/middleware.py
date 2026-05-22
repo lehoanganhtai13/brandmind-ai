@@ -49,6 +49,18 @@ _MARKET_RESEARCH_BOUNDARY_NOTE = (
     "to the specialist result, while inconclusive points stay as hypotheses or "
     "confirmation questions."
 )
+_SOCIAL_MEDIA_BOUNDARY_NOTE = (
+    "\n\n---\n"
+    "Social-media evidence boundary: use profile, content, and visual facts "
+    "from this specialist result only when each point is tied to a source, URL, "
+    "platform, or explicit evidence modality such as `search/scrape-observed` "
+    "or `browser-observed`. Logo meaning, feed/grid aesthetics, story/video "
+    "quality, and audience-content fit require `browser-observed` evidence or "
+    "source text that explicitly describes that exact observation. If the "
+    "result used only lightweight search/scrape and did not observe the "
+    "visual/content surface, keep those points as evidence gaps or hypotheses "
+    "instead of verified social facts."
+)
 _URL_RE = re.compile(r"(?i)\b(?:https?://|www\.)\S+")
 _SOURCE_LABEL_RE = re.compile(
     r"(?im)^\s*(?:[-*]\s*)?"
@@ -103,6 +115,19 @@ _RETRY_MARKET_RESEARCH_RENDER_REMINDER = (
     "useful: anchor the brand, give the safest working hypothesis, and ask only "
     "the branch/blocker needed now."
 )
+_RETRY_SOCIAL_MEDIA_RENDER_REMINDER = (
+    "## Social Media Evidence Render\n"
+    "A social-media-analyst pass has happened in this turn. Before the next "
+    "user-facing answer, run a modality check: use social/profile/content facts "
+    "only when the specialist tied them to a source, URL, platform, or evidence "
+    "modality. Treat logo meaning, feed/grid aesthetics, story/video quality, "
+    "and audience-content fit as verified only when the result is "
+    "`browser-observed` or the returned source text explicitly describes that "
+    "observation. If the specialist marked a point as `not observed`, blocked, "
+    "or inconclusive, present it as an evidence gap or ask for user/media "
+    "confirmation. Keep the response useful and concise; do not turn modality "
+    "limits into a long citation lecture unless the user asks."
+)
 _RETRY_OPENING_RESEARCH_REMINDER = (
     "## Opening Public-Brand Research\n"
     "The user's opening names a specific public-facing F&B project. Before "
@@ -134,13 +159,22 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
         )
 
     @staticmethod
+    def _is_social_media_task(request: ToolCallRequest) -> bool:
+        args = request.tool_call.get("args", {})
+        return (
+            str(request.tool_call.get("name", "")) == "task"
+            and args.get("subagent_type") == "social-media-analyst"
+        )
+
+    @staticmethod
     def _with_boundary_note(result: ToolMessage, note: str) -> ToolMessage:
         content = str(result.content)
-        marker = (
-            "Market-research evidence boundary:"
-            if "Market-research evidence boundary:" in note
-            else "Evidence boundary:"
-        )
+        if "Market-research evidence boundary:" in note:
+            marker = "Market-research evidence boundary:"
+        elif "Social-media evidence boundary:" in note:
+            marker = "Social-media evidence boundary:"
+        else:
+            marker = "Evidence boundary:"
         if marker in content:
             return result
 
@@ -201,7 +235,35 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
         return _SOURCE_LEDGER_MISSING_NOTE
 
     @staticmethod
-    def _market_research_tool_call_ids(messages: Sequence[object]) -> set[str]:
+    def _task_subagent_type(tool_call: object) -> str | None:
+        if not isinstance(tool_call, dict):
+            return None
+
+        name = tool_call.get("name")
+        args = tool_call.get("args") or {}
+        function = tool_call.get("function")
+        if isinstance(function, dict):
+            name = name or function.get("name")
+            args = args or function.get("arguments") or {}
+
+        if isinstance(args, str):
+            try:
+                args = json.loads(args)
+            except json.JSONDecodeError:
+                args = {}
+        if name != "task" or not isinstance(args, dict):
+            return None
+
+        subagent_type = args.get("subagent_type")
+        return str(subagent_type) if subagent_type else None
+
+    @classmethod
+    def _specialist_tool_call_ids(
+        cls,
+        messages: Sequence[object],
+        *,
+        subagent_type: str,
+    ) -> set[str]:
         call_ids: set[str] = set()
         for message in messages:
             tool_calls: list[object] = []
@@ -213,9 +275,7 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
                 tool_calls.extend(additional_kwargs.get("tool_calls", []) or [])
 
             for tool_call in tool_calls:
-                if not EvidenceGroundingMiddleware._tool_call_is_market_research(
-                    tool_call
-                ):
+                if cls._task_subagent_type(tool_call) != subagent_type:
                     continue
                 if isinstance(tool_call, dict):
                     call_id = tool_call.get("id") or tool_call.get("tool_call_id")
@@ -224,9 +284,37 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
         return call_ids
 
     @classmethod
-    def _market_research_result_texts(cls, request: ModelRequest) -> list[str]:
+    def _market_research_tool_call_ids(
+        cls,
+        messages: Sequence[object],
+    ) -> set[str]:
+        return cls._specialist_tool_call_ids(
+            messages,
+            subagent_type="market-research",
+        )
+
+    @classmethod
+    def _social_media_tool_call_ids(
+        cls,
+        messages: Sequence[object],
+    ) -> set[str]:
+        return cls._specialist_tool_call_ids(
+            messages,
+            subagent_type="social-media-analyst",
+        )
+
+    @classmethod
+    def _specialist_result_texts(
+        cls,
+        request: ModelRequest,
+        *,
+        subagent_type: str,
+    ) -> list[str]:
         messages = request.state.get("messages", [])
-        call_ids = cls._market_research_tool_call_ids(messages)
+        call_ids = cls._specialist_tool_call_ids(
+            messages,
+            subagent_type=subagent_type,
+        )
         if not call_ids:
             return []
 
@@ -253,6 +341,53 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
             if content.strip():
                 texts.append(content)
         return texts
+
+    @classmethod
+    def _latest_tool_result_matches_specialist(
+        cls,
+        request: ModelRequest,
+        *,
+        subagent_type: str,
+        boundary_marker: str,
+    ) -> bool:
+        messages = request.state.get("messages", [])
+        call_ids = cls._specialist_tool_call_ids(
+            messages,
+            subagent_type=subagent_type,
+        )
+        for message in reversed(messages):
+            if isinstance(message, dict):
+                message_type = str(message.get("type") or message.get("role") or "")
+                if message_type not in {"tool", "toolmessage"}:
+                    continue
+                content = str(message.get("content", ""))
+                if boundary_marker in content:
+                    return True
+                tool_call_id = message.get("tool_call_id")
+                return bool(tool_call_id and str(tool_call_id) in call_ids)
+
+            if not cls._tool_message_is_tool_message(message):
+                continue
+            content = str(getattr(message, "content", ""))
+            if boundary_marker in content:
+                return True
+            tool_call_id = getattr(message, "tool_call_id", "")
+            return bool(tool_call_id and str(tool_call_id) in call_ids)
+        return False
+
+    @classmethod
+    def _market_research_result_texts(cls, request: ModelRequest) -> list[str]:
+        return cls._specialist_result_texts(
+            request,
+            subagent_type="market-research",
+        )
+
+    @classmethod
+    def _social_media_result_texts(cls, request: ModelRequest) -> list[str]:
+        return cls._specialist_result_texts(
+            request,
+            subagent_type="social-media-analyst",
+        )
 
     @staticmethod
     def _tool_message_is_tool_message(message: object) -> bool:
@@ -282,25 +417,17 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
 
     @staticmethod
     def _tool_call_is_market_research(tool_call: object) -> bool:
-        if not isinstance(tool_call, dict):
-            return False
+        return (
+            EvidenceGroundingMiddleware._task_subagent_type(tool_call)
+            == "market-research"
+        )
 
-        name = tool_call.get("name")
-        args = tool_call.get("args") or {}
-        function = tool_call.get("function")
-        if isinstance(function, dict):
-            name = name or function.get("name")
-            args = args or function.get("arguments") or {}
-
-        if isinstance(args, str):
-            try:
-                args = json.loads(args)
-            except json.JSONDecodeError:
-                args = {}
-        if not isinstance(args, dict):
-            return False
-
-        return name == "task" and args.get("subagent_type") == "market-research"
+    @staticmethod
+    def _tool_call_is_social_media(tool_call: object) -> bool:
+        return (
+            EvidenceGroundingMiddleware._task_subagent_type(tool_call)
+            == "social-media-analyst"
+        )
 
     @staticmethod
     def _tool_message_is_market_research_boundary(message: object) -> bool:
@@ -313,34 +440,60 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
         )
 
     @staticmethod
-    def _has_market_research_dispatch(request: ModelRequest) -> bool:
+    def _tool_message_is_social_media_boundary(message: object) -> bool:
+        message_type = getattr(message, "type", "")
+        class_name = message.__class__.__name__
+        if message_type != "tool" and class_name != "ToolMessage":
+            return False
+        return "Social-media evidence boundary:" in str(getattr(message, "content", ""))
+
+    @classmethod
+    def _has_specialist_dispatch(
+        cls,
+        request: ModelRequest,
+        *,
+        subagent_type: str,
+        boundary_marker: str,
+    ) -> bool:
         messages = request.state.get("messages", [])
         for message in messages:
             if isinstance(message, dict):
                 tool_calls = message.get("tool_calls") or []
                 for tool_call in tool_calls:
-                    if EvidenceGroundingMiddleware._tool_call_is_market_research(
-                        tool_call
-                    ):
+                    if cls._task_subagent_type(tool_call) == subagent_type:
                         return True
                 content = str(message.get("content", ""))
-                if "Market-research evidence boundary:" in content:
+                if boundary_marker in content:
                     return True
                 continue
 
             tool_calls = getattr(message, "tool_calls", None) or []
             for tool_call in tool_calls:
-                if EvidenceGroundingMiddleware._tool_call_is_market_research(tool_call):
+                if cls._task_subagent_type(tool_call) == subagent_type:
                     return True
             additional_kwargs = getattr(message, "additional_kwargs", {}) or {}
             for tool_call in additional_kwargs.get("tool_calls", []) or []:
-                if EvidenceGroundingMiddleware._tool_call_is_market_research(tool_call):
+                if cls._task_subagent_type(tool_call) == subagent_type:
                     return True
-            if EvidenceGroundingMiddleware._tool_message_is_market_research_boundary(
-                message
-            ):
+            if boundary_marker in str(getattr(message, "content", "")):
                 return True
         return False
+
+    @classmethod
+    def _has_market_research_dispatch(cls, request: ModelRequest) -> bool:
+        return cls._has_specialist_dispatch(
+            request,
+            subagent_type="market-research",
+            boundary_marker="Market-research evidence boundary:",
+        )
+
+    @classmethod
+    def _has_social_media_dispatch(cls, request: ModelRequest) -> bool:
+        return cls._has_specialist_dispatch(
+            request,
+            subagent_type="social-media-analyst",
+            boundary_marker="Social-media evidence boundary:",
+        )
 
     @staticmethod
     def _latest_human_text(request: ModelRequest) -> str:
@@ -382,9 +535,52 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
     ) -> bool:
         if not cls._has_market_research_dispatch(request):
             return False
+        if not cls._latest_tool_result_matches_specialist(
+            request,
+            subagent_type="market-research",
+            boundary_marker="Market-research evidence boundary:",
+        ):
+            return False
         if request.state.get("_evidence_render_injected"):
             return False
         return True
+
+    @classmethod
+    def _should_inject_social_media_render(
+        cls,
+        request: ModelRequest,
+    ) -> bool:
+        if not cls._has_social_media_dispatch(request):
+            return False
+        if not cls._latest_tool_result_matches_specialist(
+            request,
+            subagent_type="social-media-analyst",
+            boundary_marker="Social-media evidence boundary:",
+        ):
+            return False
+        if request.state.get("_evidence_social_render_injected"):
+            return False
+        return True
+
+    @classmethod
+    def _social_media_observation_status(cls, request: ModelRequest) -> str:
+        texts = cls._social_media_result_texts(request)
+        if any("browser-observed" in text.casefold() for text in texts):
+            return "BROWSER_OBSERVED_DETECTED"
+        if texts and any(cls._has_usable_source_marker(text) for text in texts):
+            return "SOURCE_MARKERS_DETECTED"
+        return "NO_OBSERVATION_LEDGER_DETECTED"
+
+    @classmethod
+    def _social_media_render_reminder(cls, request: ModelRequest) -> str:
+        status = cls._social_media_observation_status(request)
+        return (
+            _RETRY_SOCIAL_MEDIA_RENDER_REMINDER
+            + "\n\nDetected social evidence modality status: "
+            + status
+            + ". This detected status is the operational modality boundary "
+            "for the next user-facing answer."
+        )
 
     @classmethod
     def _inject_pre_call_reminder(cls, request: ModelRequest) -> None:
@@ -407,6 +603,17 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
             cast(dict[str, object], request.state)["_evidence_render_injected"] = True
             logger.info(
                 "EvidenceGroundingMiddleware injected market-research render reminder"
+            )
+
+        if cls._should_inject_social_media_render(request):
+            request.messages.append(
+                SystemMessage(content=cls._social_media_render_reminder(request))
+            )
+            cast(dict[str, object], request.state)[
+                "_evidence_social_render_injected"
+            ] = True
+            logger.info(
+                "EvidenceGroundingMiddleware injected social-media render reminder"
             )
 
     def wrap_model_call(
@@ -444,6 +651,8 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
                 _MARKET_RESEARCH_BOUNDARY_NOTE
                 + self._market_research_source_ledger_note(str(result.content)),
             )
+        if self._is_social_media_task(request):
+            return self._with_boundary_note(result, _SOCIAL_MEDIA_BOUNDARY_NOTE)
         return result
 
     async def awrap_tool_call(
@@ -463,4 +672,6 @@ class EvidenceGroundingMiddleware(AgentMiddleware):
                 _MARKET_RESEARCH_BOUNDARY_NOTE
                 + self._market_research_source_ledger_note(str(result.content)),
             )
+        if self._is_social_media_task(request):
+            return self._with_boundary_note(result, _SOCIAL_MEDIA_BOUNDARY_NOTE)
         return result

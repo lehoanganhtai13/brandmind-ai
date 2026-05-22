@@ -437,6 +437,9 @@ def test_blocks_unsourced_public_market_facts_in_working_notes() -> None:
     assert handler_called is False
     assert "current public market facts" in str(result.content)
     assert "market-research" in str(result.content)
+    assert "Do not retry the same edit unchanged" in str(result.content)
+    assert "Ideas & Hypotheses" in str(result.content)
+    assert "Evidence Gaps" in str(result.content)
 
 
 def test_blocks_unsourced_public_listing_observations_in_working_notes() -> None:
@@ -473,8 +476,7 @@ def test_allows_public_market_facts_with_exact_tool_quote() -> None:
     middleware = WorkspaceBriefHygieneMiddleware()
     old_string = "## Inbox\n_Empty._"
     new_string = (
-        "## Inbox\n"
-        '- Source: market-research returned "TripAdvisor rating is 5.0".\n'
+        '## Inbox\n- Source: market-research returned "TripAdvisor rating is 5.0".\n'
     )
     messages = [
         ToolMessage(
@@ -807,6 +809,7 @@ def test_blocks_sparse_first_turn_profile_inference() -> None:
         result.content
     )
     assert "memory candidate" in str(result.content)
+    assert "continue the user-facing flow" in str(result.content)
 
 
 def test_blocks_keyword_profile_update_without_source_quote() -> None:
