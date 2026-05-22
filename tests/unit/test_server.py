@@ -39,7 +39,7 @@ from server.services.session_manager import (
 )
 from shared.agent_middlewares.callback_types import StreamingTokenEvent
 
-# ── SessionMode Enum ─────────────────────────────────────────────────
+# SessionMode enum
 
 
 class TestSessionModeEnum:
@@ -80,7 +80,7 @@ class TestSSEEventTypeEnum:
         assert actual == expected
 
 
-# ── EventRouter ──────────────────────────────────────────────────────
+# Event router
 
 
 class TestEventRouter:
@@ -131,7 +131,7 @@ class TestEventRouter:
         assert q2.empty()
 
 
-# ── SessionManager ───────────────────────────────────────────────────
+# Session manager
 
 
 class TestSessionManager:
@@ -423,7 +423,7 @@ class TestSessionManager:
         assert workspace.exists()
 
 
-# ── Agent Factory ────────────────────────────────────────────────────
+# Agent factory
 
 
 class TestAgentFactory:
@@ -438,7 +438,7 @@ class TestAgentFactory:
             create_agent_for_session(mode="unknown")
 
 
-# ── Pydantic Schemas ─────────────────────────────────────────────────
+# Pydantic schemas
 
 
 class TestSchemas:
@@ -510,7 +510,7 @@ class TestSchemas:
         assert '"done"' in data
 
 
-# ── API Routes ───────────────────────────────────────────────────────
+# API routes
 
 
 class TestAPIRoutes:
@@ -583,6 +583,67 @@ class TestAPIRoutes:
         descriptions = {entry["model_id"]: entry["description"] for entry in body}
         assert descriptions["gemini-3.5-flash"]
         assert descriptions["gemini-3-flash"]
+
+    def test_get_user_profile_settings_returns_defaults(
+        self,
+        client,
+        monkeypatch,
+        tmp_path,
+    ):
+        """GET profile settings returns safe defaults before onboarding."""
+        from shared.workspace import profile_settings as profile_settings_module
+
+        monkeypatch.setattr(
+            profile_settings_module.workspace_mod,
+            "BRANDMIND_HOME",
+            tmp_path / "profile-home",
+        )
+
+        resp = client.get("/api/v1/brand-strategy/user-profile/settings")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["settings"]["onboarding_completed"] is False
+        assert body["settings"]["mentoring_style"] == "balanced"
+        assert body["options"]["role"]
+        assert "# User Profile" in body["profile_markdown"]
+
+    def test_put_user_profile_settings_updates_prompt_profile(
+        self,
+        client,
+        monkeypatch,
+        tmp_path,
+    ):
+        """PUT profile settings persists the profile prior for future sessions."""
+        from shared.workspace import profile_settings as profile_settings_module
+
+        home = tmp_path / "profile-home"
+        monkeypatch.setattr(
+            profile_settings_module.workspace_mod,
+            "BRANDMIND_HOME",
+            home,
+        )
+
+        resp = client.put(
+            "/api/v1/brand-strategy/user-profile/settings",
+            json={
+                "job_domain": "fb",
+                "role": "brand_manager",
+                "experience_years": "5_plus",
+                "brand_strategy_familiarity": "advanced",
+                "mentoring_style": "compact_first",
+                "stakeholder_context": "boss",
+                "onboarding_completed": True,
+            },
+        )
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["settings"]["role"] == "brand_manager"
+        assert body["settings"]["updated_at"]
+        assert "Role: Brand Manager" in body["profile_markdown"]
+        assert "Preferred mentoring density: Compact first" in body["profile_markdown"]
+        assert (home / "user" / "profile_settings.json").is_file()
+        assert (home / "user" / "profile.md").is_file()
 
     def test_list_sessions(self, client):
         client.post("/api/v1/sessions", json={"mode": "ask"})

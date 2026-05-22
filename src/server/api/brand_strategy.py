@@ -15,6 +15,14 @@ from core.brand_strategy.model_profiles import (
     DEFAULT_BRAND_STRATEGY_MAIN_MODEL,
     list_supported_brand_strategy_main_models,
 )
+from shared.workspace.profile_settings import (
+    UserProfileSettings,
+    UserProfileSettingsOptions,
+    get_user_profile_settings_options,
+    load_user_profile_settings,
+    read_user_profile_markdown,
+    save_user_profile_settings,
+)
 
 router = APIRouter(prefix="/brand-strategy", tags=["brand-strategy"])
 
@@ -40,6 +48,26 @@ class MainModelOption(BaseModel):
     is_default: bool = Field(..., description="True for BrandMind's default profile")
 
 
+class UserProfileSettingsResponse(BaseModel):
+    """Current onboarding profile state exposed to Web and TUI clients.
+
+    The settings are the structured source of truth for onboarding controls.
+    ``profile_markdown`` shows the prompt-facing managed block after rendering,
+    which lets clients verify what the agent will read without duplicating the
+    renderer.
+    """
+
+    settings: UserProfileSettings = Field(..., description="Saved or default settings")
+    options: UserProfileSettingsOptions = Field(
+        ...,
+        description="Supported option lists for onboarding controls",
+    )
+    profile_markdown: str = Field(
+        ...,
+        description="Current prompt-facing user profile markdown",
+    )
+
+
 @router.get("/models", response_model=list[MainModelOption])
 async def list_main_agent_models() -> list[MainModelOption]:
     """Return supported main-agent model profiles for the picker UI."""
@@ -52,3 +80,32 @@ async def list_main_agent_models() -> list[MainModelOption]:
         )
         for public_key, profile in list_supported_brand_strategy_main_models()
     ]
+
+
+@router.get(
+    "/user-profile/settings",
+    response_model=UserProfileSettingsResponse,
+)
+async def get_user_profile_settings() -> UserProfileSettingsResponse:
+    """Return saved onboarding settings and option metadata for clients."""
+    return UserProfileSettingsResponse(
+        settings=load_user_profile_settings(),
+        options=get_user_profile_settings_options(),
+        profile_markdown=read_user_profile_markdown(),
+    )
+
+
+@router.put(
+    "/user-profile/settings",
+    response_model=UserProfileSettingsResponse,
+)
+async def put_user_profile_settings(
+    settings: UserProfileSettings,
+) -> UserProfileSettingsResponse:
+    """Persist onboarding settings and refresh the prompt-facing profile."""
+    saved = save_user_profile_settings(settings)
+    return UserProfileSettingsResponse(
+        settings=saved,
+        options=get_user_profile_settings_options(),
+        profile_markdown=read_user_profile_markdown(),
+    )
