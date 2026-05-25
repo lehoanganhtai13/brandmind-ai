@@ -1,10 +1,12 @@
-"""ChatPane container — vertical scroll of messages + sticky composer.
+"""ChatPane container — empty centred hero, or scrolling messages + composer.
 
-Implements ``docs/web_design.md`` § 9.3 with Codex review Finding 4
-applied: the empty state hero is smaller (28 px), anchored in the upper
-third of the canvas, and offers three prefill prompt chips so the
-first interaction has texture. Glass effects stay off the scroll
-surface to avoid streaming-token repaint judder.
+Implements ``docs/web_design.md`` § 9.3. The empty state mirrors the
+Claude / Gemini / ChatGPT new-chat pattern: a single serif greeting
+above an inline composer, vertically centred in the canvas, no
+pre-filled starter chips. Once the first turn lands, the layout
+switches to the conventional scrolling-messages + sticky-bottom
+composer. Glass effects stay off the scroll surface to avoid
+streaming-token repaint judder.
 """
 
 from __future__ import annotations
@@ -16,48 +18,20 @@ from . import tokens
 from .input_composer import input_composer
 from .message_bubble import message_bubble
 
-_STARTER_PROMPTS: tuple[str, ...] = (
-    "I'm launching a specialty cafe and need a brand strategy.",
-    "Help me reposition an existing F&B brand.",
-    "Refresh the visual identity of my restaurant.",
-)
-
-
-def _prompt_chip(prompt: str) -> rx.Component:
-    """One starter-prompt chip that prefills the composer on click."""
-    return rx.button(
-        rx.text(
-            prompt,
-            style={
-                "color": tokens.TEXT_SECONDARY,
-                "font_family": tokens.FONT_SANS,
-                "font_size": "13px",
-                "line_height": "1.45",
-                "text_align": "left",
-            },
-        ),
-        on_click=BrandMindState.set_pending_input(prompt),
-        variant="ghost",
-        style={
-            "padding": "10px 14px",
-            "border_radius": tokens.RADIUS_LG,
-            "border": f"1px solid {tokens.GLASS_BORDER}",
-            "background_color": "transparent",
-            "cursor": "pointer",
-            "height": "auto",
-            "max_width": "100%",
-            "white_space": "normal",
-            "transition": "border-color 160ms ease, background-color 160ms ease",
-            "_hover": {
-                "border_color": "rgba(95, 179, 168, 0.35)",
-                "background_color": "rgba(95, 179, 168, 0.06)",
-            },
-        },
-    )
-
 
 def _empty_state() -> rx.Component:
-    """Calm hero with three prefill prompts to seed the first turn."""
+    """Minimal centered empty-state — serif greeting above inline composer.
+
+    Mirrors the Claude / Gemini / ChatGPT new-chat pattern: a single
+    quiet hero line above a centered composer with no pre-filled
+    starter chips, so first-touch lands with iPhone-grade polish. The
+    block centres vertically inside the chat-canvas flex column and
+    reveals with a soft 600 ms ease-out fade. The composer is mounted
+    here when ``messages`` is empty and at the bottom of
+    :func:`chat_pane` after the first turn — Reflex re-mounts it on
+    the transition, which is safe because composer state lives on
+    :class:`BrandMindState`.
+    """
     return rx.center(
         rx.vstack(
             rx.text(
@@ -65,36 +39,30 @@ def _empty_state() -> rx.Component:
                 style={
                     "color": tokens.TEXT_PRIMARY,
                     "font_family": tokens.FONT_DISPLAY,
-                    "font_size": "28px",
+                    "font_size": "40px",
                     "font_weight": "400",
-                    "letter_spacing": "-0.01em",
-                    "line_height": "1.2",
+                    "letter_spacing": "-0.025em",
+                    "line_height": "1.15",
                     "text_align": "center",
+                    "margin": "0",
                 },
             ),
-            rx.text(
-                "BrandMind is your brand-strategy mentor for F&B. Pick a "
-                "prompt below or write your own.",
+            rx.box(
+                input_composer(),
                 style={
-                    "color": tokens.TEXT_MUTED,
-                    "font_family": tokens.FONT_SANS,
-                    "font_size": "14px",
-                    "line_height": "1.6",
-                    "max_width": "440px",
-                    "text_align": "center",
+                    "width": "100%",
+                    "max_width": "720px",
                 },
             ),
-            rx.vstack(
-                *[_prompt_chip(p) for p in _STARTER_PROMPTS],
-                spacing="2",
-                align="stretch",
-                width="100%",
-                max_width="440px",
-                padding_top="8px",
-            ),
-            spacing="4",
+            spacing="6",
             align="center",
-            padding_top="14vh",
+            width="100%",
+            max_width="720px",
+            style={
+                "animation": (
+                    "bm-empty-reveal 600ms cubic-bezier(0.16, 1, 0.3, 1) both"
+                ),
+            },
         ),
         flex="1",
         width="100%",
@@ -285,8 +253,28 @@ def _message_scroll() -> rx.Component:
     )
 
 
+def _chatting_layout() -> rx.Component:
+    """Render the active-chat layout: scrolling messages + bottom composer.
+
+    Used once the first user turn lands so the composer can anchor to
+    the bottom of the canvas in the conventional chat pattern. The
+    empty-state layout (:func:`_empty_state`) renders the composer
+    inline with the centred greeting; this branch resumes the
+    sticky-bottom anchor after a message exists.
+    """
+    return rx.vstack(
+        _message_scroll(),
+        input_composer(),
+        spacing="0",
+        align="stretch",
+        flex="1",
+        width="100%",
+        min_height="0",
+    )
+
+
 def chat_pane() -> rx.Component:
-    """Render the ChatPane — message scroll + sticky InputComposer.
+    """Render the ChatPane — empty centred hero, or scroll + composer.
 
     The ``on_mount`` hook boots the auto-scroll observer; the script
     polls until the message viewport appears in the DOM so it survives
@@ -296,9 +284,8 @@ def chat_pane() -> rx.Component:
         rx.cond(
             BrandMindState.messages.length() == 0,
             _empty_state(),
-            _message_scroll(),
+            _chatting_layout(),
         ),
-        input_composer(),
         spacing="0",
         align="stretch",
         flex="1 1 0",

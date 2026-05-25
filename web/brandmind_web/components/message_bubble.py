@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import reflex as rx
 
-from ..models import ChatMessage, TimelineEntry
+from ..models import ChatMessage, ThinkingSegment, TimelineEntry
 from . import tokens
 from .tool_timeline import humanize_tool_call_label, tool_call_icon_tag
 
@@ -68,24 +68,118 @@ _THINKING_TEXT_STYLE: dict[str, str] = {
     "font_family": tokens.FONT_SANS,
     "font_size": "13px",
     "font_style": "italic",
-    "line_height": "1.6",
-    "margin": "0 0 4px 0",
+    "line_height": "1.55",
+    "margin": "0",
 }
 
-_THINKING_STRONG_STYLE: dict[str, str] = {
+
+_THINKING_BODY_MARKDOWN_P_STYLE: dict[str, str] = {
     "color": tokens.TEXT_SECONDARY,
     "font_family": tokens.FONT_SANS,
     "font_size": "13px",
     "font_style": "italic",
+    "line_height": "1.55",
+    "margin": "0 0 6px 0",
+}
+
+_THINKING_BODY_MARKDOWN_STRONG_STYLE: dict[str, str] = {
+    "color": tokens.TEXT_PRIMARY,
     "font_weight": "600",
-}
-
-_THINKING_EM_STYLE: dict[str, str] = {
-    "color": tokens.TEXT_SECONDARY,
-    "font_family": tokens.FONT_SANS,
-    "font_size": "13px",
     "font_style": "italic",
 }
+
+_THINKING_BODY_MARKDOWN_EM_STYLE: dict[str, str] = {
+    "color": tokens.TEXT_SECONDARY,
+    "font_style": "italic",
+    "font_weight": "400",
+}
+
+_THINKING_BODY_MARKDOWN_CODE_STYLE: dict[str, str] = {
+    "font_family": tokens.FONT_MONO,
+    "font_size": "12px",
+    "background_color": tokens.BG_SURFACE_2,
+    "color": tokens.TEXT_PRIMARY,
+    "padding": "1px 5px",
+    "border_radius": tokens.RADIUS_SM,
+}
+
+
+def _thinking_body_markdown(text: rx.Var[str]) -> rx.Component:
+    """Render a body slice through markdown with the timeline palette.
+
+    Each body segment may contain inline markdown — ``**bold**``,
+    ``*italic*``, ``` `code` ```, or short lists — that the agent
+    folded into the prose to flag key terms. The component_map keeps
+    every rendered leaf inside the timeline's italic-secondary palette
+    while still surfacing the model's emphasis cues so the body reads
+    as authored, not as one flat italic block.
+
+    Hook-order safety: this component is reached via ``rx.foreach``
+    over a stable per-row segment list; each segment maps to its own
+    independent React instance, so the ``rx.cond`` swap between
+    :func:`rx.text` (header) and :func:`rx.markdown` (body) lives at a
+    different tree position per item and never reuses the same hook
+    stack across two component shapes.
+    """
+    return rx.markdown(
+        text,
+        component_map={
+            "p": lambda body: rx.text(body, style=_THINKING_BODY_MARKDOWN_P_STYLE),
+            "strong": lambda body: rx.el.span(
+                body, style=_THINKING_BODY_MARKDOWN_STRONG_STYLE
+            ),
+            "em": lambda body: rx.el.span(
+                body, style=_THINKING_BODY_MARKDOWN_EM_STYLE
+            ),
+            "code": lambda body: rx.el.code(
+                body, style=_THINKING_BODY_MARKDOWN_CODE_STYLE
+            ),
+            "ul": lambda items: rx.list.unordered(
+                items,
+                style={**_THINKING_BODY_MARKDOWN_P_STYLE, "padding_left": "1.2em"},
+            ),
+            "ol": lambda items: rx.list.ordered(
+                items,
+                style={**_THINKING_BODY_MARKDOWN_P_STYLE, "padding_left": "1.4em"},
+            ),
+            "li": lambda body: rx.list.item(body, style={"margin": "0 0 3px 0"}),
+        },
+    )
+
+
+def _thinking_segment(seg: rx.Var[ThinkingSegment], index: rx.Var[int]) -> rx.Component:
+    """Render one parsed slice of a thinking block (header or body).
+
+    Headers render as a heavier-weight primary-palette ``rx.text`` so
+    the eye locks onto reasoning-step titles; bodies render through
+    :func:`_thinking_body_markdown` so inline ``**bold**``, ``*em*``,
+    ``` `code` ``` and short lists from the agent's prose still
+    surface inside the italic-secondary timeline palette. The first
+    segment of a row carries no top margin so its first text line
+    centres on the bullet icon at the same vertical position as a
+    tool-row label; subsequent headers gain a top margin to break out
+    from the preceding body paragraph.
+    """
+    is_header = seg.kind == "header"
+    is_first = index == 0
+    header_top_margin = rx.cond(is_first, "0", "10px")
+    return rx.cond(
+        is_header,
+        rx.text(
+            seg.text,
+            style={
+                "color": tokens.TEXT_PRIMARY,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "13px",
+                "font_style": "italic",
+                "font_weight": "600",
+                "line_height": "1.55",
+                "margin_top": header_top_margin,
+                "margin_bottom": "2px",
+            },
+        ),
+        rx.box(_thinking_body_markdown(seg.text)),
+    )
 
 
 def _streaming_cursor() -> rx.Component:
@@ -97,27 +191,6 @@ def _streaming_cursor() -> rx.Component:
             "animation": "bm-blink 1s step-start infinite",
             "display": "inline-block",
             "margin_left": "2px",
-        },
-    )
-
-
-def _thinking_markdown(text: rx.Var[str]) -> rx.Component:
-    """Render thinking text as markdown with the italic secondary palette."""
-    return rx.markdown(
-        text,
-        component_map={
-            "p": lambda body: rx.text(body, style=_THINKING_TEXT_STYLE),
-            "strong": lambda body: rx.el.span(body, style=_THINKING_STRONG_STYLE),
-            "em": lambda body: rx.el.span(body, style=_THINKING_EM_STYLE),
-            "ul": lambda items: rx.list.unordered(
-                items,
-                style={**_THINKING_TEXT_STYLE, "padding_left": "1.2em"},
-            ),
-            "ol": lambda items: rx.list.ordered(
-                items,
-                style={**_THINKING_TEXT_STYLE, "padding_left": "1.4em"},
-            ),
-            "li": lambda body: rx.list.item(body, style={"margin": "0 0 4px 0"}),
         },
     )
 
@@ -164,15 +237,18 @@ def _timeline_entry(entry: rx.Var[TimelineEntry], index: rx.Var[int]) -> rx.Comp
     is_thinking = entry.kind == "thinking"
     tool_done = (entry.tool_call is not None) & (entry.tool_call.result != "")
 
-    icon = rx.cond(
-        is_thinking,
+    icon = rx.box(
         rx.box(
             style={
                 "width": "8px",
                 "height": "8px",
                 "border_radius": tokens.RADIUS_PILL,
-                "background_color": tokens.TEXT_MUTED,
-                "margin": "6px 0",
+                "background_color": rx.cond(
+                    is_thinking | tool_done,
+                    tokens.ACCENT_TEAL_SOLID,
+                    tokens.TEXT_MUTED,
+                ),
+                "display": rx.cond(is_thinking, "block", "none"),
             },
         ),
         rx.icon(
@@ -185,8 +261,16 @@ def _timeline_entry(entry: rx.Var[TimelineEntry], index: rx.Var[int]) -> rx.Comp
                 tokens.ACCENT_TEAL_SOLID,
                 tokens.TEXT_MUTED,
             ),
-            style={"margin": "6px 0"},
+            style={"display": rx.cond(is_thinking, "none", "block")},
         ),
+        style={
+            "display": "flex",
+            "align_items": "center",
+            "justify_content": "center",
+            "width": "20px",
+            "height": "20px",
+            "flex_shrink": "0",
+        },
     )
 
     rail_top = rx.cond(
@@ -208,36 +292,40 @@ def _timeline_entry(entry: rx.Var[TimelineEntry], index: rx.Var[int]) -> rx.Comp
         },
     )
 
-    content = rx.cond(
-        is_thinking,
-        _thinking_markdown(entry.thinking_text),
-        rx.hstack(
-            rx.text(
-                humanize_tool_call_label(
-                    entry.tool_call.tool_name, entry.tool_call.arguments
-                ),
-                style={
-                    "color": tokens.TEXT_PRIMARY,
-                    "font_family": tokens.FONT_SANS,
-                    "font_size": "13px",
-                },
+    content = rx.hstack(
+        rx.box(
+            rx.foreach(
+                entry.thinking_segments,
+                lambda seg, idx: _thinking_segment(seg, idx),
             ),
-            rx.cond(
-                tool_done,
-                rx.fragment(),
-                rx.text(
-                    "running",
-                    style={
-                        "color": tokens.TEXT_MUTED,
-                        "font_family": tokens.FONT_SANS,
-                        "font_size": "12px",
-                        "font_style": "italic",
-                    },
-                ),
-            ),
-            spacing="2",
-            align="center",
+            display=rx.cond(is_thinking, "block", "none"),
+            style={"flex": "1", "min_width": "0"},
         ),
+        rx.text(
+            humanize_tool_call_label(
+                entry.tool_call.tool_name,
+                entry.tool_call.arguments,
+            ),
+            style={
+                "color": tokens.TEXT_PRIMARY,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "13px",
+                "line_height": "1.55",
+                "display": rx.cond(is_thinking, "none", "block"),
+            },
+        ),
+        rx.text(
+            "running",
+            style={
+                "color": tokens.TEXT_MUTED,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "12px",
+                "font_style": "italic",
+                "display": rx.cond((~is_thinking) & (~tool_done), "block", "none"),
+            },
+        ),
+        spacing="2",
+        align=rx.cond(is_thinking, "start", "center"),
     )
 
     return rx.hstack(
@@ -246,7 +334,7 @@ def _timeline_entry(entry: rx.Var[TimelineEntry], index: rx.Var[int]) -> rx.Comp
             content,
             style={
                 "flex": "1",
-                "padding": "11px 0 8px 0",
+                "padding": "8px 0 4px 0",
             },
         ),
         spacing="3",
@@ -330,11 +418,12 @@ def _final_summary_row(message: rx.Var[ChatMessage]) -> rx.Component:
         width="100%",
     )
 
-    return rx.cond(
-        message.is_streaming,
-        rx.fragment(),
-        rx.cond(message.turn_duration_label, row, rx.fragment()),
+    row_display = rx.cond(
+        (~message.is_streaming) & (message.turn_duration_label != ""),
+        "flex",
+        "none",
     )
+    return rx.box(row, display=row_display)
 
 
 def _reasoning_timeline(
@@ -364,6 +453,7 @@ def _reasoning_timeline(
         style={"cursor": "pointer", "user_select": "none"},
     )
 
+    has_timeline = message.timeline.length() > 0
     expanded = rx.box(
         rx.vstack(
             rx.foreach(
@@ -379,18 +469,16 @@ def _reasoning_timeline(
             "padding": "4px 0 4px 0",
             "margin_left": "4px",
         },
+        display=rx.cond(has_timeline & message.timeline_expanded, "block", "none"),
     )
 
-    return rx.cond(
-        message.timeline.length() > 0,
-        rx.vstack(
-            header,
-            rx.cond(message.timeline_expanded, expanded, rx.fragment()),
-            spacing="1",
-            align="stretch",
-            width="100%",
-        ),
-        rx.fragment(),
+    return rx.vstack(
+        header,
+        expanded,
+        spacing="1",
+        align="stretch",
+        width="100%",
+        display=rx.cond(has_timeline, "flex", "none"),
     )
 
 
@@ -472,7 +560,10 @@ def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
                 ),
             },
         ),
-        rx.cond(message.is_streaming, _streaming_cursor(), rx.fragment()),
+        rx.box(
+            _streaming_cursor(),
+            display=rx.cond(message.is_streaming, "inline-block", "none"),
+        ),
         style={"width": "100%"},
     )
 

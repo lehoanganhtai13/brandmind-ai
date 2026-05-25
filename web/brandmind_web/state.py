@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import time
 import uuid
 
@@ -50,6 +51,7 @@ from .models import (
     SessionMessage,
     StreamingThinkingPayload,
     StreamingTokenPayload,
+    ThinkingSegment,
     TimelineEntry,
     ToolCallInfo,
     ToolCallPayload,
@@ -98,6 +100,99 @@ def _api_base_url() -> str:
     matching a default ``brandmind serve`` install.
     """
     return os.getenv("BRANDMIND_API_URL", _DEFAULT_API_URL).rstrip("/")
+
+
+_BOLD_MARKER_PATTERN = re.compile(r"\*\*([^*]+?)\*\*")
+
+
+def _compact_thinking_text(text: str) -> str:
+    """Normalize whitespace inside a streamed thinking block.
+
+    Stale persisted reasoning state carries Windows newlines, runs of
+    blank lines, and trailing spaces that explode into large visual
+    gaps once the timeline expands. Collapsing those keeps the raw
+    string a clean source of truth for both segmentation and any
+    plain-text fallback. ``**bold**`` markers are intentionally
+    preserved here so :func:`_segment_thinking_text` can find the
+    header / body boundary; the markers are stripped per-segment by
+    the segmentation step, never on the raw text.
+    """
+    normalized_newlines = text.replace("\r\n", "\n").replace("\r", "\n")
+    stripped_lines = "\n".join(
+        line.rstrip() for line in normalized_newlines.split("\n")
+    )
+    without_extra_spaces = re.sub(r"[ \t]{2,}", " ", stripped_lines)
+    paragraph_collapsed = re.sub(r"\n{3,}", "\n\n", without_extra_spaces)
+    return paragraph_collapsed.strip()
+
+
+def _segment_thinking_text(text: str) -> list[ThinkingSegment]:
+    """Split a normalized thinking block into header / body segments.
+
+    The agent emits each reasoning step as ``**Header**\\nBody...`` and
+    the same row may carry several such sections back-to-back. The web
+    timeline renders this list with ``rx.foreach`` so each segment can
+    use the matching weight and palette without mounting a heavier
+    component (rx.markdown is intentionally avoided to keep the React
+    hook order stable across thinking and tool-call rows). When the
+    raw text has no markers the whole string falls into a single body
+    segment so legacy persisted entries still render correctly.
+
+    Args:
+        text (str): The normalized thinking block.
+
+    Returns:
+        segments (list[ThinkingSegment]): Alternating header / body
+            slices in document order. Empty when ``text`` is empty.
+    """
+    if not text:
+        return []
+    segments: list[ThinkingSegment] = []
+    cursor = 0
+    for match in _BOLD_MARKER_PATTERN.finditer(text):
+        if match.start() > cursor:
+            body = text[cursor : match.start()].strip()
+            if body:
+                segments.append(ThinkingSegment(kind="body", text=body))
+        header = match.group(1).strip()
+        if header:
+            segments.append(ThinkingSegment(kind="header", text=header))
+        cursor = match.end()
+    if cursor < len(text):
+        tail = text[cursor:].strip()
+        if tail:
+            segments.append(ThinkingSegment(kind="body", text=tail))
+    return segments
+
+
+def _compact_timeline_entries(timeline: list[TimelineEntry]) -> list[TimelineEntry]:
+    """Return timeline entries with display-ready thinking text and segments."""
+    compacted: list[TimelineEntry] = []
+    for entry in timeline:
+        if entry.kind == "thinking" and entry.thinking_text:
+            normalized = _compact_thinking_text(entry.thinking_text)
+            entry = entry.model_copy(
+                update={
+                    "thinking_text": normalized,
+                    "thinking_segments": _segment_thinking_text(normalized),
+                }
+            )
+        compacted.append(entry)
+    return compacted
+
+
+def _compact_chat_message_timeline(message: ChatMessage) -> ChatMessage:
+    """Return a chat message whose reasoning timeline is display-ready."""
+    if not message.timeline:
+        return message
+    return message.model_copy(
+        update={"timeline": _compact_timeline_entries(message.timeline)}
+    )
+
+
+def _compact_chat_messages(messages: list[ChatMessage]) -> list[ChatMessage]:
+    """Return chat messages with normalized reasoning snippets."""
+    return [_compact_chat_message_timeline(message) for message in messages]
 
 
 class BrandMindState(rx.State):
@@ -295,6 +390,13 @@ class BrandMindState(rx.State):
         self.sidebar_collapsed = "0" if current else "1"
 
     @rx.event
+    def normalize_timeline_text(self) -> None:
+        """Compact existing reasoning snippets already present in browser state."""
+        if not self.messages:
+            return
+        self.messages = _compact_chat_messages(self.messages)
+
+    @rx.event
     def toggle_model_picker(self) -> None:
         """Open or close the model-picker popover.
 
@@ -471,6 +573,8 @@ class BrandMindState(rx.State):
             profile_payload = None
         async with self:
             self.sessions = self._filter_chats(sessions)
+            if self.messages:
+                self.messages = _compact_chat_messages(self.messages)
             self.available_models = options
             if not self.selected_model_id:
                 self.selected_model_id = default_model_id
@@ -915,10 +1019,12 @@ class BrandMindState(rx.State):
                     arguments=dict(entry.tool_call.arguments),
                     result=entry.tool_call.result,
                 )
+            normalized_thinking = _compact_thinking_text(entry.thinking_text)
             timeline.append(
                 TimelineEntry(
                     kind=entry.kind,
-                    thinking_text=entry.thinking_text,
+                    thinking_text=normalized_thinking,
+                    thinking_segments=_segment_thinking_text(normalized_thinking),
                     thinking_done=True,
                     tool_call=tool_call,
                 )
@@ -1436,14 +1542,19 @@ class BrandMindState(rx.State):
         tail = timeline[-1] if timeline else None
         if tail is not None and tail.kind == "thinking" and not tail.thinking_done:
             if token:
-                tail.thinking_text = f"{tail.thinking_text}{token}"
+                tail.thinking_text = _compact_thinking_text(
+                    f"{tail.thinking_text}{token}"
+                )
+                tail.thinking_segments = _segment_thinking_text(tail.thinking_text)
             if finalised:
                 tail.thinking_done = True
         elif token:
+            normalized_thinking = _compact_thinking_text(token)
             timeline.append(
                 TimelineEntry(
                     kind="thinking",
-                    thinking_text=token,
+                    thinking_text=normalized_thinking,
+                    thinking_segments=_segment_thinking_text(normalized_thinking),
                     thinking_done=finalised,
                 )
             )
@@ -1571,6 +1682,7 @@ class BrandMindState(rx.State):
         target = self.messages[-1]
         if target.role != "agent":
             return
+        target = _compact_chat_message_timeline(target)
         for entry in target.timeline:
             if entry.kind == "tool_call" and entry.tool_call is not None:
                 if entry.tool_call.result == "":
@@ -1593,6 +1705,7 @@ class BrandMindState(rx.State):
         target = self.messages[message_index]
         if target.role != "agent" or not target.timeline:
             return
+        target = _compact_chat_message_timeline(target)
         target.timeline_expanded = not target.timeline_expanded
         self.messages = [
             *self.messages[:message_index],

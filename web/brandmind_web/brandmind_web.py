@@ -24,10 +24,14 @@ from .components.tokens import (
 )
 from .state import BrandMindState
 
-_CURSOR_BLINK_KEYFRAMES = """
+_GLOBAL_KEYFRAMES = """
 @keyframes bm-blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
+}
+@keyframes bm-empty-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 """
 
@@ -40,7 +44,7 @@ def index() -> rx.Component:
     viewport between the sidebar and the chat column.
     """
     return rx.vstack(
-        rx.html(f"<style>{_CURSOR_BLINK_KEYFRAMES}</style>"),
+        rx.html(f"<style>{_GLOBAL_KEYFRAMES}</style>"),
         chat_action_dialogs(),
         settings_dialog(),
         onboarding_dialog(),
@@ -68,6 +72,7 @@ def index() -> rx.Component:
             "overflow": "hidden",
         },
         on_mount=[
+            BrandMindState.normalize_timeline_text,
             BrandMindState.initialize_app,
             BrandMindState.poll_health,
         ],

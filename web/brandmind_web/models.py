@@ -32,6 +32,28 @@ class ToolCallInfo(BaseModel):
     tool_call_id: str = ""
 
 
+class ThinkingSegment(BaseModel):
+    """One typed slice of a thinking block.
+
+    The agent's reasoning stream interleaves short ``**bold headers**``
+    with body paragraphs. Splitting that into typed segments lets the
+    timeline render the headers with the brand's primary palette and a
+    heavier weight while keeping the bodies italic-secondary, so the
+    expanded "Thought for Ns" panel reads as a stack of headed
+    paragraphs rather than one italic wall.
+
+    Attributes:
+        kind (Literal["header", "body"]): Header lines were wrapped in
+            ``**...**`` markers in the raw stream; body lines were the
+            paragraphs between them.
+        text (str): The segment's visible text, stripped of the
+            ``**`` markers.
+    """
+
+    kind: Literal["header", "body"]
+    text: str
+
+
 class TimelineEntry(BaseModel):
     """One chronological entry in an agent turn's reasoning timeline.
 
@@ -46,6 +68,13 @@ class TimelineEntry(BaseModel):
             this entry's content.
         thinking_text (str): Accumulated thinking-block text. Empty when
             ``kind == "tool_call"``.
+        thinking_segments (list[ThinkingSegment]): Parsed view of
+            ``thinking_text`` as alternating header / body slices,
+            derived client-side from the raw ``**bold**`` markers. The
+            timeline renders this list with ``rx.foreach`` so the React
+            tree shape stays stable across thinking and tool-call rows
+            (which is the React hook-order constraint that
+            ``rx.markdown`` violates).
         thinking_done (bool): Whether the thinking block has finalised so
             subsequent ``streaming_thinking`` events should open a new
             entry instead of appending here.
@@ -55,6 +84,7 @@ class TimelineEntry(BaseModel):
 
     kind: Literal["thinking", "tool_call"]
     thinking_text: str = ""
+    thinking_segments: list[ThinkingSegment] = Field(default_factory=list)
     thinking_done: bool = False
     tool_call: ToolCallInfo | None = None
 
