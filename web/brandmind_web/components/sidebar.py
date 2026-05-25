@@ -389,7 +389,7 @@ def _new_chat_button() -> rx.Component:
     """Pill button that resets the workspace into a fresh empty chat."""
     return rx.button(
         rx.hstack(
-            rx.icon(tag="plus", size=14, color=tokens.TEXT_PRIMARY),
+            rx.icon(tag="square_pen", size=14, color=tokens.TEXT_PRIMARY),
             rx.text(
                 "New chat",
                 style={
@@ -427,7 +427,7 @@ def _chats_section() -> rx.Component:
         BrandMindState.sidebar_is_collapsed,
         rx.center(
             rx.button(
-                rx.icon(tag="plus", size=16, color=tokens.TEXT_PRIMARY),
+                rx.icon(tag="square_pen", size=16, color=tokens.TEXT_PRIMARY),
                 on_click=BrandMindState.start_new_chat,
                 variant="ghost",
                 style={
