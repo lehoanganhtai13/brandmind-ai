@@ -134,7 +134,7 @@ def input_composer() -> rx.Component:
             "margin": "0 auto",
             "background_color": tokens.BG_SURFACE_1,
             "border": f"1px solid {tokens.GLASS_BORDER}",
-            "border_radius": "28px",
+            "border_radius": tokens.RADIUS_COMPOSER,
             "padding": "10px 10px 10px 22px",
             "transition": "border-color 160ms ease, box-shadow 160ms ease",
             "_focus_within": {

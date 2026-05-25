@@ -241,7 +241,7 @@ def _message_scroll() -> rx.Component:
             "&::-webkit-scrollbar-track": {"background": "transparent"},
             "&::-webkit-scrollbar-thumb": {
                 "background": "rgba(255, 255, 255, 0.16)",
-                "border_radius": "8px",
+                "border_radius": tokens.RADIUS_MD,
                 "border": "2px solid transparent",
                 "background_clip": "padding-box",
             },

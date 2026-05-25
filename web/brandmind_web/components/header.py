@@ -20,30 +20,107 @@ from .sidebar import _PHASE_DISPLAY_EN
 
 
 def _sidebar_toggle() -> rx.Component:
-    """Render the sidebar collapse / expand button.
+    """Render the sidebar collapse button used on the expanded header.
 
-    Uses the chevron-free ``panel_left`` glyph for both states so the
-    affordance reads as a friendly panel handle (Gemini / ChatGPT
-    pattern) rather than a directional arrow that suggests motion the
-    user did not request.
+    Uses the chevron-free ``panel_left`` glyph so the affordance reads
+    as a friendly panel handle (Gemini / ChatGPT pattern) rather than
+    a directional arrow that suggests motion the user did not request.
+    The collapsed rail uses :func:`_sidebar_brand_button` instead — the
+    logo doubles as the re-open affordance there, mirroring ChatGPT
+    and Gemini where the collapsed rail leads with the brand mark
+    rather than a generic panel handle.
     """
     return rx.button(
         rx.icon(tag="panel_left", size=18),
         on_click=BrandMindState.toggle_sidebar,
         variant="ghost",
         color_scheme="gray",
-        aria_label=rx.cond(
-            BrandMindState.sidebar_is_collapsed,
-            "Open sidebar",
-            "Close sidebar",
-        ),
+        aria_label="Close sidebar",
         style={
             "color": tokens.TEXT_SECONDARY,
             "width": "36px",
             "height": "36px",
             "padding": "0",
-            "border_radius": tokens.RADIUS_SM,
+            "border_radius": tokens.RADIUS_BTN,
         },
+    )
+
+
+def _sidebar_brand_button() -> rx.Component:
+    """Logo-as-toggle shown at the top of the collapsed 56-px rail.
+
+    Mirrors the ChatGPT and Gemini collapsed-rail pattern (Images #77
+    and #78): a single brand mark sits centred at the top of the rail
+    and clicking it re-expands the sidebar. The dedicated panel-toggle
+    button hides while collapsed because the rail is too narrow to
+    carry both affordances, and the logo gives a more memorable
+    landmark than a generic handle.
+
+    On hover the cat logo cross-fades to a ``panel_left`` glyph and a
+    Radix tooltip floats out to the right (Images #81 and #82) so the
+    affordance is obvious — without the swap the brand mark could
+    read as decoration rather than a clickable handle.
+    """
+    button = rx.button(
+        rx.box(
+            rx.image(
+                src="/brandmind-logo.png",
+                alt="BrandMind",
+                custom_attrs={"data-bm-logo-rest": "true"},
+                style={
+                    "width": "26px",
+                    "height": "26px",
+                    "object_fit": "contain",
+                    "display": "block",
+                    "transition": "opacity 160ms ease",
+                },
+            ),
+            rx.icon(
+                tag="panel_left",
+                size=20,
+                custom_attrs={"data-bm-logo-hover": "true"},
+                style={
+                    "position": "absolute",
+                    "top": "50%",
+                    "left": "50%",
+                    "transform": "translate(-50%, -50%)",
+                    "color": tokens.TEXT_PRIMARY,
+                    "opacity": "0",
+                    "transition": "opacity 160ms ease",
+                    "pointer_events": "none",
+                },
+            ),
+            style={
+                "position": "relative",
+                "width": "26px",
+                "height": "26px",
+                "display": "flex",
+                "align_items": "center",
+                "justify_content": "center",
+            },
+        ),
+        on_click=BrandMindState.toggle_sidebar,
+        variant="ghost",
+        color_scheme="gray",
+        aria_label="Open sidebar",
+        custom_attrs={"data-bm-sidebar-brand": "true"},
+        style={
+            "width": "40px",
+            "height": "40px",
+            "padding": "0",
+            "background": "transparent",
+            "border_radius": tokens.RADIUS_BTN,
+            "display": "flex",
+            "align_items": "center",
+            "justify_content": "center",
+            "transition": "background-color 160ms ease",
+        },
+    )
+    return rx.tooltip(
+        button,
+        content="Open sidebar",
+        side="right",
+        side_offset=8,
     )
 
 
@@ -172,7 +249,7 @@ def _canvas_toggle() -> rx.Component:
             "width": "36px",
             "height": "36px",
             "padding": "0",
-            "border_radius": tokens.RADIUS_SM,
+            "border_radius": tokens.RADIUS_BTN,
         },
     )
 
@@ -188,16 +265,20 @@ def header() -> rx.Component:
     hides while collapsed so the 56-px rail still has room for the
     toggle alone.
     """
-    sidebar_zone = rx.hstack(
+    sidebar_zone = rx.box(
         rx.cond(
             BrandMindState.sidebar_is_collapsed,
-            rx.fragment(),
-            _wordmark(),
+            rx.center(_sidebar_brand_button(), width="100%", height="100%"),
+            rx.hstack(
+                _wordmark(),
+                rx.spacer(),
+                _sidebar_toggle(),
+                spacing="3",
+                align="center",
+                width="100%",
+                height="100%",
+            ),
         ),
-        rx.spacer(),
-        _sidebar_toggle(),
-        spacing="3",
-        align="center",
         style={
             "width": rx.cond(
                 BrandMindState.sidebar_is_collapsed,
@@ -210,7 +291,11 @@ def header() -> rx.Component:
                 f"{tokens.SIDEBAR_EXPANDED_PX}px",
             ),
             "height": "100%",
-            "padding": "0 12px",
+            "padding": rx.cond(
+                BrandMindState.sidebar_is_collapsed,
+                "0",
+                "0 12px",
+            ),
             "border_right": f"1px solid {tokens.GLASS_BORDER}",
             "transition": "width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
             "flex_shrink": "0",

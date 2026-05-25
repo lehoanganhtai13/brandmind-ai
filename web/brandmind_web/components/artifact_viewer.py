@@ -60,7 +60,9 @@ _DOCX_BODY_CSS = (
 .bm-docx-body li { margin: 0.2em 0; }
 .bm-docx-body code {
   background: #1f262d;
-  border-radius: 4px;
+  border-radius: """
+    + tokens.RADIUS_SM
+    + """;
   font-family: """
     + tokens.FONT_MONO
     + """;

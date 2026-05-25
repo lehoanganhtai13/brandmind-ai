@@ -55,7 +55,10 @@ CANVAS_DRAWER_PX = 720
 
 RADIUS_SM = "4px"
 RADIUS_MD = "8px"
+RADIUS_BTN = "10px"
 RADIUS_LG = "12px"
+RADIUS_XL = "16px"
+RADIUS_COMPOSER = "28px"
 RADIUS_PILL = "9999px"
 
 DRAWER_EASING = "cubic-bezier(0.2, 0.8, 0.3, 1)"

@@ -75,7 +75,7 @@ def _nav_item(label: str, section: str) -> rx.Component:
             "width": "100%",
             "justify_content": "flex-start",
             "padding": "9px 12px",
-            "border_radius": "8px",
+            "border_radius": tokens.RADIUS_MD,
             "cursor": "pointer",
             "transition": "background-color 160ms cubic-bezier(0.16, 1, 0.3, 1)",
             "background_color": rx.cond(is_active, NAV_ACTIVE_BG, "transparent"),
@@ -115,7 +115,7 @@ def _select_item(option: rx.Var[UserProfileOption]) -> rx.Component:
             "align_items": "center",
             "height": "36px",
             "min_height": "0",
-            "border_radius": "8px",
+            "border_radius": tokens.RADIUS_MD,
             "padding": "0 36px 0 12px",
             "margin": "1px 0",
             "cursor": "pointer",
@@ -180,7 +180,7 @@ def _personalization_field(
                         "letter_spacing": "-0.005em",
                         "min_height": "34px",
                         "padding": "0 8px 0 14px",
-                        "border_radius": "9px",
+                        "border_radius": tokens.RADIUS_MD,
                         "min_width": "168px",
                         "transition": (
                             "background-color 160ms cubic-bezier(0.16, 1, 0.3, 1), "
@@ -218,7 +218,7 @@ def _personalization_field(
                     style={
                         "background_color": SURFACE_DROPDOWN,
                         "border": f"1px solid {HAIRLINE_QUIET}",
-                        "border_radius": "12px",
+                        "border_radius": tokens.RADIUS_LG,
                         "box_shadow": (
                             "0 24px 48px rgba(0, 0, 0, 0.55), "
                             "0 0 0 1px rgba(255, 255, 255, 0.025)"
@@ -398,7 +398,7 @@ def _dialog_footer() -> rx.Component:
                     "color": LABEL_COLOR,
                     "padding": "0 14px",
                     "min_height": "32px",
-                    "border_radius": "7px",
+                    "border_radius": tokens.RADIUS_MD,
                     "transition": (
                         "background-color 160ms cubic-bezier(0.16, 1, 0.3, 1), "
                         "color 160ms cubic-bezier(0.16, 1, 0.3, 1)"
@@ -423,7 +423,7 @@ def _dialog_footer() -> rx.Component:
                     "color": "#002923",
                     "padding": "0 16px",
                     "min_height": "32px",
-                    "border_radius": "7px",
+                    "border_radius": tokens.RADIUS_MD,
                     "box_shadow": (
                         "0 1px 0 rgba(255, 255, 255, 0.10) inset, "
                         "0 8px 20px rgba(95, 179, 168, 0.18)"
@@ -500,7 +500,7 @@ def settings_dialog() -> rx.Component:
             style={
                 "background_color": SURFACE_DIALOG,
                 "border": f"1px solid {HAIRLINE_QUIET}",
-                "border_radius": "16px",
+                "border_radius": tokens.RADIUS_XL,
                 "max_width": "760px",
                 "width": "90vw",
                 "padding": "28px 30px",

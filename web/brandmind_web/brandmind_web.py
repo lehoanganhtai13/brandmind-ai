@@ -43,6 +43,15 @@ _GLOBAL_KEYFRAMES = """
   -webkit-text-fill-color: var(--gray-a11) !important;
   cursor: text !important;
 }
+[data-bm-sidebar-brand]:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+[data-bm-sidebar-brand]:hover [data-bm-logo-rest] {
+  opacity: 0;
+}
+[data-bm-sidebar-brand]:hover [data-bm-logo-hover] {
+  opacity: 1;
+}
 """
 
 
