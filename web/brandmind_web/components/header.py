@@ -1,10 +1,13 @@
 """Header bar for the BrandMind Web UI.
 
-Sticky 56-px top bar with the sidebar toggle on the leftmost edge, the
-BrandMind wordmark in the display serif, the session caption, and the
-connection indicator on the right. Matches ``docs/web_design.md`` § 9.1
-with Codex-review Finding 1 applied: serif wordmark + sentence-case
-metadata + reserved mono for code/tool payloads only.
+Sticky 56-px top bar split into a sidebar-column zone (wordmark on
+the left, panel-toggle pinned to the right edge — matches the
+ChatGPT pattern where the toggle lives at the right edge of the
+sidebar header rather than the leftmost edge of the global bar) and
+a main zone (session caption centred + canvas toggle on the right).
+Matches ``docs/web_design.md`` § 9.1 with Codex-review Finding 1
+applied: serif wordmark + sentence-case metadata + reserved mono
+for code/tool payloads only.
 """
 
 from __future__ import annotations
@@ -175,17 +178,65 @@ def _canvas_toggle() -> rx.Component:
 
 
 def header() -> rx.Component:
-    """Sticky top bar matching docs/web_design.md § 9.1."""
-    return rx.hstack(
+    """Sticky top bar matching docs/web_design.md § 9.1.
+
+    The bar splits into two zones: the leftmost cluster reserves the
+    same column width as the sidebar below (wordmark on the left, toggle
+    pinned to the right edge — the ChatGPT pattern from Image #75 where
+    the panel handle lives at the right edge of the sidebar header
+    rather than the leftmost edge of the global bar). The wordmark
+    hides while collapsed so the 56-px rail still has room for the
+    toggle alone.
+    """
+    sidebar_zone = rx.hstack(
+        rx.cond(
+            BrandMindState.sidebar_is_collapsed,
+            rx.fragment(),
+            _wordmark(),
+        ),
+        rx.spacer(),
         _sidebar_toggle(),
-        _wordmark(),
+        spacing="3",
+        align="center",
+        style={
+            "width": rx.cond(
+                BrandMindState.sidebar_is_collapsed,
+                f"{tokens.SIDEBAR_COLLAPSED_PX}px",
+                f"{tokens.SIDEBAR_EXPANDED_PX}px",
+            ),
+            "min_width": rx.cond(
+                BrandMindState.sidebar_is_collapsed,
+                f"{tokens.SIDEBAR_COLLAPSED_PX}px",
+                f"{tokens.SIDEBAR_EXPANDED_PX}px",
+            ),
+            "height": "100%",
+            "padding": "0 12px",
+            "border_right": f"1px solid {tokens.GLASS_BORDER}",
+            "transition": "width 240ms cubic-bezier(0.4, 0, 0.2, 1)",
+            "flex_shrink": "0",
+        },
+    )
+
+    main_zone = rx.hstack(
         rx.spacer(),
         _session_caption(),
         rx.spacer(),
         _canvas_toggle(),
         spacing="3",
         align="center",
-        padding_x="20px",
+        style={
+            "flex": "1",
+            "min_width": "0",
+            "height": "100%",
+            "padding": "0 20px",
+        },
+    )
+
+    return rx.hstack(
+        sidebar_zone,
+        main_zone,
+        spacing="0",
+        align="center",
         style={
             "height": f"{tokens.HEADER_HEIGHT_PX}px",
             "min_height": f"{tokens.HEADER_HEIGHT_PX}px",
