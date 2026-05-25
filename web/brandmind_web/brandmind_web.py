@@ -33,6 +33,16 @@ _GLOBAL_KEYFRAMES = """
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.rt-TextAreaRoot:has([data-bm-composer-textarea]:where(:disabled, :read-only)) {
+  background-image: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+[data-bm-composer-textarea]:where(:disabled, :read-only) {
+  color: var(--gray-a11) !important;
+  -webkit-text-fill-color: var(--gray-a11) !important;
+  cursor: text !important;
+}
 """
 
 
