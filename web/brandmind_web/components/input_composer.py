@@ -97,7 +97,7 @@ def input_composer() -> rx.Component:
             placeholder=placeholder,
             on_change=BrandMindState.set_pending_input,
             on_key_down=BrandMindState.on_composer_key_down,
-            disabled=~BrandMindState.is_connected | BrandMindState.is_streaming,
+            read_only=~BrandMindState.is_connected | BrandMindState.is_streaming,
             debounce_timeout=0,
             rows="1",
             custom_attrs={"data-bm-composer-textarea": "true"},

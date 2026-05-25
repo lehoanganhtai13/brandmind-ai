@@ -615,6 +615,8 @@ def chat_action_dialogs() -> rx.Component:
                 value=BrandMindState.rename_draft,
                 placeholder="Chat title",
                 on_change=BrandMindState.set_rename_draft,
+                on_key_down=BrandMindState.on_rename_key_down,
+                auto_focus=True,
                 style={
                     "margin_top": "12px",
                     "background_color": tokens.BG_SURFACE_2,

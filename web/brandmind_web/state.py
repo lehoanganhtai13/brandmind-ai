@@ -714,6 +714,28 @@ class BrandMindState(rx.State):
         self.rename_draft = value
 
     @rx.event
+    def on_rename_key_down(self, key: str, info: dict):
+        """Submit the rename dialog when the user hits a bare Enter.
+
+        Mirrors the composer's Enter-to-send convention so the rename
+        dialog feels native: bare Enter saves, Shift/Ctrl/Alt/Meta+Enter
+        falls through to the input's default (allowing IME composition
+        and platform-specific newline behaviour).
+        """
+        if key != "Enter":
+            return None
+        if (
+            info.get("shift_key")
+            or info.get("ctrl_key")
+            or info.get("alt_key")
+            or info.get("meta_key")
+        ):
+            return None
+        if not self.rename_target:
+            return None
+        return BrandMindState.confirm_rename
+
+    @rx.event
     def cancel_rename(self) -> None:
         """Dismiss the rename dialog without applying changes."""
         self.rename_target = ""
