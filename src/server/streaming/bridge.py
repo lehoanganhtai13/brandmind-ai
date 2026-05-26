@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import asyncio
 import re
+import time
 from asyncio import Queue
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from typing import Any, Literal
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
@@ -408,11 +409,13 @@ class _AgentTurnTraceBuilder:
     that opens a new entry.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, clock: Callable[[], float] | None = None) -> None:
         self._entries: list[PersistedTimelineEntry] = []
         self._blocks: list[PersistedContentBlock] = []
+        self._block_started_at: list[float] = []
         self._tool_entries: ToolCallMatcher[PersistedTimelineEntry] = ToolCallMatcher()
         self._thinking_open = False
+        self._clock = clock or time.monotonic
 
     def on_response_text(self, token: str) -> None:
         """Fold one user-facing assistant-text chunk into ordered blocks.
@@ -427,14 +430,33 @@ class _AgentTurnTraceBuilder:
         if tail is not None and tail.kind == "assistant_text":
             tail.text = f"{tail.text}{token}"
             return
+        if tail is not None and tail.kind == "reasoning_timeline":
+            self._close_reasoning_block(len(self._blocks) - 1)
         self._blocks.append(PersistedContentBlock(kind="assistant_text", text=token))
+        self._block_started_at.append(-1.0)
 
     def _reasoning_block(self) -> PersistedContentBlock:
         """Return the active reasoning block, opening one when needed."""
         tail = self._blocks[-1] if self._blocks else None
         if tail is None or tail.kind != "reasoning_timeline":
             self._blocks.append(PersistedContentBlock(kind="reasoning_timeline"))
+            self._block_started_at.append(self._clock())
         return self._blocks[-1]
+
+    def _close_reasoning_block(self, index: int) -> None:
+        """Set a duration label for a completed reasoning block."""
+        if index < 0 or index >= len(self._blocks):
+            return
+        block = self._blocks[index]
+        if block.kind != "reasoning_timeline" or block.duration_label:
+            return
+        started_at = (
+            self._block_started_at[index]
+            if index < len(self._block_started_at)
+            else self._clock()
+        )
+        elapsed = max(0.0, self._clock() - started_at)
+        block.duration_label = format_turn_duration(elapsed)
 
     def on_thinking(self, token: str, done: bool) -> None:
         """Fold one streamed thinking chunk into the trailing entry.
@@ -550,6 +572,9 @@ class _AgentTurnTraceBuilder:
                 and entry.tool_call.result == ""
             ):
                 entry.tool_call.result = "(done)"
+        for index, block in enumerate(self._blocks):
+            if block.kind == "reasoning_timeline" and not block.duration_label:
+                self._close_reasoning_block(index)
         return PersistedAgentTurn(
             timeline=list(self._entries),
             duration_label=format_turn_duration(duration_seconds),

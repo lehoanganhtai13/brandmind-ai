@@ -111,6 +111,7 @@ class PersistedContentBlockWire(BaseModel):
     kind: Literal["assistant_text", "reasoning_timeline"]
     text: str = ""
     timeline: list[PersistedTimelineEntryWire] = Field(default_factory=list)
+    duration_label: str = ""
 
 
 class SessionMessage(BaseModel):

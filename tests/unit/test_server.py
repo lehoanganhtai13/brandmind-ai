@@ -750,6 +750,7 @@ class TestAPIRoutes:
                     PersistedContentBlock(
                         kind="reasoning_timeline",
                         timeline=[thinking_entry],
+                        duration_label="2s",
                     ),
                     PersistedContentBlock(
                         kind="assistant_text",
@@ -770,10 +771,13 @@ class TestAPIRoutes:
             "assistant_text",
         ]
         assert agent_message["blocks"][0]["text"] == "Progress note.\n\n"
+        assert agent_message["blocks"][0]["duration_label"] == ""
         assert agent_message["blocks"][1]["timeline"][0]["thinking_text"] == (
             "Checking context."
         )
+        assert agent_message["blocks"][1]["duration_label"] == "2s"
         assert agent_message["blocks"][2]["text"] == "Final answer."
+        assert agent_message["blocks"][2]["duration_label"] == ""
         assert agent_message["timeline"][0]["thinking_text"] == "Checking context."
 
     def test_patch_session_renames_and_pins(self, client):

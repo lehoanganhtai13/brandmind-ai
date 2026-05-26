@@ -518,12 +518,15 @@ class PersistedContentBlock(BaseModel):
     reasoning panel, but it loses the placement of progress notes and
     final prose around that panel. ``blocks`` preserves the live order
     as text and reasoning alternate so a reopened chat can render the
-    same shape the user saw while streaming.
+    same shape the user saw while streaming. ``duration_label`` is set
+    for reasoning blocks and stays empty for assistant text blocks and
+    older persisted sessions.
     """
 
     kind: Literal["assistant_text", "reasoning_timeline"]
     text: str = ""
     timeline: list[PersistedTimelineEntry] = Field(default_factory=list)
+    duration_label: str = ""
 
 
 class PersistedAgentTurn(BaseModel):

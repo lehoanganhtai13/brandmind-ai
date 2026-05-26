@@ -166,6 +166,7 @@ def _trace_to_wire(
                 timeline=[
                     _timeline_entry_to_wire(entry) for entry in block.timeline
                 ],
+                duration_label=block.duration_label,
             )
         )
     return timeline, trace.duration_label, blocks

@@ -169,6 +169,48 @@ def test_agent_turn_trace_builder_preserves_ordered_blocks() -> None:
     assert turn.timeline[0].thinking_text == "Checking context."
 
 
+def test_agent_turn_trace_builder_records_per_reasoning_block_durations() -> None:
+    """Multiple persisted Thought blocks should not inherit one turn duration."""
+    ticks = iter([0.0, 2.0, 10.0, 15.0])
+    trace_builder = _AgentTurnTraceBuilder(clock=lambda: next(ticks))
+
+    trace_builder.on_response_text("Progress note.\n\n")
+    trace_builder.on_thinking("First check.", done=True)
+    trace_builder.on_response_text("Interim note.\n\n")
+    trace_builder.on_thinking("Second check.", done=True)
+    trace_builder.on_response_text("Final answer.")
+
+    turn = trace_builder.finalize(duration_seconds=30.0)
+
+    assert [block.kind for block in turn.blocks] == [
+        "assistant_text",
+        "reasoning_timeline",
+        "assistant_text",
+        "reasoning_timeline",
+        "assistant_text",
+    ]
+    assert turn.blocks[1].duration_label == "2s"
+    assert turn.blocks[3].duration_label == "5s"
+    assert turn.blocks[1].duration_label != turn.duration_label
+    assert turn.blocks[3].duration_label != turn.duration_label
+    assert turn.blocks[0].duration_label == ""
+    assert turn.blocks[2].duration_label == ""
+    assert turn.blocks[4].duration_label == ""
+
+
+def test_agent_turn_trace_builder_closes_trailing_reasoning_on_finalize() -> None:
+    """A final Thought block should get a duration even without following text."""
+    ticks = iter([3.0, 7.0])
+    trace_builder = _AgentTurnTraceBuilder(clock=lambda: next(ticks))
+
+    trace_builder.on_response_text("Progress note.\n\n")
+    trace_builder.on_thinking("Trailing check.", done=True)
+
+    turn = trace_builder.finalize(duration_seconds=8.0)
+
+    assert turn.blocks[1].duration_label == "4s"
+
+
 def test_internal_reminder_filter_removes_complete_block() -> None:
     """Internal reminder blocks should be removed from one streamed chunk."""
     token_filter = _InternalReminderFilter()
