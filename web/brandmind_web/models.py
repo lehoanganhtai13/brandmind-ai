@@ -167,15 +167,19 @@ class PersistedContentBlockWire(BaseModel):
     Mirrors :class:`server.schemas.session.PersistedContentBlockWire`.
     Backend serializes the same insertion-ordered block list it built
     while the turn was live so a newer client can restore the
-    text → Thought → text layout after a refresh. Per-block durations
-    are not on the wire (deferred to a later backend phase), so the
-    client renders "Reasoning" for multi-block hydration and reuses the
-    turn-level duration label for single-block hydration.
+    text → Thought → text layout after a refresh. The Phase 3 backend
+    commit (``f940995``) also persists ``duration_label`` per reasoning
+    block, so a rehydrated multi-block turn shows ``Thought for Ns`` per
+    block instead of the generic ``Reasoning`` fallback. Older sessions
+    saved before Phase 3 (or assistant_text blocks) leave this empty,
+    and the renderer falls through to the turn-level label / generic
+    label as appropriate.
     """
 
     kind: Literal["assistant_text", "reasoning_timeline"]
     text: str = ""
     timeline: list[PersistedTimelineEntryWire] = Field(default_factory=list)
+    duration_label: str = ""
 
 
 class SessionMessage(BaseModel):

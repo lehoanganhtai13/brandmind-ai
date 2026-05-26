@@ -1307,9 +1307,10 @@ class BrandMindState(rx.State):
                         tool_call=tool_call_block,
                     )
                 )
-            duration_label = ""
+            duration_label = wire_block.duration_label
             if (
-                wire_block.kind == "reasoning_timeline"
+                not duration_label
+                and wire_block.kind == "reasoning_timeline"
                 and reasoning_count == 1
                 and message.duration_label
             ):
