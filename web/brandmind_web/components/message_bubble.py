@@ -620,7 +620,10 @@ def _blocks_renderer(message: rx.Var[ChatMessage], message_index: int) -> rx.Com
     The Phase 1 live path: progress text → Thought → final answer in
     insertion order. The legacy single-content + single-timeline
     fallback handles persisted history that has not been promoted to
-    the blocks schema yet.
+    the blocks schema yet. After all blocks, a final "Thought for Ns
+    / Done" cap row is appended so the new path matches the ChatGPT
+    pattern the legacy renderer already used at the bottom of the
+    reasoning chain.
 
     Args:
         message (rx.Var[ChatMessage]): The agent message whose
@@ -630,13 +633,14 @@ def _blocks_renderer(message: rx.Var[ChatMessage], message_index: int) -> rx.Com
 
     Returns:
         component (rx.Component): A vertical stack of per-kind block
-            renderers, in insertion order.
+            renderers + the trailing Done cap, in that order.
     """
     return rx.vstack(
         rx.foreach(
             message.blocks,
             lambda block, idx: _content_block(block, idx, message, message_index),
         ),
+        _final_summary_row(message),
         spacing="3",
         align="stretch",
         width="100%",
