@@ -8,20 +8,20 @@ Organized under task_management/ for clear functional categorization.
 
 WRITE_TODOS_SYSTEM_PROMPT = """
 # Task Management
-You have access to the `{{write_todos_function_name}}` tool to help you manage and plan complex objectives. Use these tools VERY frequently to ensure that you are tracking each necessary step and giving the user visibility into your progress.
+You have access to the `{{write_todos_function_name}}` tool to help you manage complex objectives. Use it for milestone-level planning so your work stays organized without turning every low-level tool call into a separate planning update.
 
-These tools are EXTREMELY helpful for planning complex, multi-step objectives and for breaking them down into smaller, manageable steps. If you do not use this tool when planning complex tasks, you may forget important steps - and that is unacceptable.
+This tool is helpful for complex, multi-step objectives because it keeps the current plan explicit. It is not a progress ticker. The user should see useful progress through concise chat updates and completed work, not a stream of internal todo rewrites.
 
 For truly simple, single-action objectives (e.g., answering a factual question, defining one term), it is better to just complete the objective directly and NOT use this tool. But for any objective that involves multiple aspects, dimensions, or requires investigation from different angles — use this tool to plan your approach thoroughly.
 
 ## Key Rules for Todo Management
 
-1.  **IMMEDIATE COMPLETION:** It is CRITICAL that you mark todos as `completed` as soon as you are done with that specific step. Do not batch up multiple completed steps.
+1.  **MEANINGFUL MILESTONES:** Mark todos as `completed` when a meaningful task is fully done. Do not create or update todos for every file read, search, status check, or single tool call.
 2.  **ONE IN-PROGRESS:** You MUST mark a task as `in_progress` right BEFORE you start working on it. Only one task should be `in_progress` at a time.
 3.  **REVISE AS NEEDED:** Don't be afraid to revise the To-Do list as you go. New information from the user or tool results may reveal new tasks that need to be added, or old tasks that are irrelevant and can be deleted. However, DO NOT change previously `completed` tasks.
-4.  **CALL AFTER EVERY STEP:** After EACH significant action (tool call completed, research done, analysis finished), IMMEDIATELY call `{{write_todos_function_name}}` to update task statuses. Do not wait until the end to batch multiple status changes.
+4.  **BATCH LOW-LEVEL WORK:** Multiple related reads, searches, edits, or artifact checks can live under the same `in_progress` todo. Update the todo list when you finish that milestone, switch milestones, discover a blocker, or change the plan.
 5.  **BANNED TASKS — NEVER create these:** Do NOT create tasks containing any of these words: "synthesize", "compile", "summarize", "write final", "provide answer", "present findings", "consolidate", "formulate response". These are your NATURAL output behavior, NOT trackable tasks. Your last task must be an ACTIONABLE research/analysis step. If you accidentally created such a task, DELETE it immediately from the list.
-6.  **MANDATORY FINAL REVIEW:** Before writing your final answer, you MUST call `{{write_todos_function_name}}` one last time to mark ALL remaining tasks as 'completed'. Never write a final answer while tasks are still 'in_progress' or 'pending'. This is your self-validation step.
+6.  **FINAL REVIEW:** Before writing your final answer, make sure there are no `in_progress` or `pending` todos. If the todo list already reflects completion, answer directly; if it does not, update it once.
 """
 
 WRITE_TODOS_TOOL_DESCRIPTION = """
@@ -37,7 +37,7 @@ Think like a **Team Lead** breaking down work for execution. Use this tool proac
 4.  **User provides multiple tasks** — When users provide a list of things to be done (numbered or comma-separated)
 5.  **After receiving new instructions** — Immediately capture user requirements as todos
 6.  **When you start working on a task** — Mark it as `in_progress` BEFORE beginning work
-7.  **After completing a task** — Mark it as `completed` and add any new follow-up tasks discovered during implementation
+7.  **After completing a meaningful milestone** — Mark it as `completed` and add any new follow-up tasks discovered during implementation
 
 ## When NOT to Use This Tool
 Skip using this tool when:
@@ -62,8 +62,8 @@ Skip using this tool when:
     * `completed`: Task finished successfully
 
 2.  **Task Management**:
-    * Update task status in real-time as you work
-    * Mark tasks complete IMMEDIATELY after finishing (don't batch completions)
+    * Keep task status current at meaningful milestones
+    * Mark tasks complete after the milestone is finished and verified
     * Only have ONE task `in_progress` at any time
     * Complete current tasks before starting new ones
     * Remove tasks that are no longer relevant from the list entirely
@@ -83,7 +83,7 @@ Skip using this tool when:
     * Don't be afraid to restructure your plan mid-execution
     * However, do **NOT** change previously `completed` tasks
 
-When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
+Use this tool when it improves control of the work. Skip it when another todo update would only restate internal movement without changing the plan.
 
 ## Tool Call JSON Format Example
 CRITICAL: When you call this tool, the JSON for the `todos` argument MUST follow this exact structure.
@@ -123,7 +123,7 @@ Your todo list has been updated. DO NOT mention this explicitly to the user. Her
 You MUST continue working.
 Your current active task is: **"{{current_task_content}}"** (status: {{current_task_status}})
 
-REMINDER: After completing each task, IMMEDIATELY call `write_todos` to mark it as 'completed' and set the next task to 'in_progress'. Do not wait — update your task list right away.
+REMINDER: Continue the active task. Update `write_todos` once when this milestone is complete, blocked, or the plan materially changes.
 </system-reminder>"""
 
 TODO_REMINDER_FINAL_CONFIRMATION = """
@@ -146,7 +146,7 @@ Self-reflect before your next action. DO NOT echo this reflection in your user-f
 
 Your active task: "{{task_content}}" ({{task_status}}).
 
-1. **Task Status:** Have you completed this active task? If yes, immediately call `write_todos` to mark it 'completed'.
+1. **Task Status:** Have you completed this active task? If yes, call `write_todos` once to mark it 'completed'.
 2. **Plan Validity:** Based on what you just learned, does the remaining plan still make sense? Split any broad tasks into more specific ones, remove unnecessary tasks, or add missing steps.
 3. **Completion Check:** About to write your final answer? You **MUST** call `write_todos` to ensure 0 tasks are 'in_progress' or 'pending' before answering.
 </system-reminder>"""

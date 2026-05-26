@@ -27,7 +27,7 @@ try:
     from langchain.agents import create_agent
     from langchain.agents.middleware import ToolRetryMiddleware
     from langchain_core.language_models.chat_models import BaseChatModel
-    from langchain_core.messages import HumanMessage
+    from langchain_core.messages import HumanMessage, ToolMessage
     from langchain_google_genai import ChatGoogleGenerativeAI
 
     LANGCHAIN_AVAILABLE = True
@@ -362,6 +362,84 @@ async def test_reminder_generation():
 
 
 @pytest.mark.asyncio
+async def test_async_plan_nudge_waits_two_model_calls_after_todo_update():
+    """Async path should not nudge after the first post-update tool result."""
+    middleware = TodoWriteMiddleware()
+    middleware._turns_since_update = 1
+    seen_prompts: list[str] = []
+
+    class _Request:
+        system_prompt = "base"
+        state = {
+            "todos": [
+                {
+                    "content": "Check artifacts",
+                    "status": "in_progress",
+                    "activeForm": "Checking artifacts",
+                    "priority": "high",
+                }
+            ]
+        }
+        messages = [ToolMessage("result", tool_call_id="tool-1")]
+
+        def override(self, *, system_message):
+            clone = _Request()
+            clone.system_prompt = system_message.content
+            clone.state = self.state
+            clone.messages = self.messages
+            return clone
+
+    async def handler(request):
+        seen_prompts.append(request.system_prompt)
+        return "HANDLER_RAN"
+
+    result = await middleware.awrap_model_call(_Request(), handler)
+
+    assert result == "HANDLER_RAN"
+    assert seen_prompts
+    assert "Self-reflect before your next action" not in seen_prompts[0]
+
+
+@pytest.mark.asyncio
+async def test_async_plan_nudge_still_fires_after_two_model_calls():
+    """Async nudge remains available after a real gap."""
+    middleware = TodoWriteMiddleware()
+    middleware._turns_since_update = 2
+    seen_prompts: list[str] = []
+
+    class _Request:
+        system_prompt = "base"
+        state = {
+            "todos": [
+                {
+                    "content": "Check artifacts",
+                    "status": "in_progress",
+                    "activeForm": "Checking artifacts",
+                    "priority": "high",
+                }
+            ]
+        }
+        messages = [ToolMessage("result", tool_call_id="tool-1")]
+
+        def override(self, *, system_message):
+            clone = _Request()
+            clone.system_prompt = system_message.content
+            clone.state = self.state
+            clone.messages = self.messages
+            return clone
+
+    async def handler(request):
+        seen_prompts.append(request.system_prompt)
+        return "HANDLER_RAN"
+
+    result = await middleware.awrap_model_call(_Request(), handler)
+
+    assert result == "HANDLER_RAN"
+    assert seen_prompts
+    assert "Self-reflect before your next action" in seen_prompts[0]
+
+
+@pytest.mark.asyncio
 async def test_mandatory_field_validation():
     """Test that validation enforces all mandatory fields."""
     middleware = TodoWriteMiddleware()
@@ -457,9 +535,7 @@ def test_completed_phase_5_artifact_todo_passes_when_manifest_has_category(
     monkeypatch.setattr(
         TodoWriteMiddleware,
         "_current_session_artifact_categories",
-        staticmethod(
-            lambda: {"images", "documents", "presentations", "spreadsheets"}
-        ),
+        staticmethod(lambda: {"images", "documents", "presentations", "spreadsheets"}),
     )
 
     validation = middleware._validate_todos(

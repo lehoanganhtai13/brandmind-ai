@@ -212,7 +212,7 @@ class TodoWriteMiddleware(AgentMiddleware):
                 reminder = self._generate_reminder(todos)
                 if reminder:
                     updated_prompt = f"{updated_prompt}\n\n{reminder}"
-            elif self._turns_since_update >= 1:
+            elif self._turns_since_update >= 2:
                 # "Just enough" nudge: only when agent hasn't updated in 1+ turns
                 # AND just received tool results (= work was done)
                 if self._has_recent_tool_results(request.messages):
