@@ -424,6 +424,84 @@ def _final_summary_row(message: rx.Var[ChatMessage]) -> rx.Component:
     return rx.box(row, display=row_display)
 
 
+def _block_final_summary_row(block: rx.Var[ContentBlock]) -> rx.Component:
+    """Per-block "Thought for Ns / Done" tail row for an ordered reasoning block.
+
+    Mirrors :func:`_final_summary_row` but reads ``block.duration_label``
+    + ``block.is_done`` so each reasoning block in the new ordered-blocks
+    layout terminates its own bullet rail with a check icon (matching
+    the ChatGPT pattern where the Done cap visually closes the rail
+    inside the expanded thought panel). Only paints when the block has
+    closed *and* a per-block duration is available — hydrated multi-block
+    turns whose wire payload predates per-block duration persistence
+    therefore omit the cap rather than rendering an empty "Thought for /
+    Done".
+
+    Args:
+        block (rx.Var[ContentBlock]): The reasoning block this cap
+            belongs to. Reads ``duration_label`` and ``is_done`` from
+            the block; never inherits the turn-level duration.
+
+    Returns:
+        component (rx.Component): A box that conditionally renders the
+            check + label rows when the block has timed out cleanly.
+    """
+    bullet_column = rx.vstack(
+        _rail_segment(flex=False, height="8px"),
+        rx.icon(
+            tag="circle_check",
+            size=14,
+            color=tokens.ACCENT_TEAL_SOLID,
+            style={"margin": "6px 0"},
+        ),
+        spacing="0",
+        align="center",
+        style={
+            "width": "20px",
+            "min_width": "20px",
+        },
+    )
+
+    content = rx.vstack(
+        rx.text(
+            "Thought for " + block.duration_label,
+            style={
+                "color": tokens.TEXT_PRIMARY,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "13px",
+            },
+        ),
+        rx.text(
+            "Done",
+            style={
+                "color": tokens.TEXT_MUTED,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "12px",
+            },
+        ),
+        spacing="0",
+        align="start",
+    )
+
+    row = rx.hstack(
+        bullet_column,
+        rx.box(
+            content,
+            style={"flex": "1", "padding": "11px 0 4px 0"},
+        ),
+        spacing="3",
+        align="start",
+        width="100%",
+    )
+
+    row_display = rx.cond(
+        block.is_done & (block.duration_label != ""),
+        "flex",
+        "none",
+    )
+    return rx.box(row, display=row_display)
+
+
 def _reasoning_timeline(
     message: rx.Var[ChatMessage], message_index: int
 ) -> rx.Component:
@@ -555,6 +633,7 @@ def _block_reasoning_timeline(
                 block.timeline,
                 lambda entry, idx: _timeline_entry(entry, idx),
             ),
+            _block_final_summary_row(block),
             spacing="0",
             align="stretch",
             width="100%",
@@ -618,12 +697,13 @@ def _blocks_renderer(message: rx.Var[ChatMessage], message_index: int) -> rx.Com
     """Render an agent turn as the ordered live blocks.
 
     The Phase 1 live path: progress text → Thought → final answer in
-    insertion order. The legacy single-content + single-timeline
-    fallback handles persisted history that has not been promoted to
-    the blocks schema yet. After all blocks, a final "Thought for Ns
-    / Done" cap row is appended so the new path matches the ChatGPT
-    pattern the legacy renderer already used at the bottom of the
-    reasoning chain.
+    insertion order. Each reasoning block carries its own "Thought for
+    Ns / Done" cap inside its expanded panel (rendered by
+    :func:`_block_reasoning_timeline`), so the chevron rail terminates
+    cleanly in a check icon per block — matching the ChatGPT pattern
+    *per* block rather than once below the whole chain (a global cap
+    duplicates the last block's header label and leaves a dangling rail
+    segment outside any block's panel).
 
     Args:
         message (rx.Var[ChatMessage]): The agent message whose
@@ -633,14 +713,13 @@ def _blocks_renderer(message: rx.Var[ChatMessage], message_index: int) -> rx.Com
 
     Returns:
         component (rx.Component): A vertical stack of per-kind block
-            renderers + the trailing Done cap, in that order.
+            renderers, in insertion order.
     """
     return rx.vstack(
         rx.foreach(
             message.blocks,
             lambda block, idx: _content_block(block, idx, message, message_index),
         ),
-        _final_summary_row(message),
         spacing="3",
         align="stretch",
         width="100%",
