@@ -14,6 +14,7 @@ to a queue instead of calling renderer methods directly.
 from __future__ import annotations
 
 import asyncio
+import re
 from asyncio import Queue
 from collections.abc import AsyncGenerator
 from typing import Any, Literal
@@ -23,6 +24,7 @@ from loguru import logger
 
 from core.brand_strategy.session import (
     PersistedAgentTurn,
+    PersistedContentBlock,
     PersistedTimelineEntry,
     PersistedToolCall,
     format_turn_duration,
@@ -67,6 +69,8 @@ _PSEUDO_TOOL_CALL_STARTS = (
 _PSEUDO_TOOL_CALL_END = ">"
 _JSON_FENCE_START = "```json"
 _JSON_FENCE_END = "```"
+_MARKDOWN_FENCE_START = "```"
+_MARKDOWN_FENCE_END = "```"
 _PSEUDO_TOOL_JSON_MARKERS = (
     '"action"',
     '"file_path"',
@@ -76,6 +80,16 @@ _PSEUDO_TOOL_JSON_MARKERS = (
     '"subagent_type"',
     '"todos"',
     '"scope"',
+)
+_INTERNAL_MARKDOWN_FENCE_MARKERS = (
+    "Wait! Look at line",
+    "old_string",
+    "new_string",
+    "Executing ",
+    "Tool ",
+    "DETECTED:",
+    "/workspace/",
+    "read output",
 )
 _INTERNAL_TOOL_LINE_MARKERS = (
     "`report_progress",
@@ -87,10 +101,29 @@ _INTERNAL_TOOL_LINE_MARKERS = (
     "task(subagent_type=",
     "list_artifacts(",
 )
+_RAW_TOOL_TRANSCRIPT_START_RE = re.compile(
+    r"^\s*(?:[├└]─\{|\]\s+DETECTED:|Executing\s+\w|Tool\s+\w+\s+response)",
+)
 _EMPTY_RESPONSE_FALLBACK = (
     "The last turn did not produce a visible response. "
     'Please send "continue" and I will pick up from the saved state.'
 )
+_USER_PROGRESS_TOOL_NAME = "share_progress_update"
+
+
+def _progress_note_text(arguments: dict[str, Any]) -> str:
+    """Return sanitized user-facing text from a model-authored progress tool."""
+    raw = str(arguments.get("message", "")).strip()
+    if not raw:
+        return ""
+
+    token_filter = _InternalReminderFilter(suppress_internal_tool_lines=True)
+    visible = f"{token_filter.feed(raw)}{token_filter.flush()}".strip()
+    if not visible:
+        return ""
+    if visible.endswith("\n"):
+        return visible
+    return f"{visible}\n\n"
 
 
 def _longest_suffix_prefix_match(text: str, prefix: str) -> int:
@@ -112,9 +145,19 @@ def _looks_like_pseudo_tool_json(block: str) -> bool:
     return any(marker in block for marker in _PSEUDO_TOOL_JSON_MARKERS)
 
 
+def _looks_like_internal_markdown_fence(block: str) -> bool:
+    """Return whether a generic fenced block exposes internal execution text."""
+    return any(marker in block for marker in _INTERNAL_MARKDOWN_FENCE_MARKERS)
+
+
 def _looks_like_internal_tool_line(line: str) -> bool:
     """Return whether a visible line is only leaking internal tool mechanics."""
     return any(marker in line for marker in _INTERNAL_TOOL_LINE_MARKERS)
+
+
+def _starts_raw_tool_transcript(line: str) -> bool:
+    """Return whether ``line`` starts a raw tool transcript leaked as text."""
+    return bool(_RAW_TOOL_TRANSCRIPT_START_RE.match(line))
 
 
 class _InternalReminderFilter:
@@ -123,12 +166,16 @@ class _InternalReminderFilter:
     def __init__(self, *, suppress_internal_tool_lines: bool = False) -> None:
         self._buffer = ""
         self._json_fence_buffer = ""
+        self._markdown_fence_buffer = ""
         self._line_buffer = ""
         self._internal_block_end = _INTERNAL_REMINDER_END
         self._suppress_internal_tool_lines = suppress_internal_tool_lines
         self._inside_internal_block = False
         self._inside_pseudo_tool_call = False
         self._inside_json_fence = False
+        self._inside_markdown_fence = False
+        self._discard_markdown_fence = False
+        self._inside_raw_tool_transcript = False
 
     def feed(self, text: str) -> str:
         """Accept one streamed chunk and return only user-facing text."""
@@ -154,6 +201,35 @@ class _InternalReminderFilter:
                     visible_parts.append(
                         f"{_JSON_FENCE_START}{json_body}{_JSON_FENCE_END}"
                     )
+                continue
+
+            if self._inside_markdown_fence:
+                end_index = self._buffer.find(_MARKDOWN_FENCE_END)
+                if end_index == -1:
+                    self._markdown_fence_buffer += self._buffer
+                    self._buffer = ""
+                    break
+
+                body = self._markdown_fence_buffer + self._buffer[:end_index]
+                self._buffer = self._buffer[end_index + len(_MARKDOWN_FENCE_END) :]
+                self._markdown_fence_buffer = ""
+                self._inside_markdown_fence = False
+                discard_block = self._discard_markdown_fence
+                self._discard_markdown_fence = False
+                if not discard_block and not _looks_like_internal_markdown_fence(body):
+                    visible_parts.append(
+                        f"{_MARKDOWN_FENCE_START}{body}{_MARKDOWN_FENCE_END}"
+                    )
+                elif _looks_like_internal_markdown_fence(body):
+                    language_match = re.match(
+                        r"^[A-Za-z0-9_-]{1,24}\n",
+                        self._buffer,
+                    )
+                    if language_match is not None:
+                        self._markdown_fence_buffer = language_match.group(0)
+                        self._buffer = self._buffer[language_match.end() :]
+                        self._inside_markdown_fence = True
+                        self._discard_markdown_fence = True
                 continue
 
             if self._inside_internal_block:
@@ -189,11 +265,19 @@ class _InternalReminderFilter:
             commentary_index = self._buffer.find(_COMMENTARY_START)
             plan_check_index = self._buffer.find(_PLAN_CHECK_START)
             json_fence_index = self._buffer.find(_JSON_FENCE_START)
+            markdown_fence_index = self._buffer.find(_MARKDOWN_FENCE_START)
+            if markdown_fence_index != -1:
+                possible_json = self._buffer[
+                    markdown_fence_index : markdown_fence_index + len(_JSON_FENCE_START)
+                ]
+                if _JSON_FENCE_START.startswith(possible_json):
+                    markdown_fence_index = -1
             starts = [
                 (start_index, _INTERNAL_REMINDER_START, "internal"),
                 (commentary_index, _COMMENTARY_START, "commentary"),
                 (plan_check_index, _PLAN_CHECK_START, "plan_check"),
                 (json_fence_index, _JSON_FENCE_START, "json_fence"),
+                (markdown_fence_index, _MARKDOWN_FENCE_START, "markdown_fence"),
                 *(
                     (self._buffer.find(prefix), prefix, "tool_call")
                     for prefix in _PSEUDO_TOOL_CALL_STARTS
@@ -212,6 +296,8 @@ class _InternalReminderFilter:
                     }.get(kind, _INTERNAL_REMINDER_END)
                 elif kind == "json_fence":
                     self._inside_json_fence = True
+                elif kind == "markdown_fence":
+                    self._inside_markdown_fence = True
                 else:
                     self._inside_pseudo_tool_call = True
                 continue
@@ -223,6 +309,7 @@ class _InternalReminderFilter:
                     _COMMENTARY_START,
                     _PLAN_CHECK_START,
                     _JSON_FENCE_START,
+                    _MARKDOWN_FENCE_START,
                     *_PSEUDO_TOOL_CALL_STARTS,
                 ),
             )
@@ -238,6 +325,7 @@ class _InternalReminderFilter:
         if self._inside_internal_block or self._inside_pseudo_tool_call:
             self._buffer = ""
             self._json_fence_buffer = ""
+            self._markdown_fence_buffer = ""
             self._line_buffer = ""
             self._inside_internal_block = False
             self._inside_pseudo_tool_call = False
@@ -254,6 +342,19 @@ class _InternalReminderFilter:
                 f"{_JSON_FENCE_START}{text}", final=True
             )
 
+        if self._inside_markdown_fence:
+            text = self._markdown_fence_buffer + self._buffer
+            self._buffer = ""
+            self._markdown_fence_buffer = ""
+            self._inside_markdown_fence = False
+            discard_block = self._discard_markdown_fence
+            self._discard_markdown_fence = False
+            if discard_block or _looks_like_internal_markdown_fence(text):
+                return ""
+            return self._filter_internal_tool_lines(
+                f"{_MARKDOWN_FENCE_START}{text}", final=True
+            )
+
         text = self._buffer
         self._buffer = ""
         return self._filter_internal_tool_lines(text, final=True)
@@ -268,13 +369,23 @@ class _InternalReminderFilter:
         while "\n" in self._line_buffer:
             line, self._line_buffer = self._line_buffer.split("\n", 1)
             line_with_newline = f"{line}\n"
+            if self._inside_raw_tool_transcript:
+                continue
+            if _starts_raw_tool_transcript(line):
+                self._inside_raw_tool_transcript = True
+                continue
             if not _looks_like_internal_tool_line(line):
                 visible_lines.append(line_with_newline)
 
         if final and self._line_buffer:
             line = self._line_buffer
             self._line_buffer = ""
-            if not _looks_like_internal_tool_line(line):
+            if self._inside_raw_tool_transcript:
+                self._inside_raw_tool_transcript = False
+                return "".join(visible_lines)
+            if not _starts_raw_tool_transcript(
+                line
+            ) and not _looks_like_internal_tool_line(line):
                 visible_lines.append(line)
 
         return "".join(visible_lines)
@@ -299,8 +410,31 @@ class _AgentTurnTraceBuilder:
 
     def __init__(self) -> None:
         self._entries: list[PersistedTimelineEntry] = []
+        self._blocks: list[PersistedContentBlock] = []
         self._tool_entries: ToolCallMatcher[PersistedTimelineEntry] = ToolCallMatcher()
         self._thinking_open = False
+
+    def on_response_text(self, token: str) -> None:
+        """Fold one user-facing assistant-text chunk into ordered blocks.
+
+        Adjacent assistant text chunks stay in the same block, while any
+        text after a reasoning block opens a fresh paragraph. This is
+        the persisted counterpart of the Web live-block split.
+        """
+        if not token:
+            return
+        tail = self._blocks[-1] if self._blocks else None
+        if tail is not None and tail.kind == "assistant_text":
+            tail.text = f"{tail.text}{token}"
+            return
+        self._blocks.append(PersistedContentBlock(kind="assistant_text", text=token))
+
+    def _reasoning_block(self) -> PersistedContentBlock:
+        """Return the active reasoning block, opening one when needed."""
+        tail = self._blocks[-1] if self._blocks else None
+        if tail is None or tail.kind != "reasoning_timeline":
+            self._blocks.append(PersistedContentBlock(kind="reasoning_timeline"))
+        return self._blocks[-1]
 
     def on_thinking(self, token: str, done: bool) -> None:
         """Fold one streamed thinking chunk into the trailing entry.
@@ -316,25 +450,26 @@ class _AgentTurnTraceBuilder:
                 block.
         """
         if token:
+            block = self._reasoning_block()
             if self._thinking_open and self._entries:
                 tail = self._entries[-1]
                 if tail.kind == "thinking":
                     tail.thinking_text = f"{tail.thinking_text}{token}"
                 else:
-                    self._entries.append(
-                        PersistedTimelineEntry(
-                            kind="thinking",
-                            thinking_text=token,
-                        )
-                    )
-                    self._thinking_open = True
-            else:
-                self._entries.append(
-                    PersistedTimelineEntry(
+                    entry = PersistedTimelineEntry(
                         kind="thinking",
                         thinking_text=token,
                     )
+                    self._entries.append(entry)
+                    block.timeline.append(entry)
+                    self._thinking_open = True
+            else:
+                entry = PersistedTimelineEntry(
+                    kind="thinking",
+                    thinking_text=token,
                 )
+                self._entries.append(entry)
+                block.timeline.append(entry)
                 self._thinking_open = True
         if done:
             self._thinking_open = False
@@ -364,6 +499,7 @@ class _AgentTurnTraceBuilder:
                 arguments=dict(arguments),
             ),
         )
+        self._reasoning_block().timeline.append(entry)
         self._entries.append(entry)
         self._tool_entries.add(tool_name, entry, tool_call_id)
         self._thinking_open = False
@@ -417,6 +553,7 @@ class _AgentTurnTraceBuilder:
         return PersistedAgentTurn(
             timeline=list(self._entries),
             duration_label=format_turn_duration(duration_seconds),
+            blocks=list(self._blocks),
         )
 
 
@@ -611,6 +748,7 @@ async def stream_agent_response(
 
         trace_builder = _AgentTurnTraceBuilder()
         turn_started_at = asyncio.get_event_loop().time()
+        streamed_response: list[str] = []
         ai_messages_at_start = sum(
             1 for m in session.messages if isinstance(m, AIMessage)
         )
@@ -621,15 +759,29 @@ async def stream_agent_response(
                 event = await event_queue.get()
                 if isinstance(event, _StreamEnd):
                     break
-                if isinstance(event, StreamingThinkingEvent):
+                if isinstance(event, StreamingTokenEvent):
+                    if event.token and not event.done:
+                        streamed_response.append(event.token)
+                        trace_builder.on_response_text(event.token)
+                elif isinstance(event, StreamingThinkingEvent):
                     trace_builder.on_thinking(event.token, event.done)
                 elif isinstance(event, ToolCallEvent):
+                    if event.tool_name == _USER_PROGRESS_TOOL_NAME:
+                        progress_text = _progress_note_text(dict(event.arguments))
+                        if progress_text:
+                            accumulated_response.append(progress_text)
+                            streamed_response.append(progress_text)
+                            trace_builder.on_response_text(progress_text)
+                            yield StreamingTokenEvent(token=progress_text)
+                        continue
                     trace_builder.on_tool_call(
                         event.tool_name,
                         event.arguments,
                         event.tool_call_id,
                     )
                 elif isinstance(event, ToolResultEvent):
+                    if event.tool_name == _USER_PROGRESS_TOOL_NAME:
+                        continue
                     trace_builder.on_tool_result(
                         event.tool_name,
                         event.result,
@@ -639,6 +791,14 @@ async def stream_agent_response(
         finally:
             if not producer.done():
                 producer.cancel()
+            response_text = "".join(streamed_response) or "".join(accumulated_response)
+            if (
+                response_text
+                and session.messages
+                and isinstance(session.messages[-1], AIMessage)
+                and session.messages[-1].content != response_text
+            ):
+                session.messages[-1] = AIMessage(content=response_text)
             bs = session.brand_strategy_session
             if session.mode is SessionMode.BRAND_STRATEGY and bs is not None:
                 ai_messages_now = sum(

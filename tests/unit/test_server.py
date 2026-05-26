@@ -18,7 +18,12 @@ from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, HumanMessage
 
 from core.brand_strategy import session as brand_strategy_session_store
-from core.brand_strategy.session import BrandStrategySession
+from core.brand_strategy.session import (
+    BrandStrategySession,
+    PersistedAgentTurn,
+    PersistedContentBlock,
+    PersistedTimelineEntry,
+)
 from server.main import create_app
 from server.schemas.chat import MessageResponse, ToolCallInfo
 from server.schemas.enums import SessionMode, SSEEventType
@@ -689,8 +694,6 @@ class TestAPIRoutes:
     @pytest.mark.asyncio
     async def test_get_session_messages_after_turns(self, client):
         """Populating a session's message log surfaces through the endpoint."""
-        from langchain_core.messages import AIMessage, HumanMessage
-
         create_resp = client.post("/api/v1/sessions", json={"mode": "ask"})
         sid = create_resp.json()["session_id"]
         manager = client.app.state.session_manager
@@ -716,6 +719,62 @@ class TestAPIRoutes:
         assert [m["role"] for m in history] == ["user", "agent", "user", "agent"]
         assert history[0]["content"] == "Hello"
         assert history[3]["content"] == "Why did the chicken cross the road?"
+
+    @pytest.mark.asyncio
+    async def test_get_session_messages_includes_ordered_agent_blocks(self, client):
+        """Brand-strategy history should preserve live text and Thought ordering."""
+        create_resp = client.post("/api/v1/sessions", json={"mode": "brand-strategy"})
+        sid = create_resp.json()["session_id"]
+        manager = client.app.state.session_manager
+        session = await manager.get_session(sid)
+        session.messages.extend(
+            [
+                HumanMessage(content="Start"),
+                AIMessage(content="Progress note.\n\nFinal answer."),
+            ]
+        )
+        assert session.brand_strategy_session is not None
+        thinking_entry = PersistedTimelineEntry(
+            kind="thinking",
+            thinking_text="Checking context.",
+        )
+        session.brand_strategy_session.agent_traces.append(
+            PersistedAgentTurn(
+                duration_label="3s",
+                timeline=[thinking_entry],
+                blocks=[
+                    PersistedContentBlock(
+                        kind="assistant_text",
+                        text="Progress note.\n\n",
+                    ),
+                    PersistedContentBlock(
+                        kind="reasoning_timeline",
+                        timeline=[thinking_entry],
+                    ),
+                    PersistedContentBlock(
+                        kind="assistant_text",
+                        text="Final answer.",
+                    ),
+                ],
+            )
+        )
+
+        resp = client.get(f"/api/v1/sessions/{sid}/messages")
+
+        assert resp.status_code == 200
+        agent_message = resp.json()["messages"][1]
+        assert agent_message["duration_label"] == "3s"
+        assert [block["kind"] for block in agent_message["blocks"]] == [
+            "assistant_text",
+            "reasoning_timeline",
+            "assistant_text",
+        ]
+        assert agent_message["blocks"][0]["text"] == "Progress note.\n\n"
+        assert agent_message["blocks"][1]["timeline"][0]["thinking_text"] == (
+            "Checking context."
+        )
+        assert agent_message["blocks"][2]["text"] == "Final answer."
+        assert agent_message["timeline"][0]["thinking_text"] == "Checking context."
 
     def test_patch_session_renames_and_pins(self, client):
         """PATCH updates title and pinned independently on brand-strategy sessions."""

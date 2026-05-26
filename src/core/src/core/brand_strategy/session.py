@@ -511,6 +511,21 @@ class PersistedTimelineEntry(BaseModel):
     tool_call: PersistedToolCall | None = None
 
 
+class PersistedContentBlock(BaseModel):
+    """One ordered assistant-turn block captured during live streaming.
+
+    The legacy ``timeline`` field is enough to restore one collapsed
+    reasoning panel, but it loses the placement of progress notes and
+    final prose around that panel. ``blocks`` preserves the live order
+    as text and reasoning alternate so a reopened chat can render the
+    same shape the user saw while streaming.
+    """
+
+    kind: Literal["assistant_text", "reasoning_timeline"]
+    text: str = ""
+    timeline: list[PersistedTimelineEntry] = Field(default_factory=list)
+
+
 class PersistedAgentTurn(BaseModel):
     """Reasoning timeline + duration captured for one agent message.
 
@@ -518,10 +533,14 @@ class PersistedAgentTurn(BaseModel):
     Nth ``PersistedAgentTurn`` corresponds to the Nth ``AIMessage`` in
     chronological order. ``duration_label`` is the same short string
     the web UI renders inside the collapsed "Thought for …" summary.
+    ``blocks`` is additive history data for the ordered live-block UI;
+    older saved sessions simply have an empty list and keep using the
+    legacy ``content`` + ``timeline`` shape.
     """
 
     timeline: list[PersistedTimelineEntry] = Field(default_factory=list)
     duration_label: str = ""
+    blocks: list[PersistedContentBlock] = Field(default_factory=list)
 
 
 def format_turn_duration(seconds: float) -> str:

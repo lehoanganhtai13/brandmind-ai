@@ -100,6 +100,19 @@ class PersistedTimelineEntryWire(BaseModel):
     tool_call: PersistedToolCallWire | None = None
 
 
+class PersistedContentBlockWire(BaseModel):
+    """One ordered assistant-turn block, in wire format.
+
+    Added alongside the legacy ``content`` + ``timeline`` fields so
+    newer clients can restore text → Thought → text ordering after a
+    page reload while older clients keep ignoring the extra field.
+    """
+
+    kind: Literal["assistant_text", "reasoning_timeline"]
+    text: str = ""
+    timeline: list[PersistedTimelineEntryWire] = Field(default_factory=list)
+
+
 class SessionMessage(BaseModel):
     """One user-or-agent turn from a session's chat history.
 
@@ -116,6 +129,7 @@ class SessionMessage(BaseModel):
     content: str
     timeline: list[PersistedTimelineEntryWire] = Field(default_factory=list)
     duration_label: str = ""
+    blocks: list[PersistedContentBlockWire] = Field(default_factory=list)
 
 
 class SessionMessages(BaseModel):

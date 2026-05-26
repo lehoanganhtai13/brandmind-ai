@@ -50,6 +50,9 @@ def create_brand_strategy_agent(
         get_default_brand_strategy_main_model_profile,
         resolve_brand_strategy_main_model_profile,
     )
+    from core.brand_strategy.progress_updates import (
+        NaturalProgressUpdateMiddleware,
+    )
     from core.brand_strategy.subagents import (
         create_brand_strategy_subagent_middleware,
     )
@@ -152,6 +155,30 @@ def create_brand_strategy_agent(
             loop_back_to=loop_back_to,
         )
 
+    def share_progress_update(message: str) -> str:
+        """Send one short, natural note before a visibly long wait.
+
+        Use this only when the user would otherwise wait noticeably, such as
+        specialist research, artifact generation, or a long multi-step backend
+        action. Do NOT use it for routine workspace reads, quick searches,
+        ordinary drafting, greetings, or preambles. The note is shown directly
+        in chat, so write one sentence as you would speak to this user: same
+        language, pronouns, and tone. Do not repeat the user's request, preview
+        the final answer, or mention internal tools, agents, or implementation
+        details.
+
+        Args:
+            message: One concise user-facing sentence in the user's
+                language and relationship tone. It should feel like a brief
+                human aside, not a status report.
+
+        Returns:
+            Confirmation that the note was streamed to the user.
+        """
+        if not message.strip():
+            return "No progress update sent."
+        return "Progress update sent."
+
     # Initialize model — per-session pin takes precedence over the
     # configured default so the web picker can lock a chat to a
     # specific profile while existing callers without an active
@@ -204,6 +231,8 @@ def create_brand_strategy_agent(
         list_artifacts,
         # Session tracking
         report_progress,
+        # User-facing progress notes for long action chains
+        share_progress_update,
     ]
 
     # Specialist-only: external evidence collection. Market and social
@@ -297,6 +326,7 @@ def create_brand_strategy_agent(
     deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
     phase_state_reminder_middleware = PhaseStateReminderMiddleware()
     proactive_context_middleware = ProactiveTurnMiddleware()
+    natural_progress_middleware = NaturalProgressUpdateMiddleware()
     evidence_grounding_middleware = EvidenceGroundingMiddleware()
     workspace_hygiene_middleware = WorkspaceBriefHygieneMiddleware()
 
@@ -375,6 +405,7 @@ def create_brand_strategy_agent(
             pre_compact_middleware,
             msg_summary_middleware,
             proactive_context_middleware,
+            natural_progress_middleware,
             phase_state_reminder_middleware,
             content_check_middleware,
             deliverable_dispatch_guard_middleware,

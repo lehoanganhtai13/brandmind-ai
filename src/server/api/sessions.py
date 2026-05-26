@@ -9,12 +9,13 @@ from core.brand_strategy.model_profiles import (
     UnsupportedBrandStrategyModelError,
     resolve_brand_strategy_main_model_profile,
 )
-from core.brand_strategy.session import PersistedAgentTurn
+from core.brand_strategy.session import PersistedAgentTurn, PersistedTimelineEntry
 from server.dependencies import get_session_manager
 from server.schemas.enums import SessionMode
 from server.schemas.session import (
     CreateSessionRequest,
     GenerateTitleRequest,
+    PersistedContentBlockWire,
     PersistedTimelineEntryWire,
     PersistedToolCallWire,
     SessionInfo,
@@ -115,9 +116,27 @@ def _agent_traces(session: ManagedSession) -> list[PersistedAgentTurn]:
     return list(bs.agent_traces)
 
 
+def _timeline_entry_to_wire(
+    entry: PersistedTimelineEntry,
+) -> PersistedTimelineEntryWire:
+    """Convert one persisted timeline entry into API wire format."""
+    tool_call_wire: PersistedToolCallWire | None = None
+    if entry.tool_call is not None:
+        tool_call_wire = PersistedToolCallWire(
+            tool_name=entry.tool_call.tool_name,
+            arguments=dict(entry.tool_call.arguments),
+            result=entry.tool_call.result,
+        )
+    return PersistedTimelineEntryWire(
+        kind=entry.kind,
+        thinking_text=entry.thinking_text,
+        tool_call=tool_call_wire,
+    )
+
+
 def _trace_to_wire(
     trace: PersistedAgentTurn,
-) -> tuple[list[PersistedTimelineEntryWire], str]:
+) -> tuple[list[PersistedTimelineEntryWire], str, list[PersistedContentBlockWire]]:
     """Re-shape a persisted agent turn into wire-format response fields.
 
     The web client deserialises against ``PersistedTimelineEntryWire``
@@ -132,26 +151,24 @@ def _trace_to_wire(
 
     Returns:
         timeline (list[PersistedTimelineEntryWire]): Ordered wire-format
-        entries to embed in the response.
+            entries to embed in the response.
         duration_label (str): Pre-formatted "Thought for …" label.
+        blocks (list[PersistedContentBlockWire]): Ordered text/reasoning
+            blocks for clients that can restore the live-block layout.
     """
-    entries: list[PersistedTimelineEntryWire] = []
-    for entry in trace.timeline:
-        tool_call_wire: PersistedToolCallWire | None = None
-        if entry.tool_call is not None:
-            tool_call_wire = PersistedToolCallWire(
-                tool_name=entry.tool_call.tool_name,
-                arguments=dict(entry.tool_call.arguments),
-                result=entry.tool_call.result,
-            )
-        entries.append(
-            PersistedTimelineEntryWire(
-                kind=entry.kind,
-                thinking_text=entry.thinking_text,
-                tool_call=tool_call_wire,
+    timeline = [_timeline_entry_to_wire(entry) for entry in trace.timeline]
+    blocks: list[PersistedContentBlockWire] = []
+    for block in trace.blocks:
+        blocks.append(
+            PersistedContentBlockWire(
+                kind=block.kind,
+                text=block.text,
+                timeline=[
+                    _timeline_entry_to_wire(entry) for entry in block.timeline
+                ],
             )
         )
-    return entries, trace.duration_label
+    return timeline, trace.duration_label, blocks
 
 
 @router.get("/sessions/{session_id}/messages")
@@ -186,8 +203,9 @@ async def get_session_messages(
                 continue
             timeline: list[PersistedTimelineEntryWire] = []
             duration_label = ""
+            blocks: list[PersistedContentBlockWire] = []
             if agent_idx < len(traces):
-                timeline, duration_label = _trace_to_wire(traces[agent_idx])
+                timeline, duration_label, blocks = _trace_to_wire(traces[agent_idx])
             agent_idx += 1
             history.append(
                 SessionMessage(
@@ -195,6 +213,7 @@ async def get_session_messages(
                     content=text,
                     timeline=timeline,
                     duration_label=duration_label,
+                    blocks=blocks,
                 )
             )
     return SessionMessages(session_id=session_id, messages=history)

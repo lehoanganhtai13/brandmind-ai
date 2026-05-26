@@ -47,6 +47,54 @@ class _FakeStreamingAgent:
                 yield AIMessageChunk(content=chunk), {}
 
 
+class _FakeProgressToolAgent:
+    """Agent double that emits the model-authored progress tool event."""
+
+    def __init__(self, session: ManagedSession) -> None:
+        self._session = session
+
+    async def astream(
+        self,
+        *_args: object,
+        **_kwargs: object,
+    ) -> AsyncIterator[tuple[AIMessageChunk, dict[str, object]]]:
+        """Emit one progress tool event followed by final visible text."""
+        self._session.event_router(
+            ToolCallEvent(
+                tool_name="share_progress_update",
+                tool_call_id="progress-1",
+                arguments={
+                    "message": (
+                        "Mình sẽ kiểm tra nhanh bối cảnh rồi quay lại với "
+                        "hướng định vị gọn nhất."
+                    ),
+                },
+            )
+        )
+        self._session.event_router(
+            ToolResultEvent(
+                tool_name="share_progress_update",
+                tool_call_id="progress-1",
+                result="Progress update sent.",
+            )
+        )
+        yield (
+            AIMessageChunk(
+                content="",
+                tool_call_chunks=[
+                    {
+                        "name": "share_progress_update",
+                        "args": "{}",
+                        "id": "progress-1",
+                        "index": 0,
+                    }
+                ],
+            ),
+            {},
+        )
+        yield AIMessageChunk(content="Kết quả ngắn."), {}
+
+
 def test_internal_reminder_filter_preserves_plain_text() -> None:
     """Plain user-facing text should pass through unchanged."""
     token_filter = _InternalReminderFilter()
@@ -97,6 +145,28 @@ def test_agent_turn_trace_builder_pairs_out_of_order_results_by_id() -> None:
     assert second is not None
     assert second.arguments == {"file_path": "/b"}
     assert second.result == "B result"
+
+
+def test_agent_turn_trace_builder_preserves_ordered_blocks() -> None:
+    """Persisted traces should restore progress text, Thought, then final text."""
+    trace_builder = _AgentTurnTraceBuilder()
+
+    trace_builder.on_response_text("Progress note.\n\n")
+    trace_builder.on_thinking("Checking context.", done=True)
+    trace_builder.on_response_text("Final answer.")
+
+    turn = trace_builder.finalize(duration_seconds=2.4)
+
+    assert turn.duration_label == "2s"
+    assert [block.kind for block in turn.blocks] == [
+        "assistant_text",
+        "reasoning_timeline",
+        "assistant_text",
+    ]
+    assert turn.blocks[0].text == "Progress note.\n\n"
+    assert turn.blocks[1].timeline[0].thinking_text == "Checking context."
+    assert turn.blocks[2].text == "Final answer."
+    assert turn.timeline[0].thinking_text == "Checking context."
 
 
 def test_internal_reminder_filter_removes_complete_block() -> None:
@@ -281,6 +351,63 @@ def test_internal_filter_preserves_non_tool_json_fence() -> None:
     assert token_filter.flush() == ""
 
 
+def test_internal_filter_removes_untyped_internal_markdown_fence() -> None:
+    """Untyped debug fences with edit internals should not reach Brand Strategy chat."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed(
+        "A```\nWait! Look at line 28 in `/workspace/brand_brief.md`\n"
+        "old_string=...\n```B"
+    )
+
+    assert output == "AB"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_discards_unclosed_internal_markdown_fence() -> None:
+    """An unterminated internal debug fence should be dropped on stream close."""
+    token_filter = _InternalReminderFilter()
+
+    assert token_filter.feed("Visible```\nWait! Look at line 28") == "Visible"
+    assert token_filter.feed("\nold_string=...") == ""
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_preserves_untyped_user_markdown_fence() -> None:
+    """Ordinary user-facing markdown fences remain visible."""
+    token_filter = _InternalReminderFilter()
+
+    output = token_filter.feed("A```\nmenu metric\n```B")
+
+    assert output == "A```\nmenu metric\n```B"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_removes_raw_tool_transcript_when_enabled() -> None:
+    """Brand Strategy chat should hide raw ReAct/tool transcript text."""
+    token_filter = _InternalReminderFilter(suppress_internal_tool_lines=True)
+
+    output = token_filter.feed(
+        'A\n├─{ "todos": [\n'
+        '  { "content": "Verify existing artifacts", "status": "in_progress" }\n'
+        "Executing list_artifacts...\n"
+        "Tool list_artifacts response: No artifacts found\n"
+        "\nB"
+    )
+
+    assert output == "A\n"
+    assert token_filter.flush() == ""
+
+
+def test_internal_filter_drops_unclosed_raw_tool_transcript_when_enabled() -> None:
+    """A raw tool transcript without a clean close should not leak on flush."""
+    token_filter = _InternalReminderFilter(suppress_internal_tool_lines=True)
+
+    assert token_filter.feed('A\n├─{ "todos": [\n') == "A\n"
+    assert token_filter.feed('  { "content": "Verify" }\n') == ""
+    assert token_filter.flush() == ""
+
+
 @pytest.mark.asyncio
 async def test_stream_agent_response_filters_tokens_and_history() -> None:
     """The streaming bridge should sanitize client output and session history."""
@@ -412,6 +539,41 @@ async def test_stream_agent_response_discards_brand_strategy_pre_tool_text() -> 
 
     assert "".join(tokens) == "Final answer after tools."
     assert session.messages[-1].content == "Final answer after tools."
+
+
+@pytest.mark.asyncio
+async def test_stream_agent_response_surfaces_model_authored_progress_note() -> None:
+    """Progress notes should be natural assistant text, not visible tool rows."""
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.BRAND_STRATEGY,
+        created_at=datetime.now(),
+        last_active=0.0,
+        brand_strategy_session=BrandStrategySession(),
+    )
+    session.agent = cast(CompiledStateGraph, _FakeProgressToolAgent(session))
+    manager = SessionManager()
+    tokens: list[str] = []
+    tool_names: list[str] = []
+
+    async for event in stream_agent_response(session, "hello", manager):
+        if isinstance(event, StreamingTokenEvent) and event.token and not event.done:
+            tokens.append(event.token)
+        elif isinstance(event, ToolCallEvent):
+            tool_names.append(event.tool_name)
+
+    assert "share_progress_update" not in tool_names
+    assert "".join(tokens) == (
+        "Mình sẽ kiểm tra nhanh bối cảnh rồi quay lại với "
+        "hướng định vị gọn nhất.\n\n"
+        "Kết quả ngắn."
+    )
+    assert session.messages[-1].content == "".join(tokens)
+    assert session.brand_strategy_session is not None
+    assert len(session.brand_strategy_session.agent_traces) == 1
+    blocks = session.brand_strategy_session.agent_traces[0].blocks
+    assert [block.kind for block in blocks] == ["assistant_text"]
+    assert blocks[0].text == "".join(tokens)
 
 
 @pytest.mark.asyncio
