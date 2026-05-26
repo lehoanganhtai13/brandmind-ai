@@ -189,6 +189,13 @@ app = rx.App(
         "color": TEXT_PRIMARY,
         "font_family": FONT_SANS,
     },
+    head_components=[
+        rx.el.link(rel="icon", type="image/png", href="/brandmind-favicon.png"),
+        rx.el.link(
+            rel="apple-touch-icon",
+            href="/brandmind-favicon.png",
+        ),
+    ],
     stylesheets=[
         "https://fonts.googleapis.com/css2?"
         "family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&"
