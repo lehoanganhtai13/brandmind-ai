@@ -385,11 +385,255 @@ def _chat_row(info: rx.Var[SessionInfo]) -> rx.Component:
     )
 
 
+def _rail_button_bare(
+    *,
+    icon_tag: str,
+    aria_label: str,
+    on_click=None,
+    css_tooltip: str | None = None,
+) -> rx.Component:
+    """Bare 40-px rail button — same styling for tooltip and popover wrappers.
+
+    Pulls every visual knob from ``tokens`` (``RAIL_ICON_BUTTON_PX``,
+    ``RADIUS_BTN``, ``RAIL_HOVER_BG``, ``ICON_GHOST_BUTTON``) so any
+    future rail entry only has to call this factory — tooltip wrap,
+    popover wrap, or none — and the geometry stays locked. Pass
+    ``css_tooltip`` when the button serves as a popover or hover-card
+    trigger: it stamps a ``data-bm-rail-tooltip`` attribute that the
+    body-portal controller in ``brandmind_web.py`` picks up to render
+    a Radix-styled tooltip pill, sidestepping the Slot collision that
+    occurs when ``rx.tooltip`` is nested inside ``rx.popover.trigger``.
+
+    Args:
+        icon_tag (str): Lucide icon name shown inside the button.
+        aria_label (str): Accessible label announced by screen readers.
+        on_click: Reflex event handler fired on click; left untyped per
+            project convention to match Reflex's polymorphic handler
+            shapes. ``None`` leaves the button unbound.
+        css_tooltip (str | None): Tooltip label rendered by the body
+            portal when the button cannot use ``rx.tooltip`` (e.g.
+            wrapped in ``rx.popover.trigger``). ``None`` opts out.
+
+    Returns:
+        component (rx.Component): A ghost-style icon button ready to
+            drop into a rail layout or be wrapped by a Radix trigger.
+    """
+    button_kwargs: dict = {}
+    if on_click is not None:
+        button_kwargs["on_click"] = on_click
+    if css_tooltip is not None:
+        button_kwargs["custom_attrs"] = {"data-bm-rail-tooltip": css_tooltip}
+    return rx.button(
+        rx.icon(
+            tag=icon_tag,
+            size=tokens.ICON_GHOST_BUTTON,
+            color=tokens.TEXT_SECONDARY,
+        ),
+        variant="ghost",
+        color_scheme="gray",
+        aria_label=aria_label,
+        style={
+            "width": f"{tokens.RAIL_ICON_BUTTON_PX}px",
+            "height": f"{tokens.RAIL_ICON_BUTTON_PX}px",
+            "padding": "0",
+            "border_radius": tokens.RADIUS_BTN,
+            "background": "transparent",
+            "cursor": "pointer",
+            "transition": "background-color 160ms ease",
+            "_hover": {
+                "background_color": tokens.RAIL_HOVER_BG,
+            },
+            "&[data-state='open']": {
+                "background_color": tokens.RAIL_HOVER_BG,
+            },
+        },
+        **button_kwargs,
+    )
+
+
+def _rail_icon_button(
+    *,
+    icon_tag: str,
+    on_click,
+    aria_label: str,
+    tooltip_text: str,
+) -> rx.Component:
+    """Standard rail icon button wrapped in a Radix tooltip.
+
+    Used for single-action entries on the collapsed 56-px rail (new
+    chat, settings, ...) where hover reveals a single-line label only.
+    For entries that need a full panel on click (recents), call
+    :func:`_rail_button_bare` directly with ``css_tooltip`` and wrap
+    in ``rx.popover.trigger`` to avoid the Slot collision documented
+    on the factory.
+
+    Args:
+        icon_tag (str): Lucide icon name to render inside the button.
+        on_click: Reflex event handler fired on click; left untyped
+            per project convention.
+        aria_label (str): Accessible label announced by screen readers.
+        tooltip_text (str): Label shown in the Radix tooltip pill on
+            hover.
+
+    Returns:
+        component (rx.Component): A Radix tooltip wrapping the bare
+            rail button, ready to drop into the collapsed rail.
+    """
+    return rx.tooltip(
+        _rail_button_bare(
+            icon_tag=icon_tag,
+            aria_label=aria_label,
+            on_click=on_click,
+        ),
+        content=tooltip_text,
+        side="right",
+        side_offset=8,
+    )
+
+
+def _recents_row(info: rx.Var[SessionInfo]) -> rx.Component:
+    """Compact chat row rendered inside the Recents popover.
+
+    Strips the meta line and per-row actions menu used in the expanded
+    chat list — the popover is a quick-jump affordance, not a
+    management surface, so a clean clickable title is enough. Wrapped
+    in :func:`rx.popover.close` at the caller site so clicking dismisses
+    the popover the same way the user expects from "open a chat".
+
+    Args:
+        info (rx.Var[SessionInfo]): Reactive handle to one session in
+            the recents list; the row binds its title + active state
+            to fields on this value.
+
+    Returns:
+        component (rx.Component): A clickable single-line row that
+            switches the active chat on click.
+    """
+    is_active = info.session_id == BrandMindState.session_id
+    label = rx.cond(info.metadata.title, info.metadata.title, "Untitled")
+    return rx.box(
+        rx.text(
+            label,
+            style={
+                "color": rx.cond(is_active, tokens.TEXT_PRIMARY, tokens.TEXT_SECONDARY),
+                "font_family": tokens.FONT_SANS,
+                "font_size": "13px",
+                "font_weight": rx.cond(is_active, "600", "500"),
+                "line_height": "1.4",
+                "overflow": "hidden",
+                "text_overflow": "ellipsis",
+                "white_space": "nowrap",
+            },
+        ),
+        on_click=BrandMindState.switch_chat(info.session_id),
+        style={
+            "padding": "8px 10px",
+            "border_radius": tokens.RADIUS_MD,
+            "cursor": "pointer",
+            "transition": "background-color 160ms ease",
+            "width": "100%",
+            "min_width": "0",
+            "_hover": {
+                "background_color": tokens.RAIL_HOVER_BG,
+            },
+        },
+    )
+
+
+def _recents_popover() -> rx.Component:
+    """Rail entry that opens a Radix popover listing the 10 recent chats.
+
+    Mirrors the ChatGPT collapsed-rail pattern: a chat-bubble icon
+    button shows a "Recent chats" tooltip on hover and reveals the
+    panel on click. The popover is click-open (not hover-card) so the
+    user does not get a moving-target list every time the cursor
+    brushes the rail. Each row is wrapped in :func:`rx.popover.close`
+    so picking a chat dismisses the popover and routes through
+    ``switch_chat`` in one motion.
+
+    Returns:
+        component (rx.Component): The Radix popover root composing the
+            chat-bubble trigger button and the Recents panel.
+    """
+    panel = rx.vstack(
+        rx.text(
+            "Recents",
+            style={
+                "color": tokens.TEXT_PRIMARY,
+                "font_family": tokens.FONT_DISPLAY,
+                "font_size": "16px",
+                "font_weight": "500",
+                "letter_spacing": "-0.005em",
+                "padding": "2px 10px 8px 10px",
+            },
+        ),
+        rx.cond(
+            BrandMindState.sessions.length() == 0,
+            rx.text(
+                "No chats yet — send a message to start.",
+                style={
+                    "color": tokens.TEXT_MUTED,
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "12px",
+                    "font_style": "italic",
+                    "padding": "4px 10px 8px 10px",
+                    "line_height": "1.5",
+                },
+            ),
+            rx.vstack(
+                rx.foreach(
+                    BrandMindState.recent_sessions,
+                    lambda info: rx.popover.close(_recents_row(info)),
+                ),
+                spacing="0",
+                align="stretch",
+                width="100%",
+            ),
+        ),
+        spacing="0",
+        align="stretch",
+        width="100%",
+    )
+
+    trigger_button = _rail_button_bare(
+        icon_tag="message_circle",
+        aria_label="Recent chats",
+        css_tooltip="Recent chats",
+    )
+
+    return rx.popover.root(
+        rx.popover.trigger(trigger_button),
+        rx.popover.content(
+            panel,
+            side="right",
+            side_offset=4,
+            style={
+                "background_color": tokens.BG_SURFACE_1,
+                "border": f"1px solid {tokens.GLASS_BORDER}",
+                "border_radius": tokens.RADIUS_LG,
+                "padding": "10px",
+                "width": "280px",
+                "max_height": "480px",
+                "overflow_y": "auto",
+                "box_shadow": (
+                    "0 16px 40px rgba(0, 0, 0, 0.42), "
+                    "0 0 0 1px rgba(255, 255, 255, 0.02)"
+                ),
+                "backdrop_filter": "blur(20px) saturate(140%)",
+            },
+        ),
+    )
+
+
 def _new_chat_button() -> rx.Component:
     """Pill button that resets the workspace into a fresh empty chat."""
     return rx.button(
         rx.hstack(
-            rx.icon(tag="square_pen", size=14, color=tokens.TEXT_PRIMARY),
+            rx.icon(
+                tag="square_pen",
+                size=tokens.ICON_WITH_LABEL,
+                color=tokens.TEXT_PRIMARY,
+            ),
             rx.text(
                 "New chat",
                 style={
@@ -425,25 +669,18 @@ def _chats_section() -> rx.Component:
     """Top section: section label + new-chat button + persisted chat list."""
     return rx.cond(
         BrandMindState.sidebar_is_collapsed,
-        rx.center(
-            rx.button(
-                rx.icon(tag="square_pen", size=16, color=tokens.TEXT_PRIMARY),
+        rx.vstack(
+            _rail_icon_button(
+                icon_tag="square_pen",
                 on_click=BrandMindState.start_new_chat,
-                variant="ghost",
-                style={
-                    "width": "32px",
-                    "height": "32px",
-                    "padding": "0",
-                    "border_radius": tokens.RADIUS_PILL,
-                    "border": f"1px solid {tokens.GLASS_BORDER}",
-                    "cursor": "pointer",
-                    "_hover": {
-                        "border_color": "rgba(95, 179, 168, 0.35)",
-                    },
-                },
+                aria_label="New chat",
+                tooltip_text="New chat",
             ),
+            _recents_popover(),
+            spacing="1",
+            align="center",
             width="100%",
-            padding="16px 0 8px 0",
+            padding="12px 0 8px 0",
         ),
         rx.vstack(
             rx.text(
@@ -531,29 +768,23 @@ def _settings_footer() -> rx.Component:
     return rx.cond(
         BrandMindState.sidebar_is_collapsed,
         rx.center(
-            rx.button(
-                rx.icon(tag="settings", size=18, color=tokens.TEXT_SECONDARY),
+            _rail_icon_button(
+                icon_tag="settings",
                 on_click=BrandMindState.open_settings,
-                variant="ghost",
                 aria_label="Open settings",
-                style={
-                    "width": "32px",
-                    "height": "32px",
-                    "padding": "0",
-                    "border_radius": tokens.RADIUS_PILL,
-                    "cursor": "pointer",
-                    "_hover": {
-                        "background_color": "rgba(255, 255, 255, 0.04)",
-                    },
-                },
+                tooltip_text="Open settings",
             ),
             width="100%",
-            padding="12px 0 16px 0",
+            padding="8px 0 16px 0",
         ),
         rx.box(
             rx.button(
                 rx.hstack(
-                    rx.icon(tag="settings", size=16, color=tokens.TEXT_SECONDARY),
+                    rx.icon(
+                        tag="settings",
+                        size=tokens.ICON_WITH_LABEL,
+                        color=tokens.TEXT_SECONDARY,
+                    ),
                     rx.text(
                         "Settings",
                         style={

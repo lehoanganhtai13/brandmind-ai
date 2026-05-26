@@ -31,7 +31,7 @@ def _sidebar_toggle() -> rx.Component:
     rather than a generic panel handle.
     """
     return rx.button(
-        rx.icon(tag="panel_left", size=18),
+        rx.icon(tag="panel_left", size=tokens.ICON_GHOST_BUTTON),
         on_click=BrandMindState.toggle_sidebar,
         variant="ghost",
         color_scheme="gray",
@@ -77,7 +77,7 @@ def _sidebar_brand_button() -> rx.Component:
             ),
             rx.icon(
                 tag="panel_left",
-                size=20,
+                size=tokens.ICON_GHOST_BUTTON,
                 custom_attrs={"data-bm-logo-hover": "true"},
                 style={
                     "position": "absolute",
@@ -206,7 +206,7 @@ def _canvas_toggle() -> rx.Component:
     show_badge = BrandMindState.has_unseen_artifacts & ~BrandMindState.canvas_open
     return rx.button(
         rx.box(
-            rx.icon(tag="panel_right", size=18),
+            rx.icon(tag="panel_right", size=tokens.ICON_GHOST_BUTTON),
             rx.cond(
                 show_badge,
                 rx.box(
