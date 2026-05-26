@@ -4,7 +4,7 @@ Renders a thin banner between the header and the chat scroll whenever
 the web UI cannot reach ``/api/v1/health`` or the live SSE stream has
 recently failed. The banner offers a retry control so the user can
 force a health re-check without waiting for the next polling tick,
-and auto-dismisses a short time after recovery.
+and disappears on its own as soon as the underlying problem is gone.
 
 Mirrors ``docs/web_design.md`` § 9.6:
 
@@ -12,8 +12,11 @@ Mirrors ``docs/web_design.md`` § 9.6:
 * Error — backend disconnected; offers retry.
 * Warning — backend healthy but the last stream failed; offers retry
   for the stalled turn.
-* Recovered (transient) — fades out 5 s after recovery so the user
-  notices the state flip before the banner disappears.
+
+Recovery is silent on purpose. Slack / Gmail / iMessage all stay quiet
+when connectivity returns — the inbox simply starts updating again,
+and a "Back online" pill would interrupt the chat surface to announce
+a non-actionable state change.
 """
 
 from __future__ import annotations
@@ -36,12 +39,6 @@ _VARIANT_PRESETS: dict[str, dict[str, str]] = {
         "fg": "#f3c270",
         "icon": "triangle_alert",
     },
-    "recovered": {
-        "background_color": "rgba(95, 179, 168, 0.12)",
-        "border_color": "rgba(95, 179, 168, 0.40)",
-        "fg": tokens.ACCENT_TEAL_SOLID,
-        "icon": "wifi",
-    },
 }
 
 
@@ -56,12 +53,16 @@ def _banner_shell(
     :func:`rx.match` so each banner state stays a static React tree.
 
     Args:
-        variant (str): One of ``error`` / ``warning`` / ``recovered``;
-            selects the preset color palette and icon.
+        variant (str): One of ``error`` / ``warning``; selects the
+            preset color palette and icon.
         text (rx.Var | str): The visible message body, reactive or
             literal.
         show_retry (bool): Whether to render the "Try again" button on
-            the right edge — hidden for ``recovered``.
+            the right edge.
+
+    Returns:
+        component (rx.Component): The configured banner row ready for
+            ``rx.match`` to mount.
     """
     preset = _VARIANT_PRESETS[variant]
     return rx.hstack(
@@ -121,6 +122,10 @@ def degraded_banner() -> rx.Component:
 
     Reads :attr:`BrandMindState.banner_variant` so the dispatch logic
     lives in one place; an empty string from state means "no banner".
+
+    Returns:
+        component (rx.Component): The connectivity banner, or an empty
+            fragment when no banner state is active.
     """
     return rx.match(
         BrandMindState.banner_variant,
@@ -138,14 +143,6 @@ def degraded_banner() -> rx.Component:
                 "warning",
                 BrandMindState.error_message,
                 show_retry=True,
-            ),
-        ),
-        (
-            "recovered",
-            _banner_shell(
-                "recovered",
-                "Back online.",
-                show_retry=False,
             ),
         ),
         rx.fragment(),
