@@ -161,18 +161,40 @@ class PersistedTimelineEntryWire(BaseModel):
     tool_call: PersistedToolCallWire | None = None
 
 
+class PersistedContentBlockWire(BaseModel):
+    """One ordered assistant-turn block carried in persisted history.
+
+    Mirrors :class:`server.schemas.session.PersistedContentBlockWire`.
+    Backend serializes the same insertion-ordered block list it built
+    while the turn was live so a newer client can restore the
+    text → Thought → text layout after a refresh. Per-block durations
+    are not on the wire (deferred to a later backend phase), so the
+    client renders "Reasoning" for multi-block hydration and reuses the
+    turn-level duration label for single-block hydration.
+    """
+
+    kind: Literal["assistant_text", "reasoning_timeline"]
+    text: str = ""
+    timeline: list[PersistedTimelineEntryWire] = Field(default_factory=list)
+
+
 class SessionMessage(BaseModel):
     """One persisted turn from a session's chat history.
 
     Agent turns carry the reasoning ``timeline`` and short
     ``duration_label`` so the rehydrated bubble can show the "Thought
-    for …" summary the user saw live. User turns leave both empty.
+    for …" summary the user saw live. ``blocks`` carries the Phase 2
+    additive ordered-block payload — newer clients hydrate from it to
+    restore the text → Thought → text live-stream layout, older clients
+    keep ignoring the extra field. User turns leave the timeline and
+    block list empty.
     """
 
     role: Literal["user", "agent"]
     content: str
     timeline: list[PersistedTimelineEntryWire] = Field(default_factory=list)
     duration_label: str = ""
+    blocks: list[PersistedContentBlockWire] = Field(default_factory=list)
 
 
 class SessionMessages(BaseModel):
@@ -303,6 +325,14 @@ class ContentBlock(BaseModel):
     a new block whenever the SSE event kind switches between text and
     reasoning, so the trailing block is always the active one.
 
+    Each ``reasoning_timeline`` block carries its OWN expand state,
+    started-at timestamp, and duration label so a turn that produces
+    multiple thought blocks can collapse the earlier ones as soon as
+    the next assistant text starts, give each block its own "Thought
+    for Ns" badge, and be toggled independently from the others. The
+    legacy single-toggle ``ChatMessage.timeline_expanded`` is only used
+    by the persisted-history fallback renderer.
+
     Attributes:
         kind (Literal["assistant_text", "reasoning_timeline"]): Which
             payload field of this block holds content.
@@ -311,15 +341,31 @@ class ContentBlock(BaseModel):
         timeline (list[TimelineEntry]): Interleaved thinking + tool-call
             entries for this reasoning block. Empty when
             ``kind == "assistant_text"``.
-        is_done (bool): Set to True once the turn's ``done`` event
-            fires, signalling to the renderer that the streaming cursor
-            should no longer appear inside this block.
+        is_done (bool): True once the block has closed — either because
+            a later block superseded it, or because the turn's ``done``
+            event fired while this was the trailing block.
+        expanded (bool): Whether the reasoning panel is open. Set to
+            ``True`` while the block is live so the user sees the trace
+            stream in; flipped to ``False`` once the block closes so the
+            chat scroll lands on the final answer. Ignored for
+            ``assistant_text`` blocks.
+        started_at (float): ``time.monotonic()`` value captured when the
+            block first opened. Used only client-side to compute
+            ``duration_label`` when the block closes.
+        duration_label (str): Pre-formatted ``"Ns"`` / ``"MmSs"`` label
+            for the block's wall-clock duration. Set when the block
+            closes; an empty value renders as the generic "Reasoning"
+            header (the multi-reasoning hydration case where the wire
+            payload does not carry per-block timings).
     """
 
     kind: Literal["assistant_text", "reasoning_timeline"]
     text: str = ""
     timeline: list[TimelineEntry] = Field(default_factory=list)
     is_done: bool = False
+    expanded: bool = True
+    started_at: float = 0.0
+    duration_label: str = ""
 
 
 class ChatMessage(BaseModel):

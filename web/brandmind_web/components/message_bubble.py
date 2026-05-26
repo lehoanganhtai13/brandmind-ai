@@ -480,32 +480,50 @@ def _reasoning_timeline(
     )
 
 
+def _block_summary_label(block: rx.Var[ContentBlock]) -> rx.Var:
+    """Per-block header label next to the chevron of a reasoning block.
+
+    Mirrors :func:`_timeline_summary_label` but reads the block's own
+    ``is_done`` and ``duration_label`` so two thought blocks within the
+    same turn render distinct labels. While the block is live, the
+    header reads ``Thinking…``. Once it closes, ``Thought for Ns`` is
+    used when a per-block duration was captured (live blocks) and the
+    generic ``Reasoning`` label is used when the wire payload didn't
+    carry one (multi-block hydration case).
+    """
+    closed_label = rx.cond(
+        block.duration_label,
+        "Thought for " + block.duration_label,
+        "Reasoning",
+    )
+    return rx.cond(block.is_done, closed_label, "Thinking…")
+
+
 def _block_reasoning_timeline(
     block: rx.Var[ContentBlock],
-    message: rx.Var[ChatMessage],
+    block_index: rx.Var[int],
     message_index: int,
 ) -> rx.Component:
     """Render one ``reasoning_timeline`` block as a connected thinking + tool thread.
 
     Variant of :func:`_reasoning_timeline` scoped to a single
-    ``ContentBlock`` instead of the legacy message-wide timeline.
-    Reuses the same chevron header + bullet-column rail components so a
-    block-driven turn is visually indistinguishable from the legacy
-    layout. The expanded/collapsed state still lives at the message
-    level (``message.timeline_expanded``) so a turn with multiple
-    reasoning blocks expands / collapses together — Phase 1 keeps a
-    single toggle to match the live-stream Claude / ChatGPT UX without
-    introducing per-block state.
+    ``ContentBlock``. Each block carries its own expand state and
+    duration label so a turn with multiple thought traces can collapse
+    the earlier ones as soon as the next assistant paragraph starts
+    and toggle them independently. The chevron, header label, and
+    body display all bind to ``block.expanded`` and ``block.is_done``
+    rather than to message-level fields — that is the fix that turns
+    two "Thought for 51s" headers into two distinct rows.
 
     Args:
         block (rx.Var[ContentBlock]): The reasoning_timeline block to
             render; ``block.timeline`` carries the thinking + tool
             entries.
-        message (rx.Var[ChatMessage]): The owning agent message, used
-            to read the shared expand toggle + the "Thought for Ns"
-            duration label.
-        message_index (int): Message index forwarded to the toggle
-            event handler so the right row gets toggled.
+        block_index (rx.Var[int]): Position of this block in
+            ``message.blocks``; forwarded to the per-block toggle
+            event so a click flips only this block's expand state.
+        message_index (int): Position of the owning agent turn in
+            ``BrandMindState.messages``.
 
     Returns:
         component (rx.Component): The block's collapsible reasoning
@@ -515,12 +533,12 @@ def _block_reasoning_timeline(
 
     header = rx.hstack(
         rx.icon(
-            tag=rx.cond(message.timeline_expanded, "chevron_down", "chevron_right"),
+            tag=rx.cond(block.expanded, "chevron_down", "chevron_right"),
             size=13,
             color=tokens.TEXT_MUTED,
         ),
         rx.el.span(
-            _timeline_summary_label(message),
+            _block_summary_label(block),
             style={
                 "color": tokens.TEXT_MUTED,
                 "font_family": tokens.FONT_SANS,
@@ -530,7 +548,7 @@ def _block_reasoning_timeline(
         ),
         spacing="1",
         align="center",
-        on_click=BrandMindState.toggle_timeline(message_index),
+        on_click=BrandMindState.toggle_block_timeline(message_index, block_index),
         style={"cursor": "pointer", "user_select": "none"},
     )
 
@@ -549,7 +567,7 @@ def _block_reasoning_timeline(
             "padding": "4px 0 4px 0",
             "margin_left": "4px",
         },
-        display=rx.cond(has_timeline & message.timeline_expanded, "block", "none"),
+        display=rx.cond(has_timeline & block.expanded, "block", "none"),
     )
 
     return rx.vstack(
@@ -572,15 +590,16 @@ def _content_block(
 
     Switches on ``block.kind``: ``assistant_text`` renders as markdown
     prose, ``reasoning_timeline`` renders as a collapsible reasoning
-    thread. The streaming cursor only appears at the end of the very
-    last ``assistant_text`` block when the turn is still streaming, so
-    a progress note that has been superseded by a later final answer
-    does not keep a cursor behind it.
+    thread keyed by its own per-block state. The streaming cursor only
+    appears at the end of the very last ``assistant_text`` block when
+    the turn is still streaming, so a progress note that has been
+    superseded by a later final answer does not keep a cursor behind it.
 
     Args:
         block (rx.Var[ContentBlock]): The block to render.
         index (rx.Var[int]): Index of this block within
-            ``message.blocks`` (used to decide cursor visibility).
+            ``message.blocks``; used for cursor visibility and as the
+            block id for the per-block toggle handler.
         message (rx.Var[ChatMessage]): The owning agent message.
         message_index (int): Message index forwarded to the timeline
             toggle handler.
@@ -595,7 +614,7 @@ def _content_block(
     return rx.cond(
         is_text,
         _assistant_text_block(block.text, show_cursor),
-        _block_reasoning_timeline(block, message, message_index),
+        _block_reasoning_timeline(block, index, message_index),
     )
 
 

@@ -195,6 +195,31 @@ def _compact_chat_messages(messages: list[ChatMessage]) -> list[ChatMessage]:
     return [_compact_chat_message_timeline(message) for message in messages]
 
 
+def _close_trailing_reasoning_block(blocks: list[ContentBlock]) -> None:
+    """Mark the trailing reasoning block as closed and collapse it.
+
+    Called when a new ``assistant_text`` block is about to be opened
+    after a reasoning trace so the previous thought collapses on the
+    same beat the next paragraph appears. Records the block's wall
+    duration from ``started_at`` so the header switches from
+    ``Thinking…`` to ``Thought for Ns`` on the next render.
+
+    Args:
+        blocks (list[ContentBlock]): The turn's current block list.
+            Caller passes the live list; this helper mutates in place.
+    """
+    if not blocks:
+        return
+    tail = blocks[-1]
+    if tail.kind != "reasoning_timeline" or tail.is_done:
+        return
+    if tail.started_at > 0.0 and not tail.duration_label:
+        elapsed = max(0.0, time.monotonic() - tail.started_at)
+        tail.duration_label = _format_duration(elapsed)
+    tail.is_done = True
+    tail.expanded = False
+
+
 def _append_token_to_blocks(
     blocks: list[ContentBlock], token: str
 ) -> list[ContentBlock]:
@@ -204,7 +229,10 @@ def _append_token_to_blocks(
     the active block; otherwise opens a fresh ``assistant_text`` block
     (the Codex Phase 1 rule that turns a token-after-thinking into a
     new paragraph instead of merging it with an earlier reasoning
-    block).
+    block). When the prior trailing block is an open
+    ``reasoning_timeline``, that earlier thought is closed first so its
+    header switches to ``Thought for Ns`` and its panel collapses on
+    the same render the new paragraph appears.
 
     Args:
         blocks (list[ContentBlock]): The turn's current block list, by
@@ -224,6 +252,7 @@ def _append_token_to_blocks(
     if tail is not None and tail.kind == "assistant_text" and not tail.is_done:
         tail.text = f"{tail.text}{token}"
         return blocks
+    _close_trailing_reasoning_block(blocks)
     blocks.append(ContentBlock(kind="assistant_text", text=token))
     return blocks
 
@@ -251,7 +280,13 @@ def _append_thinking_to_blocks(
     """
     tail = blocks[-1] if blocks else None
     if tail is None or tail.kind != "reasoning_timeline" or tail.is_done:
-        blocks.append(ContentBlock(kind="reasoning_timeline"))
+        blocks.append(
+            ContentBlock(
+                kind="reasoning_timeline",
+                started_at=time.monotonic(),
+                expanded=True,
+            )
+        )
         tail = blocks[-1]
     timeline = list(tail.timeline)
     last_entry = timeline[-1] if timeline else None
@@ -301,7 +336,13 @@ def _append_timeline_entry_to_blocks(
     """
     tail = blocks[-1] if blocks else None
     if tail is None or tail.kind != "reasoning_timeline" or tail.is_done:
-        blocks.append(ContentBlock(kind="reasoning_timeline"))
+        blocks.append(
+            ContentBlock(
+                kind="reasoning_timeline",
+                started_at=time.monotonic(),
+                expanded=True,
+            )
+        )
         tail = blocks[-1]
     tail.timeline = [*tail.timeline, entry]
     return blocks
@@ -1194,10 +1235,18 @@ class BrandMindState(rx.State):
     def _chat_message_from_wire(self, message: SessionMessage) -> ChatMessage:
         """Rebuild a :class:`ChatMessage` from a server-side persisted turn.
 
-        Agent turns rehydrate with their full reasoning timeline plus the
-        recorded ``duration_label`` and the ``timeline_expanded=False``
+        Agent turns rehydrate with their full reasoning timeline plus
+        the recorded ``duration_label`` and the ``timeline_expanded=False``
         flag so the bubble matches the collapsed state a live turn ends
-        in. User turns get an empty timeline and no duration label.
+        in. When the wire payload also includes the Phase 2 additive
+        ``blocks`` field, the rehydrated message keeps the original
+        text → Thought → text insertion order so refresh / chat-switch
+        renders match the live-stream layout. A single reasoning block
+        inherits the turn-level duration label (the common case); a
+        multi-reasoning turn leaves each block's label empty so the
+        header reads "Reasoning" instead of duplicating the same
+        ``Thought for Ns`` across blocks (per-block timings are not
+        persisted yet). User turns get empty timelines and no labels.
 
         Args:
             message (SessionMessage): Persisted turn payload as returned
@@ -1205,7 +1254,7 @@ class BrandMindState(rx.State):
 
         Returns:
             chat_message (ChatMessage): Frontend-state-ready bubble
-            wired with content, timeline, and duration metadata.
+            wired with content, timeline, blocks, and duration metadata.
         """
         timeline: list[TimelineEntry] = []
         for entry in message.timeline:
@@ -1226,6 +1275,49 @@ class BrandMindState(rx.State):
                     tool_call=tool_call,
                 )
             )
+        blocks: list[ContentBlock] = []
+        reasoning_count = sum(
+            1 for b in message.blocks if b.kind == "reasoning_timeline"
+        )
+        for wire_block in message.blocks:
+            block_timeline: list[TimelineEntry] = []
+            for entry in wire_block.timeline:
+                tool_call_block: ToolCallInfo | None = None
+                if entry.tool_call is not None:
+                    tool_call_block = ToolCallInfo(
+                        tool_name=entry.tool_call.tool_name,
+                        arguments=dict(entry.tool_call.arguments),
+                        result=entry.tool_call.result,
+                    )
+                normalized_thinking_block = _compact_thinking_text(entry.thinking_text)
+                block_timeline.append(
+                    TimelineEntry(
+                        kind=entry.kind,
+                        thinking_text=normalized_thinking_block,
+                        thinking_segments=_segment_thinking_text(
+                            normalized_thinking_block
+                        ),
+                        thinking_done=True,
+                        tool_call=tool_call_block,
+                    )
+                )
+            duration_label = ""
+            if (
+                wire_block.kind == "reasoning_timeline"
+                and reasoning_count == 1
+                and message.duration_label
+            ):
+                duration_label = message.duration_label
+            blocks.append(
+                ContentBlock(
+                    kind=wire_block.kind,
+                    text=wire_block.text,
+                    timeline=block_timeline,
+                    is_done=True,
+                    expanded=False,
+                    duration_label=duration_label,
+                )
+            )
         return ChatMessage(
             role=message.role,
             content=message.content,
@@ -1233,6 +1325,7 @@ class BrandMindState(rx.State):
             timeline=timeline,
             turn_duration_label=message.duration_label,
             timeline_expanded=False,
+            blocks=blocks,
         )
 
     def _replace_session_in_list(self, info: SessionInfo) -> list[SessionInfo]:
@@ -1924,6 +2017,11 @@ class BrandMindState(rx.State):
                             entry.tool_call.result = "(done)"
                     elif entry.kind == "thinking" and not entry.thinking_done:
                         entry.thinking_done = True
+                if not block.is_done:
+                    if block.started_at > 0.0 and not block.duration_label:
+                        elapsed = max(0.0, time.monotonic() - block.started_at)
+                        block.duration_label = _format_duration(elapsed)
+                    block.expanded = False
             block.is_done = True
         if target.is_streaming:
             target.is_streaming = False
@@ -1943,6 +2041,48 @@ class BrandMindState(rx.State):
             return
         target = _compact_chat_message_timeline(target)
         target.timeline_expanded = not target.timeline_expanded
+        self.messages = [
+            *self.messages[:message_index],
+            target,
+            *self.messages[message_index + 1 :],
+        ]
+
+    @rx.event
+    def toggle_block_timeline(self, message_index: int, block_index: int) -> None:
+        """Toggle the expand state of a single reasoning block within a turn.
+
+        The Phase 1 renderer used the turn-level ``timeline_expanded``
+        flag for every reasoning block, so a turn with two thought
+        traces toggled both panels together and the second click felt
+        broken. This handler flips just the indexed block so each
+        Thought row behaves independently.
+
+        Args:
+            message_index (int): Position of the agent turn in
+                ``self.messages``.
+            block_index (int): Position of the reasoning block within
+                ``message.blocks``; ignored if the entry is an
+                ``assistant_text`` block (clicks on text never reach
+                this handler in the renderer, but the guard keeps the
+                event idempotent).
+        """
+        if message_index < 0 or message_index >= len(self.messages):
+            return
+        target = self.messages[message_index]
+        if target.role != "agent":
+            return
+        if block_index < 0 or block_index >= len(target.blocks):
+            return
+        if target.blocks[block_index].kind != "reasoning_timeline":
+            return
+        target = _compact_chat_message_timeline(target)
+        new_block = target.blocks[block_index].model_copy()
+        new_block.expanded = not new_block.expanded
+        target.blocks = [
+            *target.blocks[:block_index],
+            new_block,
+            *target.blocks[block_index + 1 :],
+        ]
         self.messages = [
             *self.messages[:message_index],
             target,
