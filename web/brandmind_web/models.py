@@ -292,6 +292,36 @@ class UserProfileSettingsPayload(BaseModel):
     profile_markdown: str = ""
 
 
+class ContentBlock(BaseModel):
+    """One ordered slice of an agent turn — either prose text or a reasoning trace.
+
+    The web UI renders an agent turn as a vertical sequence of blocks
+    so a progress note that arrives BEFORE the thinking can appear as
+    its own paragraph above the timeline, instead of being merged with
+    the final answer at the bottom (ChatGPT / Claude live-stream
+    pattern). Block order is insertion order; the dispatch layer pushes
+    a new block whenever the SSE event kind switches between text and
+    reasoning, so the trailing block is always the active one.
+
+    Attributes:
+        kind (Literal["assistant_text", "reasoning_timeline"]): Which
+            payload field of this block holds content.
+        text (str): Accumulated streaming-token text. Empty when
+            ``kind == "reasoning_timeline"``.
+        timeline (list[TimelineEntry]): Interleaved thinking + tool-call
+            entries for this reasoning block. Empty when
+            ``kind == "assistant_text"``.
+        is_done (bool): Set to True once the turn's ``done`` event
+            fires, signalling to the renderer that the streaming cursor
+            should no longer appear inside this block.
+    """
+
+    kind: Literal["assistant_text", "reasoning_timeline"]
+    text: str = ""
+    timeline: list[TimelineEntry] = Field(default_factory=list)
+    is_done: bool = False
+
+
 class ChatMessage(BaseModel):
     """One row in the chat scroll — either a user turn or an agent turn.
 
@@ -305,6 +335,31 @@ class ChatMessage(BaseModel):
     duration so the collapsed state can read "Thought for Ns".
     ``timeline_expanded`` lets the user toggle the collapsed timeline
     open again after the turn closes.
+
+    ``blocks`` is the Phase 1 ordered-blocks view of the same turn:
+    the dispatch layer mirrors every streaming-token / thinking / tool
+    event into both the legacy ``content`` + ``timeline`` mirrors AND a
+    new ordered ``blocks`` list, so live streams render the trace as
+    text → Thought → text in the order the events arrived. Persisted
+    history (re-loaded from the server) has an empty ``blocks`` list
+    and falls back to the legacy single-content + single-timeline
+    layout; promoting persisted turns to the blocks model requires a
+    backend schema change deferred to a later phase.
+
+    Attributes:
+        role (Literal["user", "agent"]): Speaker for this row.
+        content (str): Concatenated assistant text (legacy mirror used
+            for the persisted-history fallback renderer).
+        is_streaming (bool): True while the agent turn is in flight.
+        timeline (list[TimelineEntry]): Legacy single timeline mirror
+            used for the persisted-history fallback renderer.
+        turn_started_at (float): Wall-clock seconds at first token.
+        turn_duration_label (str): Pre-formatted "Ns" label, set on
+            ``done``.
+        timeline_expanded (bool): Whether the user has the reasoning
+            trace expanded.
+        blocks (list[ContentBlock]): Ordered live blocks. Empty for
+            persisted turns and during user rows.
     """
 
     role: Literal["user", "agent"]
@@ -314,6 +369,7 @@ class ChatMessage(BaseModel):
     turn_started_at: float = 0.0
     turn_duration_label: str = ""
     timeline_expanded: bool = True
+    blocks: list[ContentBlock] = Field(default_factory=list)
 
 
 class PhaseAdvancePayload(BaseModel):

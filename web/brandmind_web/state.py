@@ -44,6 +44,7 @@ from .models import (
     ArtifactRef,
     BrandStrategyMetadata,
     ChatMessage,
+    ContentBlock,
     DocxTocEntry,
     MainAgentModelOption,
     PhaseAdvancePayload,
@@ -72,7 +73,6 @@ _GENERATE_TOOL_NAMES: frozenset[str] = frozenset(
 _DEFAULT_API_URL = "http://localhost:8000"
 _HEALTH_POLL_INTERVAL_SECONDS = 10
 _HEALTH_POLL_DEGRADED_INTERVAL_SECONDS = 3
-_HEALTH_RECOVERED_BANNER_HOLD_SECONDS = 5.0
 _STREAM_RECONNECT_BACKOFFS_SECONDS: tuple[float, ...] = (1.0, 2.0, 4.0)
 
 
@@ -195,6 +195,166 @@ def _compact_chat_messages(messages: list[ChatMessage]) -> list[ChatMessage]:
     return [_compact_chat_message_timeline(message) for message in messages]
 
 
+def _append_token_to_blocks(
+    blocks: list[ContentBlock], token: str
+) -> list[ContentBlock]:
+    """Mirror a streaming-token chunk into the ordered live blocks.
+
+    Appends to the trailing ``assistant_text`` block when it is still
+    the active block; otherwise opens a fresh ``assistant_text`` block
+    (the Codex Phase 1 rule that turns a token-after-thinking into a
+    new paragraph instead of merging it with an earlier reasoning
+    block).
+
+    Args:
+        blocks (list[ContentBlock]): The turn's current block list, by
+            value (the caller passes a shallow copy so this helper can
+            mutate in-place without surprising Reflex's diff tracker).
+        token (str): The incremental assistant-text chunk; an empty
+            string is a no-op so a stray empty SSE token does not open
+            a phantom block.
+
+    Returns:
+        blocks (list[ContentBlock]): The updated list ready to assign
+            back onto the message.
+    """
+    if not token:
+        return blocks
+    tail = blocks[-1] if blocks else None
+    if tail is not None and tail.kind == "assistant_text" and not tail.is_done:
+        tail.text = f"{tail.text}{token}"
+        return blocks
+    blocks.append(ContentBlock(kind="assistant_text", text=token))
+    return blocks
+
+
+def _append_thinking_to_blocks(
+    blocks: list[ContentBlock], token: str, finalised: bool
+) -> list[ContentBlock]:
+    """Mirror a streaming-thinking chunk into the ordered live blocks.
+
+    Routes the chunk through the trailing ``reasoning_timeline`` block,
+    appending to its trailing thinking entry while still open or
+    starting a fresh entry otherwise. When the trailing block is an
+    ``assistant_text`` (or no block exists yet), a new
+    ``reasoning_timeline`` block is opened first so the thinking trace
+    sits below the prior text paragraph.
+
+    Args:
+        blocks (list[ContentBlock]): The turn's current block list.
+        token (str): The incremental thinking-text chunk.
+        finalised (bool): Whether the ``streaming_thinking`` event
+            marks the current thinking entry done.
+
+    Returns:
+        blocks (list[ContentBlock]): The updated list.
+    """
+    tail = blocks[-1] if blocks else None
+    if tail is None or tail.kind != "reasoning_timeline" or tail.is_done:
+        blocks.append(ContentBlock(kind="reasoning_timeline"))
+        tail = blocks[-1]
+    timeline = list(tail.timeline)
+    last_entry = timeline[-1] if timeline else None
+    if (
+        last_entry is not None
+        and last_entry.kind == "thinking"
+        and not last_entry.thinking_done
+    ):
+        if token:
+            last_entry.thinking_text = _compact_thinking_text(
+                f"{last_entry.thinking_text}{token}"
+            )
+            last_entry.thinking_segments = _segment_thinking_text(
+                last_entry.thinking_text
+            )
+        if finalised:
+            last_entry.thinking_done = True
+    elif token:
+        normalized = _compact_thinking_text(token)
+        timeline.append(
+            TimelineEntry(
+                kind="thinking",
+                thinking_text=normalized,
+                thinking_segments=_segment_thinking_text(normalized),
+                thinking_done=finalised,
+            )
+        )
+    tail.timeline = timeline
+    return blocks
+
+
+def _append_timeline_entry_to_blocks(
+    blocks: list[ContentBlock], entry: TimelineEntry
+) -> list[ContentBlock]:
+    """Mirror a new tool-call entry into the trailing reasoning block.
+
+    Opens a fresh ``reasoning_timeline`` block when the trailing block
+    is an ``assistant_text`` so tool runs after a paragraph cleanly
+    start their own trace rather than appending to a stale text block.
+
+    Args:
+        blocks (list[ContentBlock]): The turn's current block list.
+        entry (TimelineEntry): The tool-call entry to append.
+
+    Returns:
+        blocks (list[ContentBlock]): The updated list.
+    """
+    tail = blocks[-1] if blocks else None
+    if tail is None or tail.kind != "reasoning_timeline" or tail.is_done:
+        blocks.append(ContentBlock(kind="reasoning_timeline"))
+        tail = blocks[-1]
+    tail.timeline = [*tail.timeline, entry]
+    return blocks
+
+
+def _settle_tool_result_in_blocks(
+    blocks: list[ContentBlock],
+    tool_call_id: str,
+    tool_name: str,
+    result_text: str,
+) -> list[ContentBlock]:
+    """Settle the matching in-progress tool entry within the blocks view.
+
+    Mirrors :meth:`BrandMindState._settle_tool_result` so the live
+    blocks renderer flips a running tool row to its completed icon as
+    soon as the backend confirms the result. Prefers ``tool_call_id``
+    pairing and falls back to the first unresolved entry with the same
+    ``tool_name`` when no id is provided.
+
+    Args:
+        blocks (list[ContentBlock]): The turn's current block list.
+        tool_call_id (str): Provider id from the tool-result payload.
+        tool_name (str): Tool name used for the FIFO fallback.
+        result_text (str): The settled result body.
+
+    Returns:
+        blocks (list[ContentBlock]): The updated list.
+    """
+    for block in blocks:
+        if block.kind != "reasoning_timeline":
+            continue
+        if tool_call_id:
+            for entry in block.timeline:
+                if entry.kind != "tool_call" or entry.tool_call is None:
+                    continue
+                if (
+                    entry.tool_call.tool_call_id == tool_call_id
+                    and entry.tool_call.result == ""
+                ):
+                    entry.tool_call.result = result_text
+                    return blocks
+    for block in blocks:
+        if block.kind != "reasoning_timeline":
+            continue
+        for entry in block.timeline:
+            if entry.kind != "tool_call" or entry.tool_call is None:
+                continue
+            if entry.tool_call.tool_name == tool_name and entry.tool_call.result == "":
+                entry.tool_call.result = result_text
+                return blocks
+    return blocks
+
+
 class BrandMindState(rx.State):
     """Application state for the BrandMind Web UI v1.
 
@@ -256,7 +416,6 @@ class BrandMindState(rx.State):
     artifacts_refresh_pending: bool = False
 
     health_retry_in_flight: bool = False
-    show_recovered_banner: bool = False
     stream_error_active: bool = False
     last_failed_turn_content: str = ""
 
@@ -320,22 +479,38 @@ class BrandMindState(rx.State):
         return ""
 
     @rx.var
+    def recent_sessions(self) -> list[SessionInfo]:
+        """The 10 most-recent chats shown in the collapsed-rail Recents popover.
+
+        Bounds the master ``sessions`` list server-side so the popover
+        body stays at a constant height regardless of how many chats
+        the user has accumulated. Falls back to all sessions when
+        fewer than 10 exist.
+
+        Returns:
+            sessions (list[SessionInfo]): At most 10 sessions, in the
+                same ordering as :attr:`sessions`.
+        """
+        return self.sessions[:10]
+
+    @rx.var
     def banner_variant(self) -> str:
         """Resolve the connectivity banner variant from raw state.
 
-        Returns the empty string when nothing should show — keeps the
-        component tree branch-free. Otherwise picks ``error`` when the
-        backend is unreachable, ``warning`` when a recent SSE turn
-        failed but the backend itself is healthy, or ``recovered`` while
-        the post-recovery hold flag is still set so the user notices
-        the reconnection before the banner fades.
+        Keeps the dispatch logic in one place so the component tree
+        stays branch-free. Recovery is silent by design (see
+        ``degraded_banner.py`` module docstring).
+
+        Returns:
+            variant (str): ``"error"`` when the backend is unreachable,
+                ``"warning"`` when a recent SSE turn failed but the
+                backend itself is healthy, otherwise the empty string
+                (meaning "no banner").
         """
         if not self.is_connected:
             return "error"
         if self.stream_error_active:
             return "warning"
-        if self.show_recovered_banner:
-            return "recovered"
         return ""
 
     @rx.var
@@ -1112,9 +1287,9 @@ class BrandMindState(rx.State):
         Polls every :data:`_HEALTH_POLL_INTERVAL_SECONDS` while healthy
         and every :data:`_HEALTH_POLL_DEGRADED_INTERVAL_SECONDS` while
         degraded so the banner recovers quickly when ``brandmind
-        serve`` comes back online. Records the timestamp of each
-        transition so the banner can hold a "Back online" message for
-        a few seconds after recovery.
+        serve`` comes back online. Recovery is silent — the offline
+        banner disappears as soon as ``is_connected`` flips back to
+        True, without surfacing a "Back online" announcement.
         """
         api_url = _api_base_url()
         while True:
@@ -1128,30 +1303,17 @@ class BrandMindState(rx.State):
             await asyncio.sleep(interval)
 
     async def _apply_health_result(self, connected: bool) -> None:
-        """Update health-related state, flagging recoveries for the banner.
+        """Apply the latest connectivity probe to ``is_connected``.
 
-        Called by :meth:`poll_health` and :meth:`retry_connection`. When
-        the backend transitions from offline to online, the "recovered"
-        banner is held visible for
-        :data:`_HEALTH_RECOVERED_BANNER_HOLD_SECONDS` via a fire-and-
-        forget asyncio task — Reflex computed vars do not observe real
-        time, so the banner needs an explicit state mutation to fade.
+        Called by :meth:`poll_health` and :meth:`retry_connection`.
+        Recovery is silent: the banner hides itself as soon as
+        ``is_connected`` flips back to True (see ``banner_variant``).
+
+        Args:
+            connected (bool): Result of the most recent health probe.
         """
         async with self:
-            previous = self.is_connected
             self.is_connected = connected
-            schedule_hide = False
-            if previous != connected and connected:
-                self.show_recovered_banner = True
-                schedule_hide = True
-        if schedule_hide:
-            asyncio.create_task(self._hide_recovered_banner_after_hold())
-
-    async def _hide_recovered_banner_after_hold(self) -> None:
-        """Drop the recovered banner once the visible hold window elapses."""
-        await asyncio.sleep(_HEALTH_RECOVERED_BANNER_HOLD_SECONDS)
-        async with self:
-            self.show_recovered_banner = False
 
     @rx.event(background=True)
     async def retry_connection(self) -> None:
@@ -1538,22 +1700,47 @@ class BrandMindState(rx.State):
             self.error_message = str(payload.get("error", "Stream error"))
 
     def _append_agent_token(self, token: str) -> None:
-        """Append a streaming chunk to the active agent message body."""
+        """Append a streaming chunk to the active agent message body.
+
+        Mirrors the token into two places:
+
+        - ``target.content`` — concatenated text used by the persisted-
+          history fallback renderer.
+        - ``target.blocks`` — the ordered live-block view: append to the
+          trailing ``assistant_text`` block when it is still open, or
+          push a fresh ``assistant_text`` block when the trailing block
+          is a ``reasoning_timeline`` (Codex Phase 1 Rule 3) or when no
+          block has been opened yet.
+
+        Args:
+            token (str): Incremental assistant-text chunk from the
+                ``streaming_token`` SSE event.
+        """
         if not self.messages:
             return
         target = self.messages[-1]
         if target.role != "agent":
             return
         target.content = f"{target.content}{token}"
+        target.blocks = _append_token_to_blocks(list(target.blocks), token)
         self.messages = [*self.messages[:-1], target]
 
     def _append_thinking(self, token: str, finalised: bool) -> None:
-        """Append a streaming thinking chunk to the chronological timeline.
+        """Append a streaming thinking chunk to the reasoning timeline.
 
         Consecutive thinking chunks merge into the trailing thinking entry
-        until the backend signals ``done`` for that block; the next thinking
-        event after that opens a new entry. This keeps every distinct
-        reasoning block visible as its own timeline node.
+        until the backend signals ``done`` for that block; the next
+        thinking event after that opens a new entry. Mirrors into both
+        the legacy ``target.timeline`` (fallback for persisted history)
+        AND the trailing ``reasoning_timeline`` block on ``target.blocks``
+        (Phase 1 live-block view), opening a new reasoning_timeline
+        block when the trailing block is an ``assistant_text`` so a
+        progress note above the timeline stays in its own paragraph.
+
+        Args:
+            token (str): Incremental thinking-text chunk.
+            finalised (bool): Whether the ``streaming_thinking`` event
+                marks this block as done.
         """
         if not self.messages:
             return
@@ -1581,26 +1768,34 @@ class BrandMindState(rx.State):
                 )
             )
         target.timeline = timeline
+        target.blocks = _append_thinking_to_blocks(
+            list(target.blocks), token, finalised
+        )
         self.messages = [*self.messages[:-1], target]
 
     def _append_tool_call(self, call: ToolCallPayload) -> None:
-        """Push a new in-progress tool entry into the reasoning timeline."""
+        """Push a new in-progress tool entry into the reasoning timeline.
+
+        Mirrors the entry into both ``target.timeline`` (legacy fallback)
+        and the trailing ``reasoning_timeline`` block on ``target.blocks``
+        (Phase 1 live view), opening a new reasoning_timeline block when
+        the trailing block is an ``assistant_text``.
+        """
         if not self.messages:
             return
         target = self.messages[-1]
         if target.role != "agent":
             return
-        target.timeline = [
-            *target.timeline,
-            TimelineEntry(
-                kind="tool_call",
-                tool_call=ToolCallInfo(
-                    tool_name=call.tool_name,
-                    arguments=call.arguments,
-                    tool_call_id=call.tool_call_id,
-                ),
+        entry = TimelineEntry(
+            kind="tool_call",
+            tool_call=ToolCallInfo(
+                tool_name=call.tool_name,
+                arguments=call.arguments,
+                tool_call_id=call.tool_call_id,
             ),
-        ]
+        )
+        target.timeline = [*target.timeline, entry]
+        target.blocks = _append_timeline_entry_to_blocks(list(target.blocks), entry)
         self.messages = [*self.messages[:-1], target]
 
     def _settle_tool_result(self, result: ToolResultPayload) -> None:
@@ -1611,27 +1806,37 @@ class BrandMindState(rx.State):
         is missing (older sessions or providers that do not emit one)
         the search falls back to the earliest still-running entry with
         the same ``tool_name`` so a single in-flight invocation still
-        resolves correctly.
+        resolves correctly. Mirrors the settlement into both the
+        legacy ``target.timeline`` and the ordered ``target.blocks``
+        view (Phase 1) so either renderer flips the row to its
+        completed icon.
         """
         if not self.messages:
             return
         target = self.messages[-1]
         if target.role != "agent" or not target.timeline:
             return
+        settled = False
         if result.tool_call_id and self._settle_by_tool_call_id(
             target, result.tool_call_id, result.result
         ):
-            self.messages = [*self.messages[:-1], target]
-            return
-        for entry in target.timeline:
-            if entry.kind != "tool_call" or entry.tool_call is None:
-                continue
-            if (
-                entry.tool_call.tool_name == result.tool_name
-                and entry.tool_call.result == ""
-            ):
-                entry.tool_call.result = result.result
-                break
+            settled = True
+        if not settled:
+            for entry in target.timeline:
+                if entry.kind != "tool_call" or entry.tool_call is None:
+                    continue
+                if (
+                    entry.tool_call.tool_name == result.tool_name
+                    and entry.tool_call.result == ""
+                ):
+                    entry.tool_call.result = result.result
+                    break
+        target.blocks = _settle_tool_result_in_blocks(
+            list(target.blocks),
+            result.tool_call_id,
+            result.tool_name,
+            result.result,
+        )
         self.messages = [*self.messages[:-1], target]
 
     def _settle_by_tool_call_id(
@@ -1711,6 +1916,15 @@ class BrandMindState(rx.State):
                     entry.tool_call.result = "(done)"
             elif entry.kind == "thinking" and not entry.thinking_done:
                 entry.thinking_done = True
+        for block in target.blocks:
+            if block.kind == "reasoning_timeline":
+                for entry in block.timeline:
+                    if entry.kind == "tool_call" and entry.tool_call is not None:
+                        if entry.tool_call.result == "":
+                            entry.tool_call.result = "(done)"
+                    elif entry.kind == "thinking" and not entry.thinking_done:
+                        entry.thinking_done = True
+            block.is_done = True
         if target.is_streaming:
             target.is_streaming = False
         if target.turn_started_at > 0.0 and target.turn_duration_label == "":

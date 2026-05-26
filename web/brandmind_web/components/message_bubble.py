@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import reflex as rx
 
-from ..models import ChatMessage, ThinkingSegment, TimelineEntry
+from ..models import ChatMessage, ContentBlock, ThinkingSegment, TimelineEntry
 from . import tokens
 from .tool_timeline import humanize_tool_call_label, tool_call_icon_tag
 
@@ -128,9 +128,7 @@ def _thinking_body_markdown(text: rx.Var[str]) -> rx.Component:
             "strong": lambda body: rx.el.span(
                 body, style=_THINKING_BODY_MARKDOWN_STRONG_STYLE
             ),
-            "em": lambda body: rx.el.span(
-                body, style=_THINKING_BODY_MARKDOWN_EM_STYLE
-            ),
+            "em": lambda body: rx.el.span(body, style=_THINKING_BODY_MARKDOWN_EM_STYLE),
             "code": lambda body: rx.el.code(
                 body, style=_THINKING_BODY_MARKDOWN_CODE_STYLE
             ),
@@ -482,6 +480,276 @@ def _reasoning_timeline(
     )
 
 
+def _block_reasoning_timeline(
+    block: rx.Var[ContentBlock],
+    message: rx.Var[ChatMessage],
+    message_index: int,
+) -> rx.Component:
+    """Render one ``reasoning_timeline`` block as a connected thinking + tool thread.
+
+    Variant of :func:`_reasoning_timeline` scoped to a single
+    ``ContentBlock`` instead of the legacy message-wide timeline.
+    Reuses the same chevron header + bullet-column rail components so a
+    block-driven turn is visually indistinguishable from the legacy
+    layout. The expanded/collapsed state still lives at the message
+    level (``message.timeline_expanded``) so a turn with multiple
+    reasoning blocks expands / collapses together — Phase 1 keeps a
+    single toggle to match the live-stream Claude / ChatGPT UX without
+    introducing per-block state.
+
+    Args:
+        block (rx.Var[ContentBlock]): The reasoning_timeline block to
+            render; ``block.timeline`` carries the thinking + tool
+            entries.
+        message (rx.Var[ChatMessage]): The owning agent message, used
+            to read the shared expand toggle + the "Thought for Ns"
+            duration label.
+        message_index (int): Message index forwarded to the toggle
+            event handler so the right row gets toggled.
+
+    Returns:
+        component (rx.Component): The block's collapsible reasoning
+            thread, ready to drop into the ordered blocks renderer.
+    """
+    from ..state import BrandMindState
+
+    header = rx.hstack(
+        rx.icon(
+            tag=rx.cond(message.timeline_expanded, "chevron_down", "chevron_right"),
+            size=13,
+            color=tokens.TEXT_MUTED,
+        ),
+        rx.el.span(
+            _timeline_summary_label(message),
+            style={
+                "color": tokens.TEXT_MUTED,
+                "font_family": tokens.FONT_SANS,
+                "font_size": "12px",
+                "font_style": "italic",
+            },
+        ),
+        spacing="1",
+        align="center",
+        on_click=BrandMindState.toggle_timeline(message_index),
+        style={"cursor": "pointer", "user_select": "none"},
+    )
+
+    has_timeline = block.timeline.length() > 0
+    expanded = rx.box(
+        rx.vstack(
+            rx.foreach(
+                block.timeline,
+                lambda entry, idx: _timeline_entry(entry, idx),
+            ),
+            spacing="0",
+            align="stretch",
+            width="100%",
+        ),
+        style={
+            "padding": "4px 0 4px 0",
+            "margin_left": "4px",
+        },
+        display=rx.cond(has_timeline & message.timeline_expanded, "block", "none"),
+    )
+
+    return rx.vstack(
+        header,
+        expanded,
+        spacing="1",
+        align="stretch",
+        width="100%",
+        display=rx.cond(has_timeline, "flex", "none"),
+    )
+
+
+def _content_block(
+    block: rx.Var[ContentBlock],
+    index: rx.Var[int],
+    message: rx.Var[ChatMessage],
+    message_index: int,
+) -> rx.Component:
+    """Dispatch one ordered block to the matching renderer.
+
+    Switches on ``block.kind``: ``assistant_text`` renders as markdown
+    prose, ``reasoning_timeline`` renders as a collapsible reasoning
+    thread. The streaming cursor only appears at the end of the very
+    last ``assistant_text`` block when the turn is still streaming, so
+    a progress note that has been superseded by a later final answer
+    does not keep a cursor behind it.
+
+    Args:
+        block (rx.Var[ContentBlock]): The block to render.
+        index (rx.Var[int]): Index of this block within
+            ``message.blocks`` (used to decide cursor visibility).
+        message (rx.Var[ChatMessage]): The owning agent message.
+        message_index (int): Message index forwarded to the timeline
+            toggle handler.
+
+    Returns:
+        component (rx.Component): The appropriate per-kind renderer
+            wrapped in a vstack-friendly box.
+    """
+    is_text = block.kind == "assistant_text"
+    is_last = index == message.blocks.length() - 1
+    show_cursor = is_text & is_last & message.is_streaming
+    return rx.cond(
+        is_text,
+        _assistant_text_block(block.text, show_cursor),
+        _block_reasoning_timeline(block, message, message_index),
+    )
+
+
+def _blocks_renderer(message: rx.Var[ChatMessage], message_index: int) -> rx.Component:
+    """Render an agent turn as the ordered live blocks.
+
+    The Phase 1 live path: progress text → Thought → final answer in
+    insertion order. The legacy single-content + single-timeline
+    fallback handles persisted history that has not been promoted to
+    the blocks schema yet.
+
+    Args:
+        message (rx.Var[ChatMessage]): The agent message whose
+            ``blocks`` list to render.
+        message_index (int): Message index forwarded to the timeline
+            toggle handler.
+
+    Returns:
+        component (rx.Component): A vertical stack of per-kind block
+            renderers, in insertion order.
+    """
+    return rx.vstack(
+        rx.foreach(
+            message.blocks,
+            lambda block, idx: _content_block(block, idx, message, message_index),
+        ),
+        spacing="3",
+        align="stretch",
+        width="100%",
+    )
+
+
+_MARKDOWN_COMPONENT_MAP_FACTORY = None  # populated by ``_markdown_component_map``
+
+
+def _markdown_component_map() -> dict:
+    """Return the shared component map used by every assistant-text render.
+
+    Hoisted so the legacy ``_agent_body`` and the new per-block renderer
+    in :func:`_blocks_renderer` share the exact same markdown styling.
+    Cached at module level on first use so each render does not rebuild
+    the dictionary.
+
+    Returns:
+        component_map (dict): Reflex markdown component map covering
+            paragraphs, emphasis, code, lists, and tables with the
+            BrandMind palette + spacing tokens.
+    """
+    global _MARKDOWN_COMPONENT_MAP_FACTORY
+    if _MARKDOWN_COMPONENT_MAP_FACTORY is None:
+        _MARKDOWN_COMPONENT_MAP_FACTORY = {
+            "p": lambda text: rx.text(text, style=_MARKDOWN_PARAGRAPH_STYLE),
+            "strong": lambda text: rx.el.span(
+                text,
+                style={
+                    "color": tokens.TEXT_PRIMARY,
+                    "font_weight": "600",
+                },
+            ),
+            "em": lambda text: rx.el.span(
+                text,
+                style={
+                    "color": tokens.TEXT_PRIMARY,
+                    "font_style": "italic",
+                },
+            ),
+            "ul": lambda items: rx.list.unordered(
+                items,
+                style={
+                    "color": tokens.TEXT_PRIMARY,
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "15px",
+                    "line_height": "1.65",
+                    "padding_left": "1.2em",
+                    "margin": "0 0 12px 0",
+                },
+            ),
+            "ol": lambda items: rx.list.ordered(
+                items,
+                style={
+                    "color": tokens.TEXT_PRIMARY,
+                    "font_family": tokens.FONT_SANS,
+                    "font_size": "15px",
+                    "line_height": "1.65",
+                    "padding_left": "1.4em",
+                    "margin": "0 0 12px 0",
+                },
+            ),
+            "li": lambda text: rx.list.item(text, style={"margin": "0 0 4px 0"}),
+            "code": lambda text: rx.el.code(
+                text,
+                style={
+                    "font_family": tokens.FONT_MONO,
+                    "font_size": "13px",
+                    "background_color": tokens.BG_SURFACE_2,
+                    "color": tokens.TEXT_PRIMARY,
+                    "padding": "1px 6px",
+                    "border_radius": tokens.RADIUS_SM,
+                },
+            ),
+            "table": lambda children: rx.el.table(
+                children,
+                style=_MARKDOWN_TABLE_STYLE,
+            ),
+            "thead": lambda children: rx.el.thead(children),
+            "tbody": lambda children: rx.el.tbody(children),
+            "tr": lambda children: rx.el.tr(
+                children,
+                style={
+                    "border_bottom": f"1px solid {tokens.GLASS_BORDER}",
+                    "&:last-child": {"border_bottom": "none"},
+                },
+            ),
+            "th": lambda children: rx.el.th(
+                children,
+                style=_MARKDOWN_TABLE_TH_STYLE,
+            ),
+            "td": lambda children: rx.el.td(
+                children,
+                style=_MARKDOWN_TABLE_TD_STYLE,
+            ),
+        }
+    return _MARKDOWN_COMPONENT_MAP_FACTORY
+
+
+def _assistant_text_block(text: rx.Var[str], show_cursor: rx.Var[bool]) -> rx.Component:
+    """Render one ``assistant_text`` block as markdown prose.
+
+    Shares the markdown component_map with the legacy ``_agent_body``
+    so any persisted-history paragraph and any live block use identical
+    typography. ``show_cursor`` controls the trailing blink cursor so
+    only the latest still-streaming block gets the cursor (the others
+    have already been superseded by a later block or by the ``done``
+    event).
+
+    Args:
+        text (rx.Var[str]): The block's accumulated streaming text.
+        show_cursor (rx.Var[bool]): Whether to append the streaming
+            cursor at the end of this block.
+
+    Returns:
+        component (rx.Component): A box containing the rendered
+            markdown + an optional trailing cursor.
+    """
+    return rx.box(
+        rx.markdown(text, component_map=_markdown_component_map()),
+        rx.box(
+            _streaming_cursor(),
+            display=rx.cond(show_cursor, "inline-block", "none"),
+        ),
+        style={"width": "100%"},
+    )
+
+
 def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
     """Agent message body rendered as proper markdown."""
     return rx.box(
@@ -568,11 +836,61 @@ def _agent_body(message: rx.Var[ChatMessage]) -> rx.Component:
     )
 
 
-def _agent_bubble(message: rx.Var[ChatMessage], message_index: int) -> rx.Component:
-    """Agent turn — left-bordered editorial column, no enclosing box."""
-    body = rx.vstack(
+def _legacy_agent_body(
+    message: rx.Var[ChatMessage], message_index: int
+) -> rx.Component:
+    """Legacy timeline-then-content layout for persisted history.
+
+    Picked when ``message.blocks`` is empty — typically after a page
+    refresh that re-fetches the chat from the backend, which still
+    serves the single-content + single-timeline schema (Phase 1
+    intentionally avoids the backend change). The renderer matches the
+    pre-blocks shape so old turns keep rendering exactly as before.
+
+    Args:
+        message (rx.Var[ChatMessage]): The agent message to render.
+        message_index (int): Index of the message inside
+            ``BrandMindState.messages``; forwarded to the timeline
+            toggle handler.
+
+    Returns:
+        component (rx.Component): Vertical stack of (reasoning timeline,
+            markdown body) — the pre-blocks layout.
+    """
+    return rx.vstack(
         _reasoning_timeline(message, message_index),
         _agent_body(message),
+        spacing="3",
+        align="start",
+        width="100%",
+    )
+
+
+def _agent_bubble(message: rx.Var[ChatMessage], message_index: int) -> rx.Component:
+    """Agent turn — left-bordered editorial column, no enclosing box.
+
+    Picks the ordered-blocks renderer when the turn carries live
+    ``blocks`` (Phase 1 SSE path produces them on every fresh stream),
+    otherwise falls back to the legacy timeline-then-content layout
+    so persisted history fetched from the server stays readable.
+
+    Args:
+        message (rx.Var[ChatMessage]): The agent message to render.
+        message_index (int): Index of the message inside
+            ``BrandMindState.messages``; forwarded to the timeline
+            toggle handler.
+
+    Returns:
+        component (rx.Component): A flex row carrying the left-bordered
+            agent body with either the ordered-blocks or legacy
+            renderer selected at render time.
+    """
+    body = rx.vstack(
+        rx.cond(
+            message.blocks.length() > 0,
+            _blocks_renderer(message, message_index),
+            _legacy_agent_body(message, message_index),
+        ),
         spacing="3",
         align="start",
         width="100%",
