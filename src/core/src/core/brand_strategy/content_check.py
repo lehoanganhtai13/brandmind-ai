@@ -827,10 +827,17 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
             "xlsx",
             "spreadsheet",
             "tracker",
-            "kpi",
+            "kpi dashboard",
             "bảng kpi",
         ),
     }
+    _DISPATCH_PAYLOAD_SPLIT_RE = re.compile(r"\n\s*={3,}", re.MULTILINE)
+    _NEGATED_CATEGORY_SEGMENT_RE = re.compile(
+        r"\b(?:ignore|exclude|skip|without|do not include|do not build|"
+        r"do not create|don't include|don't build|don't create|bỏ qua|"
+        r"không tạo|không xuất)\b[^.;\n]*",
+        re.IGNORECASE,
+    )
     _PHASE_5_SECTION_RE = re.compile(
         r"^##\s+Phase\s+5\b.*?(?=^##\s+Phase\s+\d|\Z)",
         re.MULTILINE | re.DOTALL,
@@ -863,7 +870,7 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
         """Return whether the task call would produce final artifacts."""
         args = request.tool_call.get("args", {})
         subagent_type = args.get("subagent_type", "")
-        description = str(args.get("description", "")).lower()
+        description = cls._category_detection_text(str(args.get("description", "")))
 
         if subagent_type == "document-generator":
             return True
@@ -872,10 +879,29 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
         return any(marker in description for marker in cls._BRAND_KEY_MARKERS)
 
     @classmethod
+    def _dispatch_instruction_text(cls, description: str) -> str:
+        """Return the task instruction header, excluding large content payloads.
+
+        Document-generator descriptions often append the whole strategy
+        payload after a delimiter. Artifact intent belongs in the
+        leading instruction, while the payload may legitimately mention
+        KPI slides, DOCX sections, or PPTX references as content. Using
+        only the header prevents payload vocabulary from being mistaken
+        for additional artifact requests.
+        """
+        return cls._DISPATCH_PAYLOAD_SPLIT_RE.split(description, maxsplit=1)[0]
+
+    @classmethod
+    def _category_detection_text(cls, description: str) -> str:
+        """Normalize dispatch text before marker-based artifact classification."""
+        instruction = cls._dispatch_instruction_text(description).lower()
+        return cls._NEGATED_CATEGORY_SEGMENT_RE.sub(" ", instruction)
+
+    @classmethod
     def _requested_categories(cls, request: ToolCallRequest) -> set[str]:
         args = request.tool_call.get("args", {})
         subagent_type = args.get("subagent_type", "")
-        description = str(args.get("description", "")).lower()
+        description = cls._category_detection_text(str(args.get("description", "")))
         if subagent_type == "creative-studio" and any(
             marker in description for marker in cls._BRAND_KEY_MARKERS
         ):
@@ -1034,7 +1060,7 @@ class DeliverableDispatchGuardMiddleware(AgentMiddleware):
         if args.get("subagent_type") != "document-generator":
             return False
 
-        description = str(args.get("description", "")).lower()
+        description = cls._category_detection_text(str(args.get("description", "")))
         return any(marker in description for marker in cls._XLSX_MARKERS)
 
     @classmethod

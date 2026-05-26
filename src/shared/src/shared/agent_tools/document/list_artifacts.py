@@ -57,26 +57,42 @@ def phase5_deliverable_key(record: dict) -> str | None:
     return None
 
 
-def _active_session_context() -> tuple[str | None, str | None]:
-    """Return ``(session_id, brand_name)`` of the active session, if any.
+def _active_session_context() -> tuple[str | None, str | None, str | None]:
+    """Return ``(session_id, brand_name, current_phase)`` for the active session.
 
     Mirrors the late-import pattern used by ``append_manifest`` so the
     ``shared`` package never carries a hard compile-time dependency on
-    ``core``. Returns ``(None, None)`` when no active session is set
-    (CLI / unit tests / ad-hoc invocations) — callers handle this by
-    falling back to the broader ``"all"`` scope or returning an empty
-    listing.
+    ``core``. Returns ``(None, None, None)`` when no active session is
+    set (CLI / unit tests / ad-hoc invocations) — callers handle this
+    by falling back to the broader ``"all"`` scope or returning an
+    empty listing.
     """
     try:
         from core.brand_strategy.session import (  # type: ignore[import-not-found]
             get_active_session,
         )
     except ImportError:
-        return None, None
+        return None, None, None
     session = get_active_session()
     if session is None:
-        return None, None
-    return session.session_id, session.brand_name or None
+        return None, None, None
+    return (
+        session.session_id,
+        session.brand_name or None,
+        getattr(session, "current_phase", None),
+    )
+
+
+def _phase_5_missing_deliverables(matches: list[dict]) -> list[str]:
+    """Return required Phase 5 deliverables absent from ``matches``."""
+    produced_deliverables = {
+        deliverable for r in matches if (deliverable := phase5_deliverable_key(r))
+    }
+    return [
+        deliverable
+        for deliverable in _REQUIRED_PHASE_5_DELIVERABLES
+        if deliverable not in produced_deliverables
+    ]
 
 
 def _phase_5_closure_summary_lines(matches: list[dict]) -> list[str]:
@@ -84,11 +100,7 @@ def _phase_5_closure_summary_lines(matches: list[dict]) -> list[str]:
     produced_deliverables = sorted(
         {deliverable for r in matches if (deliverable := phase5_deliverable_key(r))}
     )
-    missing_categories = [
-        deliverable
-        for deliverable in _REQUIRED_PHASE_5_DELIVERABLES
-        if deliverable not in produced_deliverables
-    ]
+    missing_categories = _phase_5_missing_deliverables(matches)
 
     lines = [
         f"Produced artifact types this session: {', '.join(produced_deliverables)}",
@@ -172,7 +184,7 @@ def list_artifacts(
             f"under {_base_dir()}."
         )
 
-    session_id, brand_name = _active_session_context()
+    session_id, brand_name, current_phase = _active_session_context()
     if scope == "current_session" and session_id is None:
         return (
             "No active brand strategy session — cannot resolve "
@@ -188,6 +200,7 @@ def list_artifacts(
         )
 
     matches: list[dict] = []
+    current_session_matches: list[dict] = []
     try:
         with open(manifest_file, encoding="utf-8") as f:
             for line in f:
@@ -198,6 +211,9 @@ def list_artifacts(
                     record = json.loads(line)
                 except json.JSONDecodeError:
                     continue
+
+                if session_id is not None and record.get("session_id") == session_id:
+                    current_session_matches.append(record)
 
                 if category != "all" and record.get("category") != category:
                     continue
@@ -214,6 +230,25 @@ def list_artifacts(
         logger.error(f"list_artifacts: failed to read manifest: {exc}")
         return f"Failed to read manifest at {manifest_file}: {exc}"
 
+    if scope != "current_session" and current_phase == "phase_5":
+        missing = _phase_5_missing_deliverables(current_session_matches)
+        if missing:
+            missing_text = ", ".join(missing)
+            current_lines = [
+                "CURRENT_SESSION_CLOSURE_REQUIRED: historical artifact scopes "
+                f"(scope={scope}) cannot satisfy Phase 5 closure while the "
+                f"current session is missing: {missing_text}.",
+                'Use `list_artifacts(scope="current_session")` as the closure '
+                "authority and generate only the missing current-session "
+                "deliverables. Do not reuse or report historical paths as the "
+                "final deliverable pack for this session.",
+                "",
+            ]
+            current_lines.extend(
+                _phase_5_closure_summary_lines(current_session_matches)
+            )
+            return "\n".join(current_lines)
+
     if not matches:
         return f"No artifacts found (scope={scope}, category={category})."
 
@@ -226,6 +261,16 @@ def list_artifacts(
     if scope == "current_session":
         lines.extend(_phase_5_closure_summary_lines(matches))
         lines.append("")
+    elif current_phase == "phase_5":
+        lines.extend(
+            [
+                "HISTORICAL_ARTIFACT_SCOPE: this listing can support historical "
+                "reference only. It is not proof of current-session Phase 5 "
+                'completion; use `list_artifacts(scope="current_session")` '
+                "for closure.",
+                "",
+            ]
+        )
 
     for record in matches:
         size_kb = record.get("size_bytes", 0) / 1024

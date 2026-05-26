@@ -231,7 +231,7 @@ class TestFormatFullDocument:
         content = {"phase_0_output": "data"}
         result = _format_full_document(content)
         title = _PHASE_TITLES["phase_0_output"]
-        # Anchor: "business context & problem statement" → "business-context--problem-statement"
+        # Anchor: "business context & problem statement" renders to its slug.
         anchor = title.lower().replace(" ", "-").replace("&", "")
         assert f"- [{title}](#{anchor})" in result
 
@@ -305,11 +305,13 @@ class TestExportToMarkdown:
         assert "Brand X" in result
 
     def test_section_filtering(self):
-        content = json.dumps({
-            "cover": "Brand X",
-            "executive_summary": "Summary",
-            "appendices": "Refs",
-        })
+        content = json.dumps(
+            {
+                "cover": "Brand X",
+                "executive_summary": "Summary",
+                "appendices": "Refs",
+            }
+        )
         result = export_to_markdown(content, sections=["cover"])
         assert "Brand X" in result
         # Filtered sections should not appear
@@ -317,11 +319,13 @@ class TestExportToMarkdown:
         assert "Refs" not in result
 
     def test_section_filtering_with_multiple_keys(self):
-        content = json.dumps({
-            "cover": "Brand X",
-            "executive_summary": "Summary",
-            "appendices": "Refs",
-        })
+        content = json.dumps(
+            {
+                "cover": "Brand X",
+                "executive_summary": "Summary",
+                "appendices": "Refs",
+            }
+        )
         result = export_to_markdown(content, sections=["cover", "appendices"])
         assert "Brand X" in result
         assert "Refs" in result
@@ -384,7 +388,7 @@ class TestExportToMarkdown:
     def test_long_content_default_path_uses_brand_subdir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Without output_path, file lands in <base>/documents/<brand-slug>/<timestamp>_*.md."""
+        """Without output_path, use the default brand document path."""
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
         content = json.dumps({"cover": "C" * 2500})
 
@@ -743,11 +747,15 @@ class TestResolveOutputPath:
     ) -> None:
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
         p1 = resolve_output_path(
-            None, category="documents", brand_name="Brand A",
+            None,
+            category="documents",
+            brand_name="Brand A",
             default_filename="x.docx",
         )
         p2 = resolve_output_path(
-            None, category="documents", brand_name="Brand B",
+            None,
+            category="documents",
+            brand_name="Brand B",
             default_filename="x.docx",
         )
         assert Path(p1).parent != Path(p2).parent
@@ -852,20 +860,31 @@ class TestListArtifacts:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
-        self._seed_manifest(tmp_path, [
-            {
-                "session_id": "s1", "brand_name": "Brand A",
-                "category": "documents", "tool": "generate_document",
-                "filename": "a.docx", "path": "/x/a.docx",
-                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
-            },
-            {
-                "session_id": "s2", "brand_name": "Brand B",
-                "category": "spreadsheets", "tool": "generate_spreadsheet",
-                "filename": "b.xlsx", "path": "/x/b.xlsx",
-                "size_bytes": 200, "generated_at": "2026-05-01T11:00:00+07:00",
-            },
-        ])
+        self._seed_manifest(
+            tmp_path,
+            [
+                {
+                    "session_id": "s1",
+                    "brand_name": "Brand A",
+                    "category": "documents",
+                    "tool": "generate_document",
+                    "filename": "a.docx",
+                    "path": "/x/a.docx",
+                    "size_bytes": 100,
+                    "generated_at": "2026-05-01T10:00:00+07:00",
+                },
+                {
+                    "session_id": "s2",
+                    "brand_name": "Brand B",
+                    "category": "spreadsheets",
+                    "tool": "generate_spreadsheet",
+                    "filename": "b.xlsx",
+                    "path": "/x/b.xlsx",
+                    "size_bytes": 200,
+                    "generated_at": "2026-05-01T11:00:00+07:00",
+                },
+            ],
+        )
         result = list_artifacts(scope="all")
         assert "a.docx" in result
         assert "b.xlsx" in result
@@ -875,20 +894,31 @@ class TestListArtifacts:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
-        self._seed_manifest(tmp_path, [
-            {
-                "session_id": "s1", "brand_name": "A",
-                "category": "documents", "tool": "generate_document",
-                "filename": "a.docx", "path": "/x/a.docx",
-                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
-            },
-            {
-                "session_id": "s1", "brand_name": "A",
-                "category": "spreadsheets", "tool": "generate_spreadsheet",
-                "filename": "b.xlsx", "path": "/x/b.xlsx",
-                "size_bytes": 200, "generated_at": "2026-05-01T11:00:00+07:00",
-            },
-        ])
+        self._seed_manifest(
+            tmp_path,
+            [
+                {
+                    "session_id": "s1",
+                    "brand_name": "A",
+                    "category": "documents",
+                    "tool": "generate_document",
+                    "filename": "a.docx",
+                    "path": "/x/a.docx",
+                    "size_bytes": 100,
+                    "generated_at": "2026-05-01T10:00:00+07:00",
+                },
+                {
+                    "session_id": "s1",
+                    "brand_name": "A",
+                    "category": "spreadsheets",
+                    "tool": "generate_spreadsheet",
+                    "filename": "b.xlsx",
+                    "path": "/x/b.xlsx",
+                    "size_bytes": 200,
+                    "generated_at": "2026-05-01T11:00:00+07:00",
+                },
+            ],
+        )
         result = list_artifacts(scope="all", category="documents")
         assert "a.docx" in result
         assert "b.xlsx" not in result
@@ -899,14 +929,21 @@ class TestListArtifacts:
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
         # Seed a manifest so the tool reaches the scope check rather
         # than the empty-manifest early return.
-        self._seed_manifest(tmp_path, [
-            {
-                "session_id": "s1", "brand_name": "A",
-                "category": "documents", "tool": "generate_document",
-                "filename": "a.docx", "path": "/x/a.docx",
-                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
-            },
-        ])
+        self._seed_manifest(
+            tmp_path,
+            [
+                {
+                    "session_id": "s1",
+                    "brand_name": "A",
+                    "category": "documents",
+                    "tool": "generate_document",
+                    "filename": "a.docx",
+                    "path": "/x/a.docx",
+                    "size_bytes": 100,
+                    "generated_at": "2026-05-01T10:00:00+07:00",
+                },
+            ],
+        )
         result = list_artifacts(scope="current_session")
         # No active session in unit tests → tool tells caller to switch
         # scope rather than silently returning empty.
@@ -930,23 +967,36 @@ class TestListArtifacts:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
-        self._seed_manifest(tmp_path, [
-            {
-                "session_id": "s1", "brand_name": "A",
-                "category": "images", "tool": "generate_image",
-                "filename": "a.jpeg", "path": "/x/a.jpeg",
-                "size_bytes": 100, "generated_at": "2026-05-01T10:00:00+07:00",
-            },
-            {
-                "session_id": "s1", "brand_name": "A",
-                "category": "presentations", "tool": "generate_presentation",
-                "filename": "a.pptx", "path": "/x/a.pptx",
-                "size_bytes": 200, "generated_at": "2026-05-01T10:01:00+07:00",
-            },
-        ])
+        self._seed_manifest(
+            tmp_path,
+            [
+                {
+                    "session_id": "s1",
+                    "brand_name": "A",
+                    "category": "images",
+                    "tool": "generate_image",
+                    "filename": "a.jpeg",
+                    "path": "/x/a.jpeg",
+                    "size_bytes": 100,
+                    "generated_at": "2026-05-01T10:00:00+07:00",
+                },
+                {
+                    "session_id": "s1",
+                    "brand_name": "A",
+                    "category": "presentations",
+                    "tool": "generate_presentation",
+                    "filename": "a.pptx",
+                    "path": "/x/a.pptx",
+                    "size_bytes": 200,
+                    "generated_at": "2026-05-01T10:01:00+07:00",
+                },
+            ],
+        )
         session = MagicMock(session_id="s1", brand_name="A")
 
-        with patch("core.brand_strategy.session.get_active_session", return_value=session):
+        with patch(
+            "core.brand_strategy.session.get_active_session", return_value=session
+        ):
             result = list_artifacts(scope="current_session")
 
         assert (
@@ -964,27 +1014,76 @@ class TestListArtifacts:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
-        self._seed_manifest(tmp_path, [
-            {
-                "session_id": "s1",
-                "brand_name": "A",
-                "category": category,
-                "tool": (
-                    "generate_brand_key" if category == "images" else "tool"
-                ),
-                "filename": (
-                    "brand_key.out" if category == "images" else f"{category}.out"
-                ),
-                "path": f"/x/{category}.out",
-                "size_bytes": 100,
-                "generated_at": "2026-05-01T10:00:00+07:00",
-            }
-            for category in ("images", "documents", "presentations", "spreadsheets")
-        ])
+        self._seed_manifest(
+            tmp_path,
+            [
+                {
+                    "session_id": "s1",
+                    "brand_name": "A",
+                    "category": category,
+                    "tool": ("generate_brand_key" if category == "images" else "tool"),
+                    "filename": (
+                        "brand_key.out" if category == "images" else f"{category}.out"
+                    ),
+                    "path": f"/x/{category}.out",
+                    "size_bytes": 100,
+                    "generated_at": "2026-05-01T10:00:00+07:00",
+                }
+                for category in ("images", "documents", "presentations", "spreadsheets")
+            ],
+        )
         session = MagicMock(session_id="s1", brand_name="A")
 
-        with patch("core.brand_strategy.session.get_active_session", return_value=session):
+        with patch(
+            "core.brand_strategy.session.get_active_session", return_value=session
+        ):
             result = list_artifacts(scope="current_session")
 
         assert "Missing required categories: none" in result
         assert "CLOSURE_STATUS: COMPLETE" in result
+
+    def test_historical_scope_cannot_satisfy_incomplete_phase_5(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Current-session closure wins over historical brand artifacts in Phase 5."""
+        monkeypatch.setenv("BRANDMIND_OUTPUT_DIR", str(tmp_path))
+        self._seed_manifest(
+            tmp_path,
+            [
+                {
+                    "session_id": "old-session",
+                    "brand_name": "A",
+                    "category": "presentations",
+                    "tool": "generate_presentation",
+                    "filename": "old_deck.pptx",
+                    "path": "/x/old_deck.pptx",
+                    "size_bytes": 200,
+                    "generated_at": "2026-05-01T10:00:00+07:00",
+                },
+                {
+                    "session_id": "current-session",
+                    "brand_name": "A",
+                    "category": "documents",
+                    "tool": "generate_document",
+                    "filename": "current.docx",
+                    "path": "/x/current.docx",
+                    "size_bytes": 100,
+                    "generated_at": "2026-05-22T10:00:00+07:00",
+                },
+            ],
+        )
+        session = MagicMock(
+            session_id="current-session",
+            brand_name="A",
+            current_phase="phase_5",
+        )
+
+        with patch(
+            "core.brand_strategy.session.get_active_session", return_value=session
+        ):
+            result = list_artifacts(scope="current_brand", category="presentations")
+
+        assert "CURRENT_SESSION_CLOSURE_REQUIRED" in result
+        assert "Missing required categories:" in result
+        assert "presentations" in result
+        assert "old_deck.pptx" not in result

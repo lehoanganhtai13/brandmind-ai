@@ -627,9 +627,7 @@ class TestDeliverableDispatchGuard:
             ],
         )
         set_active_session(session)
-        handler = AsyncMock(
-            return_value=ToolMessage("ran", tool_call_id="call_1")
-        )
+        handler = AsyncMock(return_value=ToolMessage("ran", tool_call_id="call_1"))
 
         try:
             with patch.object(
@@ -773,6 +771,73 @@ class TestDeliverableDispatchGuard:
                     self._task_request("document-generator", "Build the DOCX"),
                     self._handler,
                 )
+        finally:
+            set_active_session(None)
+
+        assert isinstance(result, ToolMessage)
+        assert result.content == "ran"
+
+    def test_requested_categories_ignore_payload_and_negative_markers(self) -> None:
+        """Artifact category detection should follow dispatch intent."""
+        request = self._task_request(
+            "document-generator",
+            (
+                "Build the PPTX executive deck only; ignore DOCX/XLSX schemas. "
+                "Use the generate_presentation tool.\n\n"
+                "=== PPTX CONTENT JSON MAP ===\n"
+                "phase_5_output: includes KPI dashboard summary, DOCX appendix, "
+                "and spreadsheet governance notes as slide content only."
+            ),
+        )
+
+        categories = DeliverableDispatchGuardMiddleware._requested_categories(request)
+
+        assert categories == {"presentations"}
+        assert not DeliverableDispatchGuardMiddleware._is_kpi_spreadsheet_dispatch(
+            request
+        )
+
+    def test_allows_pptx_dispatch_when_docx_and_xlsx_already_exist(
+        self,
+    ) -> None:
+        """Missing PPTX dispatch should not be blocked by existing DOCX/XLSX files."""
+        guard = DeliverableDispatchGuardMiddleware()
+        session = BrandStrategySession(
+            session_id="abc123",
+            scope="repositioning",
+            current_phase="phase_5",
+            completed_phases=[
+                "phase_0",
+                "phase_0_5",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+            ],
+        )
+        set_active_session(session)
+
+        request = self._task_request(
+            "document-generator",
+            (
+                "Build the PPTX executive deck only; ignore DOCX/XLSX schemas. "
+                "Use the generate_presentation tool.\n\n"
+                "=== PPTX CONTENT JSON MAP ===\n"
+                "Include a KPI summary slide and mention the strategy document "
+                "as context, but produce only the deck file."
+            ),
+        )
+
+        try:
+            with patch.object(
+                DeliverableDispatchGuardMiddleware,
+                "_current_session_artifact_categories",
+                side_effect=[
+                    {"documents", "spreadsheets"},
+                    {"documents", "presentations", "spreadsheets"},
+                ],
+            ):
+                result = guard.wrap_tool_call(request, self._handler)
         finally:
             set_active_session(None)
 
