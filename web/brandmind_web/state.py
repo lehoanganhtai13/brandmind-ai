@@ -253,7 +253,11 @@ def _append_token_to_blocks(
         tail.text = f"{tail.text}{token}"
         return blocks
     _close_trailing_reasoning_block(blocks)
-    blocks.append(ContentBlock(kind="assistant_text", text=token))
+    blocks.append(
+        ContentBlock(
+            kind="assistant_text", text=token, block_id=uuid.uuid4().hex,
+        )
+    )
     return blocks
 
 
@@ -285,6 +289,7 @@ def _append_thinking_to_blocks(
                 kind="reasoning_timeline",
                 started_at=time.monotonic(),
                 expanded=True,
+                block_id=uuid.uuid4().hex,
             )
         )
         tail = blocks[-1]
@@ -341,6 +346,7 @@ def _append_timeline_entry_to_blocks(
                 kind="reasoning_timeline",
                 started_at=time.monotonic(),
                 expanded=True,
+                block_id=uuid.uuid4().hex,
             )
         )
         tail = blocks[-1]
@@ -1316,6 +1322,7 @@ class BrandMindState(rx.State):
                     is_done=True,
                     expanded=False,
                     duration_label=duration_label,
+                    block_id=uuid.uuid4().hex,
                 )
             )
         return ChatMessage(
@@ -2048,46 +2055,49 @@ class BrandMindState(rx.State):
         ]
 
     @rx.event
-    def toggle_block_timeline(self, message_index: int, block_index: int) -> None:
-        """Toggle the expand state of a single reasoning block within a turn.
+    def toggle_block_timeline(self, block_id: str) -> None:
+        """Toggle the expand state of one reasoning block, located by id.
 
-        The Phase 1 renderer used the turn-level ``timeline_expanded``
-        flag for every reasoning block, so a turn with two thought
-        traces toggled both panels together and the second click felt
-        broken. This handler flips just the indexed block so each
-        Thought row behaves independently.
+        The earlier positional ``(message_index, block_index)`` signature
+        broke under Reflex's nested ``rx.foreach`` compilation: both
+        index Vars were aliased onto the same compiled JS identifier,
+        so clicking any thought chevron sent ``(block_index, block_index)``
+        and the toggle could never reach the actual message. Stamping
+        each block with a stable UUID at creation and looking it up by
+        id sidesteps the foreach scoping issue entirely.
 
         Args:
-            message_index (int): Position of the agent turn in
-                ``self.messages``.
-            block_index (int): Position of the reasoning block within
-                ``message.blocks``; ignored if the entry is an
-                ``assistant_text`` block (clicks on text never reach
-                this handler in the renderer, but the guard keeps the
-                event idempotent).
+            block_id (str): Stable per-block identifier. The handler
+                scans ``self.messages`` for the agent turn that owns
+                this block and flips its ``expanded`` flag in place.
+                Unknown ids are a no-op so a stale event from a
+                replaced message list does nothing instead of mutating
+                a random block.
         """
-        if message_index < 0 or message_index >= len(self.messages):
+        if not block_id:
             return
-        target = self.messages[message_index]
-        if target.role != "agent":
-            return
-        if block_index < 0 or block_index >= len(target.blocks):
-            return
-        if target.blocks[block_index].kind != "reasoning_timeline":
-            return
-        target = _compact_chat_message_timeline(target)
-        new_block = target.blocks[block_index].model_copy()
-        new_block.expanded = not new_block.expanded
-        target.blocks = [
-            *target.blocks[:block_index],
-            new_block,
-            *target.blocks[block_index + 1 :],
-        ]
-        self.messages = [
-            *self.messages[:message_index],
-            target,
-            *self.messages[message_index + 1 :],
-        ]
+        for message_index, message in enumerate(self.messages):
+            if message.role != "agent":
+                continue
+            for block_index, block in enumerate(message.blocks):
+                if block.block_id != block_id:
+                    continue
+                if block.kind != "reasoning_timeline":
+                    return
+                target = _compact_chat_message_timeline(message)
+                new_block = target.blocks[block_index].model_copy()
+                new_block.expanded = not new_block.expanded
+                target.blocks = [
+                    *target.blocks[:block_index],
+                    new_block,
+                    *target.blocks[block_index + 1 :],
+                ]
+                self.messages = [
+                    *self.messages[:message_index],
+                    target,
+                    *self.messages[message_index + 1 :],
+                ]
+                return
 
     @rx.event(background=True)
     async def restore_session(self, session_id: str) -> None:

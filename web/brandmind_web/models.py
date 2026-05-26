@@ -357,6 +357,15 @@ class ContentBlock(BaseModel):
             closes; an empty value renders as the generic "Reasoning"
             header (the multi-reasoning hydration case where the wire
             payload does not carry per-block timings).
+        block_id (str): Stable per-block identifier (UUID hex) stamped
+            at creation time. The toggle event uses this id to locate
+            the block instead of a positional index, because Reflex
+            nested ``rx.foreach`` loops alias the outer and inner loop
+            index Vars onto the same compiled JS identifier — passing
+            ``(message_index, block_index)`` from a nested foreach sent
+            ``(block_index, block_index)`` over the wire, so the toggle
+            never reached the intended message. A stable id lookup
+            sidesteps that collision entirely.
     """
 
     kind: Literal["assistant_text", "reasoning_timeline"]
@@ -366,6 +375,7 @@ class ContentBlock(BaseModel):
     expanded: bool = True
     started_at: float = 0.0
     duration_label: str = ""
+    block_id: str = ""
 
 
 class ChatMessage(BaseModel):

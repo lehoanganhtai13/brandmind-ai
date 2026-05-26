@@ -501,8 +501,6 @@ def _block_summary_label(block: rx.Var[ContentBlock]) -> rx.Var:
 
 def _block_reasoning_timeline(
     block: rx.Var[ContentBlock],
-    block_index: rx.Var[int],
-    message_index: int,
 ) -> rx.Component:
     """Render one ``reasoning_timeline`` block as a connected thinking + tool thread.
 
@@ -513,17 +511,15 @@ def _block_reasoning_timeline(
     and toggle them independently. The chevron, header label, and
     body display all bind to ``block.expanded`` and ``block.is_done``
     rather than to message-level fields — that is the fix that turns
-    two "Thought for 51s" headers into two distinct rows.
+    two "Thought for 51s" headers into two distinct rows. The toggle
+    event keys off ``block.block_id`` rather than positional indices
+    so Reflex's nested-``foreach`` index aliasing cannot collide.
 
     Args:
         block (rx.Var[ContentBlock]): The reasoning_timeline block to
             render; ``block.timeline`` carries the thinking + tool
-            entries.
-        block_index (rx.Var[int]): Position of this block in
-            ``message.blocks``; forwarded to the per-block toggle
-            event so a click flips only this block's expand state.
-        message_index (int): Position of the owning agent turn in
-            ``BrandMindState.messages``.
+            entries and ``block.block_id`` is forwarded to the per-block
+            toggle event so a click flips only this block's panel.
 
     Returns:
         component (rx.Component): The block's collapsible reasoning
@@ -548,7 +544,7 @@ def _block_reasoning_timeline(
         ),
         spacing="1",
         align="center",
-        on_click=BrandMindState.toggle_block_timeline(message_index, block_index),
+        on_click=BrandMindState.toggle_block_timeline(block.block_id),
         style={"cursor": "pointer", "user_select": "none"},
     )
 
@@ -614,7 +610,7 @@ def _content_block(
     return rx.cond(
         is_text,
         _assistant_text_block(block.text, show_cursor),
-        _block_reasoning_timeline(block, index, message_index),
+        _block_reasoning_timeline(block),
     )
 
 
