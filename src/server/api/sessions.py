@@ -163,9 +163,7 @@ def _trace_to_wire(
             PersistedContentBlockWire(
                 kind=block.kind,
                 text=block.text,
-                timeline=[
-                    _timeline_entry_to_wire(entry) for entry in block.timeline
-                ],
+                timeline=[_timeline_entry_to_wire(entry) for entry in block.timeline],
                 duration_label=block.duration_label,
             )
         )

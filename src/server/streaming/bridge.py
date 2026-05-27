@@ -109,11 +109,11 @@ _EMPTY_RESPONSE_FALLBACK = (
     "The last turn did not produce a visible response. "
     'Please send "continue" and I will pick up from the saved state.'
 )
-_USER_PROGRESS_TOOL_NAME = "share_progress_update"
+_USER_WORKING_NOTE_TOOL_NAME = "share_working_note"
 
 
-def _progress_note_text(arguments: dict[str, Any]) -> str:
-    """Return sanitized user-facing text from a model-authored progress tool."""
+def _working_note_text(arguments: dict[str, Any]) -> str:
+    """Return sanitized user-facing text from a model-authored working-note tool."""
     raw = str(arguments.get("message", "")).strip()
     if not raw:
         return ""
@@ -791,13 +791,13 @@ async def stream_agent_response(
                 elif isinstance(event, StreamingThinkingEvent):
                     trace_builder.on_thinking(event.token, event.done)
                 elif isinstance(event, ToolCallEvent):
-                    if event.tool_name == _USER_PROGRESS_TOOL_NAME:
-                        progress_text = _progress_note_text(dict(event.arguments))
-                        if progress_text:
-                            accumulated_response.append(progress_text)
-                            streamed_response.append(progress_text)
-                            trace_builder.on_response_text(progress_text)
-                            yield StreamingTokenEvent(token=progress_text)
+                    if event.tool_name == _USER_WORKING_NOTE_TOOL_NAME:
+                        note_text = _working_note_text(dict(event.arguments))
+                        if note_text:
+                            accumulated_response.append(note_text)
+                            streamed_response.append(note_text)
+                            trace_builder.on_response_text(note_text)
+                            yield StreamingTokenEvent(token=note_text)
                         continue
                     trace_builder.on_tool_call(
                         event.tool_name,
@@ -805,7 +805,7 @@ async def stream_agent_response(
                         event.tool_call_id,
                     )
                 elif isinstance(event, ToolResultEvent):
-                    if event.tool_name == _USER_PROGRESS_TOOL_NAME:
+                    if event.tool_name == _USER_WORKING_NOTE_TOOL_NAME:
                         continue
                     trace_builder.on_tool_result(
                         event.tool_name,

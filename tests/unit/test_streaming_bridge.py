@@ -47,10 +47,13 @@ class _FakeStreamingAgent:
                 yield AIMessageChunk(content=chunk), {}
 
 
-class _FakeProgressToolAgent:
-    """Agent double that emits the model-authored progress tool event."""
+class _FakeWorkingNoteToolAgent:
+    """Agent double that emits a model-authored working-note tool event."""
 
-    def __init__(self, session: ManagedSession) -> None:
+    def __init__(
+        self,
+        session: ManagedSession,
+    ) -> None:
         self._session = session
 
     async def astream(
@@ -58,11 +61,11 @@ class _FakeProgressToolAgent:
         *_args: object,
         **_kwargs: object,
     ) -> AsyncIterator[tuple[AIMessageChunk, dict[str, object]]]:
-        """Emit one progress tool event followed by final visible text."""
+        """Emit one working-note tool event followed by final visible text."""
         self._session.event_router(
             ToolCallEvent(
-                tool_name="share_progress_update",
-                tool_call_id="progress-1",
+                tool_name="share_working_note",
+                tool_call_id="working-note-1",
                 arguments={
                     "message": (
                         "Mình sẽ kiểm tra nhanh bối cảnh rồi quay lại với "
@@ -73,9 +76,9 @@ class _FakeProgressToolAgent:
         )
         self._session.event_router(
             ToolResultEvent(
-                tool_name="share_progress_update",
-                tool_call_id="progress-1",
-                result="Progress update sent.",
+                tool_name="share_working_note",
+                tool_call_id="working-note-1",
+                result="Working note sent.",
             )
         )
         yield (
@@ -83,9 +86,9 @@ class _FakeProgressToolAgent:
                 content="",
                 tool_call_chunks=[
                     {
-                        "name": "share_progress_update",
+                        "name": "share_working_note",
                         "args": "{}",
-                        "id": "progress-1",
+                        "id": "working-note-1",
                         "index": 0,
                     }
                 ],
@@ -584,8 +587,8 @@ async def test_stream_agent_response_discards_brand_strategy_pre_tool_text() -> 
 
 
 @pytest.mark.asyncio
-async def test_stream_agent_response_surfaces_model_authored_progress_note() -> None:
-    """Progress notes should be natural assistant text, not visible tool rows."""
+async def test_stream_agent_response_surfaces_model_authored_working_note() -> None:
+    """Working notes should be natural assistant text, not visible tool rows."""
     session = ManagedSession(
         session_id="test-session",
         mode=SessionMode.BRAND_STRATEGY,
@@ -593,7 +596,7 @@ async def test_stream_agent_response_surfaces_model_authored_progress_note() -> 
         last_active=0.0,
         brand_strategy_session=BrandStrategySession(),
     )
-    session.agent = cast(CompiledStateGraph, _FakeProgressToolAgent(session))
+    session.agent = cast(CompiledStateGraph, _FakeWorkingNoteToolAgent(session))
     manager = SessionManager()
     tokens: list[str] = []
     tool_names: list[str] = []
@@ -604,7 +607,7 @@ async def test_stream_agent_response_surfaces_model_authored_progress_note() -> 
         elif isinstance(event, ToolCallEvent):
             tool_names.append(event.tool_name)
 
-    assert "share_progress_update" not in tool_names
+    assert "share_working_note" not in tool_names
     assert "".join(tokens) == (
         "Mình sẽ kiểm tra nhanh bối cảnh rồi quay lại với "
         "hướng định vị gọn nhất.\n\n"
