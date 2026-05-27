@@ -322,7 +322,7 @@ class ContentBlock(BaseModel):
     """One ordered slice of an agent turn — either prose text or a reasoning trace.
 
     The web UI renders an agent turn as a vertical sequence of blocks
-    so a progress note that arrives BEFORE the thinking can appear as
+    so a working note that arrives BEFORE the thinking can appear as
     its own paragraph above the timeline, instead of being merged with
     the final answer at the bottom (ChatGPT / Claude live-stream
     pattern). Block order is insertion order; the dispatch layer pushes

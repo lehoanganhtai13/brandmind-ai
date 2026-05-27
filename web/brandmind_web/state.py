@@ -1836,7 +1836,7 @@ class BrandMindState(rx.State):
         AND the trailing ``reasoning_timeline`` block on ``target.blocks``
         (Phase 1 live-block view), opening a new reasoning_timeline
         block when the trailing block is an ``assistant_text`` so a
-        progress note above the timeline stays in its own paragraph.
+        working note above the timeline stays in its own paragraph.
 
         Args:
             token (str): Incremental thinking-text chunk.

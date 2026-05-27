@@ -667,7 +667,7 @@ def _content_block(
     prose, ``reasoning_timeline`` renders as a collapsible reasoning
     thread keyed by its own per-block state. The streaming cursor only
     appears at the end of the very last ``assistant_text`` block when
-    the turn is still streaming, so a progress note that has been
+    the turn is still streaming, so a working note that has been
     superseded by a later final answer does not keep a cursor behind it.
 
     Args:
@@ -696,7 +696,7 @@ def _content_block(
 def _blocks_renderer(message: rx.Var[ChatMessage], message_index: int) -> rx.Component:
     """Render an agent turn as the ordered live blocks.
 
-    The Phase 1 live path: progress text → Thought → final answer in
+    The Phase 1 live path: working note → Thought → final answer in
     insertion order. Each reasoning block carries its own "Thought for
     Ns / Done" cap inside its expanded panel (rendered by
     :func:`_block_reasoning_timeline`), so the chevron rail terminates
