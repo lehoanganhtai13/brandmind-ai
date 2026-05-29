@@ -845,10 +845,14 @@ class BrandMindState(rx.State):
         the user actually sends the first message (see
         :meth:`_ensure_session`). This keeps the picker free of empty
         rows when the user just wants a clean slate.
+
+        Opening a draft is allowed while another chat is streaming, the
+        same way :meth:`switch_chat` is: the in-flight stream keeps
+        running server-side, the dispatch layer drops paint while its
+        target is out of view, and the composer stays disabled until
+        that stream completes and releases the global lock.
         """
         async with self:
-            if self.is_streaming:
-                return
             self.session_id = ""
             self.messages = []
             self.scope = ""
