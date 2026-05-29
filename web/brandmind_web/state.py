@@ -40,6 +40,7 @@ from .api_client import (
     stream_message,
     update_session,
 )
+from .composer_logic import enter_sends_message
 from .models import (
     ArtifactRef,
     BrandStrategyMetadata,
@@ -1241,18 +1242,14 @@ class BrandMindState(rx.State):
     def _chat_message_from_wire(self, message: SessionMessage) -> ChatMessage:
         """Rebuild a :class:`ChatMessage` from a server-side persisted turn.
 
-        Agent turns rehydrate with their full reasoning timeline plus
-        the recorded ``duration_label`` and the ``timeline_expanded=False``
-        flag so the bubble matches the collapsed state a live turn ends
-        in. When the wire payload also includes the Phase 2 additive
-        ``blocks`` field, the rehydrated message keeps the original
-        text → Thought → text insertion order so refresh / chat-switch
-        renders match the live-stream layout. A single reasoning block
-        inherits the turn-level duration label (the common case); a
-        multi-reasoning turn leaves each block's label empty so the
-        header reads "Reasoning" instead of duplicating the same
-        ``Thought for Ns`` across blocks (per-block timings are not
-        persisted yet). User turns get empty timelines and no labels.
+        Restores a refreshed or switched-to chat so it reads the same as
+        when it streamed live: agent turns come back collapsed with their
+        reasoning trace and duration label, and when the wire payload
+        carries the ordered ``blocks`` field the original
+        text → Thought → text order is preserved. Each reasoning block
+        shows its own persisted duration, falling back to the turn-level
+        label for a single-block turn that carries none. User turns
+        rehydrate with empty timelines and no labels.
 
         Args:
             message (SessionMessage): Persisted turn payload as returned
@@ -1469,28 +1466,26 @@ class BrandMindState(rx.State):
 
     @rx.event
     def on_composer_key_down(self, key: str, info: dict):
-        """Send on Enter (no modifier), let Shift+Enter fall through to newline.
+        """Send the pending message on a bare Enter; Shift+Enter adds a newline.
 
-        Reflex's :func:`key_event` arg-spec passes the key name plus a
-        ``KeyInputInfo`` dict (``shift_key`` / ``ctrl_key`` / ``alt_key`` /
-        ``meta_key``). Sending only triggers when the user pressed a bare
-        Enter while connected, with non-empty content, and not mid-stream;
-        any modifier (incl. composing Vietnamese accents via IME) falls
-        through to the textarea's native behaviour. The handler flips
-        ``is_streaming`` synchronously so any trailing ``set_pending_input``
-        from the same Enter is dropped by the guard above.
+        Submits the composer when the user presses Enter while connected,
+        with non-empty content, and no turn already streaming. Any
+        modifier key falls through to the textarea's native newline. The
+        composer suppresses Enter while a Vietnamese IME composition is
+        active, so this handler only runs for a deliberate send.
+
+        Args:
+            key (str): The event key name from the keyboard event.
+            info (dict): ``KeyInputInfo`` modifier flags for the event.
         """
-        if key != "Enter":
-            return None
-        if (
-            info.get("shift_key")
-            or info.get("ctrl_key")
-            or info.get("alt_key")
-            or info.get("meta_key")
-        ):
-            return None
         content = self.pending_input.strip()
-        if not self.is_connected or self.is_streaming or not content:
+        if not enter_sends_message(
+            key,
+            info,
+            connected=self.is_connected,
+            streaming=self.is_streaming,
+            has_content=bool(content),
+        ):
             return None
         self.pending_input = ""
         self.is_streaming = True
@@ -2059,21 +2054,18 @@ class BrandMindState(rx.State):
     def toggle_block_timeline(self, block_id: str) -> None:
         """Toggle the expand state of one reasoning block, located by id.
 
-        The earlier positional ``(message_index, block_index)`` signature
-        broke under Reflex's nested ``rx.foreach`` compilation: both
-        index Vars were aliased onto the same compiled JS identifier,
-        so clicking any thought chevron sent ``(block_index, block_index)``
-        and the toggle could never reach the actual message. Stamping
-        each block with a stable UUID at creation and looking it up by
-        id sidesteps the foreach scoping issue entirely.
+        Each agent turn can hold several reasoning blocks, so a chevron
+        click identifies its block by stable id rather than position —
+        positional indexing is unreliable inside the nested
+        message/block render loops. Looking the block up by id keeps the
+        toggle scoped to exactly the panel the user clicked.
 
         Args:
             block_id (str): Stable per-block identifier. The handler
                 scans ``self.messages`` for the agent turn that owns
                 this block and flips its ``expanded`` flag in place.
                 Unknown ids are a no-op so a stale event from a
-                replaced message list does nothing instead of mutating
-                a random block.
+                replaced message list mutates nothing.
         """
         if not block_id:
             return

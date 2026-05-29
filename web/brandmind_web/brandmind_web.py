@@ -44,6 +44,9 @@ _GLOBAL_KEYFRAMES = f"""
   -webkit-text-fill-color: var(--gray-a11) !important;
   cursor: text !important;
 }}
+[data-bm-composer-textarea] {{
+  field-sizing: content;
+}}
 [data-bm-sidebar-brand]:hover {{
   background-color: {RAIL_HOVER_BG} !important;
 }}

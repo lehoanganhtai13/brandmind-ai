@@ -165,15 +165,13 @@ class PersistedContentBlockWire(BaseModel):
     """One ordered assistant-turn block carried in persisted history.
 
     Mirrors :class:`server.schemas.session.PersistedContentBlockWire`.
-    Backend serializes the same insertion-ordered block list it built
-    while the turn was live so a newer client can restore the
-    text → Thought → text layout after a refresh. The Phase 3 backend
-    commit (``f940995``) also persists ``duration_label`` per reasoning
-    block, so a rehydrated multi-block turn shows ``Thought for Ns`` per
-    block instead of the generic ``Reasoning`` fallback. Older sessions
-    saved before Phase 3 (or assistant_text blocks) leave this empty,
-    and the renderer falls through to the turn-level label / generic
-    label as appropriate.
+    The backend serializes the insertion-ordered block list captured
+    while the turn streamed so the client can restore the
+    text → Thought → text layout after a refresh. ``duration_label``
+    carries each reasoning block's own "Thought for Ns" timing; it is
+    empty for ``assistant_text`` blocks and for turns persisted before
+    per-block timings were recorded, where the client falls back to the
+    turn-level label.
     """
 
     kind: Literal["assistant_text", "reasoning_timeline"]
@@ -187,11 +185,11 @@ class SessionMessage(BaseModel):
 
     Agent turns carry the reasoning ``timeline`` and short
     ``duration_label`` so the rehydrated bubble can show the "Thought
-    for …" summary the user saw live. ``blocks`` carries the Phase 2
-    additive ordered-block payload — newer clients hydrate from it to
-    restore the text → Thought → text live-stream layout, older clients
-    keep ignoring the extra field. User turns leave the timeline and
-    block list empty.
+    for …" summary the user saw live. ``blocks`` is the additive
+    ordered-block payload clients hydrate from to restore the
+    text → Thought → text layout; it is absent for turns persisted
+    before blocks existed. User turns leave the timeline and block list
+    empty.
     """
 
     role: Literal["user", "agent"]
@@ -357,19 +355,13 @@ class ContentBlock(BaseModel):
             block first opened. Used only client-side to compute
             ``duration_label`` when the block closes.
         duration_label (str): Pre-formatted ``"Ns"`` / ``"MmSs"`` label
-            for the block's wall-clock duration. Set when the block
-            closes; an empty value renders as the generic "Reasoning"
-            header (the multi-reasoning hydration case where the wire
-            payload does not carry per-block timings).
+            for the block's wall-clock duration, set when the block
+            closes. An empty value renders the generic "Reasoning"
+            header instead of "Thought for Ns".
         block_id (str): Stable per-block identifier (UUID hex) stamped
-            at creation time. The toggle event uses this id to locate
-            the block instead of a positional index, because Reflex
-            nested ``rx.foreach`` loops alias the outer and inner loop
-            index Vars onto the same compiled JS identifier — passing
-            ``(message_index, block_index)`` from a nested foreach sent
-            ``(block_index, block_index)`` over the wire, so the toggle
-            never reached the intended message. A stable id lookup
-            sidesteps that collision entirely.
+            at creation. The expand-toggle event locates the block by
+            this id rather than by position so it stays correct inside
+            the nested message/block render loops.
     """
 
     kind: Literal["assistant_text", "reasoning_timeline"]
@@ -396,15 +388,13 @@ class ChatMessage(BaseModel):
     ``timeline_expanded`` lets the user toggle the collapsed timeline
     open again after the turn closes.
 
-    ``blocks`` is the Phase 1 ordered-blocks view of the same turn:
-    the dispatch layer mirrors every streaming-token / thinking / tool
-    event into both the legacy ``content`` + ``timeline`` mirrors AND a
-    new ordered ``blocks`` list, so live streams render the trace as
-    text → Thought → text in the order the events arrived. Persisted
-    history (re-loaded from the server) has an empty ``blocks`` list
-    and falls back to the legacy single-content + single-timeline
-    layout; promoting persisted turns to the blocks model requires a
-    backend schema change deferred to a later phase.
+    ``blocks`` is the ordered-blocks view of the same turn: the dispatch
+    layer mirrors every streaming-token / thinking / tool event into
+    both the legacy ``content`` + ``timeline`` fields AND the ordered
+    ``blocks`` list, so a live stream renders the trace as
+    text → Thought → text in arrival order. A turn re-loaded from a
+    server that does not supply ``blocks`` keeps an empty list and
+    falls back to the legacy single-content + single-timeline layout.
 
     Attributes:
         role (Literal["user", "agent"]): Speaker for this row.

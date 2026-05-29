@@ -8,9 +8,10 @@ when the textarea grows to multi-line content (Shift+Enter). Action chips
 are vertically aligned to the bottom via ``align="end"`` so they follow
 the typing cursor down as the composer expands, again matching ChatGPT.
 
-Two-way binding mirrors the textarea value into ``BrandMindState.pending_input``;
-``debounce_timeout=0`` keeps Reflex's :class:`DebounceInput` wrapper from
-caching the in-flight value when the state clears post-send.
+Typing is debounced (``debounce_timeout``) so an IME composition (Vietnamese
+Telex, Pinyin) settles locally before the controlled value is reasserted from
+server state, and a client bootstrap script keeps the Enter key from sending
+while an IME composition is active.
 """
 
 from __future__ import annotations
@@ -21,20 +22,35 @@ from ..state import BrandMindState
 from . import tokens
 from .model_picker import model_picker
 
-_AUTO_GROW_SCRIPT = """
+# The Enter decision lives in this client listener, not the Reflex event: a server
+# event cannot read the IME composition flag, so only a capture-phase listener can
+# skip a mid-composition send and suppress the newline on a real send. Height is
+# owned by the CSS `field-sizing` rule (the JS height path is a fallback only).
+_COMPOSER_BOOTSTRAP_SCRIPT = """
 (function bootstrap() {
-  if (window.__bmComposerAutoGrow) return;
-  window.__bmComposerAutoGrow = true;
+  if (window.__bmComposerBootstrap) return;
+  window.__bmComposerBootstrap = true;
+  const nativeAutoSize = window.CSS && CSS.supports &&
+    CSS.supports('field-sizing', 'content');
   function resize(ta) {
     ta.style.height = 'auto';
     const next = Math.min(ta.scrollHeight, 180);
     ta.style.height = next + 'px';
   }
+  function onKeyDown(e) {
+    if (e.key !== 'Enter') return;
+    if (e.isComposing || e.keyCode === 229) { e.stopPropagation(); return; }
+    if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+    e.preventDefault();
+  }
   function attach(ta) {
-    if (!ta || ta.__bmAutoGrow) return;
-    ta.__bmAutoGrow = true;
-    ta.addEventListener('input', () => resize(ta));
-    resize(ta);
+    if (!ta || ta.__bmComposerBound) return;
+    ta.__bmComposerBound = true;
+    ta.addEventListener('keydown', onKeyDown, true);
+    if (!nativeAutoSize) {
+      ta.addEventListener('input', () => resize(ta));
+      resize(ta);
+    }
   }
   function scan() {
     document.querySelectorAll('[data-bm-composer-textarea]').forEach(attach);
@@ -98,7 +114,7 @@ def input_composer() -> rx.Component:
             on_change=BrandMindState.set_pending_input,
             on_key_down=BrandMindState.on_composer_key_down,
             read_only=~BrandMindState.is_connected | BrandMindState.is_streaming,
-            debounce_timeout=0,
+            debounce_timeout=100,
             rows="1",
             custom_attrs={"data-bm-composer-textarea": "true"},
             style={
@@ -148,7 +164,7 @@ def input_composer() -> rx.Component:
         composer_card,
         padding="12px 24px 20px 24px",
         width="100%",
-        on_mount=rx.call_script(_AUTO_GROW_SCRIPT),
+        on_mount=rx.call_script(_COMPOSER_BOOTSTRAP_SCRIPT),
         style={
             "background_color": tokens.BG_CANVAS,
         },

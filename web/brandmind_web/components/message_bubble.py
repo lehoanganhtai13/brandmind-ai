@@ -427,15 +427,11 @@ def _final_summary_row(message: rx.Var[ChatMessage]) -> rx.Component:
 def _block_final_summary_row(block: rx.Var[ContentBlock]) -> rx.Component:
     """Per-block "Thought for Ns / Done" tail row for an ordered reasoning block.
 
-    Mirrors :func:`_final_summary_row` but reads ``block.duration_label``
-    + ``block.is_done`` so each reasoning block in the new ordered-blocks
-    layout terminates its own bullet rail with a check icon (matching
-    the ChatGPT pattern where the Done cap visually closes the rail
-    inside the expanded thought panel). Only paints when the block has
-    closed *and* a per-block duration is available — hydrated multi-block
-    turns whose wire payload predates per-block duration persistence
-    therefore omit the cap rather than rendering an empty "Thought for /
-    Done".
+    Reads ``block.duration_label`` + ``block.is_done`` so each reasoning
+    block terminates its own bullet rail with a check icon, the way the
+    ChatGPT reasoning cap closes the rail inside the expanded panel. It
+    paints only when the block has closed and carries a duration, so a
+    block with no recorded duration shows no half-filled cap.
 
     Args:
         block (rx.Var[ContentBlock]): The reasoning block this cap
@@ -583,15 +579,11 @@ def _block_reasoning_timeline(
     """Render one ``reasoning_timeline`` block as a connected thinking + tool thread.
 
     Variant of :func:`_reasoning_timeline` scoped to a single
-    ``ContentBlock``. Each block carries its own expand state and
-    duration label so a turn with multiple thought traces can collapse
-    the earlier ones as soon as the next assistant paragraph starts
-    and toggle them independently. The chevron, header label, and
-    body display all bind to ``block.expanded`` and ``block.is_done``
-    rather than to message-level fields — that is the fix that turns
-    two "Thought for 51s" headers into two distinct rows. The toggle
-    event keys off ``block.block_id`` rather than positional indices
-    so Reflex's nested-``foreach`` index aliasing cannot collide.
+    ``ContentBlock`` so a turn with several thought traces shows each
+    one with its own collapse state, header label, and duration. The
+    chevron, header label, and body all bind to per-block fields, and
+    the toggle event keys off ``block.block_id`` so it stays correct
+    inside the nested message/block render loops.
 
     Args:
         block (rx.Var[ContentBlock]): The reasoning_timeline block to
@@ -696,14 +688,11 @@ def _content_block(
 def _blocks_renderer(message: rx.Var[ChatMessage], message_index: int) -> rx.Component:
     """Render an agent turn as the ordered live blocks.
 
-    The Phase 1 live path: working note → Thought → final answer in
+    Renders the turn as working note → Thought → final answer in
     insertion order. Each reasoning block carries its own "Thought for
     Ns / Done" cap inside its expanded panel (rendered by
     :func:`_block_reasoning_timeline`), so the chevron rail terminates
-    cleanly in a check icon per block — matching the ChatGPT pattern
-    *per* block rather than once below the whole chain (a global cap
-    duplicates the last block's header label and leaves a dangling rail
-    segment outside any block's panel).
+    cleanly in a per-block check icon — the ChatGPT-style reasoning cap.
 
     Args:
         message (rx.Var[ChatMessage]): The agent message whose
@@ -939,11 +928,10 @@ def _legacy_agent_body(
 ) -> rx.Component:
     """Legacy timeline-then-content layout for persisted history.
 
-    Picked when ``message.blocks`` is empty — typically after a page
-    refresh that re-fetches the chat from the backend, which still
-    serves the single-content + single-timeline schema (Phase 1
-    intentionally avoids the backend change). The renderer matches the
-    pre-blocks shape so old turns keep rendering exactly as before.
+    Picked when ``message.blocks`` is empty — typically a turn re-fetched
+    from a server that returns the single-content + single-timeline
+    shape. Matches the pre-blocks layout so those turns render the same
+    as they always have.
 
     Args:
         message (rx.Var[ChatMessage]): The agent message to render.
@@ -967,10 +955,10 @@ def _legacy_agent_body(
 def _agent_bubble(message: rx.Var[ChatMessage], message_index: int) -> rx.Component:
     """Agent turn — left-bordered editorial column, no enclosing box.
 
-    Picks the ordered-blocks renderer when the turn carries live
-    ``blocks`` (Phase 1 SSE path produces them on every fresh stream),
-    otherwise falls back to the legacy timeline-then-content layout
-    so persisted history fetched from the server stays readable.
+    Picks the ordered-blocks renderer when the turn carries ``blocks``
+    (every fresh stream produces them), otherwise falls back to the
+    legacy timeline-then-content layout so persisted history fetched
+    from the server stays readable.
 
     Args:
         message (rx.Var[ChatMessage]): The agent message to render.
