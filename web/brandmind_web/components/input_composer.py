@@ -8,10 +8,14 @@ when the textarea grows to multi-line content (Shift+Enter). Action chips
 are vertically aligned to the bottom via ``align="end"`` so they follow
 the typing cursor down as the composer expands, again matching ChatGPT.
 
-Typing is debounced (``debounce_timeout``) so an IME composition (Vietnamese
-Telex, Pinyin) settles locally before the controlled value is reasserted from
-server state, and a client bootstrap script keeps the Enter key from sending
-while an IME composition is active.
+The textarea is uncontrolled: it has no ``value`` bound to server state, so a
+server round-trip can never overwrite the DOM mid-keystroke. That keeps an IME
+composition (Vietnamese Telex, Pinyin) from being corrupted — earlier a bound
+value re-asserted the stale server echo during composition and duplicated the
+just-typed syllable. Typing syncs one way to ``pending_input`` via ``on_change``
+(for the send button and send body); a ``key`` bound to ``composer_epoch``
+remounts the field empty after each send. A client bootstrap script keeps the
+Enter key from sending while a composition is active.
 """
 
 from __future__ import annotations
@@ -109,13 +113,12 @@ def input_composer() -> rx.Component:
 
     composer_row = rx.hstack(
         rx.text_area(
-            value=BrandMindState.pending_input,
             placeholder=placeholder,
             on_change=BrandMindState.set_pending_input,
             on_key_down=BrandMindState.on_composer_key_down,
             read_only=~BrandMindState.is_connected | BrandMindState.is_streaming,
-            debounce_timeout=100,
             rows="1",
+            key=BrandMindState.composer_epoch.to_string(),
             custom_attrs={"data-bm-composer-textarea": "true"},
             style={
                 "flex": "1",

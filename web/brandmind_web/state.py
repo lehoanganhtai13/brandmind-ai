@@ -427,6 +427,7 @@ class BrandMindState(rx.State):
     is_streaming: bool = False
     streaming_session_id: str = ""
     pending_input: str = ""
+    composer_epoch: int = 0
     error_message: str = ""
 
     available_models: list[MainAgentModelOption] = []
@@ -1492,6 +1493,7 @@ class BrandMindState(rx.State):
         ):
             return None
         self.pending_input = ""
+        self.composer_epoch += 1
         self.is_streaming = True
         return BrandMindState.send_message_with(content)
 
@@ -1512,6 +1514,7 @@ class BrandMindState(rx.State):
             if session_id is None:
                 return
             self.pending_input = ""
+            self.composer_epoch += 1
             needs_title = self._chat_is_untitled(session_id)
             self._begin_turn(content, session_id)
         if needs_title:
