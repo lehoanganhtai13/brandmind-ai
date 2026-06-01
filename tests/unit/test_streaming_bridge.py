@@ -22,6 +22,7 @@ from server.streaming.bridge import (
 from server.streaming.tool_call_matching import ToolCallMatcher
 from shared.agent_middlewares.callback_types import (
     BaseAgentEvent,
+    StreamingThinkingEvent,
     StreamingTokenEvent,
     ToolCallEvent,
     ToolResultEvent,
@@ -62,25 +63,6 @@ class _FakeWorkingNoteToolAgent:
         **_kwargs: object,
     ) -> AsyncIterator[tuple[AIMessageChunk, dict[str, object]]]:
         """Emit one working-note tool event followed by final visible text."""
-        self._session.event_router(
-            ToolCallEvent(
-                tool_name="share_working_note",
-                tool_call_id="working-note-1",
-                arguments={
-                    "message": (
-                        "Mình sẽ kiểm tra nhanh bối cảnh rồi quay lại với "
-                        "hướng định vị gọn nhất."
-                    ),
-                },
-            )
-        )
-        self._session.event_router(
-            ToolResultEvent(
-                tool_name="share_working_note",
-                tool_call_id="working-note-1",
-                result="Working note sent.",
-            )
-        )
         yield (
             AIMessageChunk(
                 content="",
@@ -95,7 +77,40 @@ class _FakeWorkingNoteToolAgent:
             ),
             {},
         )
+        self._session.event_router(
+            ToolCallEvent(
+                tool_name="share_working_note",
+                tool_call_id="working-note-1",
+                arguments={
+                    "message": (
+                        "Điểm doanh thu bạn vừa đưa làm trọng tâm chuyển từ "
+                        "định vị sang lý do khách quay lại."
+                    ),
+                },
+            )
+        )
+        self._session.event_router(
+            ToolResultEvent(
+                tool_name="share_working_note",
+                tool_call_id="working-note-1",
+                result="Working note sent.",
+            )
+        )
         yield AIMessageChunk(content="Kết quả ngắn."), {}
+
+
+class _FakeMidTurnWorkingNoteToolAgent(_FakeWorkingNoteToolAgent):
+    """Agent double that speaks normally before a working-note aside."""
+
+    async def astream(
+        self,
+        *_args: object,
+        **_kwargs: object,
+    ) -> AsyncIterator[tuple[AIMessageChunk, dict[str, object]]]:
+        """Emit visible text, then a working-note tool event, then final text."""
+        yield AIMessageChunk(content="Mình hiểu rồi.\n\n"), {}
+        async for chunk, metadata in super().astream(*_args, **_kwargs):
+            yield chunk, metadata
 
 
 def test_internal_reminder_filter_preserves_plain_text() -> None:
@@ -587,8 +602,8 @@ async def test_stream_agent_response_discards_brand_strategy_pre_tool_text() -> 
 
 
 @pytest.mark.asyncio
-async def test_stream_agent_response_surfaces_model_authored_working_note() -> None:
-    """Working notes should be natural assistant text, not visible tool rows."""
+async def test_stream_agent_response_streams_main_agent_working_note() -> None:
+    """Working-note tools should stream as assistant text without tool rows."""
     session = ManagedSession(
         session_id="test-session",
         mode=SessionMode.BRAND_STRATEGY,
@@ -609,8 +624,8 @@ async def test_stream_agent_response_surfaces_model_authored_working_note() -> N
 
     assert "share_working_note" not in tool_names
     assert "".join(tokens) == (
-        "Mình sẽ kiểm tra nhanh bối cảnh rồi quay lại với "
-        "hướng định vị gọn nhất.\n\n"
+        "Điểm doanh thu bạn vừa đưa làm trọng tâm chuyển từ "
+        "định vị sang lý do khách quay lại.\n\n"
         "Kết quả ngắn."
     )
     assert session.messages[-1].content == "".join(tokens)
@@ -619,6 +634,99 @@ async def test_stream_agent_response_surfaces_model_authored_working_note() -> N
     blocks = session.brand_strategy_session.agent_traces[0].blocks
     assert [block.kind for block in blocks] == ["assistant_text"]
     assert blocks[0].text == "".join(tokens)
+
+
+@pytest.mark.asyncio
+async def test_stream_agent_response_surfaces_mid_turn_working_note() -> None:
+    """Working-note tools remain available after visible turn text exists."""
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.BRAND_STRATEGY,
+        created_at=datetime.now(),
+        last_active=0.0,
+        brand_strategy_session=BrandStrategySession(),
+    )
+    session.agent = cast(CompiledStateGraph, _FakeMidTurnWorkingNoteToolAgent(session))
+    manager = SessionManager()
+    tokens: list[str] = []
+    tool_names: list[str] = []
+
+    async for event in stream_agent_response(
+        session,
+        "Tôi muốn chuẩn bị brand strategy chi tiết cho nhà hàng.",
+        manager,
+    ):
+        if isinstance(event, StreamingTokenEvent) and event.token and not event.done:
+            tokens.append(event.token)
+        elif isinstance(event, ToolCallEvent):
+            tool_names.append(event.tool_name)
+
+    assert "share_working_note" not in tool_names
+    assert "".join(tokens) == (
+        "Mình hiểu rồi.\n\n"
+        "Điểm doanh thu bạn vừa đưa làm trọng tâm chuyển từ "
+        "định vị sang lý do khách quay lại.\n\n"
+        "Kết quả ngắn."
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_agent_response_does_not_inject_preturn_working_note() -> None:
+    """The bridge should not add assistant text before the agent emits it."""
+    session = ManagedSession(
+        session_id="test-session",
+        mode=SessionMode.BRAND_STRATEGY,
+        created_at=datetime.now(),
+        last_active=0.0,
+        brand_strategy_session=BrandStrategySession(),
+    )
+    session.agent = cast(
+        CompiledStateGraph,
+        _FakeStreamingAgent(
+            [
+                AIMessageChunk(
+                    content=[
+                        {
+                            "type": "thinking",
+                            "thinking": "Thinking before final answer.",
+                        }
+                    ],
+                ),
+                "Kết quả ngắn.",
+            ]
+        ),
+    )
+    manager = SessionManager()
+    events: list[BaseAgentEvent] = []
+
+    async for event in stream_agent_response(
+        session,
+        "Tôi muốn chuẩn bị một kế hoạch brand strategy đầy đủ cho nhà hàng.",
+        manager,
+    ):
+        events.append(event)
+
+    first_token_index = next(
+        index
+        for index, event in enumerate(events)
+        if isinstance(event, StreamingTokenEvent) and event.token and not event.done
+    )
+    first_thinking_index = next(
+        index
+        for index, event in enumerate(events)
+        if isinstance(event, StreamingThinkingEvent) and event.token and not event.done
+    )
+
+    assert first_thinking_index < first_token_index
+    assert isinstance(events[first_token_index], StreamingTokenEvent)
+    assert events[first_token_index].token == "Kết quả ngắn."
+    assert session.messages[-1].content == "Kết quả ngắn."
+    assert session.brand_strategy_session is not None
+    blocks = session.brand_strategy_session.agent_traces[0].blocks
+    assert [block.kind for block in blocks] == [
+        "reasoning_timeline",
+        "assistant_text",
+    ]
 
 
 @pytest.mark.asyncio

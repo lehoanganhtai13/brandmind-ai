@@ -50,12 +50,10 @@ def create_brand_strategy_agent(
         get_default_brand_strategy_main_model_profile,
         resolve_brand_strategy_main_model_profile,
     )
-    from core.brand_strategy.progress_updates import (
-        NaturalWorkingNoteMiddleware,
-    )
     from core.brand_strategy.subagents import (
         create_brand_strategy_subagent_middleware,
     )
+    from core.brand_strategy.working_notes import WorkingNoteCheckpointMiddleware
     from prompts.brand_strategy import BRAND_STRATEGY_SYSTEM_PROMPT
     from shared.agent_middlewares import (
         EnsureTasksFinishedMiddleware,
@@ -156,30 +154,52 @@ def create_brand_strategy_agent(
         )
 
     def share_working_note(message: str) -> str:
-        """Send one short collaborative note during a natural pause.
+        """Send a short collaborative note at a material transition.
 
-        Use this only when a brief human aside would help the user follow a
-        constraint, correction, trade-off, or visible wait before you continue.
-        Do NOT use it for routine workspace reads, quick searches, ordinary
-        drafting, greetings, status reports, or preambles. The note is shown
-        directly in chat, so write one sentence as you would speak to this
-        user: same language, pronouns, and tone. For pre-action notes, prefer
-        future or intent wording ("I will..." / "I'll first..."). Use present
-        tense only when you are truly describing something already discovered.
-        Do not repeat the request, preview the final answer, or mention
-        internal tools, agents, or implementation details.
+        Use this only when the user benefits from hearing a decision-relevant
+        implication before more hidden work continues. Good triggers include a
+        new constraint that changes the recommendation, a correction that
+        changes the frame, a trade-off that changes the priority, risky
+        ambiguity that could waste work, a large deliverable that needs a clear
+        working shape before a visible wait, or a new finding/blocker/pivot
+        discovered mid-turn. If facts are still missing, a useful note can name
+        the assumption risk that would make the next move unsafe. The note must
+        state what changed for the next move, not narrate that you are working.
+
+        Do not use this for greetings, thanks, motivation, quick answers,
+        ordinary thinking, routine reading/searching/drafting, periodic status,
+        or messages that only say you are preparing, checking, searching,
+        drafting, analyzing, comparing, or starting. Phrase the note as the
+        business implication first, not as a first-person future-work report
+        such as "I will build/check/analyze...". A useful note can be
+        paraphrased as: "Because of this signal, the next move should change in
+        this way." If you cannot state an implication or assumption risk, skip
+        the tool and continue normally.
+
+        Write the note in the user's language and relationship tone. Do not
+        mention internal tools, agents, phase names, implementation details, or
+        step labels. One turn can contain more than one note only when a later
+        material transition appears, such as a new finding, blocker, strategy
+        pivot, or milestone handoff. Do not repeat an earlier note.
 
         Args:
-            message: One concise user-facing sentence in the user's
-                language and relationship tone. It should feel like a brief
-                human aside, not a status report.
+            message: One concise user-facing sentence that anchors to the
+                specific constraint, correction, trade-off, ambiguity, finding,
+                blocker, pivot, or milestone and explains why it matters for the
+                next move.
 
         Returns:
-            Confirmation that the note was streamed to the user.
+            Continuation guidance confirming the note was streamed to the user.
         """
         if not message.strip():
             return "No working note sent."
-        return "Working note sent."
+        return (
+            "Working note sent and visible to the user. Continue from that note "
+            "in the next visible answer; do not greet again, restate the same "
+            "framing, or repeat the note. Add another working note only if a "
+            "new material finding, blocker, strategy pivot, or milestone "
+            "appears before more hidden work."
+        )
 
     # Initialize model — per-session pin takes precedence over the
     # configured default so the web picker can lock a chat to a
@@ -327,8 +347,8 @@ def create_brand_strategy_agent(
     content_check_middleware = ContentCheckAdvanceMiddleware(callback=callback)
     deliverable_dispatch_guard_middleware = DeliverableDispatchGuardMiddleware()
     phase_state_reminder_middleware = PhaseStateReminderMiddleware()
+    working_note_checkpoint_middleware = WorkingNoteCheckpointMiddleware()
     proactive_context_middleware = ProactiveTurnMiddleware()
-    natural_working_note_middleware = NaturalWorkingNoteMiddleware()
     evidence_grounding_middleware = EvidenceGroundingMiddleware()
     workspace_hygiene_middleware = WorkspaceBriefHygieneMiddleware()
 
@@ -407,8 +427,8 @@ def create_brand_strategy_agent(
             pre_compact_middleware,
             msg_summary_middleware,
             proactive_context_middleware,
-            natural_working_note_middleware,
             phase_state_reminder_middleware,
+            working_note_checkpoint_middleware,
             content_check_middleware,
             deliverable_dispatch_guard_middleware,
             evidence_grounding_middleware,

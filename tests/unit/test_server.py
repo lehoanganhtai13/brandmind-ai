@@ -381,7 +381,7 @@ class TestSessionManager:
     async def test_delete_workspace_explicit_true_overrides_flag_off(
         self, manager, tmp_path, monkeypatch
     ):
-        """Per-request ``delete_workspace=True`` removes the dir."""
+        """Per-request ``delete_workspace=True`` removes files and registry rows."""
         from server.services import session_manager as sm_module
 
         monkeypatch.setattr(sm_module, "BRANDMIND_HOME", tmp_path)
@@ -398,15 +398,29 @@ class TestSessionManager:
         workspace = tmp_path / "projects" / bs_id / "workspace"
         workspace.mkdir(parents=True)
         (workspace / "brand_brief.md").write_text("scratch")
+        index_path = tmp_path / "index.json"
+        index_path.write_text(
+            (
+                '{"projects": {'
+                f'"{bs_id}": {{"brand_name": "Deleted", "updated_at": "t1"}}, '
+                '"other": {"brand_name": "Other", "updated_at": "t2"}'
+                "}}"
+            ),
+            encoding="utf-8",
+        )
 
         await manager.delete_session(info.session_id, delete_workspace=True)
+
         assert not (tmp_path / "projects" / bs_id).exists()
+        saved_index = index_path.read_text(encoding="utf-8")
+        assert bs_id not in saved_index
+        assert "other" in saved_index
 
     @pytest.mark.asyncio
     async def test_delete_workspace_explicit_false_overrides_flag_on(
         self, manager, tmp_path, monkeypatch
     ):
-        """Per-request ``delete_workspace=False`` keeps the dir."""
+        """Per-request ``delete_workspace=False`` keeps files and registry rows."""
         from server.services import session_manager as sm_module
 
         monkeypatch.setattr(sm_module, "BRANDMIND_HOME", tmp_path)
@@ -423,9 +437,20 @@ class TestSessionManager:
         workspace = tmp_path / "projects" / bs_id / "workspace"
         workspace.mkdir(parents=True)
         (workspace / "brand_brief.md").write_text("scratch")
+        index_path = tmp_path / "index.json"
+        index_path.write_text(
+            (
+                '{"projects": {'
+                f'"{bs_id}": {{"brand_name": "Kept", "updated_at": "t1"}}'
+                "}}"
+            ),
+            encoding="utf-8",
+        )
 
         await manager.delete_session(info.session_id, delete_workspace=False)
+
         assert workspace.exists()
+        assert bs_id in index_path.read_text(encoding="utf-8")
 
 
 # Agent factory

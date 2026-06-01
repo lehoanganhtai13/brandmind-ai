@@ -32,7 +32,7 @@ from server.schemas.session import (
 )
 from server.services.agent_factory import create_agent_for_session
 from shared.agent_middlewares.callback_types import BaseAgentEvent
-from shared.workspace import BRANDMIND_HOME
+from shared.workspace import BRANDMIND_HOME, remove_project_from_index
 
 
 def _is_pinned(info: SessionInfo) -> bool:
@@ -336,6 +336,7 @@ class SessionManager:
             should_delete = delete_workspace
         if should_delete:
             _delete_workspace_dir(bs.session_id)
+            remove_project_from_index(bs.session_id, brandmind_home=BRANDMIND_HOME)
 
     def persist_session(self, session: ManagedSession) -> None:
         """Persist a brand-strategy session after syncing chat history."""

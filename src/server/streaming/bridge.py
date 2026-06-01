@@ -17,7 +17,7 @@ import asyncio
 import re
 import time
 from asyncio import Queue
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable, Mapping, Sequence
 from typing import Any, Literal
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
@@ -125,6 +125,18 @@ def _working_note_text(arguments: dict[str, Any]) -> str:
     if visible.endswith("\n"):
         return visible
     return f"{visible}\n\n"
+
+
+def _has_non_working_note_tool_call(
+    tool_calls: Sequence[Mapping[str, Any]],
+) -> bool:
+    """Return whether a streamed chunk invokes a tool other than a working note."""
+    return any(call.get("name") != _USER_WORKING_NOTE_TOOL_NAME for call in tool_calls)
+
+
+def _has_working_note_tool_call(tool_calls: Sequence[Mapping[str, Any]]) -> bool:
+    """Return whether a streamed chunk invokes the user-facing working-note tool."""
+    return any(call.get("name") == _USER_WORKING_NOTE_TOOL_NAME for call in tool_calls)
 
 
 def _longest_suffix_prefix_match(text: str, prefix: str) -> int:
@@ -666,6 +678,18 @@ async def stream_agent_response(
                 suppress_internal_tool_lines=suppress_internal_tool_lines
             )
 
+        def _consume_response_segment() -> str:
+            response_text = "".join(response_segment)
+            if response_text:
+                accumulated_response.append(response_text)
+                response_segment.clear()
+            return response_text
+
+        async def _flush_response_segment() -> None:
+            response_text = _consume_response_segment()
+            if response_text:
+                await event_queue.put(StreamingTokenEvent(token=response_text))
+
         async def _flush_visible_text() -> None:
             nonlocal filters_flushed
             if filters_flushed:
@@ -680,13 +704,13 @@ async def stream_agent_response(
                 await _emit_response_text(response_tail)
 
             if hold_response_segments:
-                response_text = "".join(response_segment)
-                if response_text:
-                    accumulated_response.append(response_text)
-                    await event_queue.put(StreamingTokenEvent(token=response_text))
-                response_segment.clear()
+                await _flush_response_segment()
 
             filters_flushed = True
+
+        trace_builder = _AgentTurnTraceBuilder()
+        turn_started_at = asyncio.get_event_loop().time()
+        streamed_response: list[str] = []
 
         async def _run_astream() -> None:
             nonlocal accumulated_response
@@ -739,8 +763,14 @@ async def stream_agent_response(
                             await _emit_response_text(visible_text)
 
                     if chunk.tool_calls:
-                        if hold_response_segments:
+                        if hold_response_segments and _has_non_working_note_tool_call(
+                            chunk.tool_calls
+                        ):
                             await _discard_response_segment()
+                        elif hold_response_segments and _has_working_note_tool_call(
+                            chunk.tool_calls
+                        ):
+                            await _flush_response_segment()
                         if not thinking_done:
                             await event_queue.put(
                                 StreamingThinkingEvent(token="", done=True)
@@ -771,13 +801,6 @@ async def stream_agent_response(
         # Start producer in background
         producer = asyncio.create_task(_run_astream())
 
-        trace_builder = _AgentTurnTraceBuilder()
-        turn_started_at = asyncio.get_event_loop().time()
-        streamed_response: list[str] = []
-        ai_messages_at_start = sum(
-            1 for m in session.messages if isinstance(m, AIMessage)
-        )
-
         # Consumer: yield events until stream end
         try:
             while True:
@@ -792,6 +815,11 @@ async def stream_agent_response(
                     trace_builder.on_thinking(event.token, event.done)
                 elif isinstance(event, ToolCallEvent):
                     if event.tool_name == _USER_WORKING_NOTE_TOOL_NAME:
+                        prefix_text = _consume_response_segment()
+                        if prefix_text:
+                            streamed_response.append(prefix_text)
+                            trace_builder.on_response_text(prefix_text)
+                            yield StreamingTokenEvent(token=prefix_text)
                         note_text = _working_note_text(dict(event.arguments))
                         if note_text:
                             accumulated_response.append(note_text)
@@ -826,10 +854,7 @@ async def stream_agent_response(
                 session.messages[-1] = AIMessage(content=response_text)
             bs = session.brand_strategy_session
             if session.mode is SessionMode.BRAND_STRATEGY and bs is not None:
-                ai_messages_now = sum(
-                    1 for m in session.messages if isinstance(m, AIMessage)
-                )
-                if ai_messages_now > ai_messages_at_start:
+                if response_text:
                     duration = max(
                         0.0,
                         asyncio.get_event_loop().time() - turn_started_at,

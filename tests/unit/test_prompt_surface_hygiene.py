@@ -126,6 +126,9 @@ def test_main_prompt_has_scope_and_research_sufficiency_guardrails() -> None:
     expected_phrases = (
         "Evidence discipline",
         "first-party evidence",
+        "Sufficiency-first tool policy",
+        "If the current context is enough",
+        "search only when it can change the next strategic decision",
         "Scope classification guardrail",
         "premium extension",
         "REPOSITIONING",
@@ -149,6 +152,14 @@ def test_main_prompt_has_scope_and_research_sufficiency_guardrails() -> None:
     )
     for phrase in expected_phrases:
         assert phrase in BRAND_STRATEGY_SYSTEM_PROMPT
+
+    conflicting_phrases = (
+        "When in doubt, SEARCH.",
+        "Whenever your reasoning touches marketing theory",
+        "When teaching the user a concept, search first",
+    )
+    for phrase in conflicting_phrases:
+        assert phrase not in BRAND_STRATEGY_SYSTEM_PROMPT
 
 
 def test_main_prompt_has_chat_process_quality_guardrails() -> None:
@@ -485,6 +496,8 @@ def test_phase_0_reference_routes_explicit_research_requests() -> None:
         "Explicit Research Request",
         "dispatch one bounded `market-research` pass",
         'Do not present a "market scan" from KG/doc search alone',
+        "Decision-grade concepts should be verified",
+        "do not block a useful diagnosis reply",
     )
     for phrase in expected_phrases:
         assert phrase in phase_0_text

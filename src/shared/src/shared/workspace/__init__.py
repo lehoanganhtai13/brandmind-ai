@@ -307,3 +307,42 @@ def _update_index(session_id: str, brand_name: str | None) -> None:
         json.dumps(index, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
+
+
+def remove_project_from_index(
+    session_id: str,
+    *,
+    brandmind_home: Path | None = None,
+) -> None:
+    """Remove a project registry row after its saved workspace is deleted.
+
+    The project index is a discovery aid, not the source of the saved progress
+    itself. When the workspace is removed, leaving the row behind can make
+    future sessions believe usable project memory still exists.
+
+    Args:
+        session_id: Brand-strategy session id used as the project key.
+        brandmind_home: Optional BrandMind home override for tests or isolated
+            runtime homes. Defaults to the module-level ``BRANDMIND_HOME``.
+    """
+    root = brandmind_home or BRANDMIND_HOME
+    index_path = root / "index.json"
+    try:
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return
+    except json.JSONDecodeError as exc:
+        logger.warning(f"Cannot prune malformed BrandMind project index: {exc}")
+        return
+
+    projects = index.get("projects") if isinstance(index, dict) else None
+    if not isinstance(projects, dict) or session_id not in projects:
+        return
+
+    projects.pop(session_id, None)
+    index["projects"] = projects
+    index_path.write_text(
+        json.dumps(index, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    logger.info(f"Removed project registry row: {session_id}")

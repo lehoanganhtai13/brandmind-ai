@@ -30,7 +30,7 @@ If the user explicitly asks for quick market, competitor, or customer research d
 
 ## Quality Gate
 
-- [ ] **p0_knowledge_verified**: Key concepts verified via KG and/or doc search before applying (scope classification, 5W1H, brand architecture)
+- [ ] **p0_knowledge_verified**: Decision-grade concepts should be verified via KG and/or doc search when they determine scope, brand architecture, or stakeholder-defensible diagnosis. For simple concept explanations or a sparse opening question, do not block a useful diagnosis reply on source lookup.
 - [ ] **p0_problem**: Clear problem statement articulated
 - [ ] **p0_scope**: Scope classified (new_brand/refresh/repositioning/full_rebrand)
 - [ ] **p0_category**: F&B category and concept understood

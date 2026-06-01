@@ -320,6 +320,72 @@ def test_builder_skips_current_session_when_matching_prior_projects(
     assert packet.prior_matches == ()
 
 
+def test_builder_skips_index_rows_without_project_workspace(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Deleted-project registry rows must not become reusable prior memory."""
+    monkeypatch.setattr(proactive_mod.workspace_mod, "BRANDMIND_HOME", tmp_path)
+    _write_project_index(
+        tmp_path,
+        {
+            "ghost-session": {
+                "brand_name": "Chuyện Ba Bữa Signature",
+                "updated_at": "2026-06-01T00:00:00",
+            }
+        },
+    )
+
+    packet = ProactiveContextBuilder().build(
+        "Làm tiếp cho Chuyện Ba Bữa Signature",
+        session_id="current-session",
+        discovery_needed=True,
+    )
+    rendered = packet.to_prompt()
+
+    assert packet.prior_matches == ()
+    assert "Related Prior Projects" not in rendered
+    assert "related prior workspace memory" not in rendered
+
+
+def test_builder_skips_template_only_prior_project(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Metadata-only projects should not be treated as source-backed memory."""
+    monkeypatch.setattr(proactive_mod.workspace_mod, "BRANDMIND_HOME", tmp_path)
+    _write_project_index(
+        tmp_path,
+        {
+            "template-only": {
+                "brand_name": "Chuyện Ba Bữa Signature",
+                "updated_at": "2026-06-01T00:00:00",
+            }
+        },
+    )
+    workspace_dir = tmp_path / "projects" / "template-only" / "workspace"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "brand_brief.md").write_text(
+        proactive_mod.workspace_mod.BRAND_BRIEF_TEMPLATE,
+        encoding="utf-8",
+    )
+    (workspace_dir / "working_notes.md").write_text(
+        proactive_mod.workspace_mod.WORKING_NOTES_TEMPLATE,
+        encoding="utf-8",
+    )
+
+    packet = ProactiveContextBuilder().build(
+        "Tôi muốn làm brand strategy cho Chuyện Ba Bữa Signature",
+        session_id="current-session",
+        discovery_needed=True,
+    )
+    rendered = packet.to_prompt()
+
+    assert packet.prior_matches == ()
+    assert "Related Prior Projects" not in rendered
+    assert "related prior workspace memory" not in rendered
+
+
 def test_builder_adds_post_tool_synthesis_contract(
     tmp_path: Path,
     monkeypatch,

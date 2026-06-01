@@ -756,10 +756,14 @@ class ProactiveContextBuilder:
             workspace_dir = (
                 workspace_mod.BRANDMIND_HOME / "projects" / session_id / "workspace"
             )
+            if not workspace_dir.is_dir():
+                continue
             excerpt = self._workspace_excerpt(
                 workspace_dir,
                 self.max_prior_workspace_chars,
             )
+            if not excerpt:
+                continue
             candidates.append(
                 ProactiveProjectMatch(
                     session_id=session_id,

@@ -35,3 +35,34 @@ def test_project_workspace_bootstraps_editable_files(monkeypatch, tmp_path) -> N
     for filename in ("brand_brief.md", "working_notes.md", "quality_gates.md"):
         assert (workspace_dir / filename).is_file()
     assert (user_dir / "profile.md").is_file()
+
+
+def test_remove_project_from_index_drops_only_target_project(tmp_path) -> None:
+    """Deleting saved progress should remove only that project registry row."""
+    index_path = tmp_path / "index.json"
+    index_path.write_text(
+        """
+{
+  "projects": {
+    "deleted-chat": {
+      "brand_name": "Deleted Brand",
+      "updated_at": "2026-06-01T00:00:00"
+    },
+    "kept-chat": {
+      "brand_name": "Kept Brand",
+      "updated_at": "2026-06-01T00:01:00"
+    }
+  }
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    workspace_mod.remove_project_from_index(
+        "deleted-chat",
+        brandmind_home=tmp_path,
+    )
+
+    saved = index_path.read_text(encoding="utf-8")
+    assert "deleted-chat" not in saved
+    assert "kept-chat" in saved

@@ -17,7 +17,7 @@ def test_default_main_model_profile_is_gemini_35_flash() -> None:
 
     assert DEFAULT_BRAND_STRATEGY_MAIN_MODEL == "gemini-3.5-flash"
     assert profile.model_id == "gemini-3.5-flash"
-    assert profile.thinking_level == "high"
+    assert profile.thinking_level == "medium"
     assert profile.context_window == 262144
 
 

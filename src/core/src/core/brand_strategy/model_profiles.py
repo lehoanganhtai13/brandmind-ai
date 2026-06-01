@@ -29,7 +29,7 @@ class BrandStrategyMainModelProfile:
     description: str = ""
     provider: str = "google"
     temperature: float = 1.0
-    thinking_level: str = "high"
+    thinking_level: str = "medium"
     max_output_tokens: int = 8000
     context_window: int = 262144
     include_thoughts: bool = True
